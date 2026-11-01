@@ -63,6 +63,13 @@ describe("limitOr429", () => {
 });
 
 describe("clientIp", () => {
+  it("prefers cf-connecting-ip, which a visitor cannot write", () => {
+    const req = new Request("https://x.test", {
+      headers: { "cf-connecting-ip": "5.6.7.8", "x-forwarded-for": "1.2.3.4" },
+    });
+    expect(clientIp(req)).toBe("5.6.7.8");
+  });
+
   it("uses the first x-forwarded-for hop", () => {
     const req = new Request("https://x.test", {
       headers: { "x-forwarded-for": "1.2.3.4, 10.0.0.1" },

@@ -6,9 +6,9 @@
 
 ## 0) เตรียมก่อนเริ่ม
 
-- [ ] เปิด `https://jodtang-th.vercel.app` ได้ และ LIFF เปิดในแอป LINE เห็นหน้าสรุป
+- [ ] เปิด `https://app.p-hook.com` ได้ และ LIFF เปิดในแอป LINE เห็นหน้าสรุป
 - [ ] พิมพ์ `กาแฟ 30` ในแชท ได้การ์ด "จดสำเร็จ"
-- [ ] Vercel มี `GEMINI_API_KEY` (หรือ `OPENAI_API_KEY` ถ้า `AI_PROVIDER=openai`) และ Redeploy แล้ว
+- [ ] Cloudflare มี secret `GEMINI_API_KEY` (หรือ `OPENAI_API_KEY` ถ้า `AI_PROVIDER=openai`) แล้ว
 - [ ] Stripe Dashboard (**Test mode**, เช็คชื่อบัญชี P'Hook มุมซ้ายบน) เปิด Cards + PromptPay + Customer portal แล้ว
 - [ ] ดูแผนปัจจุบันที่ตั้งค่า → ถ้าเป็น Free ให้เริ่มข้อ 1 ได้เลย (ถ้ามีแผนอยู่แล้ว ข้อ 1 จะไม่ผ่านเพราะทดลองฟรีเริ่มได้เฉพาะตอนไม่มีแผน)
 
@@ -38,7 +38,7 @@
 - [ ] กดซ้ำเกิน 5 ครั้งในวันเดียว → บอกว่าครบจำนวนแล้ว
 - [ ] ผู้ใช้ Elite ที่เปิด "สรุปอัตโนมัติรายเดือน": ถึงวันเริ่มรอบงบ 09:00 ได้การ์ดสรุป + การ์ด AI Insight ต่อท้าย (สั่งรัน workflow `cron.yml` เพื่อทดลองได้) ส่วน Pro ได้การ์ดสรุปอย่างเดียว
 - [ ] บัญชี Free/Pro พิมพ์ `วิเคราะห์` → ได้ข้อความชวนอัปเกรด Elite; ปุ่มลัด "🧠 วิเคราะห์" ใต้การ์ดสรุปทำงาน
-- [ ] ดูต้นทุน AI ที่ Google AI Studio / OpenAI usage และ log `insight_failed` ใน Vercel
+- [ ] ดูต้นทุน AI ที่ Google AI Studio / OpenAI usage และ log `insight_failed` ใน Cloudflare
 
 ## 0.30) พยากรณ์ปลายเดือน (เฉพาะ Elite — ใช้แผนทดลอง Elite ได้ — **รัน migration 0017 ก่อน**)
 
@@ -151,7 +151,7 @@
 - [ ] ข้อความที่ไม่มีเรื่องเงินเลย เช่น `วันนี้อากาศดีมาก` → บอทตอบว่าไม่เข้าใจ ไม่จดมั่ว
 - [ ] บัญชี Pro พิมพ์ประโยคยาวแบบเดียวกัน → จดแบบเดิม (กติกา) ไม่มีการ์ด AI
 - [ ] ส่งเสียงพูดประโยคยาวเหมือนข้างบน (Elite) → การ์ด "ตรวจรายการจากเสียง"
-- [ ] ดูต้นทุน AI ที่ Google AI Studio / OpenAI usage และ log `smart_parse_failed` ใน Vercel
+- [ ] ดูต้นทุน AI ที่ Google AI Studio / OpenAI usage และ log `smart_parse_failed` ใน Cloudflare
 
 ## 1) ทดลองฟรี 7 วัน (ทำก่อน เพราะต้องเริ่มจากบัญชี Free)
 
@@ -176,7 +176,7 @@
 - [ ] เสียงเบา/เสียงรบกวน/ไม่มีเลขเงิน → บอทตอบสุภาพ ไม่จดมั่ว
 - [ ] บัญชี Free และ Pro ส่งเสียง → บอทบอกว่าเป็นฟีเจอร์เฉพาะ Elite และไม่ถอดเสียง
 - [ ] ส่งเสียงรัว ๆ เกิน 5 ครั้ง/นาที → ขึ้นข้อความเตือน rate limit
-- [ ] ถ้าถอดเสียงพัง: ดู Vercel Logs ค้น `voice_transcribe_failed` (ข้อสงสัยหลัก: ไฟล์ m4a ของ LINE ส่งเป็น `audio/mp4` ไป Gemini)
+- [ ] ถ้าถอดเสียงพัง: ดู Cloudflare Logs (`npx wrangler tail phook`) ค้น `voice_transcribe_failed` (ข้อสงสัยหลัก: ไฟล์ m4a ของ LINE ส่งเป็น `audio/mp4` ไป Gemini)
 
 ## 3) สรุปอัตโนมัติ (ต้องเป็น Pro ขึ้นไป · ปิดไว้เป็นค่าเริ่มต้น)
 
@@ -186,7 +186,7 @@
 - [ ] ได้ข้อความ **ครั้งเดียว** ต่อช่วง: รัน workflow ซ้ำแล้วไม่ส่งซ้ำ
 - [ ] **สรุปรายเดือน**: ส่งวันเริ่มรอบงบ 09:00 (ค่าเริ่มต้นวันที่ 1) → ตรวจแบบเดียวกัน
 - [ ] ปิดสวิตช์แล้วรอบถัดไปไม่ส่ง
-- [ ] GitHub Actions รันสำเร็จ (ไม่ใช่ 401) → ถ้า 401 ตรวจ secrets `APP_BASE_URL` และ `CRON_SECRET` ให้ตรงกับ Vercel · log ค้น `cron_reminders_failed`
+- [ ] Cron Trigger ของ Cloudflare รันสำเร็จ (`npx wrangler tail phook` เห็นบรรทัด `cf_cron` status 200) → ถ้าไม่ใช่ ตรวจ secrets `APP_BASE_URL` และ `CRON_SECRET` บน Cloudflare · log ค้น `cron_reminders_failed`
 - [ ] ตรวจโควตา push ที่ LINE Official Account Manager หลังทดสอบ
 
 ## 4) อัปเกรดจ่ายเฉพาะส่วนต่าง
@@ -467,7 +467,7 @@
 - [ ] คนที่ไม่ได้ค้างยอดส่งรูปสลิป → บอทเงียบ
 - [ ] `ยังไม่ได้รับ ข` (คนจ่ายพิมพ์) ถอนการติ๊กได้ และถอนส่วนของคนจ่ายเองไม่ได้; คนอื่นกดปุ่ม ↩ ไม่ได้
 - [ ] สลิปใบสุดท้ายที่ทำให้ทุกคนจ่ายครบ → การ์ด "🎉 เก็บครบแล้ว"
-- [ ] ตรวจในหน้า Vercel Logs ว่าไม่มี error ใหม่ (`group_slip_*`)
+- [ ] ตรวจในหน้า Cloudflare Logs (`npx wrangler tail phook`) ว่าไม่มี error ใหม่ (`group_slip_*`)
 
 ## 12) การ์ดต้อนรับเล็ก + เปิดสมุดกลุ่มผ่านหน้า LIFF + หารบิลพิมพ์ตรงไหนก็ได้ + เพื่อนร่วมหารเอง (ต้องรัน migration 0038)
 

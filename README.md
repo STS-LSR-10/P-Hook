@@ -2,7 +2,7 @@
 
 จดง่าย เห็นเงินชัด — ผู้ช่วยจดรายรับรายจ่ายผ่าน LINE Official Account + LIFF
 
-Stack: Next.js 15 · TypeScript (strict) · Tailwind · shadcn/ui · Supabase · LINE Messaging API + LIFF · Vercel
+Stack: Next.js 15 · TypeScript (strict) · Tailwind · shadcn/ui · Supabase · LINE Messaging API + LIFF · Cloudflare Workers
 
 ## เริ่มใช้งาน (local)
 
@@ -37,7 +37,7 @@ pnpm lint && pnpm typecheck && pnpm test
 
 ## ทดสอบ webhook
 
-- **Vercel preview:** ทุก PR ได้ URL preview ใส่เป็น Webhook URL ชั่วคราว
+- **ทดสอบ webhook ชั่วคราว:** ใช้ `pnpm cf:preview` ในเครื่อง หรือ deploy เป็น Worker แยกชื่อ
 - **ngrok:** `ngrok http 3000` แล้วใช้ `https://<id>.ngrok-free.app/api/line/webhook`
   (ตั้ง `APP_BASE_URL` ให้ตรง)
 
@@ -48,7 +48,7 @@ pnpm lint && pnpm typecheck && pnpm test
      LIFF จะต่อ path จาก `liff.line.me/<LIFF_ID>/<path>` ไปท้าย Endpoint URL
      ถ้าตั้ง Endpoint เป็น `/summary` ลิงก์ `/budgets` จะกลายเป็น `/summary/budgets` และขึ้น 404
    - Scope: `profile`, `openid` · Size: `Full`
-2. ตั้งค่าใน Vercel (แล้ว Redeploy):
+2. ตั้งค่าใน Cloudflare (Workers → `phook` → Variables and Secrets):
    - `NEXT_PUBLIC_LIFF_ID` = LIFF ID
    - `LINE_LOGIN_CHANNEL_ID` = Channel ID ของ **LINE Login channel** (ใช้ตรวจ ID token)
    - `APP_BASE_URL` = โดเมน production
@@ -73,7 +73,7 @@ pnpm lint && pnpm typecheck && pnpm test
 
 1. รัน migration `supabase/migrations/0005_slips_bucket.sql` ใน Supabase SQL Editor
    (สร้าง bucket `slips` แบบ **private** — ผู้ใช้ดูรูปผ่าน signed URL อายุ 60 วินาทีเท่านั้น)
-2. ตั้ง `AI_PROVIDER` (`gemini` | `anthropic` | `openai`) และ API key ของค่ายนั้นใน Vercel
+2. ตั้ง `AI_PROVIDER` (`gemini` | `anthropic` | `openai`) และ API key ของค่ายนั้นใน Cloudflare
    (ไม่บังคับ: `AI_MODEL` เพื่อเปลี่ยนโมเดลเริ่มต้น) แล้ว Redeploy
 3. (แนะนำ) ตั้ง `EASYSLIP_API_KEY` เพื่อให้ตรวจสลิปโอนเงินผ่าน EasySlip ก่อน
 
@@ -84,7 +84,7 @@ pnpm lint && pnpm typecheck && pnpm test
 - EasySlip ใช้ได้กับ **สลิปโอนเงินที่มี QR** (ได้ค่าที่ธนาคารยืนยันและกันสลิปปลอม) ส่วนใบเสร็จร้านค้า
   หรือรูปที่ QR ไม่ชัด จะตกไปให้ AI อ่าน
 - ถ้า AI ตอบชัดเจนว่า "ไม่ใช่สลิป" จะหยุดทันที ไม่ไล่เรียกเจ้าที่เหลือ (ไม่เสียค่าเรียกซ้ำ)
-- ดูว่าเจ้าไหนถูกข้ามได้ใน Vercel Logs: event `slip_reader_skipped` (มีชื่อเจ้าและสถานะ ไม่มีข้อมูลสลิป)
+- ดูว่าเจ้าไหนถูกข้ามได้ใน Cloudflare Logs (`npx wrangler tail phook`): event `slip_reader_skipped` (มีชื่อเจ้าและสถานะ ไม่มีข้อมูลสลิป)
 
 พฤติกรรม:
 
@@ -166,14 +166,14 @@ pnpm lint && pnpm typecheck && pnpm test
 
 **ตั้งเวลา (cron)** — endpoint ป้องกันด้วย `Authorization: Bearer <CRON_SECRET>`
 
-| งาน                | endpoint                   | ตัวเรียก                                                           |
-| ------------------ | -------------------------- | ------------------------------------------------------------------ |
-| จดรายการประจำ      | `/api/cron/recurring`      | GitHub Actions ทุกชั่วโมง (`.github/workflows/cron.yml`)           |
-| เตือนที่ผู้ใช้ตั้ง | `/api/cron/user-reminders` | GitHub Actions ทุก 5 นาที (`.github/workflows/cron-reminders.yml`) |
-| เตือนรายวัน        | `/api/cron/reminders`      | GitHub Actions ทุกชั่วโมง (`.github/workflows/cron.yml`)           |
+| งาน                | endpoint                   | ตัวเรียก                                              |
+| ------------------ | -------------------------- | ----------------------------------------------------- |
+| จดรายการประจำ      | `/api/cron/recurring`      | Cloudflare Cron Trigger ทุกชั่วโมง (`wrangler.jsonc`) |
+| เตือนที่ผู้ใช้ตั้ง | `/api/cron/user-reminders` | Cloudflare Cron Trigger ทุกนาที (`wrangler.jsonc`)    |
+| เตือนรายวัน        | `/api/cron/reminders`      | Cloudflare Cron Trigger ทุกชั่วโมง (`wrangler.jsonc`) |
 
-ตัวตั้งเวลาอยู่ที่ GitHub Actions ทั้งหมด ไม่ผูกกับโฮสต์ (ย้ายจาก Vercel ไป Cloudflare ฯลฯ ได้โดยไม่ต้องแก้) สองงานเรียกซ้ำได้อย่างปลอดภัย: รายการประจำที่ค้างจะถูกตามให้ครบและแต่ละกฎถูกจองครั้งเดียวต่อวันครบกำหนด
-ตั้งที่ GitHub → Settings → Secrets and variables → Actions: `APP_BASE_URL` (เช่น `https://jod-tang.vercel.app`) และ `CRON_SECRET` (ค่าเดียวกับบนโฮสต์) — ถ้าเปลี่ยนโดเมนหรือย้ายโฮสต์ ต้องแก้ `APP_BASE_URL` ที่นี่ด้วย
+ตัวตั้งเวลาอยู่ที่ Cloudflare Cron Triggers (`wrangler.jsonc` + handler `scheduled` ใน `cf-worker.mjs`) เรียก route เหล่านี้ภายใน Worker ด้วย `CRON_SECRET` สองงานเรียกซ้ำได้อย่างปลอดภัย: รายการประจำที่ค้างจะถูกตามให้ครบและแต่ละกฎถูกจองครั้งเดียวต่อวันครบกำหนด
+ตั้ง `APP_BASE_URL` (เช่น `https://app.p-hook.com`) และ `CRON_SECRET` เป็น Secret บน Cloudflare · workflow ใน `.github/workflows/cron*.yml` เหลือไว้กดรันมือ (ใช้ GitHub Secrets ชื่อเดียวกัน)
 
 **ส่งออก (Pro ขึ้นไป)** — ที่หน้ารายการ กดไอคอนดาวน์โหลด (Free เห็นหน้าอธิบายพร้อมลิงก์อัปเกรด และเซิร์ฟเวอร์ตอบ 403) เลือก CSV หรือ Excel ตามตัวกรองที่เลือกอยู่ (สูงสุด 5,000 แถว)
 ลิงก์ดาวน์โหลดมีอายุ 2 นาทีและเปิดในเบราว์เซอร์ของเครื่อง (เบราว์เซอร์ในแอป LINE ดาวน์โหลดไฟล์ไม่ได้)
@@ -260,11 +260,12 @@ supabase db push
 
 Migration ใน `supabase/migrations/` รันซ้ำได้ (idempotent) ทดสอบในเครื่องด้วย `supabase start` + `supabase db reset`
 
-## Vercel
+## Cloudflare
 
-1. Import repo จาก GitHub ใน Vercel (preview ถูกสร้างให้ทุก PR อัตโนมัติ)
-2. ตั้ง environment variables ทั้งหมดใน _Project Settings → Environment Variables_ ตาม `.env.example`
+1. สร้าง Worker `phook` (ชื่อใน `wrangler.jsonc`), ผูก Custom domain (เช่น `app.p-hook.com`)
+2. ตั้ง secrets ใน _Workers → `phook` → Settings → Variables and Secrets_ ตาม `.env.example` (ค่า `NEXT_PUBLIC_*` ใส่เป็น Build variables / `.env.local` เพราะฝังตอนบิลด์)
 3. `APP_BASE_URL` = โดเมน production
+4. Deploy: `pnpm cf:deploy` จากเครื่อง หรือต่อ GitHub ให้ Workers Builds deploy เองทุกครั้งที่ push `main` (ดู `docs/DEPLOY.md` § 10)
 
 ## โครงสร้าง
 

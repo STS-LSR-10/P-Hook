@@ -103,8 +103,14 @@ export async function limitOr429(
   return res;
 }
 
-/** Best-effort client IP behind Vercel's proxy (first hop of x-forwarded-for). */
+/**
+ * Best-effort client IP. Behind Cloudflare `cf-connecting-ip` is set by Cloudflare itself (a visitor
+ * cannot choose it), so it comes first; x-forwarded-for is only a fallback because its first hop can
+ * be written by the visitor.
+ */
 export function clientIp(request: Request): string {
+  const cf = request.headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   return forwarded || request.headers.get("x-real-ip") || "unknown";
 }

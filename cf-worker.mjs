@@ -8,7 +8,7 @@ const JOBS = {
   "7 * * * *": ["/api/cron/recurring", "/api/cron/reminders"],
 };
 
-export default {
+const handler = {
   fetch: worker.fetch,
   async scheduled(controller, env, ctx) {
     const paths = JOBS[controller.cron] ?? [];
@@ -36,3 +36,5 @@ export default {
 };
 
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "./.open-next/worker.js";
+
+export default handler;

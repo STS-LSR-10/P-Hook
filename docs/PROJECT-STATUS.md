@@ -4,7 +4,7 @@
 · ถัดไป: เจ้าของขอหยุดเพิ่มฟีเจอร์ก่อน → ทดสอบจริง → เปิด Stripe Live เป็นขั้นสุดท้าย
 
 เอกสารนี้ไว้ให้เซสชันใหม่ (หรือคนใหม่) อ่านแล้วทำต่อได้ทันที **ไม่มีความลับใด ๆ อยู่ในไฟล์นี้**
-ค่า secret ทั้งหมดอยู่ใน Vercel Environment Variables และ `.env.local` (ไม่ถูก commit)
+ค่า secret ทั้งหมดอยู่ใน Cloudflare (Workers → `phook` → Variables and Secrets) และ `.env.local` (ไม่ถูก commit)
 
 ---
 
@@ -18,14 +18,14 @@
 
 ## 2) บัญชีและโครงสร้างพื้นฐาน (หลังย้ายบัญชีเมื่อ 2026-10-17)
 
-| ส่วน       | ที่อยู่                                                                                                                                                                                        |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| โค้ด       | GitHub `STS-LSR-10/JodTang` (private) branch `main` · remote `origin` = repo ใหม่, `old-origin` = repo เก่า (ไม่ใช้แล้ว)                                                                       |
-| เว็บ + API | Vercel (บัญชีใหม่) โดเมนผลิต **`https://jodtang-th.vercel.app`** · deploy อัตโนมัติจาก push                                                                                                    |
-| ฐานข้อมูล  | Supabase โปรเจกต์ใหม่ (Singapore) เริ่มข้อมูลใหม่ ไม่ได้คัดลอกข้อมูลจากของเก่า                                                                                                                 |
-| LINE       | ช่อง Messaging API + LINE Login (LIFF) **ใช้ช่องเดิม** ไม่ได้ย้าย · Webhook และ LIFF Endpoint ชี้โดเมนใหม่แล้ว                                                                                 |
-| ชำระเงิน   | Stripe **Sandbox (Test mode)** ชื่อ P'Hook · Live ยังไม่เปิด                                                                                                                                   |
-| Cron       | GitHub Actions `cron.yml` ทุกชั่วโมง (จดรายการประจำ + เตือนจดประจำวัน + สรุปอัตโนมัติ + เตือนบิล) ไม่ใช้ Vercel Cron แล้ว ต้องมี secrets `APP_BASE_URL`, `CRON_SECRET` ใน repo ใหม่ (ตั้งแล้ว) |
+| ส่วน       | ที่อยู่                                                                                                                                                                                                                                                                            |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| โค้ด       | GitHub `STS-LSR-10/JodTang` (private) branch `main` · remote `origin` = repo ใหม่, `old-origin` = repo เก่า (ไม่ใช้แล้ว)                                                                                                                                                           |
+| เว็บ + API | **Cloudflare Workers** (Worker `phook`, OpenNext) โดเมน **`https://app.p-hook.com`** · deploy: `pnpm cf:deploy` หรือ Workers Builds (docs/DEPLOY.md § 10) · ย้ายจาก Vercel เมื่อ 1 พ.ย. 2569 (ต้องใช้ Workers Paid: CPU ต่อคำขอเกิน 10 ms)                                         |
+| ฐานข้อมูล  | Supabase โปรเจกต์ใหม่ (Singapore) เริ่มข้อมูลใหม่ ไม่ได้คัดลอกข้อมูลจากของเก่า                                                                                                                                                                                                     |
+| LINE       | ช่อง Messaging API + LINE Login (LIFF) **ใช้ช่องเดิม** ไม่ได้ย้าย · Webhook และ LIFF Endpoint ชี้โดเมนใหม่แล้ว                                                                                                                                                                     |
+| ชำระเงิน   | Stripe **Sandbox (Test mode)** ชื่อ P'Hook · Live ยังไม่เปิด                                                                                                                                                                                                                       |
+| Cron       | **Cloudflare Cron Triggers** (`wrangler.jsonc`): ทุกนาที `/api/cron/user-reminders` · ทุกชั่วโมง `/api/cron/recurring` + `/api/cron/reminders` · handler `scheduled` ใน `cf-worker.mjs` ใช้ secrets `APP_BASE_URL`, `CRON_SECRET` บน Cloudflare · workflow GitHub เหลือไว้กดรันมือ |
 
 ข้อมูลในระบบตอนนี้เป็น **ข้อมูลทดสอบของเจ้าของเท่านั้น** ยังไม่มีผู้ใช้จริง
 
@@ -79,7 +79,7 @@
 
 ## 6) ตัวแปร environment (ชื่อเท่านั้น ไม่มีค่า)
 
-Vercel (Production) · ตัวที่ขึ้นต้น `NEXT_PUBLIC_*` และ `APP_BASE_URL` **ห้ามติ๊ก Sensitive**
+Cloudflare (Workers → `phook` → Variables and Secrets) · ตัวที่ขึ้นต้น `NEXT_PUBLIC_*` ฝังตอนบิลด์ (Build variables / `.env.local`) ไม่ใช่ secret รันไทม์
 
 - LINE: `LINE_CHANNEL_ID`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_LOGIN_CHANNEL_ID`, `NEXT_PUBLIC_LIFF_ID`
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
@@ -196,7 +196,7 @@ Vercel (Production) · ตัวที่ขึ้นต้น `NEXT_PUBLIC_*` �
 1. ทดสอบบนมือถือจริงให้ครบ: จดด้วยเสียง, สรุปอัตโนมัติ (รอวันจันทร์หลัง 09:00 หรือกด Run workflow), ทดลองฟรี, อัปเกรดส่วนต่างพร้อมเพย์
 2. **เปิด Stripe Live** (เจ้าของบอกว่าเป็นขั้นสุดท้าย): ใช้บัญชี Stripe ที่ยืนยันธุรกิจและผูกธนาคารแล้ว → ใส่ `sk_live_` + `whsec_` ของ Live ใน Vercel → สร้าง webhook 5 อีเวนต์ใน Live → เปิด Cards + PromptPay + Customer portal ใน Live → ทดสอบจ่ายจริงจำนวนน้อยแล้วคืนเงิน → ตั้ง Public business name + โลโก้ + `NEXT_PUBLIC_CONTACT_EMAIL`
 3. ตรวจโควตา push ของ LINE OA (สรุปอัตโนมัติและเตือนใช้โควตา)
-4. ปิด/ลบบริการบัญชีเก่า (Vercel เก่าปิดแล้ว) และหมุน (rotate) secret ที่เคยอยู่ในบัญชีเก่า
+4. ปิด/ลบบริการบัญชีเก่า (Vercel เก่าปิดแล้ว; Vercel ปัจจุบันเลิกใช้หลังย้ายไป Cloudflare) และหมุน (rotate) secret ที่เคยอยู่ในบัญชีเก่า
 
 ## 11) วิธีทำงานกับเจ้าของโปรเจกต์
 
@@ -210,12 +210,12 @@ Vercel (Production) · ตัวที่ขึ้นต้น `NEXT_PUBLIC_*` �
 
 ## 12) บทเรียน / ข้อควรรู้ (เจอมาแล้ว)
 
-**Vercel / env**
+**Cloudflare / env** (บางข้อเป็นบทเรียนเดิมจากตอนอยู่ Vercel)
 
 - ตัวแปรใหม่หรือแก้ค่าแล้ว **ต้อง Redeploy** · ตัวแปร `NEXT_PUBLIC_*` ฝังตอน build → Redeploy แบบ **ปิด build cache** · อย่าติ๊ก Sensitive (ไม่ถูกฝัง ทำให้ขึ้น "ยังไม่ได้ตั้งค่า LIFF")
-- `AI_PROVIDER` ค่าว่างทำให้ทุก route ที่อ่าน env พัง 500 "server misconfigured" (ตรวจจาก Logs ค้น `Invalid server environment`)
-- Deployment Protection ต้องปิด ไม่งั้น LINE เรียก webhook ได้ 401 · อย่าใช้ URL เฉพาะ deployment เป็น Webhook URL
-- ลบโดเมน `.vercel.app` ออกโดยพลาดได้ → Settings → Domains → Add กลับ
+- `AI_PROVIDER` ค่าว่างเคยทำให้ทุก route พัง 500 "server misconfigured" (ตอนนี้ค่าว่าง = ไม่ตั้ง = gemini แล้ว) · ค่าผิดอื่นยังพัง ตรวจจาก log ค้น `Invalid server environment`
+- บน Cloudflare: secret ที่ใส่ในแดชบอร์ดมีผลทันที (ไม่ต้อง Redeploy) แต่ `NEXT_PUBLIC_*` ต้อง **บิลด์ใหม่** · ดู log สด `npx wrangler tail phook` · `pnpm` ต้องอยู่ใน PATH ตอน `cf:build`
+- เปลี่ยน Endpoint URL ของ LIFF แล้วต้องบิลด์ด้วย **LIFF ID ตัวเดียวกับที่ใช้ในเมนู** ไม่งั้นเข้าแอปไม่ได้ · ล็อกอินไม่ผ่านด้วย "some parameters in the wrong format" = `LINE_LOGIN_CHANNEL_ID` ผิด (ต้องเป็นเลข 10 หลักหน้าขีดของ LIFF ID)
 
 **LINE / LIFF**
 

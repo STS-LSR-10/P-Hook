@@ -67,7 +67,7 @@ export default function PrivacyPage() {
           <li>
             Supabase: ฐานข้อมูลและที่เก็บรูปสลิป (เก็บแบบส่วนตัว เข้าถึงผ่านลิงก์ชั่วคราวเท่านั้น)
           </li>
-          <li>Vercel: โฮสต์เว็บและระบบหลังบ้าน</li>
+          <li>Cloudflare: โฮสต์เว็บและระบบหลังบ้าน</li>
           <li>
             ผู้ให้บริการอ่านสลิป: EasySlip (ตรวจสลิปโอนเงินผ่าน QR) และผู้ให้บริการ AI ด้านภาพ
             (Google Gemini, Anthropic Claude หรือ OpenAI ตามที่ระบบตั้งไว้){" "}

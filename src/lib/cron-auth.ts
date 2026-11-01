@@ -3,8 +3,8 @@ import { createHash, timingSafeEqual } from "node:crypto";
 const digest = (value: string) => createHash("sha256").update(value, "utf8").digest();
 
 /**
- * Cron endpoints accept `Authorization: Bearer <CRON_SECRET>` only (Vercel Cron sends this
- * automatically when CRON_SECRET is set; the GitHub Actions workflow sends it too).
+ * Cron endpoints accept `Authorization: Bearer <CRON_SECRET>` only (the Cloudflare Cron Triggers
+ * handler in cf-worker.mjs sends it, and so does the manual GitHub workflow).
  * Comparing digests keeps the comparison constant-time regardless of length.
  */
 export function isCronAuthorized(header: string | null, secret: string): boolean {

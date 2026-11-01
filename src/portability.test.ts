@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Keeps the app movable between hosts (Vercel today, Cloudflare Workers possible later): server code
+ * Keeps the app movable between hosts (Cloudflare Workers today, Vercel before; either can host it): server code
  * may only use the Node modules that Workers' Node compatibility supports, and nothing from Vercel.
  * See docs/CLOUDFLARE-MIGRATION.md. If a new import fails here, check it against the Workers Node.js
  * compatibility list before adding it to ALLOWED_NODE.
