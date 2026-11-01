@@ -351,6 +351,17 @@ export const PDF_ALREADY_DONE_TEXT = "ชุดรายการนี้จั
 export const pdfRecordedText = (count: number) =>
   `จดแล้ว ${count} รายการ ดูได้ที่เมนู "รายการ" และแก้ไขภายหลังได้`;
 
+// ── plain messages sorted by the AI ──
+export const SECRET_ASK_TEXT =
+  "ข้อความนี้ดูเหมือนรหัสหรือเลขสำคัญ พี่ฮูกเลยไม่ส่งให้ AI อ่าน จะบันทึกเป็นโน้ตไหม?\n⚠️ โน้ตเก็บเป็นข้อความธรรมดา ไม่ควรเก็บรหัสผ่านสำคัญ";
+export const INTENT_CONFIRM_TEXT = (label: string) => `พี่ฮูกเข้าใจว่าให้${label} ใช่ไหม?`;
+export const INTENT_UNCLEAR_TEXT = "พี่ฮูกไม่แน่ใจ อยากให้ทำอะไรกับข้อความนี้?";
+export const INTENT_CANCELLED_TEXT = "ยกเลิกแล้ว ไม่ได้บันทึกอะไร";
+export const INTENT_EXPIRED_TEXT = "รายการนี้หมดเวลาหรือทำไปแล้ว ลองพิมพ์ใหม่อีกครั้งนะ";
+export const ROUTER_REMINDER_HINT_TEXT =
+  'ถ้าจะตั้งเตือน พิมพ์ขึ้นต้นด้วย "เตือน" เช่น "เตือน กินยา 6 โมงเย็น"\nถ้าจะจดเงิน พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"';
+export const MONEY_HINT_TEXT = 'ลองพิมพ์ชื่อรายการกับจำนวนเงิน เช่น "ค่าหมอ 800" นะ';
+
 // ── notes ──
 export const NOTE_SAVED_TEXT = (preview: string, url?: string) =>
   `จดโน้ตแล้ว 📝\n"${preview}"${url ? `\nดู แก้ไข หรือค้นหาทั้งหมด: ${url}` : ""}`;
@@ -381,6 +392,8 @@ export const REMINDER_TOO_FAR_TEXT = "ตั้งเตือนล่วงห
 export const REMINDER_FULL_TEXT = (limit: number) =>
   `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`;
 export const REMINDER_EMPTY_TEXT = ["ยังไม่มีเตือนที่รออยู่", "", REMINDER_USAGE_TEXT].join("\n");
+export const REMINDER_NOT_MATCHED_TEXT = 'ไม่พบเตือนนี้ พิมพ์ "รายการเตือน" เพื่อดูเตือนทั้งหมดได้';
+export const REMINDER_WHICH_TEXT = "มีหลายเตือนที่ตรง อันไหนนะ?";
 export const REMINDER_CANCELLED_TEXT = "ยกเลิกเตือนแล้ว";
 export const REMINDER_GONE_TEXT = "ไม่พบเตือนนี้แล้ว (อาจส่งไปแล้วหรือถูกยกเลิก)";
 /** The push that arrives at the time. */

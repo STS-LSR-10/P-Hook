@@ -4,6 +4,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { buildInsightWriter } from "@/lib/ai/insight-writer";
 import { buildOwl } from "@/lib/ai/owl";
 import { buildPdfReader } from "@/lib/ai/pdf-reader";
+import { buildIntentRouter } from "@/lib/ai/intent-router";
 import { buildTextStructurer } from "@/lib/ai/text-structurer";
 import { buildTranscriber } from "@/lib/voice/transcribe";
 import { claimEvent, releaseEvent } from "@/lib/repo";
@@ -71,6 +72,9 @@ export async function processEvents(rawEvents: unknown[]): Promise<void> {
   // Long typed or spoken sentences (Elite) are read by the same AI provider; without a key the rules do it all.
   const structurer = buildTextStructurer(env);
   if (structurer) deps.structurer = structurer;
+  // Plain messages are sorted into groups by the same provider; without a key the rules do it all.
+  const router = buildIntentRouter(env);
+  if (router) deps.router = router;
   const insightWriter = buildInsightWriter(env);
   if (insightWriter) deps.insightWriter = insightWriter;
 

@@ -147,6 +147,9 @@ import { buildSummaryMenu } from "./summary-menu";
 import { PRESET_TITLE, presetRange } from "@/lib/summary-range-text";
 import type { Owl } from "@/lib/ai/owl";
 import { inOwlMode, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
+import type { IntentRouter } from "@/lib/ai/intent-router";
+import { needsRouter } from "@/lib/ai/route-text";
+import { handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
 import { countNotes, createNote, deleteNote, listNotes } from "@/lib/note-repo";
 import { looksSecret } from "@/lib/secret-text";
@@ -347,6 +350,8 @@ export interface HandlerDeps {
   insightWriter?: InsightWriter;
   /** AI that reads long sentences (Elite). Absent -> the ordinary rules handle everything. */
   structurer?: TextStructurer;
+  /** AI that sorts plain messages into groups. Absent -> the ordinary rules handle everything. */
+  router?: IntentRouter;
   /** Voice messages. Absent (no AI key that hears audio) -> a polite "not available" reply. */
   voice?: {
     fetchAudio: VoiceDeps["fetchAudio"];
@@ -510,12 +515,30 @@ function appBaseUrl(): string | undefined {
   return process.env.APP_BASE_URL?.replace(/\/$/, "") || undefined;
 }
 
+/** What sorting a plain message needs from the handler's dependencies. */
+function intentDeps(user: UserRow, deps: HandlerDeps): IntentDeps {
+  return {
+    db: deps.db,
+    now: deps.now,
+    router: deps.router,
+    run: (command) => runCommand(command, user, deps),
+    ask: (question) => owlAsk(owlDeps(deps), user, question, false, user.line_user_id),
+    recordMoney: (input) => handleText(input, user, deps, { routed: true }),
+    listUrl: pageUrl("/reminders"),
+  };
+}
+
 /** What the assistant needs from the handler's dependencies. */
 function owlDeps(deps: HandlerDeps): OwlDeps {
   return { db: deps.db, now: deps.now, owl: deps.owl, limit: deps.limit };
 }
 
-async function handleText(input: string, user: UserRow, deps: HandlerDeps): Promise<LineMessage[]> {
+async function handleText(
+  input: string,
+  user: UserRow,
+  deps: HandlerDeps,
+  options: { routed?: boolean } = {},
+): Promise<LineMessage[]> {
   const command = parseCommand(input);
   if (command?.kind === "transfer") {
     // "โอนค่าเช่า 5000 ไป ..." that names no wallet is an ordinary entry, so it falls through
@@ -561,6 +584,17 @@ async function handleText(input: string, user: UserRow, deps: HandlerDeps): Prom
   const parsed = parseMessage(input, deps.now(), { currencies: true });
   let { entries } = parsed;
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
+
+  // What the rules cannot be trusted with: the AI says whether it is money at all.
+  if (
+    !options.routed &&
+    deps.router &&
+    !entries.some((e) => e.foreign) &&
+    needsRouter(input, parsed)
+  ) {
+    const routed = await routeText(input, parsed, user, intentDeps(user, deps));
+    if (routed) return routed;
+  }
 
   // Long or unclear sentences (Elite): let the AI read them, then ask before saving anything.
   if (
@@ -2344,6 +2378,12 @@ async function handlePostback(
         (await cancelReminder(deps.db, user.id, id)) ? REMINDER_CANCELLED_TEXT : REMINDER_GONE_TEXT,
       ),
     ];
+  }
+  // The buttons under a message the AI was not sure about.
+  if (action === "irp") {
+    const id = params.get("id") ?? "";
+    if (!UUID_RE.test(id)) return [text(NOT_FOUND_TEXT)];
+    return handleIntentPick(id, params.get("p") ?? "", user, intentDeps(user, deps));
   }
   // "ยกเลิกโน้ตนี้" under a note that was just saved.
   if (action === "ntx") {
