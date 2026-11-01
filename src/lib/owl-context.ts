@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { calendarMonthRange, cycleRange } from "@/lib/budget-cycle";
 import { formatBaht, toSatang } from "@/lib/money";
 import { listNotes } from "@/lib/note-repo";
+import { looksSecret } from "@/lib/secret-text";
 import { log, safeMessage } from "@/lib/log";
 import {
   expenseTotalSatang,
@@ -272,12 +273,13 @@ export async function loadOwlFacts(
       "notes",
       async () => {
         if (asksAboutNotes(question)) {
-          return (await listNotes(db, userId, { limit: MAX_NOTES })).items;
+          const { items } = await listNotes(db, userId, { limit: MAX_NOTES });
+          return items.filter((n) => !looksSecret(n.body));
         }
         const found = new Map<string, { createdAt: string; body: string }>();
         for (const w of noteSearchWords(question)) {
           for (const n of (await listNotes(db, userId, { q: w, limit: 3 })).items) {
-            found.set(n.id, n);
+            if (!looksSecret(n.body)) found.set(n.id, n);
           }
         }
         return [...found.values()].slice(0, 5);

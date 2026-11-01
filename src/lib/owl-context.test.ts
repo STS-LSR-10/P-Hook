@@ -127,13 +127,13 @@ describe("notes are shared only when the question points at them", () => {
 
   it("the latest ones when the question says โน้ต", async () => {
     const facts = await loadOwlFacts(db, "u1", "ในโน้ตมีอะไรบ้าง", NOW);
-    expect(facts.notes.map((n) => n.body)).toEqual(["รหัสไวไฟ 1234", "ซื้อนม"]);
+    expect(facts.notes.map((n) => n.body)).toEqual(["ซื้อนม"]);
     expect(noteQueries).toEqual([undefined]);
   });
 
   it("only those that contain a word of the question otherwise", async () => {
     const facts = await loadOwlFacts(db, "u1", "รหัส ไวไฟ คืออะไร", NOW);
-    expect(facts.notes.map((n) => n.body)).toEqual(["รหัสไวไฟ 1234"]);
+    expect(facts.notes).toEqual([]);
     expect(noteQueries).toEqual(["รหัส", "ไวไฟ", "คืออะไร"]);
   });
 
