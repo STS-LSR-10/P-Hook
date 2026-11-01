@@ -1,5 +1,6 @@
 import type { FileDto } from "@/lib/file";
 import { formatBytes } from "@/lib/file";
+import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
 
@@ -64,6 +65,61 @@ function card(input: {
             },
           }
         : {}),
+    },
+  };
+}
+
+/** Found files, one card each. The card opens the file through the signed-in page. */
+export function buildFileResults(
+  files: FileDto[],
+  openUrl: (id: string) => string | undefined,
+): LineMessage {
+  return {
+    type: "flex",
+    altText: `พบ ${files.length} ไฟล์`,
+    contents: {
+      type: "carousel",
+      contents: files.slice(0, MAX_LISTED).map((file) => {
+        const uri = openUrl(file.id);
+        return {
+          type: "bubble",
+          size: "micro",
+          body: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: COLOR.surface,
+            spacing: "xs",
+            contents: [
+              { type: "text", text: file.name, weight: "bold", size: "sm", wrap: true },
+              {
+                type: "text",
+                text: `${formatBytes(file.sizeBytes)} · ${formatThaiDate(new Date(file.createdAt))}`,
+                size: "xxs",
+                color: COLOR.muted,
+                wrap: true,
+              },
+            ],
+          },
+          ...(uri
+            ? {
+                footer: {
+                  type: "box",
+                  layout: "vertical",
+                  backgroundColor: COLOR.surface,
+                  contents: [
+                    {
+                      type: "button",
+                      style: "primary",
+                      height: "sm",
+                      color: COLOR.primary,
+                      action: { type: "uri", label: "เปิดไฟล์", uri },
+                    },
+                  ],
+                },
+              }
+            : {}),
+        };
+      }),
     },
   };
 }

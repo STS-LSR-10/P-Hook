@@ -21,6 +21,7 @@ export type Command =
   | { kind: "file-search"; term: string }
   | { kind: "file-list" }
   | { kind: "file-rename"; name: string }
+  | { kind: "kept-search"; term: string }
   | { kind: "remind-add"; text: string }
   | { kind: "owl-start" }
   | { kind: "open-page"; page: "summary" | "transactions" | "budgets" | "analytics" }

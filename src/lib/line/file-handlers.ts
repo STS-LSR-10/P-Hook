@@ -1,6 +1,8 @@
 import { fileCapacity, fileDayLimit, formatBytes, isBlockedFile, cleanFileName } from "@/lib/file";
 import type { FileDto } from "@/lib/file";
 import {
+  fileUsage,
+  listFiles,
   rememberMedia,
   renameLatestFile,
   startFileWait,
@@ -9,10 +11,11 @@ import {
   type RecentMedia,
 } from "@/lib/file-repo";
 import { saveFile, type SaveDeps, type SaveFailure } from "@/lib/file-save";
+import { listNotes } from "@/lib/note-repo";
 import { effectivePlan } from "@/lib/plan";
 import type { UserRow } from "@/lib/repo";
 import type { LineMessage } from "@/lib/types";
-import { buildFilesSavedCard } from "./file-flex";
+import { buildFileResults, buildFilesSavedCard } from "./file-flex";
 import {
   FILE_ASK_KEEP_TEXT,
   FILE_ASK_PDF_TEXT,
@@ -27,7 +30,10 @@ import {
   FILE_UNAVAILABLE_TEXT,
   fileDayLimitText,
   fileFullText,
+  fileNotFoundText,
   fileRenamedText,
+  fileSpaceText,
+  noteListText,
   text,
 } from "./messages";
 
@@ -37,8 +43,11 @@ export interface FileChatDeps extends SaveDeps {
 
 type Media = Omit<RecentMedia, "id">;
 
+const MAX_RESULTS = 5;
 const LABEL_KEEP = "เก็บไฟล์";
 const LABEL_READ = "อ่านเป็นรายการ";
+
+const openUrlOf = (deps: FileChatDeps) => (id: string) => deps.pageUrl(`/files?open=${id}`);
 
 function buttons(message: string, picks: [label: string, data: string][]): LineMessage {
   return {
@@ -100,7 +109,7 @@ async function saveAll(
     messages.push(
       buildFilesSavedCard({
         files: saved,
-        openUrl: (id) => deps.pageUrl(`/files?open=${id}`),
+        openUrl: openUrlOf(deps),
         listUrl: deps.pageUrl("/files"),
         hint: unnamed ? FILE_NAMING_HINT_TEXT : undefined,
       }),
@@ -164,6 +173,40 @@ export async function runFileSave(
     user,
     waiting.map((media, i) => ({ media, name: numbered ? `${name} ${i + 1}` : name })),
   );
+}
+
+/** Files whose name holds `term`, and with `withNotes` the notes that do too. */
+export async function runFileSearch(
+  deps: FileChatDeps,
+  user: UserRow,
+  term: string,
+  withNotes: boolean,
+): Promise<LineMessage[]> {
+  const [files, notes] = await Promise.all([
+    listFiles(deps.db, user.id, { q: term, limit: MAX_RESULTS }),
+    withNotes
+      ? listNotes(deps.db, user.id, { q: term, limit: MAX_RESULTS })
+      : { items: [], hasMore: false },
+  ]);
+  const messages: LineMessage[] = [];
+  if (notes.items.length > 0) {
+    const url = deps.pageUrl(`/notes?q=${encodeURIComponent(term)}`);
+    messages.push(text(noteListText(`โน้ตที่มี "${term}"`, notes.items, url, notes.hasMore)));
+  }
+  if (files.items.length > 0) messages.push(buildFileResults(files.items, openUrlOf(deps)));
+  return messages.length > 0 ? messages : [text(fileNotFoundText(term))];
+}
+
+/** "ไฟล์ของฉัน": the space used and the latest files. */
+export async function runFileList(deps: FileChatDeps, user: UserRow): Promise<LineMessage[]> {
+  const { items } = await listFiles(deps.db, user.id, { limit: MAX_RESULTS });
+  if (items.length === 0) return [text(FILE_NOT_FOUND_TEXT)];
+  const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
+  const used = await fileUsage(deps.db, user.id);
+  return [
+    text(fileSpaceText(formatBytes(used), formatBytes(fileCapacity(plan)), deps.pageUrl("/files"))),
+    buildFileResults(items, openUrlOf(deps)),
+  ];
 }
 
 export async function runFileRename(

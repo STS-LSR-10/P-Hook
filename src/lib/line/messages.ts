@@ -1,3 +1,5 @@
+import { noteTitle } from "@/lib/note";
+import { formatThaiDate } from "@/lib/thai-date";
 import { REFERRAL_BONUS_REFEREE, REFERRAL_WINDOW_DAYS } from "@/lib/config";
 import type { LineMessage } from "@/lib/types";
 
@@ -362,6 +364,20 @@ export const ROUTER_REMINDER_HINT_TEXT =
   'ถ้าจะตั้งเตือน พิมพ์ขึ้นต้นด้วย "เตือน" เช่น "เตือน กินยา 6 โมงเย็น"\nถ้าจะจดเงิน พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"';
 export const MONEY_HINT_TEXT = 'ลองพิมพ์ชื่อรายการกับจำนวนเงิน เช่น "ค่าหมอ 800" นะ';
 
+/** "• 27 ธ.ค. 2569  ซื้อนม…" lines for a short list of notes, then where to see the rest. */
+export function noteListText(
+  title: string,
+  items: { body: string; createdAt: string }[],
+  url: string | undefined,
+  more = false,
+): string {
+  const lines = items.map(
+    (n) => `• ${formatThaiDate(new Date(n.createdAt))}  ${noteTitle(n.body, 50)}`,
+  );
+  const tail = url ? [`${more ? "ดูทั้งหมด" : "ดู แก้ไข หรือค้นหา"}: ${url}`] : [];
+  return [`${title} 📝`, ...lines, ...tail].join("\n");
+}
+
 // ── kept files ──
 export const FILE_ASK_KEEP_TEXT = "จะให้พี่ฮูกเก็บไฟล์นี้ไว้ไหม?";
 export const FILE_ASK_PDF_TEXT = "ไฟล์ PDF นี้ จะให้พี่ฮูกทำอะไร?";
@@ -380,6 +396,9 @@ export const FILE_SEND_NOW_TEXT = "ส่งไฟล์มาได้เลย
 export const FILE_NOT_FOUND_TEXT = "ยังไม่มีไฟล์ที่เก็บไว้";
 export const FILE_VIDEO_ELSEWHERE_TEXT = "วิดีโอนี้อยู่นอก LINE พี่ฮูกเก็บให้ไม่ได้นะ";
 export const FILE_NAMING_HINT_TEXT = 'ตั้งชื่อให้หาง่าย พิมพ์ เช่น "ชื่อไฟล์ รูปบัตร"';
+export const fileNotFoundText = (term: string) => `ไม่พบไฟล์หรือโน้ตที่มีคำว่า "${term}"`;
+export const fileSpaceText = (used: string, capacity: string, url?: string) =>
+  `ใช้ไป ${used} จาก ${capacity}${url ? `\nดูไฟล์ทั้งหมด: ${url}` : ""}`;
 export const fileRenamedText = (name: string) => `เปลี่ยนชื่อเป็น "${name}" แล้ว`;
 
 // ── notes ──

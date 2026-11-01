@@ -153,7 +153,7 @@ function execute(
     case "note_add":
       return deps.run({ kind: "note-add", body: input });
     case "search":
-      return deps.run({ kind: "note-search", term: decision.searchTerm });
+      return deps.run({ kind: "kept-search", term: decision.searchTerm ?? input });
     case "file_save":
       return deps.run({ kind: "file-save", name: decision.fileName });
     case "ask":

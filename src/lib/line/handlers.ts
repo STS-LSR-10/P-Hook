@@ -153,8 +153,10 @@ import {
   handleFilePick,
   handleIncomingFile,
   offerToKeep,
+  runFileList,
   runFileRename,
   runFileSave,
+  runFileSearch,
   saveWaitingFile,
   type FileChatDeps,
 } from "./file-handlers";
@@ -253,7 +255,6 @@ import {
   NOTE_EMPTY_TEXT,
   NOTE_FULL_TEXT,
   FILE_EXPIRED_TEXT,
-  FILE_NOT_FOUND_TEXT,
   FILE_UNAVAILABLE_TEXT,
   FILE_VIDEO_ELSEWHERE_TEXT,
   NOTE_SAVED_TEXT,
@@ -261,6 +262,7 @@ import {
   NOTE_SEARCH_USAGE_TEXT,
   NOTE_TOO_LONG_TEXT,
   NOTE_UNDONE_TEXT,
+  noteListText,
   noteNotFoundText,
   WALLET_MOVE_ASK_TEXT,
   WALLET_SLIP_ASK_TEXT,
@@ -1923,20 +1925,6 @@ export async function editedCardFor(user: UserRow, deps: HandlerDeps): Promise<L
 
 // ───────────────────────── commands ─────────────────────────
 
-/** "• 27 ธ.ค. 2569  ซื้อนม…" lines for a short list of notes, then where to see the rest. */
-function noteListText(
-  title: string,
-  items: { body: string; createdAt: string }[],
-  url: string | undefined,
-  more = false,
-): string {
-  const lines = items.map(
-    (n) => `• ${formatThaiDate(new Date(n.createdAt))}  ${noteTitle(n.body, 50)}`,
-  );
-  const tail = url ? [`${more ? "ดูทั้งหมด" : "ดู แก้ไข หรือค้นหา"}: ${url}`] : [];
-  return [`${title} 📝`, ...lines, ...tail].join("\n");
-}
-
 async function runCommand(
   command: Command,
   user: UserRow,
@@ -2259,6 +2247,12 @@ async function runCommand(
     case "search-usage":
       return [text(SEARCH_USAGE_TEXT)];
 
+    case "kept-search": {
+      const files = fileChatDeps(deps);
+      if (!files) return runCommand({ kind: "note-search", term: command.term }, user, deps);
+      return runFileSearch(files, user, command.term, true);
+    }
+
     case "file-save":
     case "file-rename":
     case "file-search":
@@ -2267,7 +2261,8 @@ async function runCommand(
       if (!files) return [text(FILE_UNAVAILABLE_TEXT)];
       if (command.kind === "file-save") return runFileSave(files, user, command.name);
       if (command.kind === "file-rename") return runFileRename(files, user, command.name);
-      return [text(FILE_NOT_FOUND_TEXT)];
+      if (command.kind === "file-search") return runFileSearch(files, user, command.term, false);
+      return runFileList(files, user);
     }
 
     case "note-add": {

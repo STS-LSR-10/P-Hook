@@ -17,6 +17,7 @@ import {
   FILE_SEND_NOW_TEXT,
   FILE_VIDEO_ELSEWHERE_TEXT,
   fileFullText,
+  fileNotFoundText,
 } from "./messages";
 
 const ID = "11111111-1111-4111-8111-111111111111";
@@ -26,6 +27,10 @@ let recent: RecentMedia[] = [];
 let byId: RecentMedia | null = null;
 let failure: SaveFailure | null = null;
 let latest: FileDto | null = null;
+let found: FileDto[] = [];
+let notes: { id: string; body: string; createdAt: string; updatedAt: string }[] = [];
+const fileQueries: (string | undefined)[] = [];
+const noteQueries: (string | undefined)[] = [];
 const saves: { media: Omit<RecentMedia, "id">; name: string | null }[] = [];
 const remembered: Omit<RecentMedia, "id">[] = [];
 const waits: (string | null)[] = [];
@@ -93,9 +98,20 @@ vi.mock("@/lib/file-repo", () => ({
     byId = null;
     return r;
   },
+  listFiles: async (_db: unknown, _u: string, o: { q?: string }) => {
+    fileQueries.push(o.q);
+    return { items: found, hasMore: false };
+  },
+  fileUsage: async () => 12 * 1024 * 1024,
   renameLatestFile: async (_db: unknown, _u: string, name: string) => {
     renames.push(name);
     return latest;
+  },
+}));
+vi.mock("@/lib/note-repo", () => ({
+  listNotes: async (_db: unknown, _u: string, o: { q?: string }) => {
+    noteQueries.push(o.q);
+    return { items: notes, hasMore: false };
   },
 }));
 vi.mock("@/lib/file-save", () => ({
@@ -196,6 +212,10 @@ beforeEach(() => {
   byId = null;
   failure = null;
   latest = null;
+  found = [];
+  notes = [];
+  fileQueries.length = 0;
+  noteQueries.length = 0;
   saves.length = 0;
   remembered.length = 0;
   waits.length = 0;
@@ -422,6 +442,87 @@ describe("naming", () => {
   it("says so when there is nothing to name", async () => {
     const { deps, reply } = setup();
     await handleEvent(say("ชื่อไฟล์ รูปบัตร"), deps);
+    expect(said(reply)).toBe(FILE_NOT_FOUND_TEXT);
+  });
+});
+
+describe("finding files", () => {
+  const file = (n: number): FileDto => ({
+    id: ID,
+    name: `สัญญา ${n}.pdf`,
+    mimeType: "application/pdf",
+    sizeBytes: 10,
+    createdAt: "2026-11-01T05:00:00Z",
+  });
+  const note = {
+    id: "n1",
+    body: "สัญญาเช่าหมดเดือนมีนา",
+    createdAt: "2026-11-01T05:00:00Z",
+    updatedAt: "2026-11-01T05:00:00Z",
+  };
+  const sortedSearch = (term: string): IntentDecision => ({
+    intent: "search",
+    confidence: 0.9,
+    reminderText: null,
+    reminderQuery: null,
+    whenText: null,
+    searchTerm: term,
+    fileName: null,
+  });
+  const bubbles = (reply: ReturnType<typeof setup>["reply"]) => {
+    const flex = sent(reply).find((m) => "contents" in m) as
+      { contents: { type: string; contents: unknown[] } } | undefined;
+    return flex?.contents.contents.length ?? 0;
+  };
+
+  it("หาไฟล์ finds by name and shows at most 5 cards", async () => {
+    found = [1, 2, 3, 4, 5, 6].map(file);
+    const { deps, reply } = setup();
+    await handleEvent(say("หาไฟล์ สัญญา"), deps);
+    expect(fileQueries).toEqual(["สัญญา"]);
+    expect(noteQueries).toEqual([]);
+    expect(bubbles(reply)).toBe(5);
+    expect(JSON.stringify(sent(reply))).toContain(`/files?open=${ID}`);
+  });
+
+  it("kept-search answers with notes and files together", async () => {
+    found = [file(1)];
+    notes = [note];
+    route.mockResolvedValue(sortedSearch("สัญญา"));
+    const { deps, reply } = setup();
+    await handleEvent(say("เรื่องสัญญาเช่าจดไว้ไหม"), deps);
+    expect(fileQueries).toEqual(["สัญญา"]);
+    expect(noteQueries).toEqual(["สัญญา"]);
+    expect(said(reply)).toContain("สัญญาเช่าหมดเดือนมีนา");
+    expect(bubbles(reply)).toBe(1);
+  });
+
+  it("kept-search with notes only stays the note answer", async () => {
+    notes = [note];
+    route.mockResolvedValue(sortedSearch("สัญญา"));
+    const { deps, reply } = setup();
+    await handleEvent(say("เรื่องสัญญาเช่าจดไว้ไหม"), deps);
+    expect(sent(reply)).toHaveLength(1);
+    expect(said(reply)).toContain("สัญญาเช่าหมดเดือนมีนา");
+  });
+
+  it("says so when nothing is found", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("หาไฟล์ สัญญา"), deps);
+    expect(said(reply)).toBe(fileNotFoundText("สัญญา"));
+  });
+
+  it("ไฟล์ของฉัน shows the latest with the space used", async () => {
+    found = [file(1)];
+    const { deps, reply } = setup();
+    await handleEvent(say("ไฟล์ของฉัน"), deps);
+    expect(said(reply)).toContain("ใช้ไป 12 MB จาก 500 MB");
+    expect(bubbles(reply)).toBe(1);
+  });
+
+  it("ไฟล์ของฉัน with nothing kept says so", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("ไฟล์ของฉัน"), deps);
     expect(said(reply)).toBe(FILE_NOT_FOUND_TEXT);
   });
 });
