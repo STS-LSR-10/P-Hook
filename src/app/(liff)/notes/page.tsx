@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil, Search, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
@@ -109,7 +110,14 @@ function Notes() {
 
   return (
     <main>
-      <PageHeader title="โน้ต" />
+      <PageHeader
+        title="โน้ต"
+        right={
+          <Link href="/files" className="text-sm font-semibold text-primary">
+            ไฟล์ที่ฝากไว้
+          </Link>
+        }
+      />
       <div className="space-y-4 px-4 pb-4">
         <form onSubmit={add} className={cardClass} aria-label="เพิ่มโน้ต">
           <label htmlFor="note-draft" className="sr-only">
