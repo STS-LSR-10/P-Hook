@@ -1,10 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { BillDto } from "./bill";
+import type { DebtDto } from "./debt";
+import type { GoalDto } from "./goal";
 import type { NoteDto } from "./note";
+import type { RuleRow } from "./recurring-repo";
 
 let notes: NoteDto[] = [];
 const noteQueries: (string | undefined)[] = [];
 let failMonth = false;
+let failDebts = false;
+let debts: DebtDto[] = [];
+let goals: GoalDto[] = [];
+let bills: BillDto[] = [];
+let rules: RuleRow[] = [];
 const NOW = new Date("2026-10-30T05:00:00Z");
 
 vi.mock("@/lib/note-repo", () => ({
@@ -40,6 +49,16 @@ vi.mock("@/lib/repo", async (original) => ({
   loadCategories: async () => [],
   expenseTotalSatang: async () => 400_000,
 }));
+
+vi.mock("@/lib/debt-repo", () => ({
+  listDebts: async () => {
+    if (failDebts) throw new Error("db down");
+    return debts;
+  },
+}));
+vi.mock("@/lib/goal-repo", () => ({ listGoals: async () => goals }));
+vi.mock("@/lib/bill-repo", () => ({ listBills: async () => bills }));
+vi.mock("@/lib/recurring-repo", () => ({ listRules: async () => rules }));
 
 import { asksAboutNotes, loadOwlFacts, noteSearchWords, renderOwlContext } from "./owl-context";
 
@@ -79,6 +98,11 @@ beforeEach(() => {
   notes = [note("n1", "รหัสไวไฟ 1234"), note("n2", "ซื้อนม")];
   noteQueries.length = 0;
   failMonth = false;
+  failDebts = false;
+  debts = [];
+  goals = [];
+  bills = [];
+  rules = [];
 });
 
 describe("renderOwlContext", () => {
@@ -114,6 +138,10 @@ describe("renderOwlContext", () => {
       recent: [],
       reminders: [],
       notes: [],
+      debts: [],
+      goals: [],
+      bills: [],
+      recurring: [],
     });
     expect(text).toBe("วันนี้: 30 ต.ค. 2569 (เวลาไทย)");
   });
@@ -153,5 +181,129 @@ describe("a failing part does not fail the answer", () => {
     expect(facts.month).toBeNull();
     expect(facts.topCategories).toHaveLength(2);
     expect(renderOwlContext(facts)).not.toContain("เดือนนี้ (ต.ค.)");
+  });
+});
+
+const debt = (over: Partial<DebtDto>): DebtDto => ({
+  id: "d",
+  direction: "borrowed",
+  person: "สมชาย",
+  amountSatang: 1_000_000,
+  paidSatang: 0,
+  remainingSatang: 1_000_000,
+  accountId: null,
+  accountName: "เงินสด",
+  occurredAt: "2026-09-01T05:00:00Z",
+  dueAt: null,
+  note: "รหัส 1234 ห้ามส่ง",
+  ...over,
+});
+const goal = (over: Partial<GoalDto>): GoalDto => ({
+  id: "g",
+  name: "ทริปญี่ปุ่น",
+  emoji: null,
+  targetSatang: 6_000_000,
+  savedSatang: 1_500_000,
+  dueOn: "2027-04-30",
+  archived: false,
+  percent: 25,
+  remainingSatang: 4_500_000,
+  done: false,
+  monthlyNeededSatang: 750_000,
+  overdue: false,
+  ...over,
+});
+const bill = (over: Partial<BillDto>): BillDto => ({
+  id: "b",
+  name: "ค่าเน็ต",
+  amountSatang: 59_900,
+  cadence: "monthly",
+  dayOfMonth: 5,
+  monthOfYear: null,
+  nextDueOn: "2026-11-05",
+  remindDays: [1],
+  remindHour: 9,
+  snoozedOn: null,
+  note: null,
+  isActive: true,
+  ...over,
+});
+const rule = (over: Partial<RuleRow>): RuleRow => ({
+  id: "r",
+  type: "income",
+  amount: "25000.00",
+  title: "เงินเดือน",
+  category_id: null,
+  cadence: "monthly",
+  day_of_period: 25,
+  next_run_at: "2026-11-24T17:00:00Z",
+  is_active: true,
+  ...over,
+});
+const context = async () =>
+  renderOwlContext(await loadOwlFacts(db, "u1", "ผ่อนก้อนไหนก่อนดี", NOW));
+
+describe("what a money plan needs", () => {
+  it("adds up the debts on both sides, and leaves out their notes", async () => {
+    debts = [
+      debt({ remainingSatang: 1_000_000 }),
+      debt({ person: "แม่", remainingSatang: 500_000, dueAt: "2026-12-01T05:00:00Z" }),
+      debt({ direction: "lent", person: "น้อย", remainingSatang: 200_000 }),
+      debt({ person: "จ่ายหมดแล้ว", remainingSatang: 0 }),
+    ];
+    const out = await context();
+    expect(out).toContain("หนี้ที่ยืมมาคงเหลือรวม ฿15,000");
+    expect(out).toContain("เงินที่ให้ยืมคงเหลือรวม ฿2,000");
+    expect(out).toContain("แม่");
+    expect(out).not.toContain("จ่ายหมดแล้ว");
+    expect(out).not.toContain("1234");
+  });
+
+  it("totals every debt even when only some are listed", async () => {
+    debts = Array.from({ length: 12 }, (_, i) => debt({ person: `คน${i}` }));
+    const out = await context();
+    expect(out).toContain("หนี้ที่ยืมมาคงเหลือรวม ฿120,000");
+    expect(out).not.toContain("คน11");
+  });
+
+  it("shows open goals with what each month needs", async () => {
+    goals = [
+      goal({}),
+      goal({ name: "เก็บครบแล้ว", done: true }),
+      goal({ name: "เลิกแล้ว", archived: true }),
+    ];
+    const out = await context();
+    expect(out).toContain("ทริปญี่ปุ่น");
+    expect(out).toContain("฿15,000 จาก ฿60,000");
+    expect(out).toContain("ต้องเก็บเดือนละ ฿7,500");
+    expect(out).not.toContain("เก็บครบแล้ว");
+    expect(out).not.toContain("เลิกแล้ว");
+  });
+
+  it("shows bills, with no amount when none was set", async () => {
+    bills = [bill({}), bill({ name: "ค่าไฟ", amountSatang: null, nextDueOn: "2026-11-09" })];
+    const out = await context();
+    expect(out).toContain("ค่าเน็ต ฿599");
+    expect(out).toContain("ค่าไฟ ยังไม่ระบุยอด");
+  });
+
+  it("shows live recurring entries only", async () => {
+    rules = [
+      rule({}),
+      rule({ title: "ฟิตเนส", type: "expense", amount: "990.00", cadence: "weekly" }),
+      rule({ title: "ยกเลิกแล้ว", is_active: false }),
+    ];
+    const out = await context();
+    expect(out).toContain("รายรับ เงินเดือน ฿25,000 รายเดือน");
+    expect(out).toContain("รายจ่าย ฟิตเนส ฿990 รายสัปดาห์");
+    expect(out).not.toContain("ยกเลิกแล้ว");
+  });
+
+  it("a failing part leaves the rest of the plan", async () => {
+    failDebts = true;
+    goals = [goal({})];
+    const out = await context();
+    expect(out).toContain("ทริปญี่ปุ่น");
+    expect(out).not.toContain("หนี้ที่ยืมมา");
   });
 });

@@ -1,7 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { listBills } from "@/lib/bill-repo";
 import { calendarMonthRange, cycleRange } from "@/lib/budget-cycle";
+import { listDebts } from "@/lib/debt-repo";
+import type { DebtDirection } from "@/lib/debt";
+import { listGoals } from "@/lib/goal-repo";
 import { formatBaht, toSatang } from "@/lib/money";
 import { listNotes } from "@/lib/note-repo";
+import type { Cadence } from "@/lib/recurring";
+import { listRules } from "@/lib/recurring-repo";
 import { looksSecret } from "@/lib/secret-text";
 import { log, safeMessage } from "@/lib/log";
 import {
@@ -23,6 +29,16 @@ const MAX_REMINDERS = 8;
 const MAX_NOTES = 8;
 const MAX_NOTE_CHARS = 300;
 const MAX_BUDGET_LINES = 8;
+const MAX_DEBTS = 8;
+const MAX_GOALS = 5;
+const MAX_BILLS = 8;
+const MAX_RECURRING = 8;
+
+const CADENCE_LABEL: Record<Cadence, string> = {
+  daily: "รายวัน",
+  weekly: "รายสัปดาห์",
+  monthly: "รายเดือน",
+};
 
 export interface Money {
   incomeSatang: number;
@@ -52,6 +68,27 @@ export interface OwlFacts {
   }[];
   reminders: { remindAt: Date; body: string; repeat: Repeat | null }[];
   notes: { createdAt: Date; body: string }[];
+  /** Every open debt, so the totals are real; only the biggest are listed. */
+  debts: {
+    direction: DebtDirection;
+    person: string;
+    remainingSatang: number;
+    dueAt: Date | null;
+  }[];
+  goals: {
+    name: string;
+    savedSatang: number;
+    targetSatang: number;
+    dueOn: Date | null;
+    monthlyNeededSatang: number | null;
+  }[];
+  bills: { name: string; amountSatang: number | null; nextDueOn: Date }[];
+  recurring: {
+    type: "income" | "expense";
+    title: string;
+    amountSatang: number;
+    cadence: Cadence;
+  }[];
 }
 
 const baht = (satang: number) => `฿${formatBaht(satang)}`;
@@ -62,6 +99,29 @@ function moneyLine(label: string, m: Money | null): string | null {
 }
 
 const oneLine = (s: string, max = 80) => s.replace(/\s+/g, " ").trim().slice(0, max);
+
+/** A calendar day (YYYY-MM-DD) as a date to print. */
+function dayOf(ymd: string): Date {
+  const [year = 0, month = 1, day = 1] = ymd.split("-").map(Number);
+  return fromBangkok(year, month, day);
+}
+
+function debtLines(debts: OwlFacts["debts"]): string[] {
+  if (debts.length === 0) return [];
+  const total = (direction: DebtDirection) =>
+    debts.filter((d) => d.direction === direction).reduce((s, d) => s + d.remainingSatang, 0);
+  const listed = [...debts]
+    .sort((a, b) => b.remainingSatang - a.remainingSatang)
+    .slice(0, MAX_DEBTS);
+  return [
+    `หนี้ที่ยืมมาคงเหลือรวม ${baht(total("borrowed"))} · เงินที่ให้ยืมคงเหลือรวม ${baht(total("lent"))}`,
+    "รายการหนี้ (มากไปน้อย ไม่มีข้อมูลดอกเบี้ย):",
+    ...listed.map(
+      (d) =>
+        `- ${d.direction === "borrowed" ? "ยืมมาจาก" : "ให้ยืม"} ${oneLine(d.person, 40)} | เหลือ ${baht(d.remainingSatang)}${d.dueAt ? ` | ครบ ${formatThaiDate(d.dueAt)}` : ""}`,
+    ),
+  ];
+}
 
 /** The facts as the text the model reads (Thai, one fact per line, nothing but what is listed). */
 export function renderOwlContext(f: OwlFacts): string {
@@ -130,6 +190,31 @@ export function renderOwlContext(f: OwlFacts): string {
       );
     }
   }
+  lines.push(...debtLines(f.debts));
+  if (f.goals.length > 0) {
+    lines.push("เป้าออม:");
+    for (const g of f.goals) {
+      lines.push(
+        `- ${oneLine(g.name, 40)} | ออมแล้ว ${baht(g.savedSatang)} จาก ${baht(g.targetSatang)}${g.dueOn ? ` | ครบ ${formatThaiDate(g.dueOn)}` : ""}${g.monthlyNeededSatang !== null ? ` | ต้องเก็บเดือนละ ${baht(g.monthlyNeededSatang)}` : ""}`,
+      );
+    }
+  }
+  if (f.bills.length > 0) {
+    lines.push("บิลที่ต้องจ่าย:");
+    for (const b of f.bills) {
+      lines.push(
+        `- ${oneLine(b.name, 40)} ${b.amountSatang === null ? "ยังไม่ระบุยอด" : baht(b.amountSatang)} | ครบ ${formatThaiDate(b.nextDueOn)}`,
+      );
+    }
+  }
+  if (f.recurring.length > 0) {
+    lines.push("รายการประจำ:");
+    for (const r of f.recurring) {
+      lines.push(
+        `- ${r.type === "income" ? "รายรับ" : "รายจ่าย"} ${oneLine(r.title, 40)} ${baht(r.amountSatang)} ${CADENCE_LABEL[r.cadence]}`,
+      );
+    }
+  }
   return lines.filter((l): l is string => l !== null).join("\n");
 }
 
@@ -157,8 +242,9 @@ async function part<T>(name: string, run: () => Promise<T>, fallback: T): Promis
 
 /**
  * Collect what the assistant may see: this month, last month and this year in numbers, the biggest
- * categories, the budget(s), the last entries, waiting reminders, and notes only when the question
- * asks for them (all notes, or those that contain a word of the question).
+ * categories, the budget(s), the last entries, waiting reminders, open debts, goals, bills and
+ * recurring entries, and notes only when the question asks for them (all notes, or those that
+ * contain a word of the question).
  */
 export async function loadOwlFacts(
   db: SupabaseClient,
@@ -182,6 +268,10 @@ export async function loadOwlFacts(
     recent,
     reminders,
     notes,
+    debts,
+    goals,
+    bills,
+    rules,
   ] = await Promise.all([
     part("month", () => periodSummary(db, { userId, ...month }), null),
     part("previous_month", () => periodSummary(db, { userId, ...previous }), null),
@@ -286,6 +376,10 @@ export async function loadOwlFacts(
       },
       [],
     ),
+    part("debts", () => listDebts(db, userId), []),
+    part("goals", () => listGoals(db, userId, now), []),
+    part("bills", () => listBills(db, userId), []),
+    part("recurring", () => listRules(db, userId), []),
   ]);
 
   return {
@@ -311,5 +405,37 @@ export async function loadOwlFacts(
       repeat: r.repeat,
     })),
     notes: notes.map((n) => ({ createdAt: new Date(n.createdAt), body: n.body })),
+    debts: debts
+      .filter((d) => d.remainingSatang > 0)
+      .map((d) => ({
+        direction: d.direction,
+        person: d.person,
+        remainingSatang: d.remainingSatang,
+        dueAt: d.dueAt ? new Date(d.dueAt) : null,
+      })),
+    goals: goals
+      .filter((g) => !g.archived && !g.done)
+      .slice(0, MAX_GOALS)
+      .map((g) => ({
+        name: g.name,
+        savedSatang: g.savedSatang,
+        targetSatang: g.targetSatang,
+        dueOn: g.dueOn ? dayOf(g.dueOn) : null,
+        monthlyNeededSatang: g.monthlyNeededSatang,
+      })),
+    bills: bills.slice(0, MAX_BILLS).map((b) => ({
+      name: b.name,
+      amountSatang: b.amountSatang,
+      nextDueOn: dayOf(b.nextDueOn),
+    })),
+    recurring: rules
+      .filter((r) => r.is_active)
+      .slice(0, MAX_RECURRING)
+      .map((r) => ({
+        type: r.type,
+        title: r.title,
+        amountSatang: toSatang(r.amount),
+        cadence: r.cadence,
+      })),
   };
 }

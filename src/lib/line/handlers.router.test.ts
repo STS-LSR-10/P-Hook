@@ -320,13 +320,98 @@ describe("plain messages", () => {
     await handleEvent(say("เมื่อวานพาแม่ไปโรงพยาบาลแล้วจ่ายค่าหมอกับค่ายาไปทั้งหมด 800 บาท"), deps);
     expect(structure).toHaveBeenCalledOnce();
   });
+});
 
-  it("owl mode still wins", async () => {
+describe("in the พี่ฮูก mode", () => {
+  beforeEach(() => {
     owlMode = true;
+  });
+
+  it("sets a reminder from a plain sentence and stays open", async () => {
+    route.mockResolvedValue(decision({ intent: "reminder_add", reminderText: "กินยา 6 โมงเย็น" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("พี่ฮูกเตือนกินยา 6 โมงเย็นด้วย"), deps);
+    expect(madeReminders[0]?.body).toBe("กินยา");
+    expect(asked).not.toHaveBeenCalled();
+    expect(buttons(reply)).toContain("a=owlx");
+  });
+
+  it("looks through what they kept", async () => {
+    route.mockResolvedValue(decision({ intent: "search", searchTerm: "สัญญาเช่า" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("สัญญาเช่าอยู่ไหน"), deps);
+    expect(searched).toContain("สัญญาเช่า");
+    expect(asked).not.toHaveBeenCalled();
+    expect(buttons(reply)).toContain("a=owlx");
+  });
+
+  it("keeps a note", async () => {
+    route.mockResolvedValue(decision({ intent: "note_add" }));
+    const { deps } = setup();
+    await handleEvent(say("ช่วยจดว่าวันหยุดต้องล้างแอร์"), deps);
+    expect(notes).toEqual(["ช่วยจดว่าวันหยุดต้องล้างแอร์"]);
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  it("records money that has an amount", async () => {
+    route.mockResolvedValue(decision({ intent: "money" }));
+    const { deps } = setup();
+    await handleEvent(say("กินข้าว50"), deps);
+    expect(entries).toHaveLength(1);
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  it("answers money with nothing to record, instead of a hint about typing", async () => {
+    route.mockResolvedValue(decision({ intent: "money" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("จ่ายค่าหมอไปแล้วเมื่อวาน"), deps);
+    expect(entries).toEqual([]);
+    expect(asked).toHaveBeenCalledTimes(1);
+    expect(said(reply)).not.toBe(MONEY_HINT_TEXT);
+  });
+
+  it("answers a question", async () => {
+    route.mockResolvedValue(decision({ intent: "ask" }));
+    const { deps } = setup();
+    await handleEvent(say("ควรออมเดือนละเท่าไร"), deps);
+    expect(asked).toHaveBeenCalledWith("ควรออมเดือนละเท่าไร");
+  });
+
+  it.each([
+    ["ask", 0.4],
+    ["unclear", 0.9],
+  ] as const)("%s at %d is answered, never a choice of buttons", async (intent, confidence) => {
+    route.mockResolvedValue(decision({ intent, confidence }));
+    const { deps } = setup();
+    await handleEvent(say("ทำยังไงดี"), deps);
+    expect(asked).toHaveBeenCalledTimes(1);
+    expect(putPending).not.toHaveBeenCalled();
+  });
+
+  it("asks first before an action it is not sure of", async () => {
+    route.mockResolvedValue(
+      decision({ intent: "reminder_add", confidence: 0.5, reminderText: "กินยา 6 โมงเย็น" }),
+    );
+    const { deps } = setup();
+    await handleEvent(say("กินยา 6 โมงเย็น"), deps);
+    expect(madeReminders).toEqual([]);
+    expect(asked).not.toHaveBeenCalled();
+    expect(putPending).toHaveBeenCalled();
+  });
+
+  it("falls back to an answer when the day's sorting is used up", async () => {
+    quota = false;
     const { deps } = setup();
     await handleEvent(say("กินยา 6 โมงเย็น"), deps);
     expect(route).not.toHaveBeenCalled();
-    expect(asked).toHaveBeenCalled();
+    expect(asked).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to an answer when the AI cannot sort it", async () => {
+    route.mockRejectedValue(new Error("429"));
+    const { deps } = setup();
+    await handleEvent(say("หาไฟล์สัญญาเช่า"), deps);
+    expect(asked).toHaveBeenCalledTimes(1);
   });
 });
 

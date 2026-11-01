@@ -30,6 +30,8 @@ export interface OwlDeps {
   limit?: (bucket: string, subject: string, rule: LimitRule) => Promise<RateLimitResult>;
 }
 
+const MAX_QUICK_REPLIES = 13; // LINE's limit
+
 const END_ACTION = {
   type: "action",
   action: { type: "postback", label: "จบการถาม", data: "a=owlx", displayText: "จบการถาม" },
@@ -52,6 +54,23 @@ function withButtons(body: string, examples: boolean): LineMessage {
       ],
     },
   };
+}
+
+/** After an action in the mode: another few minutes, and the way out under the last message. */
+export async function keepOwlOpen(
+  deps: OwlDeps,
+  user: UserRow,
+  replies: LineMessage[],
+): Promise<LineMessage[]> {
+  const last = replies.at(-1);
+  const items = (last?.quickReply as { items: unknown[] } | undefined)?.items ?? [];
+  if (items.includes(END_ACTION)) return replies;
+  await startAskWait(deps.db, user.id, deps.now()).catch((e) =>
+    log.warn("ask_wait_extend_failed", { reason: safeMessage(e) }),
+  );
+  // the person's confirm style can be no reply at all
+  if (!last || items.length >= MAX_QUICK_REPLIES) return replies;
+  return [...replies.slice(0, -1), { ...last, quickReply: { items: [...items, END_ACTION] } }];
 }
 
 /** "ถามพี่ฮูก": open the mode and show what can be asked. */

@@ -19,6 +19,11 @@ const CASES: {
   /** Words the reminder text must keep. */
   keeps?: string;
 }[] = [
+  { text: "หาไฟล์สัญญาเช่าให้หน่อย", expected: "search" },
+  { text: "สลิปค่าเทอมอยู่ไหน", expected: "search" },
+  { text: "ควรออมเดือนละเท่าไรดี", expected: "ask", never: MUTATING },
+  { text: "พรุ่งนี้มีเตือนอะไรบ้าง", expected: "ask", never: MUTATING },
+  { text: "ถ้าเก็บเดือนละ 3000 กี่เดือนจะถึงแสน", expected: "ask", never: MUTATING },
   { text: "เตือนกินยา 6 โมงเย็นหน่อย", expected: "reminder_add" },
   { text: "พรุ่งนี้ต้องไปหาหมอ 10 โมง", expected: "reminder_add", keeps: "พรุ่งนี้" },
   { text: "มะรืนนี้บ่าย 2 นัดลูกค้า", expected: "reminder_add", keeps: "มะรืน" },

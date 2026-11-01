@@ -449,13 +449,13 @@ export const reminderPushText = (body: string, repeatLabel: string | null, url?:
 // ── พี่ฮูก (AI assistant) ──
 export const OWL_UNAVAILABLE_TEXT = "พี่ฮูกยังไม่เปิดให้ถามตอนนี้ ลองใหม่ภายหลังนะ";
 export const OWL_PROMPT_TEXT =
-  '🦉 พี่ฮูกมาแล้ว ถามได้ทุกเรื่อง จะให้ช่วยวิเคราะห์รายรับรายจ่าย งบ เตือน หรือโน้ตของคุณ หรือถามเรื่องทั่วไปก็ได้\n(พิมพ์ "จบ" เมื่ออยากกลับไปจดรายการ)';
-/** Quick-reply questions (labels are 20 characters at most): three about their money, one general. */
+  '🦉 พี่ฮูกมาแล้ว ถามเรื่องเงินหรือเรื่องทั่วไปได้เลย\nให้ตั้งเตือน จดโน้ต หรือหาไฟล์กับโน้ตก็ได้ เช่น "เตือนกินยา 2 ทุ่ม" หรือ "หาไฟล์สัญญาเช่า"\n(พิมพ์ "จบ" เมื่อคุยเสร็จ)';
+/** Quick-reply questions (labels are 20 characters at most). None of them changes anything. */
 export const OWL_EXAMPLES = [
   "วิเคราะห์เดือนนี้",
-  "หมวดไหนใช้เยอะสุด",
   "เหลืองบเท่าไร",
-  "ช่วยคิดเมนูมื้อเย็น",
+  "ควรออมเดือนละเท่าไร",
+  "ไฟล์ของฉัน",
 ] as const;
 export const OWL_END_TEXT = "กลับมาจดรายการตามปกติแล้ว 🦉";
 export const OWL_NOT_IN_MODE_TEXT = 'ตอนนี้ไม่ได้ถามพี่ฮูกอยู่นะ พิมพ์ "ถามพี่ฮูก" เมื่ออยากถาม';

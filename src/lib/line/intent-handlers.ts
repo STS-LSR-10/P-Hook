@@ -166,7 +166,7 @@ function execute(
 }
 
 /** Text that looks secret stays away from the AI: ask what to do with it. */
-export async function askAboutSecret(
+async function askAboutSecret(
   input: string,
   canBeMoney: boolean,
   user: UserRow,
@@ -184,12 +184,14 @@ export async function askAboutSecret(
 /**
  * Sort a message the rules cannot be trusted with, then act or ask. Null carries on down the money
  * path: it was money, or the AI could not help and the message reads as an ordinary entry.
+ * `chatting` is the พี่ฮูก mode: there, whatever is not clearly an action gets an answer.
  */
 export async function routeText(
   input: string,
   parsed: ParseResult,
   user: UserRow,
   deps: IntentDeps,
+  chatting = false,
 ): Promise<LineMessage[] | null> {
   const { db } = deps;
   if (looksSecret(input)) return askAboutSecret(input, parsed.entries.length > 0, user, deps);
@@ -201,6 +203,9 @@ export async function routeText(
     { router: deps.router, now: deps.now },
     { db, userId: user.id, plan, text: input },
   );
+  if (chatting && (!decision || decision.intent === "ask" || decision.intent === "unclear")) {
+    return deps.ask(input);
+  }
   if (!decision) {
     return clockIsTheAmount(input, parsed.entries) ? [text(ROUTER_REMINDER_HINT_TEXT)] : null;
   }
@@ -225,7 +230,8 @@ export async function routeText(
     ];
   }
   if (decision.intent === "money") {
-    return parsed.entries.length === 0 && !can(plan, "smartParse") ? [text(MONEY_HINT_TEXT)] : null;
+    if (parsed.entries.length > 0 || can(plan, "smartParse")) return null;
+    return chatting ? deps.ask(input) : [text(MONEY_HINT_TEXT)];
   }
   return execute(input, decision, user, deps);
 }

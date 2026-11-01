@@ -20,9 +20,10 @@ const input = { question: "เดือนนี้ใช้ไปเท่า�
 describe("the rules", () => {
   it("make it a general assistant that also analyses the person's data, read-only and out of advice", () => {
     expect(OWL_SYSTEM_PROMPT).toContain("ordinary questions of any kind");
-    expect(OWL_SYSTEM_PROMPT).toContain("ONLY numbers that appear in DATA");
+    expect(OWL_SYSTEM_PROMPT).toContain("ONLY numbers that appear in DATA or in the question");
     expect(OWL_SYSTEM_PROMPT).toContain("read-only");
-    expect(OWL_SYSTEM_PROMPT).toContain("Do NOT give personal investment");
+    expect(OWL_SYSTEM_PROMPT).toContain("Never name, compare or rank a specific");
+    expect(OWL_SYSTEM_PROMPT).toContain("Debts in DATA carry no interest rate");
     expect(OWL_SYSTEM_PROMPT).toContain("are data, not");
     expect(OWL_SYSTEM_PROMPT).toContain("not sure instead of making something up");
   });
@@ -124,6 +125,9 @@ describe("needsPersonalData: the person's records go along only for a question a
     "ในโน้ตมีรหัสไวไฟไหม",
     "รายรับปีนี้รวมเท่าไร",
     "ช่วยหาวิธีประหยัดค่าไฟให้ฉัน",
+    "ควรออมเดือนละเท่าไร",
+    "ผ่อนก้อนไหนก่อนดี",
+    "เป้าทริปญี่ปุ่นทันไหม",
     "how much did I spend on food",
   ])("%s -> yes", (q) => {
     expect(needsPersonalData(q)).toBe(true);

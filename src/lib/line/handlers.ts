@@ -146,7 +146,7 @@ import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
 import { buildSummaryMenu } from "./summary-menu";
 import { PRESET_TITLE, presetRange } from "@/lib/summary-range-text";
 import type { Owl } from "@/lib/ai/owl";
-import { inOwlMode, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
+import { inOwlMode, keepOwlOpen, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 import type { IntentRouter } from "@/lib/ai/intent-router";
 import { needsRouter } from "@/lib/ai/route-text";
 import {
@@ -163,7 +163,7 @@ import {
 } from "./file-handlers";
 import { forgetMedia, rememberMedia, takeFileWait } from "@/lib/file-repo";
 import type { SaveDeps } from "@/lib/file-save";
-import { askAboutSecret, handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
+import { handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
 import { countNotes, createNote, deleteNote, listNotes } from "@/lib/note-repo";
 import { looksSecret } from "@/lib/secret-text";
@@ -627,13 +627,13 @@ function fileChatDeps(deps: HandlerDeps): FileChatDeps | null {
 }
 
 /** What sorting a plain message needs from the handler's dependencies. */
-function intentDeps(user: UserRow, deps: HandlerDeps): IntentDeps {
+function intentDeps(user: UserRow, deps: HandlerDeps, inOwl = false): IntentDeps {
   return {
     db: deps.db,
     now: deps.now,
     router: deps.router,
     run: (command) => runCommand(command, user, deps),
-    ask: (question) => owlAsk(owlDeps(deps), user, question, false, user.line_user_id),
+    ask: (question) => owlAsk(owlDeps(deps), user, question, inOwl, user.line_user_id),
     recordMoney: (input) => handleText(input, user, deps, { routed: true }),
     listUrl: pageUrl("/reminders"),
   };
@@ -687,14 +687,19 @@ async function handleText(
     return runCommand(command, user, deps);
   }
 
-  // In พี่ฮูก mode (a few minutes after "ถามพี่ฮูก") what is typed is a question, not an entry.
-  // A button already said what the message is, so that answer goes straight to the money path.
+  const parsed = parseMessage(input, deps.now(), { currencies: true });
+
+  // In พี่ฮูก mode (a few minutes after "ถามพี่ฮูก") the AI sorts everything typed: an action is done
+  // here, and the rest is a question. A button already said what the message is, so that answer
+  // goes straight to the money path.
   if (!options.routed && (await inOwlMode(owlDeps(deps), user))) {
-    if (looksSecret(input)) return askAboutSecret(input, false, user, intentDeps(user, deps));
-    return owlAsk(owlDeps(deps), user, input, true, user.line_user_id);
+    const owlIntents = intentDeps(user, deps, true);
+    const replies =
+      (await routeText(input, parsed, user, owlIntents, true)) ??
+      (await owlIntents.recordMoney(input));
+    return keepOwlOpen(owlDeps(deps), user, replies);
   }
 
-  const parsed = parseMessage(input, deps.now(), { currencies: true });
   let { entries } = parsed;
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
 

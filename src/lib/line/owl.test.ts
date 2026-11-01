@@ -10,7 +10,7 @@ import {
   OWL_UNAVAILABLE_TEXT,
   owlQuotaText,
 } from "./messages";
-import { inOwlMode, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
+import { inOwlMode, keepOwlOpen, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 
 let plan = "plus";
 let usageLeft = 50;
@@ -101,6 +101,47 @@ describe("starting and ending", () => {
     live = false;
     expect(first(await owlEnd(deps(), user())).text).toBe(OWL_NOT_IN_MODE_TEXT);
     expect(waits).toEqual(["clear", "clear"]);
+  });
+});
+
+describe("after an action in the mode", () => {
+  const button = (data: string) => ({ type: "action", action: { type: "postback", data } });
+  const dataOf = (r: unknown[]) =>
+    (r.at(-1) as Sent).quickReply?.items.map((i) => i.action.data) ?? [];
+
+  it("adds the way out under the last message, and gives more time", async () => {
+    const r = await keepOwlOpen(deps(), user(), [
+      { type: "text", text: "1" },
+      { type: "text", text: "2" },
+    ]);
+    expect(dataOf(r)).toEqual(["a=owlx"]);
+    expect(first(r).quickReply).toBeUndefined();
+    expect(waits).toEqual(["start"]);
+  });
+
+  it("keeps the buttons a card already has", async () => {
+    const r = await keepOwlOpen(deps(), user(), [
+      { type: "flex", quickReply: { items: [button("a=x")] } },
+    ]);
+    expect(dataOf(r)).toEqual(["a=x", "a=owlx"]);
+  });
+
+  it("never adds it twice", async () => {
+    const answered = await owlAsk(deps(), user(), "เดือนนี้ใช้ไปเท่าไร", true, "U1");
+    const r = await keepOwlOpen(deps(), user(), answered);
+    expect(dataOf(r).filter((d) => d === "a=owlx")).toHaveLength(1);
+  });
+
+  it("leaves a card that has no room for another button, but still gives more time", async () => {
+    const items = Array.from({ length: 13 }, (_, i) => button(`a=${i}`));
+    const r = await keepOwlOpen(deps(), user(), [{ type: "flex", quickReply: { items } }]);
+    expect(dataOf(r)).toHaveLength(13);
+    expect(waits).toEqual(["start"]);
+  });
+
+  it("gives more time when nothing is sent back", async () => {
+    expect(await keepOwlOpen(deps(), user(), [])).toEqual([]);
+    expect(waits).toEqual(["start"]);
   });
 });
 
