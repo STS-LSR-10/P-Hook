@@ -152,7 +152,7 @@ export async function rescheduleReminder(
   return data ? toDto(data as Row) : null;
 }
 
-/** Rewrite a reminder. Whatever it was, it now waits for its new time. */
+/** Rewrite a reminder. */
 export async function updateReminder(
   db: SupabaseClient,
   userId: string,
@@ -162,6 +162,7 @@ export async function updateReminder(
     remindAt: Date;
     repeat: Repeat | null;
     category: ReminderCategory | null;
+    status: ReminderStatus;
   },
 ): Promise<ReminderDto | null> {
   const { data, error } = await db
@@ -171,8 +172,8 @@ export async function updateReminder(
       remind_at: input.remindAt.toISOString(),
       repeat: input.repeat,
       category: input.category,
-      status: "active",
-      last_sent_at: null,
+      status: input.status,
+      ...(input.status === "active" ? { last_sent_at: null } : {}),
     })
     .eq("id", id)
     .eq("user_id", userId)
@@ -180,6 +181,30 @@ export async function updateReminder(
     .maybeSingle();
   if (error) fail("update reminder", error);
   return data ? toDto(data as Row) : null;
+}
+
+/**
+ * Skip a round of a repeat, but only the round the person saw: a second tap, or a page left open
+ * while the job moved on, must not lose the round after it. False when it has moved.
+ */
+export async function skipReminderRound(
+  db: SupabaseClient,
+  userId: string,
+  id: string,
+  from: string,
+  to: Date,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("user_reminders")
+    .update({ remind_at: to.toISOString() })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .eq("remind_at", from)
+    .select("id")
+    .maybeSingle();
+  if (error) fail("skip reminder round", error);
+  return data !== null;
 }
 
 async function moveStatus(

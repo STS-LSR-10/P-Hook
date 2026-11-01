@@ -27,7 +27,7 @@ export function Sheet({
       aria-label={title}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="mx-auto max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-3xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="mx-auto max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-3xl bg-surface p-4 text-foreground pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">{title}</h2>
           <button type="button" onClick={onClose} aria-label="ปิด" className="h-11 w-11">

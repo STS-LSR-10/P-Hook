@@ -6,6 +6,7 @@ import {
   reopenReminder,
   rescheduleReminder,
   setReminderDone,
+  skipReminderRound,
   updateReminder,
 } from "./user-reminder-repo";
 
@@ -84,6 +85,26 @@ describe("the reminders of the page", () => {
   });
 });
 
+describe("skipping a round", () => {
+  it("moves it only from the round the person saw", async () => {
+    const row = { id: "r1" };
+    const { db, filters, sets } = fakeDb(row);
+    const seen = "2026-11-02T11:00:00+00:00";
+    await expect(skipReminderRound(db, "u1", "r1", seen, when)).resolves.toBe(true);
+    expect(filters).toEqual([
+      ["id", "r1"],
+      ["user_id", "u1"],
+      ["status", "active"],
+      ["remind_at", seen],
+    ]);
+    expect(sets[0]).toEqual({ remind_at: when.toISOString() });
+  });
+
+  it("is false when the round has moved", async () => {
+    await expect(skipReminderRound(fakeDb(null).db, "u1", "r1", "x", when)).resolves.toBe(false);
+  });
+});
+
 describe("changing a reminder", () => {
   const row = { id: "r1", body: "a", remind_at: when.toISOString(), repeat: null };
 
@@ -94,6 +115,7 @@ describe("changing a reminder", () => {
       remindAt: when,
       repeat: null,
       category: "bill",
+      status: "active",
     });
     expect(filters).toEqual([
       ["id", "r1"],
@@ -107,6 +129,19 @@ describe("changing a reminder", () => {
       status: "active",
       last_sent_at: null,
     });
+  });
+
+  it("an edit that keeps the tick leaves the rest alone", async () => {
+    const { db, sets } = fakeDb(row);
+    await updateReminder(db, "u1", "r1", {
+      body: "b",
+      remindAt: when,
+      repeat: null,
+      category: null,
+      status: "done",
+    });
+    expect(sets[0]).toMatchObject({ status: "done" });
+    expect(sets[0]).not.toHaveProperty("last_sent_at");
   });
 
   it("done applies only to one still waiting", async () => {

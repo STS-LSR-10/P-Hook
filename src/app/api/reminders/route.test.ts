@@ -5,6 +5,7 @@ let active = 0;
 const created: Record<string, unknown>[] = [];
 const cancelled: string[] = [];
 let found = true;
+let limited = false;
 const R = "11111111-1111-4111-8111-111111111111";
 const edits: Record<string, unknown>[] = [];
 const calls: string[] = [];
@@ -19,7 +20,8 @@ vi.mock("@/lib/slip-repo", () => ({
 }));
 vi.mock("@/lib/rate-limit", async (original) => ({
   ...(await original<typeof import("@/lib/rate-limit")>()),
-  limitOr429: async () => null,
+  limitOr429: async () =>
+    limited ? new Response(JSON.stringify({ error: "x" }), { status: 429 }) : null,
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
 vi.mock("@/lib/user-reminder-repo", () => ({
@@ -43,9 +45,9 @@ vi.mock("@/lib/user-reminder-repo", () => ({
     calls.push("reopen");
     return found;
   },
-  rescheduleReminder: async (_db: unknown, _u: string, _id: string, input: { remindAt: Date }) => {
-    calls.push(`moved:${input.remindAt.toISOString()}`);
-    return found ? stored : null;
+  skipReminderRound: async (_db: unknown, _u: string, _id: string, from: string, to: Date) => {
+    calls.push(`moved:${new Date(from).toISOString()}>${to.toISOString()}`);
+    return found;
   },
   cancelReminder: async (_db: unknown, _u: string, id: string) => {
     cancelled.push(id);
@@ -68,6 +70,7 @@ beforeEach(() => {
   plan = "plus";
   active = 0;
   found = true;
+  limited = false;
   created.length = 0;
   cancelled.length = 0;
   edits.length = 0;
@@ -206,16 +209,67 @@ describe("reminders on the page", () => {
     expect(edits).toEqual([]);
   });
 
+  const seen = () => String(stored?.remindAt);
+
   it("a one-off that is ticked is done", async () => {
-    expect((await patch({ action: "done" })).status).toBe(200);
+    expect((await patch({ action: "done", remindAt: seen() })).status).toBe(200);
     expect(calls).toEqual(["done"]);
   });
 
   it("a repeat that is ticked skips its round, and goes on", async () => {
     const remindAt = "2030-01-01T02:00:00.000Z";
     stored = { ...stored, repeat: "daily", remindAt };
-    expect((await patch({ action: "done" })).status).toBe(200);
-    expect(calls).toEqual(["moved:2030-01-02T02:00:00.000Z"]);
+    expect((await patch({ action: "done", remindAt })).status).toBe(200);
+    expect(calls).toEqual(["moved:2030-01-01T02:00:00.000Z>2030-01-02T02:00:00.000Z"]);
+  });
+
+  it("a tick needs to say which round", async () => {
+    expect((await patch({ action: "done" })).status).toBe(400);
+  });
+
+  it("a tick on a round that has moved skips nothing", async () => {
+    stored = { ...stored, repeat: "daily", remindAt: "2030-01-02T02:00:00.000Z" };
+    const res = await patch({ action: "done", remindAt: "2030-01-01T02:00:00.000Z" });
+    expect(res.status).toBe(409);
+    expect(calls).toEqual([]);
+  });
+
+  it("the same moment in another form is the same round", async () => {
+    stored = { ...stored, repeat: "daily", remindAt: "2030-01-01T02:00:00+00:00" };
+    const res = await patch({ action: "done", remindAt: "2030-01-01T02:00:00.000Z" });
+    expect(res.status).toBe(200);
+  });
+
+  it("a tick the job got to first says so", async () => {
+    found = false;
+    const res = await patch({ action: "done", remindAt: seen() });
+    expect(res.status).toBe(409);
+  });
+
+  it("fixing the name of a ticked one keeps the tick", async () => {
+    stored = { ...stored, status: "done" };
+    const res = await patch({ body: "แก้คำ", remindAt: seen() });
+    expect(res.status).toBe(200);
+    expect(edits[0]?.status).toBe("done");
+  });
+
+  it("fixing the name of one that has gone by needs no new time", async () => {
+    stored = { ...stored, status: "done", remindAt: past() };
+    const res = await patch({ body: "แก้คำ", remindAt: seen() });
+    expect(res.status).toBe(200);
+  });
+
+  it("a new time brings a ticked one back", async () => {
+    stored = { ...stored, status: "done" };
+    await patch({ body: "a", remindAt: future() });
+    expect(edits[0]?.status).toBe("active");
+  });
+
+  it("deleting has the write limit", async () => {
+    limited = true;
+    const res = await DELETE(req("DELETE"), params);
+    expect(res.status).toBe(429);
+    expect(cancelled).toEqual([]);
   });
 
   it("taking a tick back reopens one still ahead", async () => {
@@ -239,12 +293,7 @@ describe("reminders on the page", () => {
 
   it("is 404 for a reminder that is not theirs", async () => {
     stored = null;
-    expect((await patch({ action: "done" })).status).toBe(404);
-  });
-
-  it("is 404 when the job sent it first", async () => {
-    found = false;
-    expect((await patch({ action: "done" })).status).toBe(404);
+    expect((await patch({ action: "done", remindAt: future() })).status).toBe(404);
   });
 
   it("refuses what it does not know", async () => {

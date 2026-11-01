@@ -14,8 +14,8 @@ import {
   cancelReminder,
   getReminder,
   reopenReminder,
-  rescheduleReminder,
   setReminderDone,
+  skipReminderRound,
   updateReminder,
 } from "@/lib/user-reminder-repo";
 
@@ -25,12 +25,17 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 const NOT_FOUND = "ไม่พบเตือนนี้";
-const actionSchema = z.object({ action: z.enum(["done", "undo"]) });
+const MOVED = "เตือนนี้เพิ่งเปลี่ยนไปแล้ว ดูรายการล่าสุดนะ";
+const actionSchema = z.discriminatedUnion("action", [
+  /** `remindAt` is the round the person saw: a tick never applies to any other. */
+  z.object({ action: z.literal("done"), remindAt: z.string().datetime({ offset: true }) }),
+  z.object({ action: z.literal("undo") }),
+]);
 
 /**
- * PATCH /api/reminders/:id — { action: "done" } ticks it: a one-off will not be sent, a repeat skips
- * this round and goes on. { action: "undo" } takes the tick back while its time is still ahead. Any
- * other body is the whole reminder, rewritten.
+ * PATCH /api/reminders/:id — { action: "done", remindAt } ticks a round: a one-off will not be sent,
+ * a repeat skips it and goes on. { action: "undo" } takes the tick back while its time is still
+ * ahead. Any other body is the whole reminder, rewritten; a new time brings a finished one back.
  */
 export async function PATCH(request: Request, { params }: Params): Promise<Response> {
   return guard(async () => {
@@ -53,9 +58,14 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
 
     if (edit?.data) {
       const remindAt = new Date(edit.data.remindAt);
-      const problem = reminderTimeProblem(remindAt);
-      if (problem) return apiError(problem, 400);
-      if (reminder.status === "done") {
+      const sameTime = remindAt.getTime() === new Date(reminder.remindAt).getTime();
+      // a spelling fix on a ticked reminder leaves it ticked
+      const keepsDone = reminder.status === "done" && sameTime;
+      if (!sameTime) {
+        const problem = reminderTimeProblem(remindAt);
+        if (problem) return apiError(problem, 400);
+      }
+      if (reminder.status === "done" && !keepsDone) {
         const full = await reminderRoomProblem(db, auth.userId);
         if (full) return full;
       }
@@ -64,6 +74,7 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
         remindAt,
         repeat: edit.data.repeat ?? null,
         category: edit.data.category ?? null,
+        status: keepsDone ? "done" : "active",
       });
       return updated ? json({ reminder: updated }) : apiError(NOT_FOUND, 404);
     }
@@ -76,20 +87,20 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
       if (full) return full;
       return (await reopenReminder(db, auth.userId, id))
         ? json({ ok: true })
-        : apiError(NOT_FOUND, 404);
+        : apiError(MOVED, 409);
     }
 
-    if (reminder.repeat) {
-      const remindAt = roundAfter(new Date(reminder.remindAt), reminder.repeat, new Date());
-      const moved = await rescheduleReminder(db, auth.userId, id, {
-        remindAt,
-        repeat: reminder.repeat,
-      });
-      return moved ? json({ ok: true, skipped: true }) : apiError(NOT_FOUND, 404);
+    const seen = action.data?.remindAt ?? "";
+    if (new Date(seen).getTime() !== new Date(reminder.remindAt).getTime()) {
+      return apiError(MOVED, 409);
     }
-    return (await setReminderDone(db, auth.userId, id))
-      ? json({ ok: true })
-      : apiError(NOT_FOUND, 404);
+    if (reminder.repeat) {
+      const next = roundAfter(new Date(reminder.remindAt), reminder.repeat, new Date());
+      return (await skipReminderRound(db, auth.userId, id, reminder.remindAt, next))
+        ? json({ ok: true, skipped: true })
+        : apiError(MOVED, 409);
+    }
+    return (await setReminderDone(db, auth.userId, id)) ? json({ ok: true }) : apiError(MOVED, 409);
   });
 }
 
@@ -100,7 +111,10 @@ export async function DELETE(request: Request, { params }: Params): Promise<Resp
     if (auth instanceof Response) return auth;
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) return apiError(NOT_FOUND, 404);
-    return (await cancelReminder(getAdminClient(), auth.userId, id))
+    const db = getAdminClient();
+    const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
+    if (limited) return limited;
+    return (await cancelReminder(db, auth.userId, id))
       ? json({ ok: true })
       : apiError(NOT_FOUND, 404);
   });

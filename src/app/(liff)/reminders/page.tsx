@@ -72,12 +72,19 @@ const CONFETTI = ["#FF8800", "#5F9E6B", "#FFD180", "#4B8154"];
 
 const dayDate = (ymd: string) => new Date(`${ymd}T05:00:00Z`);
 const dayLabel = (ymd: string) => formatThaiDate(dayDate(ymd));
+const shortDay = (at: Date) => formatThaiDate(at).split(" ").slice(0, 2).join(" ");
 const clock = (at: Date) => toBangkokInputValue(at).slice(11, 16);
 const monthOf = (ymd: string) => ({
   year: Number(ymd.slice(0, 4)),
   month: Number(ymd.slice(5, 7)),
 });
 const monthLabel = (year: number, month: number) => `${MONTHS[month - 1]} ${year + 543}`;
+
+/** A time still ahead today, so saving a new reminder does not fail on the default. */
+function nextHour(): string {
+  const hour = Number(toBangkokInputValue(new Date()).slice(11, 13)) + 1;
+  return hour > 23 ? "23:59" : `${String(hour).padStart(2, "0")}:00`;
+}
 
 export default function RemindersPage() {
   const { api } = useLiff();
@@ -93,6 +100,7 @@ export default function RemindersPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [notice, setNotice] = useState<string | null>(null);
   const [form, setForm] = useState<{ reminder: ReminderDto | null } | null>(null);
+  const ticking = useRef(new Set<string>());
   const [word, setWord] = useState(FIRST_WORD);
   const [cheers, setCheers] = useState(0);
 
@@ -117,10 +125,9 @@ export default function RemindersPage() {
     if (period === "day") return pick(addDays(selected, direction));
     if (period === "week") return pick(addDays(selected, direction * 7));
     const month = shown.month + direction;
-    setShown({
-      year: shown.year + (month > 12 ? 1 : month < 1 ? -1 : 0),
-      month: month > 12 ? 1 : month < 1 ? 12 : month,
-    });
+    const year = shown.year + (month > 12 ? 1 : month < 1 ? -1 : 0);
+    const first = `${year}-${String(month > 12 ? 1 : month < 1 ? 12 : month).padStart(2, "0")}-01`;
+    pick(today.slice(0, 7) === first.slice(0, 7) ? today : first);
   }
 
   function cheer() {
@@ -132,12 +139,16 @@ export default function RemindersPage() {
   }
 
   async function tick(reminder: ReminderDto) {
+    if (ticking.current.has(reminder.id)) return;
+    ticking.current.add(reminder.id);
     const action = reminder.status === "done" ? "undo" : "done";
     setNotice(null);
     try {
       const result = await api<{ skipped?: boolean }>(`/api/reminders/${reminder.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(
+          action === "done" ? { action, remindAt: reminder.remindAt } : { action },
+        ),
       });
       setNotice(
         action === "undo"
@@ -147,9 +158,11 @@ export default function RemindersPage() {
             : "เสร็จแล้ว เก่งมากครับ!",
       );
       if (action === "done") cheer();
-      reminders.reload();
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "เปลี่ยนสถานะไม่สำเร็จ");
+    } finally {
+      ticking.current.delete(reminder.id);
+      reminders.reload();
     }
   }
 
@@ -162,9 +175,10 @@ export default function RemindersPage() {
     try {
       await api(`/api/reminders/${reminder.id}`, { method: "DELETE" });
       setNotice("ลบแล้ว");
-      reminders.reload();
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+    } finally {
+      reminders.reload();
     }
   }
 
@@ -221,15 +235,6 @@ export default function RemindersPage() {
           ))}
         </div>
       </div>
-
-      {notice ? (
-        <p
-          role="status"
-          className="mx-4 mt-2 rounded-2xl bg-[#E1EFE3] px-4 py-2 text-sm text-[#2F5A38]"
-        >
-          {notice}
-        </p>
-      ) : null}
 
       {reminders.loading && !data ? (
         <div className="px-4 py-4">
@@ -423,6 +428,18 @@ export default function RemindersPage() {
         </>
       )}
 
+      {/* always in the page, so a reader announces what lands in it; fixed, so it is always seen */}
+      <div
+        role="status"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(9rem+env(safe-area-inset-bottom))] z-20 mx-auto max-w-md px-4"
+      >
+        {notice ? (
+          <p className="rounded-2xl bg-[#2F5A38] px-4 py-2 text-center text-sm text-white shadow-lg">
+            {notice}
+          </p>
+        ) : null}
+      </div>
+
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 mx-auto flex max-w-md justify-end px-4">
         <button
           type="button"
@@ -438,13 +455,15 @@ export default function RemindersPage() {
         <ReminderSheet
           reminder={form.reminder}
           day={selected}
+          today={today}
           full={form.reminder ? false : data ? !data.canAdd : false}
           limit={data?.limit ?? 0}
           onClose={() => setForm(null)}
           onSaved={(message, ymd) => {
             setForm(null);
             setNotice(message);
-            pick(ymd);
+            // a repeat stays on the day in view: it still has rounds there
+            if (!form.reminder?.repeat) pick(ymd);
             cheer();
             reminders.reload();
           }}
@@ -467,16 +486,19 @@ function DayCell({
   muted: boolean;
   onPick: (ymd: string) => void;
 }) {
+  const today = ymdOf(new Date());
   const waiting = entries?.some((e) => e.reminder.status === "active");
   return (
     <button
       type="button"
       aria-label={`${dayLabel(ymd)}${entries ? ", มีเตือน" : ""}`}
       aria-pressed={selected}
+      aria-current={ymd === today ? "date" : undefined}
       onClick={() => onPick(ymd)}
       className={cn(
         "flex h-11 w-full flex-col items-center justify-center rounded-xl text-xs font-semibold",
         selected ? "bg-[#3F7A4B] text-white" : muted ? "text-slate-500" : "text-slate-800",
+        ymd === today && !selected && "ring-2 ring-[#FFB74D]",
       )}
     >
       {Number(ymd.slice(8))}
@@ -520,7 +542,7 @@ function ReminderRow({
       <button
         type="button"
         onClick={() => onEdit(reminder)}
-        className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left"
+        className="flex min-h-12 min-w-0 flex-1 items-center gap-2 py-1.5 text-left"
       >
         <span
           aria-hidden
@@ -533,22 +555,31 @@ function ReminderRow({
         </span>
         <span
           className={cn(
-            "min-w-0 flex-1 truncate text-sm font-semibold",
-            done ? "text-slate-600 line-through" : "text-slate-800",
+            "flex min-w-0 flex-1 gap-x-2 gap-y-0.5",
+            showDay ? "flex-col" : "items-center",
           )}
         >
-          {reminder.body}
-        </span>
-        <span className="shrink-0 whitespace-nowrap rounded-md border border-emerald-200 bg-[#E1EFE3] px-1.5 py-0.5 text-[11px] font-bold text-emerald-900">
-          {showDay ? `${formatThaiDate(at).split(" ").slice(0, 2).join(" ")} · ` : ""}เวลา{" "}
-          {clock(at)} น.
-        </span>
-        {reminder.repeat ? (
-          <span className="shrink-0 text-slate-500">
-            <RepeatIcon className="h-3.5 w-3.5" aria-hidden />
-            <span className="sr-only">{REPEAT_LABEL[reminder.repeat]}</span>
+          <span
+            className={cn(
+              "min-w-0 truncate text-sm font-semibold",
+              !showDay && "flex-1",
+              done ? "text-slate-600 line-through" : "text-slate-800",
+            )}
+          >
+            {reminder.body}
           </span>
-        ) : null}
+          <span className="flex shrink-0 items-center gap-1.5">
+            <span className="whitespace-nowrap rounded-md border border-emerald-200 bg-[#E1EFE3] px-1.5 py-0.5 text-[11px] font-bold text-emerald-900">
+              {showDay ? `${shortDay(at)} · ` : ""}เวลา {clock(at)} น.
+            </span>
+            {reminder.repeat ? (
+              <span className="text-slate-500">
+                <RepeatIcon className="h-3.5 w-3.5" aria-hidden />
+                <span className="sr-only">{REPEAT_LABEL[reminder.repeat]}</span>
+              </span>
+            ) : null}
+          </span>
+        </span>
       </button>
       {canTick ? (
         <button
@@ -594,7 +625,14 @@ function AllList({
 }) {
   const shown = items
     .filter((r) => filter === "all" || r.status === filter)
-    .sort((a, b) => a.status.localeCompare(b.status) || a.remindAt.localeCompare(b.remindAt));
+    // what waits comes first, soonest on top; what is finished follows, newest on top
+    .sort((a, b) =>
+      a.status !== b.status
+        ? a.status.localeCompare(b.status)
+        : a.status === "done"
+          ? b.remindAt.localeCompare(a.remindAt)
+          : a.remindAt.localeCompare(b.remindAt),
+    );
   if (shown.length === 0) {
     return (
       <p className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">
@@ -658,6 +696,7 @@ function Confetti({ active }: { active: boolean }) {
 function ReminderSheet({
   reminder,
   day,
+  today,
   full,
   limit,
   onClose,
@@ -665,13 +704,17 @@ function ReminderSheet({
 }: {
   reminder: ReminderDto | null;
   day: string;
+  today: string;
   full: boolean;
   limit: number;
   onClose: () => void;
   onSaved: (message: string, ymd: string) => void;
 }) {
   const { api } = useLiff();
-  const start = reminder ? toBangkokInputValue(new Date(reminder.remindAt)) : `${day}T09:00`;
+  const start = reminder
+    ? toBangkokInputValue(new Date(reminder.remindAt))
+    : `${day}T${day === today ? nextHour() : "09:00"}`;
+  const series = reminder?.repeat ? reminder : null;
   const [body, setBody] = useState(reminder?.body ?? "");
   const [date, setDate] = useState(start.slice(0, 10));
   const [time, setTime] = useState(start.slice(11, 16));
@@ -710,6 +753,11 @@ function ReminderSheet({
   return (
     <Sheet title={reminder ? "แก้การเตือน" : "ตั้งเตือนใหม่กับพี่ฮูก"} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
+        {series ? (
+          <p className="rounded-xl bg-amber-100 px-3 py-2 text-sm text-amber-900">
+            แก้ทุกรอบ · รอบถัดไป {formatThaiDate(new Date(series.remindAt))}
+          </p>
+        ) : null}
         <div>
           <label htmlFor="reminder-body" className="mb-1 block text-xs font-semibold">
             ชื่อรายการเตือน
@@ -726,7 +774,7 @@ function ReminderSheet({
         <div className="grid grid-cols-2 gap-2.5">
           <div>
             <label htmlFor="reminder-date" className="mb-1 block text-xs font-semibold">
-              วันที่เตือน
+              {series ? "วันที่รอบถัดไป" : "วันที่เตือน"}
             </label>
             <input
               id="reminder-date"
@@ -761,7 +809,7 @@ function ReminderSheet({
                 className={cn(
                   "min-h-11 rounded-xl border px-1 text-xs",
                   category === key
-                    ? "border-emerald-600 bg-emerald-50 font-semibold"
+                    ? "border-emerald-600 bg-emerald-50 font-semibold text-emerald-900"
                     : "border-border",
                 )}
               >

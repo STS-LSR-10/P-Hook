@@ -206,7 +206,7 @@ test.describe("reminders page (360px)", () => {
     await page.goto("/reminders");
     await page.getByRole("button", { name: "ทำเสร็จ จ่ายค่าเน็ต" }).click();
     await expect(page.getByRole("status").filter({ hasText: "เสร็จแล้ว" })).toBeVisible();
-    expect(sent).toEqual({ action: "done" });
+    expect(sent).toEqual({ action: "done", remindAt: "2026-11-15T07:00:00.000Z" });
   });
 
   test("ticking a repeat says the next round goes on", async ({ page }) => {
@@ -218,6 +218,135 @@ test.describe("reminders page (360px)", () => {
     await page.goto("/reminders");
     await page.getByRole("button", { name: "ทำเสร็จ กินยา" }).click();
     await expect(page.getByRole("status").filter({ hasText: "ข้ามรอบนี้แล้ว" })).toBeVisible();
+  });
+
+  test("a double tap on a tick sends one request", async ({ page }) => {
+    let ticks = 0;
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST(THREE),
+      [`PATCH /api/reminders/${ID(2)}`]: async () => {
+        ticks += 1;
+        await new Promise((done) => setTimeout(done, 200));
+        return { ok: true, skipped: true };
+      },
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "ทำเสร็จ กินยา" }).dblclick();
+    await expect(page.getByRole("status").filter({ hasText: "ข้ามรอบนี้แล้ว" })).toBeVisible();
+    expect(ticks).toBe(1);
+  });
+
+  test("a tick that lost to the job says so, and the list reloads", async ({ page }) => {
+    const { seen } = await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST(THREE),
+      [`PATCH /api/reminders/${ID(1)}`]: {
+        status: 409,
+        body: { error: "เตือนนี้เพิ่งเปลี่ยนไปแล้ว ดูรายการล่าสุดนะ" },
+      },
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "ทำเสร็จ จ่ายค่าเน็ต" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "เพิ่งเปลี่ยนไปแล้ว" })).toBeVisible();
+    await expect.poll(() => seen.filter((s) => s === "GET /api/reminders").length).toBe(2);
+  });
+
+  test("the result of a tick shows on screen wherever the list is", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST(THREE),
+      [`PATCH /api/reminders/${ID(1)}`]: { ok: true },
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "ทำเสร็จ จ่ายค่าเน็ต" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "เสร็จแล้ว" })).toBeInViewport();
+  });
+
+  test("the form can be read in dark mode", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
+    const colors = await page.getByText("ชื่อรายการเตือน").evaluate((label) => {
+      const panel = label.closest("form")?.parentElement?.parentElement ?? label;
+      return [getComputedStyle(label).color, getComputedStyle(panel).backgroundColor];
+    });
+    expect(colors[0]).not.toBe("rgb(30, 41, 59)");
+    expect(colors[0]).not.toBe(colors[1]);
+  });
+
+  test("editing a repeat from a later day says it changes every round", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST(THREE),
+      [`PATCH /api/reminders/${ID(2)}`]: { reminder: {} },
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "18 พ.ย. 2569, มีเตือน" }).click();
+    await page.getByRole("button", row("กินยา")).click();
+    await expect(page.getByText("แก้ทุกรอบ · รอบถัดไป 15 พ.ย. 2569")).toBeVisible();
+    await expect(page.getByLabel("วันที่รอบถัดไป")).toHaveValue("2026-11-15");
+    await page.getByRole("button", { name: "บันทึกการเตือน" }).click();
+    await expect(page.getByText("รายการเตือน: 18 พ.ย. 2569")).toBeVisible();
+  });
+
+  test("in the all view names stay readable at 360px", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: /รายการทั้งหมด/ }).click();
+    const width = await page
+      .getByText("จ่ายค่าเน็ต", { exact: true })
+      .evaluate((el) => el.getBoundingClientRect().width);
+    expect(width).toBeGreaterThan(150);
+  });
+
+  test("paging to another month chooses a day in it", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "ถัดไป" }).click();
+    await expect(page.getByText("รายการเตือน: 1 ธ.ค. 2569")).toBeVisible();
+  });
+
+  test("today stays marked when another day is chosen", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "20 พ.ย. 2569, มีเตือน" }).click();
+    await expect(page.getByRole("button", { name: /^15 พ.ย. 2569/ })).toHaveAttribute(
+      "aria-current",
+      "date",
+    );
+  });
+
+  test("a new reminder for today starts at the next hour", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
+    await expect(page.getByLabel("เวลา")).toHaveValue("11:00");
+  });
+
+  test("a new reminder for another day starts at nine", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "20 พ.ย. 2569, มีเตือน" }).click();
+    await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
+    await expect(page.getByLabel("เวลา")).toHaveValue("09:00");
+  });
+
+  test("the newest finished one comes first", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST([
+        item(1, "เก่า", "2026-10-01T02:00:00.000Z", { status: "done" }),
+        item(2, "ใหม่", "2026-11-01T02:00:00.000Z", { status: "done" }),
+      ]),
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: /รายการทั้งหมด/ }).click();
+    await expect(
+      page.getByRole("list", { name: "รายการเตือน" }).getByRole("listitem").first(),
+    ).toContainText("ใหม่");
   });
 
   test("a tick is taken back, and a refusal is shown", async ({ page }) => {
