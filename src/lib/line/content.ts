@@ -1,3 +1,4 @@
+import { MAX_FILE_BYTES } from "@/lib/file";
 import type { SlipImage } from "@/lib/ocr/provider";
 
 const API_DATA = "https://api-data.line.me/v2/bot";
@@ -6,7 +7,7 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export class ImageError extends Error {
   constructor(
-    readonly reason: "too_large" | "unsupported" | "download_failed",
+    readonly reason: "too_large" | "unsupported" | "download_failed" | "gone",
     message: string,
   ) {
     super(message);
@@ -38,6 +39,30 @@ export async function fetchLineImage(
 
 export function extensionFor(mimeType: string): string {
   return mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+}
+
+/** Download any file message from LINE, for keeping (status only in errors, never the payload). */
+export async function fetchLineFile(
+  accessToken: string,
+  messageId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ bytes: Uint8Array; mimeType: string }> {
+  const res = await fetchImpl(`${API_DATA}/message/${encodeURIComponent(messageId)}/content`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (res.status === 404 || res.status === 410) {
+    throw new ImageError("gone", `LINE content gone: ${res.status}`);
+  }
+  if (!res.ok) throw new ImageError("download_failed", `LINE content failed: ${res.status}`);
+
+  const declared = Number(res.headers.get("content-length") ?? 0);
+  if (declared > MAX_FILE_BYTES) throw new ImageError("too_large", "file too large");
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  if (bytes.byteLength > MAX_FILE_BYTES) throw new ImageError("too_large", "file too large");
+  if (bytes.byteLength === 0) throw new ImageError("download_failed", "empty file");
+  const mimeType = (res.headers.get("content-type") ?? "").split(";")[0]?.trim();
+  return { bytes, mimeType: mimeType || "application/octet-stream" };
 }
 
 export const MAX_AUDIO_BYTES = 2 * 1024 * 1024;

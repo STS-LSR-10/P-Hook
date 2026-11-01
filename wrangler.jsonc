@@ -8,6 +8,7 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS",
   },
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "phook-files" }],
   "keep_vars": true,
   "triggers": { "crons": ["* * * * *", "7 * * * *"] },
   "observability": { "enabled": true },
