@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanNoteBody, noteCapacity, noteTitle } from "./note";
+import { cleanNoteBody, firstUrl, noteCapacity, noteTitle } from "./note";
 
 describe("cleanNoteBody", () => {
   it("keeps the person's lines, trims the edges and the ends of lines, and caps blank runs", () => {
@@ -22,5 +22,18 @@ describe("noteCapacity", () => {
     expect([noteCapacity("free"), noteCapacity("plus"), noteCapacity("ultimate")]).toEqual([
       30, 500, 2000,
     ]);
+  });
+});
+
+describe("firstUrl", () => {
+  it("finds the link in a note", () => {
+    expect(firstUrl("ดูที่ https://example.com/a?b=1 นะ")).toBe("https://example.com/a?b=1");
+  });
+  it("is null with no link", () => expect(firstUrl("ซื้อนม")).toBeNull());
+  it("takes only web links", () => {
+    expect(firstUrl("javascript:alert(1) ftp://x.y")).toBeNull();
+  });
+  it("leaves a closing bracket out", () => {
+    expect(firstUrl("(https://example.com)")).toBe("https://example.com");
   });
 });

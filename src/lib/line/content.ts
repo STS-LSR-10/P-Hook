@@ -65,6 +65,31 @@ export async function fetchLineFile(
   return { bytes, mimeType: mimeType || "application/octet-stream" };
 }
 
+const MAX_PREVIEW_BYTES = 1024 * 1024;
+
+/** LINE's small preview of a picture or video message. Throws when there is none. */
+export async function fetchLinePreview(
+  accessToken: string,
+  messageId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<Uint8Array> {
+  const res = await fetchImpl(
+    `${API_DATA}/message/${encodeURIComponent(messageId)}/content/preview`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(5_000),
+    },
+  );
+  if (!res.ok) throw new ImageError("download_failed", `LINE preview failed: ${res.status}`);
+  const mimeType = (res.headers.get("content-type") ?? "").split(";")[0]?.trim() ?? "";
+  if (!ALLOWED.has(mimeType)) throw new ImageError("unsupported", "unsupported preview type");
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_PREVIEW_BYTES) {
+    throw new ImageError("too_large", "preview out of size");
+  }
+  return bytes;
+}
+
 export const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
 export const MAX_AUDIO_MS = 30_000;
 

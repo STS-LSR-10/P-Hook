@@ -5,6 +5,7 @@ let count = 0;
 const created: string[] = [];
 const updated: { id: string; body: string }[] = [];
 const deleted: string[] = [];
+const linkLists: (boolean | undefined)[] = [];
 let found = true;
 const N = "11111111-1111-4111-8111-111111111111";
 
@@ -20,7 +21,10 @@ vi.mock("@/lib/rate-limit", async (original) => ({
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
 vi.mock("@/lib/note-repo", () => ({
-  listNotes: async () => ({ items: [], hasMore: false }),
+  listNotes: async (_db: unknown, _u: string, o: { links?: boolean }) => {
+    linkLists.push(o.links);
+    return { items: [], hasMore: false };
+  },
   countNotes: async () => count,
   createNote: async (_db: unknown, _u: string, body: string) => {
     created.push(body);
@@ -138,5 +142,14 @@ describe("paging notes", () => {
       req("GET", undefined, `https://app.example.com/api/notes?before=${before}`),
     );
     expect(res.status).toBe(200);
+  });
+});
+
+describe("notes with links", () => {
+  it("asks for them only with links=1", async () => {
+    linkLists.length = 0;
+    await GET(req("GET", undefined, "https://app.example.com/api/notes?links=1"));
+    await GET(req("GET", undefined, "https://app.example.com/api/notes"));
+    expect(linkLists).toEqual([true, false]);
   });
 });

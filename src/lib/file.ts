@@ -24,7 +24,19 @@ export interface FileDto {
   mimeType: string;
   sizeBytes: number;
   createdAt: string;
+  /** A small preview is stored beside the file. */
+  hasThumb: boolean;
 }
+
+/** Which kept files a list shows: pictures, or everything else. */
+export type FileKind = "image" | "file";
+
+/** The types a page may show as a picture. SVG is left out: it can carry a script. */
+const VIEWABLE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+export const isViewableImage = (mimeType: string): boolean => VIEWABLE_TYPES.has(mimeType);
+
+/** The preview of a file in the bucket. */
+export const thumbKey = (r2Key: string): string => `${r2Key}.thumb`;
 
 const EXTENSION_RE = /\.[a-z0-9]{1,10}$/i;
 const BLOCKED_RE = /\.(?:exe|apk|msi|bat|sh)$/i;

@@ -140,6 +140,7 @@ vi.mock("@/lib/file-save", () => ({
         mimeType: "image/png",
         sizeBytes: 10,
         createdAt: "2026-11-01T05:00:00Z",
+        hasThumb: false,
       },
     };
   },
@@ -554,6 +555,7 @@ describe("naming", () => {
       mimeType: "image/png",
       sizeBytes: 1,
       createdAt: "2026-11-01T05:00:00Z",
+      hasThumb: false,
     };
     const { deps, reply } = setup();
     await handleEvent(say("ชื่อไฟล์ รูปบัตร"), deps);
@@ -575,6 +577,7 @@ describe("finding files", () => {
     mimeType: "application/pdf",
     sizeBytes: 10,
     createdAt: "2026-11-01T05:00:00Z",
+    hasThumb: false,
   });
   const note = {
     id: "n1",

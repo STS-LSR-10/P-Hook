@@ -5,6 +5,9 @@ const AUDIENCE = "phook-file";
 
 export const FILE_LINK_TTL_SECONDS = 600;
 
+const VIEW_AUDIENCE = "phook-view";
+const VIEW_TTL_SECONDS = 3600;
+
 const keyOf = (secret: string) => new TextEncoder().encode(secret);
 
 /**
@@ -41,6 +44,41 @@ export async function verifyFileToken(
     });
     if (typeof payload.sub !== "string" || typeof payload.fid !== "string") return null;
     return { userId: payload.sub, fileId: payload.fid };
+  } catch {
+    return null;
+  }
+}
+
+/** Lets one person's page show their own pictures. Good for reading, and for nothing else. */
+export async function signViewToken(
+  userId: string,
+  secret: string,
+  now: Date = new Date(),
+): Promise<string> {
+  const iat = Math.floor(now.getTime() / 1000);
+  return new SignJWT({})
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(userId)
+    .setIssuer(ISSUER)
+    .setAudience(VIEW_AUDIENCE)
+    .setIssuedAt(iat)
+    .setExpirationTime(iat + VIEW_TTL_SECONDS)
+    .sign(keyOf(secret));
+}
+
+export async function verifyViewToken(
+  token: string,
+  secret: string,
+  now: Date = new Date(),
+): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, keyOf(secret), {
+      issuer: ISSUER,
+      audience: VIEW_AUDIENCE,
+      algorithms: ["HS256"],
+      currentDate: now,
+    });
+    return typeof payload.sub === "string" ? payload.sub : null;
   } catch {
     return null;
   }

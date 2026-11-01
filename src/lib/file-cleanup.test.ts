@@ -35,7 +35,7 @@ describe("cleanupFiles", () => {
       order.push(`object:${keys.join()}`);
     });
     await expect(cleanupFiles(db, store, NOW)).resolves.toEqual({ removed: 1 });
-    expect(order).toEqual(["object:k1", "row:f1"]);
+    expect(order).toEqual(["object:k1,k1.thumb", "row:f1"]);
     expect(cutoff?.toISOString()).toBe("2026-11-01T04:00:00.000Z");
   });
 

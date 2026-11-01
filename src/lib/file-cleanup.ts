@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { thumbKey } from "@/lib/file";
 import { dropFileRow, listStalePending, purgeExpiredMedia } from "@/lib/file-repo";
 import type { FileStore } from "@/lib/file-store";
 import { log, safeMessage } from "@/lib/log";
@@ -21,7 +22,7 @@ export async function cleanupFiles(
   const stale = await listStalePending(db, new Date(now.getTime() - STALE_MS));
   for (const file of stale) {
     try {
-      await store.delete([file.r2Key]);
+      await store.delete([file.r2Key, thumbKey(file.r2Key)]);
       await dropFileRow(db, file.userId, file.id);
       removed += 1;
     } catch (error) {

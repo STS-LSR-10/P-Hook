@@ -122,6 +122,47 @@ describe("saveFile", () => {
     expect(reservations[0]?.capacity).toBe(500 * 1024 * 1024);
   });
 
+  it("keeps LINE's small preview beside a picture", async () => {
+    const store = createMemoryStore();
+    const fetchPreview = vi.fn(async () => new Uint8Array([9]));
+    const r = await saveFile(deps({ store, fetchPreview }), user, picture, null);
+    expect(fetchPreview).toHaveBeenCalledWith("m1");
+    expect(store.keys().some((k) => k.endsWith(".thumb"))).toBe(true);
+    expect(ready).toHaveBeenCalledWith(db, "u1", expect.any(String), true);
+    expect(r.ok && r.file.hasThumb).toBe(true);
+  });
+
+  it("a video has a preview too", async () => {
+    const fetchPreview = vi.fn(async () => new Uint8Array([9]));
+    await saveFile(deps({ fetchPreview }), user, { ...picture, kind: "video" }, null);
+    expect(fetchPreview).toHaveBeenCalledOnce();
+  });
+
+  it("a document has none", async () => {
+    const fetchPreview = vi.fn(async () => new Uint8Array([9]));
+    await saveFile(deps({ fetchPreview }), user, doc, null);
+    expect(fetchPreview).not.toHaveBeenCalled();
+  });
+
+  it("a preview that fails still keeps the file", async () => {
+    const store = createMemoryStore();
+    const fetchPreview = async () => {
+      throw new Error("no preview");
+    };
+    const r = await saveFile(deps({ store, fetchPreview }), user, picture, null);
+    expect(r.ok && r.file.hasThumb).toBe(false);
+    expect(ready).toHaveBeenCalledWith(db, "u1", expect.any(String), false);
+    expect(store.keys()).toHaveLength(1);
+  });
+
+  it("takes the preview away when the row could not be finished", async () => {
+    const store = createMemoryStore();
+    ready.mockRejectedValueOnce(new Error("db down"));
+    const fetchPreview = async () => new Uint8Array([9]);
+    await saveFile(deps({ store, fetchPreview }), user, picture, null);
+    expect(store.keys()).toEqual([]);
+  });
+
   it("gives a video an extension from its type", async () => {
     const fetchFile = async () => ({ bytes: new Uint8Array([1]), mimeType: "video/mp4" });
     await saveFile(deps({ fetchFile }), user, { ...picture, kind: "video" }, "งานแต่ง");

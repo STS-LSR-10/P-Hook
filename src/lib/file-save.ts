@@ -7,6 +7,7 @@ import {
   fileDayLimit,
   isBlockedFile,
   MAX_FILE_BYTES,
+  thumbKey,
   withExtensionOf,
   type FileDto,
 } from "@/lib/file";
@@ -27,6 +28,8 @@ export interface SaveDeps {
   now: () => Date;
   store: FileStore | null;
   fetchFile: (messageId: string) => Promise<{ bytes: Uint8Array; mimeType: string }>;
+  /** LINE's small preview of a picture or video. Absent -> files have none. */
+  fetchPreview?: (messageId: string) => Promise<Uint8Array>;
 }
 
 /** The name to keep it under. Whatever it is called, it takes the extension of the real file. */
@@ -41,6 +44,23 @@ function chooseName(
     cleanFileName(media.fileName ?? "") ||
     defaultFileName(media.kind, now);
   return withExtensionOf(name, media.fileName || `file${extensionOfType(mimeType)}`);
+}
+
+/** Store LINE's preview beside the file. A file with no preview is still a kept file. */
+async function savePreview(
+  deps: SaveDeps,
+  media: Omit<RecentMedia, "id">,
+  r2Key: string,
+): Promise<boolean> {
+  const { store, fetchPreview } = deps;
+  if (!store || !fetchPreview || media.kind === "file") return false;
+  try {
+    await store.put(thumbKey(r2Key), await fetchPreview(media.messageId), "image/jpeg");
+    return true;
+  } catch (error) {
+    log.warn("file_preview_failed", { reason: safeMessage(error) });
+    return false;
+  }
 }
 
 /**
@@ -93,7 +113,8 @@ export async function saveFile(
       return { ok: false, reason: "full" };
     }
     await store.put(r2Key, bytes, mimeType);
-    await markFileReady(db, user.id, id);
+    const hasThumb = await savePreview(deps, media, r2Key);
+    await markFileReady(db, user.id, id, hasThumb);
     return {
       ok: true,
       file: {
@@ -102,12 +123,13 @@ export async function saveFile(
         mimeType,
         sizeBytes: bytes.byteLength,
         createdAt: now.toISOString(),
+        hasThumb,
       },
     };
   } catch (error) {
     if (reserved) {
       // the bytes may have landed; a row that stays pending lets the cleanup try again
-      const removed = await store.delete([r2Key]).then(
+      const removed = await store.delete([r2Key, thumbKey(r2Key)]).then(
         () => true,
         () => false,
       );

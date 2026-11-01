@@ -3121,3 +3121,19 @@ describe("stored files (0047)", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("file previews (0048)", () => {
+  it("a file has no preview until it is said to", async () => {
+    const u = await newUser(db, `thumb-${Math.random()}`);
+    await db.query(
+      "select file_reserve(gen_random_uuid(), $1, 'a', 'image/png', 1, gen_random_uuid()::text, 100)",
+      [u],
+    );
+    const r = await one<{ has_thumb: boolean }>(
+      db,
+      "select has_thumb from stored_files where user_id = $1",
+      [u],
+    );
+    expect(r.has_thumb).toBe(false);
+  });
+});

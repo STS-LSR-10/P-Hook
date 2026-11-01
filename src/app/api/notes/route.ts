@@ -26,10 +26,11 @@ export async function GET(request: Request): Promise<Response> {
       before: url.searchParams.get("before") ?? undefined,
     });
     if (!parsed.success) return apiError("คำค้นหรือหน้าที่ขอไม่ถูกต้อง", 400);
+    const links = url.searchParams.get("links") === "1";
 
     const db = getAdminClient();
     const [{ items, hasMore }, count, { plan }] = await Promise.all([
-      listNotes(db, auth.userId, parsed.data),
+      listNotes(db, auth.userId, { ...parsed.data, links }),
       countNotes(db, auth.userId),
       getPlanInfo(db, auth.userId),
     ]);

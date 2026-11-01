@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
-import { cleanFileName, MAX_NAME_LENGTH, withExtensionOf } from "@/lib/file";
+import { cleanFileName, MAX_NAME_LENGTH, thumbKey, withExtensionOf } from "@/lib/file";
 import { dropFileRow, getReadyFile, renameFile } from "@/lib/file-repo";
 import { getFileStore } from "@/lib/file-store";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
@@ -55,7 +55,7 @@ export async function DELETE(request: Request, { params }: Params): Promise<Resp
     if (!file) return apiError(NOT_FOUND, 404);
     const store = await getFileStore();
     if (!store) return apiError("ตอนนี้ระบบเก็บไฟล์ยังไม่พร้อม", 503);
-    await store.delete([file.r2Key]);
+    await store.delete([file.r2Key, thumbKey(file.r2Key)]);
     await dropFileRow(db, auth.userId, id);
     return json({ ok: true });
   });

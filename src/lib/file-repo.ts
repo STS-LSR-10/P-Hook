@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { withExtensionOf, type FileDto, type MediaKind } from "@/lib/file";
+import { withExtensionOf, type FileDto, type FileKind, type MediaKind } from "@/lib/file";
 import { escapeLike } from "@/lib/note-repo";
 
 const WAIT_MS = 5 * 60_000;
@@ -17,14 +17,16 @@ interface FileRow {
   size_bytes: number | string;
   r2_key: string;
   created_at: string;
+  has_thumb?: boolean;
 }
-const COLUMNS = "id,name,mime_type,size_bytes,r2_key,created_at";
+const COLUMNS = "id,name,mime_type,size_bytes,r2_key,created_at,has_thumb";
 const toDto = (r: FileRow): FileDto => ({
   id: r.id,
   name: r.name,
   mimeType: r.mime_type,
   sizeBytes: Number(r.size_bytes),
   createdAt: r.created_at,
+  hasThumb: r.has_thumb === true,
 });
 
 /** Reserve the space and add the row as pending. False when it would pass `capacity`. */
@@ -53,10 +55,15 @@ export async function reserveFile(
   return data === true;
 }
 
-export async function markFileReady(db: SupabaseClient, userId: string, id: string): Promise<void> {
+export async function markFileReady(
+  db: SupabaseClient,
+  userId: string,
+  id: string,
+  hasThumb: boolean,
+): Promise<void> {
   const { error } = await db
     .from("stored_files")
-    .update({ status: "ready" })
+    .update({ status: "ready", has_thumb: hasThumb })
     .eq("id", id)
     .eq("user_id", userId);
   if (error) fail("mark file ready", error);
@@ -89,7 +96,7 @@ export async function getReadyFile(
 export async function listFiles(
   db: SupabaseClient,
   userId: string,
-  options: { q?: string; before?: string; limit?: number } = {},
+  options: { q?: string; before?: string; limit?: number; kind?: FileKind } = {},
 ): Promise<{ items: FileDto[]; hasMore: boolean }> {
   const limit = options.limit ?? 30;
   let query = db
@@ -101,6 +108,8 @@ export async function listFiles(
     .limit(limit + 1);
   const q = options.q?.trim();
   if (q) query = query.ilike("name", `%${escapeLike(q)}%`);
+  if (options.kind === "image") query = query.like("mime_type", "image/%");
+  if (options.kind === "file") query = query.not("mime_type", "like", "image/%");
   if (options.before) query = query.lt("created_at", options.before);
   const { data, error } = await query;
   if (error) fail("list files", error);

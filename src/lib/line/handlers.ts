@@ -375,6 +375,7 @@ export interface HandlerDeps {
   /** Kept files. Absent -> pictures and files behave as they did before the file store. */
   files?: {
     fetchFile: SaveDeps["fetchFile"];
+    fetchPreview?: SaveDeps["fetchPreview"];
     store: SaveDeps["store"];
   };
   /** Voice messages. Absent (no AI key that hears audio) -> a polite "not available" reply. */
@@ -615,7 +616,14 @@ async function readPdf(
 function fileChatDeps(deps: HandlerDeps): FileChatDeps | null {
   const { files } = deps;
   if (!files) return null;
-  return { db: deps.db, now: deps.now, store: files.store, fetchFile: files.fetchFile, pageUrl };
+  return {
+    db: deps.db,
+    now: deps.now,
+    store: files.store,
+    fetchFile: files.fetchFile,
+    fetchPreview: files.fetchPreview,
+    pageUrl,
+  };
 }
 
 /** What sorting a plain message needs from the handler's dependencies. */

@@ -14,6 +14,12 @@ export interface NoteDto {
   updatedAt: string;
 }
 
+const URL_RE = /https?:\/\/[^\s<>"'()]+/i;
+
+/** The first web link in a note. Only http and https, so opening one can never run anything. */
+export const firstUrl = (body: string): string | null =>
+  URL_RE.exec(body)?.[0]?.replace(/[.,;:!?]+$/, "") ?? null;
+
 /** Tidy what was typed: normalised line breaks, no trailing spaces, no blank edges. */
 export function cleanNoteBody(raw: string): string {
   return raw

@@ -11,7 +11,13 @@ import { claimEvent, releaseEvent } from "@/lib/repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createLineClient } from "./client";
 import { getFileStore } from "@/lib/file-store";
-import { fetchLineAudio, fetchLineFile, fetchLineImage, fetchLinePdf } from "./content";
+import {
+  fetchLineAudio,
+  fetchLineFile,
+  fetchLineImage,
+  fetchLinePdf,
+  fetchLinePreview,
+} from "./content";
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 import { ERROR_TEXT, text } from "./messages";
 import { log } from "@/lib/log";
@@ -95,6 +101,7 @@ export async function processEvents(rawEvents: unknown[]): Promise<void> {
   // Kept files live in R2; outside Workers there is no bucket and the chat says so.
   deps.files = {
     fetchFile: (messageId) => fetchLineFile(env.LINE_CHANNEL_ACCESS_TOKEN, messageId),
+    fetchPreview: (messageId) => fetchLinePreview(env.LINE_CHANNEL_ACCESS_TOKEN, messageId),
     store: await getFileStore(),
   };
 

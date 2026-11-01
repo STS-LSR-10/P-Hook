@@ -35,7 +35,7 @@ export async function countNotes(db: SupabaseClient, userId: string): Promise<nu
 export async function listNotes(
   db: SupabaseClient,
   userId: string,
-  options: { q?: string; before?: string; limit?: number } = {},
+  options: { q?: string; before?: string; limit?: number; links?: boolean } = {},
 ): Promise<{ items: NoteDto[]; hasMore: boolean }> {
   const limit = options.limit ?? 30;
   let query = db
@@ -46,6 +46,7 @@ export async function listNotes(
     .limit(limit + 1);
   const q = options.q?.trim();
   if (q) query = query.ilike("body", `%${escapeLike(q)}%`);
+  if (options.links) query = query.or("body.ilike.%http://%,body.ilike.%https://%");
   if (options.before) query = query.lt("created_at", options.before);
   const { data, error } = await query;
   if (error) fail("list notes", error);

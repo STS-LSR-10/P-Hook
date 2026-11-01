@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { fetchLineFile, fetchLinePdf, ImageError, inspectPdf, MAX_PDF_BYTES } from "./content";
+import {
+  fetchLineFile,
+  fetchLinePdf,
+  fetchLinePreview,
+  ImageError,
+  inspectPdf,
+  MAX_PDF_BYTES,
+} from "./content";
 
 const bytes = (s: string) => new TextEncoder().encode(s);
 
@@ -87,5 +94,38 @@ describe("fetchLineFile", () => {
     await expect(fetchLineFile("t", "m", respond(null, { status: 500 }))).rejects.toMatchObject({
       reason: "download_failed",
     });
+  });
+});
+
+describe("fetchLinePreview", () => {
+  it("asks LINE for the preview of the message", async () => {
+    const urls: string[] = [];
+    const f = (async (url: string) => {
+      urls.push(url);
+      return new Response(new Uint8Array([1]), { headers: { "content-type": "image/jpeg" } });
+    }) as unknown as typeof fetch;
+    await expect(fetchLinePreview("t", "m1", f)).resolves.toEqual(new Uint8Array([1]));
+    expect(urls[0]).toBe("https://api-data.line.me/v2/bot/message/m1/content/preview");
+  });
+
+  it("refuses what is not a picture", async () => {
+    const f = (async () =>
+      new Response("<svg>", {
+        headers: { "content-type": "image/svg+xml" },
+      })) as unknown as typeof fetch;
+    await expect(fetchLinePreview("t", "m1", f)).rejects.toThrow();
+  });
+
+  it("refuses a preview over 1 MB", async () => {
+    const f = (async () =>
+      new Response(new Uint8Array(1024 * 1024 + 1), {
+        headers: { "content-type": "image/jpeg" },
+      })) as unknown as typeof fetch;
+    await expect(fetchLinePreview("t", "m1", f)).rejects.toThrow();
+  });
+
+  it("fails on an error from LINE", async () => {
+    const f = (async () => new Response(null, { status: 404 })) as unknown as typeof fetch;
+    await expect(fetchLinePreview("t", "m1", f)).rejects.toThrow();
   });
 });

@@ -6,6 +6,7 @@ import {
   getMediaById,
   getReadyFile,
   listFiles,
+  markFileReady,
   rememberMedia,
   renameFile,
   reserveFile,
@@ -34,6 +35,8 @@ function fakeDb(result: { data?: unknown; count?: number } = {}) {
     lt: note("lt"),
     lte: note("lte"),
     in: note("in"),
+    like: note("like"),
+    not: note("not"),
     ilike: note("ilike"),
     order: note("order"),
     limit: note("limit"),
@@ -91,6 +94,29 @@ describe("stored files", () => {
     expect(hasMore).toBe(false);
     expect(has(calls, "eq", "status", "ready")).toBe(true);
     expect(has(calls, "ilike", "name", "%50\\%%")).toBe(true);
+  });
+
+  it("tells whether a file has a preview", async () => {
+    const { db } = fakeDb({ data: { ...row, has_thumb: true } });
+    await expect(getReadyFile(db, "u1", "f1")).resolves.toMatchObject({ hasThumb: true });
+  });
+
+  it("lists pictures only", async () => {
+    const { db, calls } = fakeDb({ data: [] });
+    await listFiles(db, "u1", { kind: "image" });
+    expect(has(calls, "like", "mime_type", "image/%")).toBe(true);
+  });
+
+  it("lists everything but pictures", async () => {
+    const { db, calls } = fakeDb({ data: [] });
+    await listFiles(db, "u1", { kind: "file" });
+    expect(has(calls, "not", "mime_type", "like", "image/%")).toBe(true);
+  });
+
+  it("marks a file ready with its preview", async () => {
+    const { db, calls } = fakeDb();
+    await markFileReady(db, "u1", "f1", true);
+    expect(has(calls, "update", { status: "ready", has_thumb: true })).toBe(true);
   });
 
   it("sums the space in the database, so no row limit can cut it short", async () => {
