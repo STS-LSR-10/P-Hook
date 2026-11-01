@@ -103,6 +103,7 @@ async function moveReminder(
       remindAt: parsed.remindAt,
       repeat,
       timeDefaulted: false,
+      rolledToTomorrow: parsed.rolledToTomorrow,
       listUrl: deps.listUrl,
     }),
   ];

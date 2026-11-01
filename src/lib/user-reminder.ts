@@ -29,7 +29,15 @@ export const REPEAT_LABEL: Record<Repeat, string> = {
 };
 
 export type ReminderParse =
-  | { ok: true; body: string; remindAt: Date; repeat: Repeat | null; timeDefaulted: boolean }
+  | {
+      ok: true;
+      body: string;
+      remindAt: Date;
+      repeat: Repeat | null;
+      timeDefaulted: boolean;
+      /** A time alone had already gone by today, so it was set for tomorrow. */
+      rolledToTomorrow: boolean;
+    }
   | { ok: false; reason: "no_text" | "no_time" | "past" | "too_far" };
 
 const WEEKDAYS: Record<string, number> = {
@@ -283,7 +291,7 @@ export function parseReminder(input: string, now: Date): ReminderParse {
   if (relativeMs !== null) {
     const remindAt = new Date(Math.floor((now.getTime() + relativeMs) / 60_000) * 60_000);
     if (remindAt.getTime() > maxAt) return { ok: false, reason: "too_far" };
-    return { ok: true, body, remindAt, repeat, timeDefaulted: false };
+    return { ok: true, body, remindAt, repeat, timeDefaulted: false, rolledToTomorrow: false };
   }
 
   const clock = timed.clock;
@@ -302,6 +310,7 @@ export function parseReminder(input: string, now: Date): ReminderParse {
   const future = (t: Date) => t.getTime() > now.getTime() + 30_000;
   const explicitDay = Boolean(dated.date) || Boolean(clock?.today);
   let remindAt: Date | null = null;
+  let rolledToTomorrow = false;
 
   if (!date || clock?.today) {
     // a time alone (or only "ทุกวัน"): today if it is still ahead, else tomorrow
@@ -311,6 +320,7 @@ export function parseReminder(input: string, now: Date): ReminderParse {
     else {
       const n = addDays(today.year, today.month, today.day, 1);
       remindAt = at(n.year, n.month, n.day);
+      rolledToTomorrow = clock !== null && !repeat;
     }
   } else if (date.kind === "offset") {
     const n = addDays(today.year, today.month, today.day, date.days);
@@ -353,7 +363,7 @@ export function parseReminder(input: string, now: Date): ReminderParse {
   }
   if (!remindAt) return { ok: false, reason: explicitDay ? "past" : "no_time" };
   if (remindAt.getTime() > maxAt) return { ok: false, reason: "too_far" };
-  return { ok: true, body, remindAt, repeat, timeDefaulted: !clock };
+  return { ok: true, body, remindAt, repeat, timeDefaulted: !clock, rolledToTomorrow };
 }
 
 /** "พรุ่งนี้ 28 ต.ค. 2569 09:00 · ทุกวัน": how a reminder is shown back to the person. */
@@ -373,13 +383,13 @@ export function moveReminderTime(when: string, current: Date, now: Date): Remind
   if (clock && !date && !clock.today) {
     const hour = clock.midnight ? 24 : clock.hour;
     const remindAt = fromBangkok(kept.year, kept.month, kept.day, hour, clock.minute);
-    return remindAt > now ? { ...parsed, remindAt } : parsed;
+    return remindAt > now ? { ...parsed, remindAt, rolledToTomorrow: false } : parsed;
   }
   if (date && !clock) {
     const day = bangkokParts(parsed.remindAt);
     const remindAt = fromBangkok(day.year, day.month, day.day, kept.hour, kept.minute);
     if (remindAt <= now) return { ok: false, reason: "past" };
-    return { ...parsed, remindAt, timeDefaulted: false };
+    return { ...parsed, remindAt, timeDefaulted: false, rolledToTomorrow: false };
   }
   return parsed;
 }

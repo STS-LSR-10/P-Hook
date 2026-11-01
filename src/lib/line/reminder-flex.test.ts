@@ -26,6 +26,11 @@ describe("reminder card", () => {
     expect(json()).not.toContain("ใช้ 09:00");
   });
 
+  it("says when the time had passed, so it was set for tomorrow", () => {
+    expect(json({ rolledToTomorrow: true })).toContain("เลยตั้งเป็นพรุ่งนี้");
+    expect(json()).not.toContain("เลยตั้งเป็นพรุ่งนี้");
+  });
+
   it("links to the reminders page only when it is known", () => {
     expect(json()).not.toContain('"type":"uri"');
     expect(json({ listUrl: "https://liff.line.me/x/reminders" })).toContain(

@@ -327,6 +327,25 @@ describe("plain messages", () => {
   });
 });
 
+describe("a reminder for a time that has passed today", () => {
+  it("the card says it was set for tomorrow", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("เตือน กินยา 8 โมง"), deps);
+    expect(JSON.stringify(sent(reply))).toContain("เลยตั้งเป็นพรุ่งนี้");
+  });
+
+  it("a moved reminder says so too", async () => {
+    reminders = [{ ...reminder(ID, "กินยา"), remindAt: "2026-11-01T01:00:00Z" }];
+    moved = reminders[0] ?? null;
+    route.mockResolvedValue(
+      decision({ intent: "reminder_edit", reminderQuery: "กินยา", whenText: "7 โมง" }),
+    );
+    const { deps, reply } = setup();
+    await handleEvent(say("เลื่อนเตือนกินยาเป็น 7 โมง"), deps);
+    expect(JSON.stringify(sent(reply))).toContain("เลยตั้งเป็นพรุ่งนี้");
+  });
+});
+
 describe("moving a reminder", () => {
   const edit = decision({
     intent: "reminder_edit",

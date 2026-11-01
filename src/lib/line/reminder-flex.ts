@@ -9,6 +9,8 @@ export interface ReminderCardInput {
   repeat: Repeat | null;
   /** No time was given, so the usual morning time was used. */
   timeDefaulted: boolean;
+  /** A time alone had already gone by today, so it was set for tomorrow. */
+  rolledToTomorrow?: boolean;
   /** The LIFF reminders page (the "ดูเตือนทั้งหมด" button is left out without it). */
   listUrl?: string;
 }
@@ -53,6 +55,17 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
             weight: "bold",
             wrap: true,
           },
+          ...(input.rolledToTomorrow
+            ? [
+                {
+                  type: "text",
+                  text: "เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)",
+                  size: "xs",
+                  color: COLOR.muted,
+                  wrap: true,
+                },
+              ]
+            : []),
           ...(input.timeDefaulted
             ? [
                 {

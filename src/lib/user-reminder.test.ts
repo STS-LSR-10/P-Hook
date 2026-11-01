@@ -174,6 +174,26 @@ describe("reminderCapacity and describeReminder", () => {
   });
 });
 
+describe("a time that has already gone by today", () => {
+  it("moves to tomorrow and says so", () => {
+    const r = ok("กินยา 8 โมง");
+    expect(bkk(r.remindAt)).toBe("2026-10-29 08:00");
+    expect(r.rolledToTomorrow).toBe(true);
+  });
+
+  it("is not flagged while it is still ahead", () => {
+    expect(ok("กินยา 11 โมง").rolledToTomorrow).toBe(false);
+  });
+
+  it("is not flagged when the day was named", () => {
+    expect(ok("พรุ่งนี้ กินยา 8 โมง").rolledToTomorrow).toBe(false);
+  });
+
+  it("is not flagged on a repeat, which simply starts tomorrow", () => {
+    expect(ok("ทุกวัน กินยา 8 โมง").rolledToTomorrow).toBe(false);
+  });
+});
+
 describe("moveReminderTime", () => {
   const SUNDAY_NOON = new Date("2026-11-01T05:00:00Z");
   const at = (iso: string, when: string) => moveReminderTime(when, new Date(iso), SUNDAY_NOON);
@@ -201,6 +221,13 @@ describe("moveReminderTime", () => {
 
   it("moves on to the next time when the kept day has passed for that time", () => {
     expect(time(at("2026-11-01T01:00:00Z", "7 โมง"))).toBe("2026-11-02T00:00:00.000Z");
+  });
+
+  it("flags only a move that rolled over", () => {
+    const kept = at("2026-11-05T01:00:00Z", "3 ทุ่ม");
+    expect(kept.ok && kept.rolledToTomorrow).toBe(false);
+    const rolled = at("2026-11-01T01:00:00Z", "7 โมง");
+    expect(rolled.ok && rolled.rolledToTomorrow).toBe(true);
   });
 
   it("midnight is the end of the kept day", () => {

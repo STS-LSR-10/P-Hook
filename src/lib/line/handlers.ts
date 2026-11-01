@@ -2262,6 +2262,7 @@ async function runCommand(
           remindAt: parsed.remindAt,
           repeat: parsed.repeat,
           timeDefaulted: parsed.timeDefaulted,
+          rolledToTomorrow: parsed.rolledToTomorrow,
           listUrl: pageUrl("/reminders"),
         }),
       ];
