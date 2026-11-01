@@ -44,7 +44,7 @@ function fail(message: string): never {
 }
 
 async function renderImage(): Promise<Buffer> {
-  // the picture, cut to the menu's proportions and brought to 2500x1686 (LINE takes up to 1 MB)
+  // the picture, cut to the menu's proportions and brought to its size (LINE takes up to 1 MB)
   const jpg = await sharp(resolve(ART_FILE))
     .extract({ left: 0, top: ART_CROP.top, width: ART_WIDTH, height: ART_CROP.height })
     .resize(RICH_MENU_WIDTH, RICH_MENU_HEIGHT, { fit: "fill", kernel: "lanczos3" })

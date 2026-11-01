@@ -30,7 +30,7 @@ describe("the Rich Menu tap areas", () => {
     expect(TILES).toHaveLength(10);
   });
 
-  it("stay inside the 2500x1686 menu and have a size", () => {
+  it("stay inside the 2500x1555 menu and have a size", () => {
     for (const { bounds: b, key } of TILES) {
       expect(b.width, key).toBeGreaterThan(100);
       expect(b.height, key).toBeGreaterThan(100);
@@ -54,7 +54,7 @@ describe("the Rich Menu tap areas", () => {
 
   it("a box of the picture is carried over with the same crop and scale", () => {
     // the whole picture is the whole menu
-    expect(toMenuBounds([0, 0, 2000, 1342])).toEqual({
+    expect(toMenuBounds([0, 0, 2000, 1244])).toEqual({
       x: 0,
       y: 0,
       width: RICH_MENU_WIDTH,
