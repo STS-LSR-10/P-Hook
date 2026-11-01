@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const querySchema = z.object({
   q: z.string().trim().max(100).optional(),
-  before: z.string().datetime().optional(),
+  before: z.string().datetime({ offset: true }).optional(),
 });
 
 /** GET /api/files?q=&before= — the person's files, newest first, and the space used. */

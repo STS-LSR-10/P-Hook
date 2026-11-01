@@ -2,11 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import {
   fileUsage,
+  forgetMedia,
+  getMediaById,
   getReadyFile,
   listFiles,
   rememberMedia,
   renameFile,
   reserveFile,
+  hasFiles,
   takeFileWait,
   takeMediaById,
   takeRecentMedia,
@@ -90,16 +93,23 @@ describe("stored files", () => {
     expect(has(calls, "ilike", "name", "%50\\%%")).toBe(true);
   });
 
-  it("counts every row in the space used, pending too", async () => {
-    const { db, calls } = fakeDb({ data: [{ size_bytes: 5 }, { size_bytes: "7" }] });
+  it("sums the space in the database, so no row limit can cut it short", async () => {
+    const { db, calls } = fakeDb({ data: "12" });
     await expect(fileUsage(db, "u1")).resolves.toBe(12);
-    expect(has(calls, "eq", "status", "ready")).toBe(false);
+    expect(calls[0]?.[1]).toBe("file_usage");
   });
 
   it("renames only their own file", async () => {
     const { db, calls } = fakeDb({ data: { id: "f1" } });
     await expect(renameFile(db, "u1", "f1", "b")).resolves.toBe(true);
     expect(has(calls, "eq", "user_id", "u1")).toBe(true);
+  });
+});
+
+describe("hasFiles", () => {
+  it("counts without reading every row", async () => {
+    const { db } = fakeDb({ count: 2 });
+    await expect(hasFiles(db, "u1")).resolves.toBe(true);
   });
 });
 
@@ -131,22 +141,40 @@ describe("recent media", () => {
     });
   });
 
-  it("is taken oldest first, at most 5, and only once", async () => {
+  it("takes the newest 5, and hands them back oldest first, only once", async () => {
+    const row = (id: string, at: string) => ({
+      id,
+      message_id: id,
+      kind: "image",
+      file_name: null,
+      file_size: null,
+      created_at: at,
+    });
     const { db, calls } = fakeDb({
-      data: [
-        {
-          id: "r1",
-          message_id: "m1",
-          kind: "image",
-          file_name: null,
-          file_size: null,
-        },
-      ],
+      data: [row("b", "2026-11-01T05:02:00Z"), row("a", "2026-11-01T05:01:00Z")],
     });
     const taken = await takeRecentMedia(db, "u1", NOW);
-    expect(taken[0]).toMatchObject({ id: "r1", messageId: "m1" });
+    expect(taken.map((t) => t.id)).toEqual(["a", "b"]);
     expect(has(calls, "delete")).toBe(true);
     expect(has(calls, "gt", "expires_at", NOW.toISOString())).toBe(true);
+    expect(has(calls, "order", "created_at", { ascending: false })).toBe(true);
+  });
+
+  it("can be looked at without being taken", async () => {
+    const { db, calls } = fakeDb({
+      data: { id: "r1", message_id: "m", kind: "file", file_name: "a.pdf", file_size: 1 },
+    });
+    await expect(getMediaById(db, "u1", "r1", NOW)).resolves.toMatchObject({ messageId: "m" });
+    expect(has(calls, "delete")).toBe(false);
+    expect(has(calls, "eq", "user_id", "u1")).toBe(true);
+  });
+
+  it("can be forgotten by its owner", async () => {
+    const { db, calls } = fakeDb();
+    await forgetMedia(db, "u1", "r1");
+    expect(has(calls, "delete")).toBe(true);
+    expect(has(calls, "eq", "user_id", "u1")).toBe(true);
+    expect(has(calls, "eq", "id", "r1")).toBe(true);
   });
 
   it("is taken by id only by its owner", async () => {

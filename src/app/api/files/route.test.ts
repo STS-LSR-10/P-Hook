@@ -86,6 +86,12 @@ describe("GET /api/files", () => {
     });
   });
 
+  it("pages from a time as the database writes it", async () => {
+    const before = encodeURIComponent("2026-11-01T05:00:00.123456+00:00");
+    const res = await GET(new Request(`https://app.example.com/api/files?before=${before}`));
+    expect(res.status).toBe(200);
+  });
+
   it("needs a session", async () => {
     signedIn = false;
     const res = await GET(new Request("https://app.example.com/api/files"));

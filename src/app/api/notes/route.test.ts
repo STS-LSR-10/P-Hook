@@ -130,3 +130,13 @@ describe("PATCH / DELETE /api/notes/:id", () => {
     expect((await PATCH(req("PATCH", { body: " " }), params)).status).toBe(400);
   });
 });
+
+describe("paging notes", () => {
+  it("accepts a time as the database writes it", async () => {
+    const before = encodeURIComponent("2026-11-01T05:00:00.123456+00:00");
+    const res = await GET(
+      req("GET", undefined, `https://app.example.com/api/notes?before=${before}`),
+    );
+    expect(res.status).toBe(200);
+  });
+});

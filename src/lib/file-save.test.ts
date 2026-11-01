@@ -12,6 +12,7 @@ const reservations: Record<string, unknown>[] = [];
 const refund = vi.fn(async () => undefined);
 const take = vi.fn(async () => dayLeft);
 const drop = vi.fn(async () => undefined);
+const ready = vi.fn(async () => void order.push("ready"));
 
 vi.mock("@/lib/file-repo", () => ({
   reserveFile: async (_db: unknown, input: Record<string, unknown>) => {
@@ -19,7 +20,7 @@ vi.mock("@/lib/file-repo", () => ({
     reservations.push(input);
     return reserved;
   },
-  markFileReady: async () => void order.push("ready"),
+  markFileReady: (...a: unknown[]) => ready(...(a as [])),
   dropFileRow: (...a: unknown[]) => drop(...(a as [])),
 }));
 vi.mock("@/lib/usage", async (original) => ({
@@ -71,7 +72,11 @@ describe("saveFile", () => {
     await saveFile(deps(), user, picture, "รูปบัตร");
     await saveFile(deps(), user, doc, null);
     await saveFile(deps(), user, picture, null);
-    expect(reservations.map((r) => r.name)).toEqual(["รูปบัตร", "a.pdf", "รูป 1 พ.ย. 2569 12:00"]);
+    expect(reservations.map((r) => r.name)).toEqual([
+      "รูปบัตร.png",
+      "a.pdf",
+      "รูป 1 พ.ย. 2569 12:00.png",
+    ]);
   });
 
   it("keeps the extension of the real file when given a name", async () => {
@@ -115,6 +120,35 @@ describe("saveFile", () => {
     reserved = false;
     await expect(saveFile(deps(), user, doc, null)).resolves.toEqual({ ok: false, reason: "full" });
     expect(reservations[0]?.capacity).toBe(500 * 1024 * 1024);
+  });
+
+  it("gives a video an extension from its type", async () => {
+    const fetchFile = async () => ({ bytes: new Uint8Array([1]), mimeType: "video/mp4" });
+    await saveFile(deps({ fetchFile }), user, { ...picture, kind: "video" }, "งานแต่ง");
+    expect(reservations[0]?.name).toBe("งานแต่ง.mp4");
+  });
+
+  it("removes the object when the row could not be finished", async () => {
+    const store = createMemoryStore();
+    ready.mockRejectedValueOnce(new Error("db down"));
+    const r = await saveFile(deps({ store }), user, picture, null);
+    expect(r).toEqual({ ok: false, reason: "failed" });
+    expect(store.keys()).toEqual([]);
+    expect(drop).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the pending row when the object cannot be removed, for the cleanup", async () => {
+    const store: FileStore = {
+      ...createMemoryStore(),
+      put: async () => {
+        throw new Error("r2 down");
+      },
+      delete: async () => {
+        throw new Error("r2 down");
+      },
+    };
+    await saveFile(deps({ store }), user, picture, null);
+    expect(drop).not.toHaveBeenCalled();
   });
 
   it("drops the row when the write fails", async () => {

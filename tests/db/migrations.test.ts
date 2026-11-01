@@ -3084,6 +3084,14 @@ describe("stored files (0047)", () => {
     expect((await reserve(b, 90)).ok).toBe(true);
   });
 
+  it("file_usage sums every row of the person", async () => {
+    const u = await newUser(db, `file-sum-${Math.random()}`);
+    await reserve(u, 30);
+    await reserve(u, 20);
+    const r = await one<{ n: string }>(db, "select file_usage($1)::text as n", [u]);
+    expect(r.n).toBe("50");
+  });
+
   it("keeps every table server only", async () => {
     const r = await rows<{ relname: string; on: boolean; n: number }>(
       db,

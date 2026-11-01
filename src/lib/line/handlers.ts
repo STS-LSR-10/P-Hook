@@ -152,6 +152,7 @@ import { needsRouter } from "@/lib/ai/route-text";
 import {
   handleFilePick,
   handleIncomingFile,
+  keepOffer,
   offerToKeep,
   runFileList,
   runFileRename,
@@ -160,7 +161,7 @@ import {
   saveWaitingFile,
   type FileChatDeps,
 } from "./file-handlers";
-import { rememberMedia, takeFileWait } from "@/lib/file-repo";
+import { forgetMedia, rememberMedia, takeFileWait } from "@/lib/file-repo";
 import type { SaveDeps } from "@/lib/file-save";
 import { askAboutSecret, handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
@@ -416,7 +417,9 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
           : isAudio
             ? (["chat_voice", LIMITS.chatVoice] as const)
             : isFile
-              ? (["chat_pdf", LIMITS.chatPdf] as const)
+              ? deps.files
+                ? (["chat_file", LIMITS.chatFile] as const)
+                : (["chat_pdf", LIMITS.chatPdf] as const)
               : (["chat", LIMITS.chat] as const);
     const result = await deps.limit(bucket, lineUserId, rule);
     if (!result.allowed) {
@@ -468,11 +471,12 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
           } else if (keep && files) {
             await reply(await saveWaitingFile(files, user, media, keep.name));
           } else {
-            if (files) {
-              await rememberMedia(deps.db, user.id, media, deps.now()).catch((error: unknown) =>
-                log.warn("remember_media_failed", { reason: safeMessage(error) }),
-              );
-            }
+            const remembered = files
+              ? await rememberMedia(deps.db, user.id, media, deps.now()).catch((error: unknown) => {
+                  log.warn("remember_media_failed", { reason: safeMessage(error) });
+                  return null;
+                })
+              : null;
             await reply(
               await handleSlipImage(
                 {
@@ -483,7 +487,13 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
                   editUrl: (txId) => pageUrl(`/transactions?edit=${txId}`),
                   logoUrl: appBaseUrl() ? `${appBaseUrl()}/success-logo.png?v=2` : undefined,
                   extras: (made) => receiptCardExtras(deps, user, made),
-                  onNotSlip: files ? () => offerToKeep(files, user, media) : undefined,
+                  onNotSlip: remembered ? async () => keepOffer(remembered) : undefined,
+                  onRecorded: remembered
+                    ? () =>
+                        forgetMedia(deps.db, user.id, remembered).catch((error: unknown) =>
+                          log.warn("forget_media_failed", { reason: safeMessage(error) }),
+                        )
+                    : undefined,
                 },
                 user,
                 event.message.id,
@@ -2485,8 +2495,11 @@ async function handlePostback(
     const id = params.get("id") ?? "";
     const files = fileChatDeps(deps);
     if (!files || !UUID_RE.test(id)) return [text(FILE_EXPIRED_TEXT)];
-    return handleFilePick(files, user, action, id, (media) =>
-      readPdf(
+    return handleFilePick(files, user, action, id, async (media) => {
+      // a reading is a paid AI call, so this is where the limit on them belongs
+      const limit = await deps.limit?.("chat_pdf", user.line_user_id, LIMITS.chatPdf);
+      if (limit && !limit.allowed) return [text(TOO_MANY_MESSAGES_TEXT)];
+      return readPdf(
         {
           id: media.messageId,
           fileName: media.fileName ?? undefined,
@@ -2495,8 +2508,8 @@ async function handlePostback(
         user,
         deps,
         user.line_user_id,
-      ),
-    );
+      );
+    });
   }
   // The buttons under a message the AI was not sure about.
   if (action === "irp") {

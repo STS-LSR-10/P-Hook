@@ -49,6 +49,19 @@ export function withExtensionOf(name: string, source: string): string {
   return extension && !EXTENSION_RE.test(name) ? cleanFileName(`${name}${extension}`) : name;
 }
 
+const TYPE_EXTENSION: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/heic": ".heic",
+  "video/mp4": ".mp4",
+  "video/quicktime": ".mov",
+};
+
+/** LINE gives pictures and videos no file name, so their extension comes from the type. */
+export const extensionOfType = (mimeType: string): string => TYPE_EXTENSION[mimeType] ?? "";
+
 const KIND_LABEL: Record<MediaKind, string> = { image: "รูป", video: "วิดีโอ", file: "ไฟล์" };
 
 /** What a file is called until it gets a name: "รูป 1 พ.ย. 2569 19:30". */

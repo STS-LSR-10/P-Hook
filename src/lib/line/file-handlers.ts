@@ -2,6 +2,7 @@ import { fileCapacity, fileDayLimit, formatBytes, isBlockedFile, cleanFileName }
 import type { FileDto } from "@/lib/file";
 import {
   fileUsage,
+  getMediaById,
   listFiles,
   rememberMedia,
   renameLatestFile,
@@ -129,14 +130,18 @@ export function saveWaitingFile(
   return saveAll(deps, user, [{ media, name }]);
 }
 
+/** The question for a file already remembered. */
+export const keepOffer = (id: string): LineMessage[] => [
+  buttons(FILE_ASK_KEEP_TEXT, [[LABEL_KEEP, `a=fsv&id=${id}`]]),
+];
+
 /** Remember it and ask. Nothing is kept, and no AI is called, until a button is tapped. */
 export async function offerToKeep(
   deps: FileChatDeps,
   user: UserRow,
   media: Media,
 ): Promise<LineMessage[]> {
-  const id = await rememberMedia(deps.db, user.id, media, deps.now());
-  return [buttons(FILE_ASK_KEEP_TEXT, [[LABEL_KEEP, `a=fsv&id=${id}`]])];
+  return keepOffer(await rememberMedia(deps.db, user.id, media, deps.now()));
 }
 
 /** A document in the chat: a PDF may also be read for its entries, which costs an AI call. */
@@ -219,7 +224,10 @@ export async function runFileRename(
   return [text(file ? fileRenamedText(file.name) : FILE_NOT_FOUND_TEXT)];
 }
 
-/** The buttons of a file. The file is taken once, so a second tap does nothing. */
+/**
+ * The buttons of a file. Keeping takes it, so a second tap does nothing; reading leaves it, because
+ * the plan may refuse the reading and the file can still be kept.
+ */
 export async function handleFilePick(
   deps: FileChatDeps,
   user: UserRow,
@@ -227,7 +235,12 @@ export async function handleFilePick(
   id: string,
   readPdf: (media: RecentMedia) => Promise<LineMessage[]>,
 ): Promise<LineMessage[]> {
-  const media = await takeMediaById(deps.db, user.id, id, deps.now());
+  const media = await (action === "frd" ? getMediaById : takeMediaById)(
+    deps.db,
+    user.id,
+    id,
+    deps.now(),
+  );
   if (!media) return [text(FILE_EXPIRED_TEXT)];
   if (action === "frd") return readPdf(media);
   return saveAll(deps, user, [{ media, name: null }]);

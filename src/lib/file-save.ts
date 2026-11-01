@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   cleanFileName,
   defaultFileName,
+  extensionOfType,
   fileCapacity,
   fileDayLimit,
   isBlockedFile,
@@ -28,11 +29,18 @@ export interface SaveDeps {
   fetchFile: (messageId: string) => Promise<{ bytes: Uint8Array; mimeType: string }>;
 }
 
-/** The name to keep it under. A typed name takes the extension of the real file. */
-function chooseName(media: Omit<RecentMedia, "id">, given: string | null, now: Date): string {
-  const name = cleanFileName(given ?? "");
-  if (!name) return cleanFileName(media.fileName ?? "") || defaultFileName(media.kind, now);
-  return withExtensionOf(name, media.fileName ?? "");
+/** The name to keep it under. Whatever it is called, it takes the extension of the real file. */
+function chooseName(
+  media: Omit<RecentMedia, "id">,
+  given: string | null,
+  mimeType: string,
+  now: Date,
+): string {
+  const name =
+    cleanFileName(given ?? "") ||
+    cleanFileName(media.fileName ?? "") ||
+    defaultFileName(media.kind, now);
+  return withExtensionOf(name, media.fileName || `file${extensionOfType(mimeType)}`);
 }
 
 /**
@@ -66,11 +74,11 @@ export async function saveFile(
 
   const giveBack = () => refundUsage(db, user.id, "file_save", day).catch(() => undefined);
   const id = crypto.randomUUID();
+  const r2Key = `u/${user.id}/${id}`;
   let reserved = false;
   try {
     const { bytes, mimeType } = await deps.fetchFile(media.messageId);
-    const r2Key = `u/${user.id}/${id}`;
-    const name = chooseName(media, given, now);
+    const name = chooseName(media, given, mimeType, now);
     reserved = await reserveFile(db, {
       id,
       userId: user.id,
@@ -97,7 +105,14 @@ export async function saveFile(
       },
     };
   } catch (error) {
-    if (reserved) await dropFileRow(db, user.id, id).catch(() => undefined);
+    if (reserved) {
+      // the bytes may have landed; a row that stays pending lets the cleanup try again
+      const removed = await store.delete([r2Key]).then(
+        () => true,
+        () => false,
+      );
+      if (removed) await dropFileRow(db, user.id, id).catch(() => undefined);
+    }
     await giveBack();
     if (error instanceof ImageError && error.reason === "gone") {
       return { ok: false, reason: "gone" };

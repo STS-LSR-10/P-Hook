@@ -16,6 +16,7 @@ import {
   FILE_NOT_FOUND_TEXT,
   FILE_SEND_NOW_TEXT,
   FILE_VIDEO_ELSEWHERE_TEXT,
+  TOO_MANY_MESSAGES_TEXT,
   fileFullText,
   fileNotFoundText,
 } from "./messages";
@@ -25,6 +26,10 @@ let photoWait: { tx_id: string; expired: boolean } | null = null;
 let fileWait: { name: string | null } | null = null;
 let recent: RecentMedia[] = [];
 let byId: RecentMedia | null = null;
+let peeked: RecentMedia | null = null;
+let limited = "";
+const forgotten: string[] = [];
+const limitCalls: string[] = [];
 let failure: SaveFailure | null = null;
 let latest: FileDto | null = null;
 let found: FileDto[] = [];
@@ -93,6 +98,8 @@ vi.mock("@/lib/file-repo", () => ({
     recent = [];
     return r;
   },
+  forgetMedia: async (_db: unknown, _u: string, id: string) => void forgotten.push(id),
+  getMediaById: async () => peeked,
   takeMediaById: async () => {
     const r = byId;
     byId = null;
@@ -166,7 +173,10 @@ function setup() {
     reply,
     getProfile: async () => null,
     now: () => new Date("2026-11-01T05:00:00Z"),
-    limit: async () => ({ allowed: true, hits: 1, limit: 30 }),
+    limit: async (bucket) => {
+      limitCalls.push(bucket);
+      return { allowed: bucket !== limited, hits: 1, limit: 30 };
+    },
     slip: {
       fetchImage: async () => ({ bytes: new Uint8Array(1), mimeType: "image/png" }),
       ocr: { name: "o", extract: async () => ({}) },
@@ -210,6 +220,10 @@ beforeEach(() => {
   fileWait = null;
   recent = [];
   byId = null;
+  peeked = null;
+  limited = "";
+  forgotten.length = 0;
+  limitCalls.length = 0;
   failure = null;
   latest = null;
   found = [];
@@ -261,6 +275,25 @@ describe("a picture in the chat", () => {
     expect(buttons(reply)[0]?.data).toBe(`a=fsv&id=${ID}`);
   });
 
+  it("offering to keep it does not bring back a file already taken", async () => {
+    handleSlipImage.mockImplementation(async (d: { onNotSlip?: () => Promise<unknown[]> }) =>
+      d.onNotSlip ? d.onNotSlip() : [],
+    );
+    const { deps } = setup();
+    await handleEvent(picture, deps);
+    expect(remembered).toHaveLength(1);
+  });
+
+  it("a slip that was recorded is forgotten, so เก็บไว้ does not keep it again", async () => {
+    handleSlipImage.mockImplementation(async (d: { onRecorded?: () => Promise<void> }) => {
+      await d.onRecorded?.();
+      return [{ type: "text", text: "slip read" }];
+    });
+    const { deps } = setup();
+    await handleEvent(picture, deps);
+    expect(forgotten).toEqual([ID]);
+  });
+
   it("a saved picture says how to name it", async () => {
     fileWait = { name: null };
     const { deps, reply } = setup();
@@ -280,8 +313,44 @@ describe("a file in the chat", () => {
     ]);
   });
 
+  it("a document counts as a file arriving, not as a paid reading", async () => {
+    const { deps } = setup();
+    await handleEvent(fileEvent("งาน.docx"), deps);
+    expect(limitCalls).toEqual(["chat_file"]);
+  });
+
+  it("reading counts against the paid limit", async () => {
+    peeked = { id: ID, messageId: "f1", kind: "file", fileName: "งบ.pdf", fileSize: 100 };
+    const { deps } = setup();
+    await handleEvent(tap(`a=frd&id=${ID}`), deps);
+    expect(limitCalls).toContain("chat_pdf");
+  });
+
+  it("over the paid limit reading stops, and the file stays", async () => {
+    peeked = { id: ID, messageId: "f1", kind: "file", fileName: "งบ.pdf", fileSize: 100 };
+    limited = "chat_pdf";
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=frd&id=${ID}`), deps);
+    expect(handlePdfMessage).not.toHaveBeenCalled();
+    expect(said(reply)).toBe(TOO_MANY_MESSAGES_TEXT);
+  });
+
+  it("reading leaves the file, so it can still be kept", async () => {
+    peeked = { id: ID, messageId: "f1", kind: "file", fileName: "งบ.pdf", fileSize: 100 };
+    byId = peeked;
+    const { deps } = setup();
+    await handleEvent(tap(`a=frd&id=${ID}`), deps);
+    expect(byId).not.toBeNull();
+  });
+
+  it("reading from a stale button says so", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=frd&id=${ID}`), deps);
+    expect(said(reply)).toBe(FILE_EXPIRED_TEXT);
+  });
+
   it("reading a PDF from its button", async () => {
-    byId = { id: ID, messageId: "f1", kind: "file", fileName: "งบ.pdf", fileSize: 100 };
+    peeked = { id: ID, messageId: "f1", kind: "file", fileName: "งบ.pdf", fileSize: 100 };
     const { deps } = setup();
     await handleEvent(tap(`a=frd&id=${ID}`), deps);
     expect(handlePdfMessage.mock.calls[0]).toContainEqual({

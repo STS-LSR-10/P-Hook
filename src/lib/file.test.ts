@@ -3,6 +3,7 @@ import {
   cleanFileName,
   contentDisposition,
   defaultFileName,
+  extensionOfType,
   fileCapacity,
   fileDayLimit,
   formatBytes,
@@ -27,6 +28,17 @@ describe("contentDisposition", () => {
   it("encodes quotes in the long form", () => {
     expect(contentDisposition("it's.pdf")).toContain("it%27s.pdf");
   });
+});
+
+describe("extensionOfType", () => {
+  it.each([
+    ["image/jpeg", ".jpg"],
+    ["image/png", ".png"],
+    ["image/webp", ".webp"],
+    ["video/mp4", ".mp4"],
+    ["video/quicktime", ".mov"],
+    ["application/octet-stream", ""],
+  ])("%s gives %s", (type, ext) => expect(extensionOfType(type)).toBe(ext));
 });
 
 describe("formatBytes", () => {

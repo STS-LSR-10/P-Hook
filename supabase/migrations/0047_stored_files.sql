@@ -57,5 +57,13 @@ begin
   return true;
 end $$;
 
+-- The space in use, summed here because a plain select stops at the API's row limit.
+create or replace function file_usage(p_user uuid)
+returns bigint
+language sql stable security invoker as $$
+  select coalesce(sum(size_bytes), 0)::bigint from stored_files where user_id = p_user;
+$$;
+
 revoke execute on function file_reserve(uuid, uuid, text, text, bigint, text, bigint)
   from public, anon, authenticated;
+revoke execute on function file_usage(uuid) from public, anon, authenticated;

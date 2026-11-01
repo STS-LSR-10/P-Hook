@@ -57,6 +57,8 @@ export interface SlipDeps {
   editUrl?: (txId: string) => string | undefined;
   /** Public https picture for the card header. */
   logoUrl?: string;
+  /** After a slip was recorded. */
+  onRecorded?: () => Promise<void>;
   /** What to say about a picture that is no slip. Absent -> the plain "not a slip" text. */
   onNotSlip?: () => Promise<LineMessage[]>;
   /**
@@ -187,6 +189,7 @@ export async function handleSlipImage(
     }
 
     recorded = true;
+    await deps.onRecorded?.();
     const title = data.payeeName ?? data.memo ?? "โอนเงิน";
     const [categories, memory] = await Promise.all([
       loadCategories(db, user.id),

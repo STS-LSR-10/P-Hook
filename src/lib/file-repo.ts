@@ -141,18 +141,18 @@ export async function renameLatestFile(
 
 /** Bytes in use, pending files too, the same sum `file_reserve` makes. */
 export async function fileUsage(db: SupabaseClient, userId: string): Promise<number> {
-  const { data, error } = await db.from("stored_files").select("size_bytes").eq("user_id", userId);
+  const { data, error } = await db.rpc("file_usage", { p_user: userId });
   if (error) fail("file usage", error);
-  return ((data ?? []) as { size_bytes: number | string }[]).reduce(
-    (sum, r) => sum + Number(r.size_bytes),
-    0,
-  );
+  return Number(data ?? 0);
 }
 
-export async function listAllKeys(db: SupabaseClient, userId: string): Promise<string[]> {
-  const { data, error } = await db.from("stored_files").select("r2_key").eq("user_id", userId);
-  if (error) fail("list file keys", error);
-  return ((data ?? []) as { r2_key: string }[]).map((r) => r.r2_key);
+export async function hasFiles(db: SupabaseClient, userId: string): Promise<boolean> {
+  const { count, error } = await db
+    .from("stored_files")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+  if (error) fail("count files", error);
+  return (count ?? 0) > 0;
 }
 
 /** Files that never finished: the upload died between the reserve and the end. */
@@ -258,7 +258,10 @@ export async function rememberMedia(
   return id;
 }
 
-/** Take the files waiting, oldest first. Deleting them here means a second "เก็บไว้" finds nothing. */
+/**
+ * Take the newest files waiting and hand them back oldest first, for numbering. Deleting them here
+ * means a second "เก็บไว้" finds nothing.
+ */
 export async function takeRecentMedia(
   db: SupabaseClient,
   userId: string,
@@ -270,7 +273,7 @@ export async function takeRecentMedia(
     .select("id")
     .eq("user_id", userId)
     .gt("expires_at", now.toISOString())
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(limit);
   if (error) fail("list recent media", error);
   const ids = ((data ?? []) as { id: string }[]).map((r) => r.id);
@@ -280,10 +283,35 @@ export async function takeRecentMedia(
     .delete()
     .eq("user_id", userId)
     .in("id", ids)
-    .select(`${MEDIA_COLUMNS},created_at`)
-    .order("created_at", { ascending: true });
+    .select(`${MEDIA_COLUMNS},created_at`);
   if (taken.error) fail("take recent media", taken.error);
-  return ((taken.data ?? []) as MediaRow[]).map(toMedia);
+  return ((taken.data ?? []) as (MediaRow & { created_at: string })[])
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .map(toMedia);
+}
+
+/** Look at a file without taking it: reading a PDF leaves it there to be kept. */
+export async function getMediaById(
+  db: SupabaseClient,
+  userId: string,
+  id: string,
+  now: Date,
+): Promise<RecentMedia | null> {
+  const { data, error } = await db
+    .from("recent_media")
+    .select(MEDIA_COLUMNS)
+    .eq("user_id", userId)
+    .eq("id", id)
+    .gt("expires_at", now.toISOString())
+    .maybeSingle();
+  if (error) fail("get media", error);
+  return data ? toMedia(data as MediaRow) : null;
+}
+
+/** A slip that was recorded already lives with its entry. */
+export async function forgetMedia(db: SupabaseClient, userId: string, id: string): Promise<void> {
+  const { error } = await db.from("recent_media").delete().eq("user_id", userId).eq("id", id);
+  if (error) fail("forget media", error);
 }
 
 export async function takeMediaById(

@@ -11,6 +11,8 @@ import { EmptyState, ErrorState, LoadingBlock, PageHeader } from "@/components/l
 import { formatBytes, MAX_NAME_LENGTH, type FileDto } from "@/lib/file";
 import { formatThaiDate } from "@/lib/thai-date";
 
+const UUID_RE = /^[0-9a-f-]{36}$/i;
+
 interface FilesResponse {
   items: FileDto[];
   hasMore: boolean;
@@ -30,7 +32,8 @@ export default function FilesPage() {
 function Files() {
   const { api, openExternal, status } = useLiff();
   const params = useSearchParams();
-  const toOpen = params.get("open");
+  const requested = params.get("open") ?? "";
+  const toOpen = UUID_RE.test(requested) ? requested : null;
   const [query, setQuery] = useState("");
   const [typed, setTyped] = useState("");
   const first = useApi<FilesResponse>(

@@ -13,6 +13,8 @@ export interface FileStore {
   put(key: string, bytes: Uint8Array, mimeType: string): Promise<void>;
   get(key: string): Promise<StoredObject | null>;
   delete(keys: string[]): Promise<void>;
+  /** Remove everything under `prefix`, whatever the database knows about. Returns how many. */
+  deletePrefix(prefix: string): Promise<number>;
 }
 
 /** The part of a Workers R2 bucket used here. */
@@ -24,6 +26,11 @@ export interface R2Like {
   ): Promise<unknown>;
   get(key: string): Promise<{ body: ReadableStream; size: number } | null>;
   delete(keys: string | string[]): Promise<void>;
+  list(options: { prefix: string; cursor?: string }): Promise<{
+    objects: { key: string }[];
+    truncated: boolean;
+    cursor?: string;
+  }>;
 }
 
 export function createR2Store(bucket: R2Like): FileStore {
@@ -39,6 +46,18 @@ export function createR2Store(bucket: R2Like): FileStore {
       for (let i = 0; i < keys.length; i += DELETE_BATCH) {
         await bucket.delete(keys.slice(i, i + DELETE_BATCH));
       }
+    },
+    async deletePrefix(prefix) {
+      let removed = 0;
+      let cursor: string | undefined;
+      do {
+        const page = await bucket.list({ prefix, cursor });
+        const keys = page.objects.map((o) => o.key);
+        if (keys.length > 0) await bucket.delete(keys);
+        removed += keys.length;
+        cursor = page.truncated ? page.cursor : undefined;
+      } while (cursor);
+      return removed;
     },
   };
 }
@@ -57,6 +76,11 @@ export function createMemoryStore(): FileStore & { keys(): string[] } {
     },
     async delete(keys) {
       for (const key of keys) objects.delete(key);
+    },
+    async deletePrefix(prefix) {
+      const keys = [...objects.keys()].filter((key) => key.startsWith(prefix));
+      for (const key of keys) objects.delete(key);
+      return keys.length;
     },
   };
 }

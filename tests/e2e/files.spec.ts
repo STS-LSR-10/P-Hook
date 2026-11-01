@@ -147,6 +147,16 @@ test.describe("files page (360px)", () => {
       .toBe("https://app.example.com/d?t=2");
   });
 
+  test("?open= with anything but an id asks for nothing", async ({ page }) => {
+    const { seen } = await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/files": PAGE([file]),
+    });
+    await page.goto("/files?open=../../plan/portal%3F");
+    await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
+    expect(seen.filter((s) => s.startsWith("POST"))).toEqual([]);
+  });
+
   test("a file that is gone says so", async ({ page }) => {
     await mockApi(page, {
       "GET /api/me": ME_FREE,
