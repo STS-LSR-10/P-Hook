@@ -42,6 +42,8 @@ export const LIMITS = {
   authPerIp: { limit: 30, windowSeconds: 60 },
   /** Writes from the web app per user. */
   write: { limit: 60, windowSeconds: 60 },
+  /** Download links of kept files per user. */
+  fileLink: { limit: 20, windowSeconds: 60 },
   /** Export file links per user. */
   exportLink: { limit: 10, windowSeconds: 60 },
   /** Points redemption / referral attempts per user. */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cleanFileName,
+  contentDisposition,
   defaultFileName,
   fileCapacity,
   fileDayLimit,
@@ -10,6 +11,23 @@ import {
   MAX_NAME_LENGTH,
   withExtensionOf,
 } from "./file";
+
+describe("contentDisposition", () => {
+  it("keeps a Thai name", () => {
+    expect(contentDisposition("สัญญา.pdf")).toContain("filename*=UTF-8''%E0%B8%AA");
+  });
+  it("has a plain name for old clients", () => {
+    expect(contentDisposition("สัญญา.pdf")).toMatch(/^attachment; filename="[\x20-\x7e]+";/);
+  });
+  it("cannot break the header", () => {
+    const value = contentDisposition('a"\r\nX: y.pdf');
+    expect(value).not.toMatch(/[\r\n]/);
+    expect(value.split(";")[1]).not.toContain('a"');
+  });
+  it("encodes quotes in the long form", () => {
+    expect(contentDisposition("it's.pdf")).toContain("it%27s.pdf");
+  });
+});
 
 describe("formatBytes", () => {
   it.each([

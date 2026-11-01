@@ -63,3 +63,13 @@ export function formatBytes(bytes: number): string {
   if (bytes >= MB) return `${Number((bytes / MB).toFixed(1))} MB`;
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
+
+/** A download header for any name: plain for old clients, UTF-8 for the rest, never two lines. */
+export function contentDisposition(name: string): string {
+  const plain = name.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+  const encoded = encodeURIComponent(name).replace(
+    /['()*!]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+  return `attachment; filename="${plain}"; filename*=UTF-8''${encoded}`;
+}
