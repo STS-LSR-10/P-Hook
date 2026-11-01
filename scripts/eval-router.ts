@@ -24,6 +24,7 @@ const CASES: {
   { text: "มะรืนนี้บ่าย 2 นัดลูกค้า", expected: "reminder_add", keeps: "มะรืน" },
   { text: "วันศุกร์ 9 โมงส่งรายงาน", expected: "reminder_add", keeps: "ศุกร์" },
   { text: "ช่วยเตือนจ่ายค่าไฟทุกวันที่ 5", expected: "reminder_add", keeps: "ทุกวันที่ 5" },
+  { text: "เล่นเกมส์ตอน 19:13 น.", expected: "reminder_add", keeps: "19" },
   { text: "เลื่อนเตือนกินยาเป็น 1 ทุ่ม", expected: "reminder_edit" },
   { text: "ไปเที่ยวต้องซื้อครีมกันแดด หมวก ยากันยุง", expected: "note_add" },
   { text: "ของที่ต้องเตรียมไปงานมีเสื้อสูท รองเท้า", expected: "note_add" },

@@ -8,6 +8,7 @@ import {
   VOICE_FAILED_TEXT,
   VOICE_TASTE_TEXT,
   VOICE_TOO_LONG_TEXT,
+  voiceHeardText,
   voiceQuotaText,
 } from "./messages";
 
@@ -321,5 +322,55 @@ describe("long spoken sentences", () => {
     await run(deps({ heard: "กาแฟ 30 บาท", structurer }));
     expect(structure).not.toHaveBeenCalled();
     expect(inserted[0]).toMatchObject({ amountSatang: 3000 });
+  });
+});
+
+describe("a voice message that is not money", () => {
+  const voiceDeps = (heard: string, route: VoiceDeps["route"]): VoiceDeps => ({
+    db: { rpc } as unknown as SupabaseClient,
+    now: () => new Date("2026-10-17T08:00:00Z"),
+    fetchAudio: async () => ({ bytes: new Uint8Array(1), mimeType: "audio/mp4" }),
+    transcriber: { name: "t", transcribe: async () => heard },
+    route,
+  });
+  const elite = {
+    id: "u1",
+    line_user_id: "U1",
+    display_name: null,
+    plan: "ultimate",
+    plan_expires_at: null,
+  } as Parameters<typeof handleVoiceMessage>[1];
+  const send = (deps: VoiceDeps) => handleVoiceMessage(deps, elite, { id: "m1" }, "U1");
+
+  beforeEach(() => {
+    inserted.length = 0;
+    counters.clear();
+  });
+
+  it("is sorted like a typed one, and no entry is made", async () => {
+    const route = vi.fn(async (_heard: string) => [
+      { type: "text" as const, text: "ตั้งเตือนแล้ว" },
+    ]);
+    const said = await send(voiceDeps("เล่นเกมตอน 19:13 น.", route));
+    expect(route.mock.calls[0]?.[0]).toBe("เล่นเกมตอน 19:13 น.");
+    expect(inserted).toEqual([]);
+    expect(said.map((m) => (m as { text?: string }).text)).toEqual([
+      voiceHeardText("เล่นเกมตอน 19:13 น."),
+      "ตั้งเตือนแล้ว",
+    ]);
+  });
+
+  it("still waits for a tap when the sorter says it is money", async () => {
+    const route = vi.fn(async () => null);
+    await send(voiceDeps("กาแฟตอนเช้าบ่าย 3 แก้วละ 60", route));
+    expect(route).toHaveBeenCalledOnce();
+    expect(inserted[0]?.status).toBe("pending_confirm");
+  });
+
+  it("clear money does not spend a sorter use", async () => {
+    const route = vi.fn(async () => null);
+    await send(voiceDeps("กาแฟ 50", route));
+    expect(route).not.toHaveBeenCalled();
+    expect(inserted).toHaveLength(1);
   });
 });

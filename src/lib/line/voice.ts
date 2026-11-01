@@ -5,9 +5,10 @@ import { MAX_AUDIO_MS, ImageError } from "@/lib/line/content";
 import { can, effectivePlan, VOICE_LIMIT } from "@/lib/plan";
 import { LIFETIME, monthKey, refundUsage, takeUsage } from "@/lib/usage";
 import { upsellReply } from "./upsell-reply";
-import { parseMessage } from "@/lib/parse/text-parser";
+import { parseMessage, type ParseResult } from "@/lib/parse/text-parser";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import { insertTransaction, loadCategories, loadMemoryFor, type UserRow } from "@/lib/repo";
+import { needsRouter } from "@/lib/ai/route-text";
 import { needsSmartParse, runSmartParse } from "@/lib/ai/smart-parse";
 import type { TextStructurer } from "@/lib/ai/text-structurer";
 import type { Transcriber } from "@/lib/voice/transcribe";
@@ -34,6 +35,8 @@ export interface VoiceDeps {
   transcriber: Transcriber;
   /** Reads long or unclear sentences (voice is Elite, so it is allowed here). */
   structurer?: TextStructurer;
+  /** Sorts what was heard like a typed message. Null (or absent): treat it as money. */
+  route?: (heard: string, parsed: ParseResult) => Promise<LineMessage[] | null>;
   limit?: (bucket: string, subject: string, rule: LimitRule) => Promise<RateLimitResult>;
 }
 
@@ -126,6 +129,12 @@ export async function handleVoiceMessage(
     // 6. understand it like typed text, but never save without a tap
     const parsed = parseMessage(heard, now);
     const { entries } = parsed;
+
+    // "เล่นเกมตอน 19:13" is a reminder, not 19 baht
+    if (deps.route && needsRouter(heard, parsed)) {
+      const routed = await deps.route(heard, parsed);
+      if (routed) return [text(voiceHeardText(heard)), ...routed];
+    }
 
     const [categories, memory] = await Promise.all([
       loadCategories(deps.db, user.id),

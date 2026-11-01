@@ -114,3 +114,21 @@ describe("voice messages in handleEvent", () => {
     expect(repliedText(reply)).toBe(VOICE_CANCELLED_TEXT);
   });
 });
+
+describe("the sorter for voice messages", () => {
+  const sorterOf = () =>
+    ((handleVoiceMessage.mock.calls[0] as unknown[] | undefined)?.[0] as { route?: unknown })
+      ?.route;
+
+  it("is passed on when the AI is set up", async () => {
+    const { deps } = setup(true);
+    deps.router = { name: "t", route: async () => ({}) };
+    await handleEvent(audio(), deps);
+    expect(sorterOf()).toBeTypeOf("function");
+  });
+
+  it("is left out without it", async () => {
+    await handleEvent(audio(), setup(true).deps);
+    expect(sorterOf()).toBeUndefined();
+  });
+});

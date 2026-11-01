@@ -38,14 +38,24 @@ describe("needsRouter", () => {
     (t) => expect(needsRouter(t, read(t))).toBe(false),
   );
 
-  it.each(["กินยา 18:00", "กินยาบ่าย 3", "ปลุกตี 5", "กินยาอีก 30 นาที", "ที่อยู่หอซอย 5"])(
-    "sends %s to the router",
-    (t) => expect(needsRouter(t, read(t))).toBe(true),
-  );
+  it.each([
+    "กินยา 18:00",
+    "กินยาบ่าย 3",
+    "ปลุกตี 5",
+    "กินยาอีก 30 นาที",
+    "ที่อยู่หอซอย 5",
+    "เล่นเกมตอน 19.13 น.",
+  ])("sends %s to the router", (t) => expect(needsRouter(t, read(t))).toBe(true));
 
   it("keeps a typed list of entries with the rules", () => {
     const t = "กาแฟ 50\nข้าว 60\nน้ำ 20";
     expect(needsRouter(t, read(t))).toBe(false);
+  });
+});
+
+describe("an amount with satang", () => {
+  it("stays with the rules", () => {
+    expect(needsRouter("กาแฟ 45.50", read("กาแฟ 45.50"))).toBe(false);
   });
 });
 
@@ -57,6 +67,7 @@ describe("clockIsTheAmount", () => {
     "ปลุกตี 5",
     "กินยาอีก 30 นาที",
     "กินยา ๖ โมงเย็น",
+    "เล่นเกมตอน 19.13 น.",
   ])("sees the time was read as money in %s", (t) =>
     expect(clockIsTheAmount(t, read(t).entries)).toBe(true),
   );

@@ -489,6 +489,9 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
                 fetchAudio: voice.fetchAudio,
                 transcriber: voice.transcriber,
                 structurer: deps.structurer,
+                route: deps.router
+                  ? (heard, parsed) => routeText(heard, parsed, user, intentDeps(user, deps))
+                  : undefined,
                 limit: deps.limit,
               },
               user,
