@@ -413,3 +413,22 @@ describe("summary: the menu, the ready-made ones and the many ways to name a ran
     expect(parseCommand("สรุปวันนี้ 30")).toBeNull();
   });
 });
+
+describe("kept files", () => {
+  it.each([
+    ["เก็บไฟล์", { kind: "file-save", name: null }],
+    ["เก็บไว้", { kind: "file-save", name: null }],
+    ["เก็บไว้ให้หน่อย", { kind: "file-save", name: null }],
+    ["เก็บไฟล์ สัญญาเช่า", { kind: "file-save", name: "สัญญาเช่า" }],
+    ["หาไฟล์ สัญญา", { kind: "file-search", term: "สัญญา" }],
+    ["ไฟล์ของฉัน", { kind: "file-list" }],
+    ["ชื่อไฟล์ รูปบัตร", { kind: "file-rename", name: "รูปบัตร" }],
+  ])("reads %s", (input, command) => {
+    expect(parseCommand(input)).toEqual(command);
+  });
+
+  it("an entry that starts the same way stays an entry", () => {
+    expect(parseCommand("ไฟล์ 500")).toBeNull();
+    expect(parseCommand("เก็บไว้กินเย็น 80")).toBeNull();
+  });
+});

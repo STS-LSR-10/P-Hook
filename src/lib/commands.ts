@@ -17,6 +17,10 @@ export type Command =
   | { kind: "search"; term: string }
   | { kind: "search-usage" }
   | { kind: "note-add"; body: string }
+  | { kind: "file-save"; name: string | null }
+  | { kind: "file-search"; term: string }
+  | { kind: "file-list" }
+  | { kind: "file-rename"; name: string }
   | { kind: "remind-add"; text: string }
   | { kind: "owl-start" }
   | { kind: "open-page"; page: "summary" | "transactions" | "budgets" | "analytics" }
@@ -69,6 +73,19 @@ export function parseCommand(input: string): Command | null {
   const note = /^โน[้๊็]ต(?:\s+([\s\S]+))?$/.exec(raw);
   if (note)
     return note[1]?.trim() ? { kind: "note-add", body: note[1].trim() } : { kind: "note-list" };
+
+  // Kept files: "เก็บไว้" keeps what was just sent. Only these whole phrases count ("เก็บไว้กินเย็น 80"
+  // is still an entry).
+  if (["เก็บไว้", "เก็บไว้ให้หน่อย", "เก็บไว้หน่อย", "เก็บไฟล์นี้"].includes(text)) {
+    return { kind: "file-save", name: null };
+  }
+  const fileSave = /^เก็บไฟล์(?:\s+([\s\S]+))?$/.exec(raw);
+  if (fileSave) return { kind: "file-save", name: fileSave[1]?.trim() || null };
+  const fileSearch = /^หาไฟล์\s+([\s\S]+)$/.exec(raw);
+  if (fileSearch?.[1]) return { kind: "file-search", term: fileSearch[1].trim() };
+  const fileRename = /^ชื่อไฟล์\s+([\s\S]+)$/.exec(raw);
+  if (fileRename?.[1]) return { kind: "file-rename", name: fileRename[1].trim() };
+  if (["ไฟล์ของฉัน", "ไฟล์ทั้งหมด", "หน้าไฟล์"].includes(text)) return { kind: "file-list" };
 
   // The pages that are not on the Rich Menu any more open from a short chat command.
   if (["หน้ารายการ", "รายการทั้งหมด", "ประวัติ", "ประวัติรายการ"].includes(text)) {

@@ -6,6 +6,7 @@ import {
   fileDayLimit,
   isBlockedFile,
   MAX_FILE_BYTES,
+  withExtensionOf,
   type FileDto,
 } from "@/lib/file";
 import { dropFileRow, markFileReady, reserveFile, type RecentMedia } from "@/lib/file-repo";
@@ -17,13 +18,7 @@ import type { UserRow } from "@/lib/repo";
 import { dayKey, refundUsage, takeUsage } from "@/lib/usage";
 
 export type SaveFailure =
-  | "blocked"
-  | "too_large"
-  | "day_limit"
-  | "full"
-  | "gone"
-  | "failed"
-  | "unavailable";
+  "blocked" | "too_large" | "day_limit" | "full" | "gone" | "failed" | "unavailable";
 export type SaveResult = { ok: true; file: FileDto } | { ok: false; reason: SaveFailure };
 
 export interface SaveDeps {
@@ -33,14 +28,11 @@ export interface SaveDeps {
   fetchFile: (messageId: string) => Promise<{ bytes: Uint8Array; mimeType: string }>;
 }
 
-const EXTENSION_RE = /\.[^.\s]{1,10}$/;
-
 /** The name to keep it under. A typed name takes the extension of the real file. */
 function chooseName(media: Omit<RecentMedia, "id">, given: string | null, now: Date): string {
   const name = cleanFileName(given ?? "");
   if (!name) return cleanFileName(media.fileName ?? "") || defaultFileName(media.kind, now);
-  const extension = EXTENSION_RE.exec(media.fileName ?? "")?.[0];
-  return extension && !EXTENSION_RE.test(name) ? cleanFileName(`${name}${extension}`) : name;
+  return withExtensionOf(name, media.fileName ?? "");
 }
 
 /**

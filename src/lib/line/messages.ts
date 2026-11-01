@@ -362,6 +362,26 @@ export const ROUTER_REMINDER_HINT_TEXT =
   'ถ้าจะตั้งเตือน พิมพ์ขึ้นต้นด้วย "เตือน" เช่น "เตือน กินยา 6 โมงเย็น"\nถ้าจะจดเงิน พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"';
 export const MONEY_HINT_TEXT = 'ลองพิมพ์ชื่อรายการกับจำนวนเงิน เช่น "ค่าหมอ 800" นะ';
 
+// ── kept files ──
+export const FILE_ASK_KEEP_TEXT = "จะให้พี่ฮูกเก็บไฟล์นี้ไว้ไหม?";
+export const FILE_ASK_PDF_TEXT = "ไฟล์ PDF นี้ จะให้พี่ฮูกทำอะไร?";
+export const FILE_BLOCKED_TEXT = "พี่ฮูกไม่รับไฟล์ติดตั้งโปรแกรม เช่น .exe หรือ .apk นะ";
+export const FILE_TOO_LARGE_TEXT = "ไฟล์ใหญ่เกิน 20 MB ลองย่อขนาดแล้วส่งใหม่นะ";
+export const fileFullText = (capacity: string) =>
+  `พื้นที่เก็บไฟล์เต็มแล้ว (${capacity}) ลบไฟล์เก่าในหน้าไฟล์ หรืออัปเกรดแผนเพื่อเพิ่มพื้นที่นะ`;
+export const fileDayLimitText = (limit: number) =>
+  `วันนี้เก็บไฟล์ครบ ${limit} ไฟล์แล้ว พรุ่งนี้ส่งใหม่ได้เลยนะ`;
+export const FILE_GONE_TEXT =
+  "ไฟล์นี้หมดอายุจาก LINE แล้ว ส่งไฟล์มาอีกครั้งได้เลย พี่ฮูกรออยู่ 5 นาที";
+export const FILE_FAILED_TEXT = "เก็บไฟล์ไม่สำเร็จ ลองส่งอีกครั้งนะ";
+export const FILE_UNAVAILABLE_TEXT = "ตอนนี้ระบบเก็บไฟล์ยังไม่พร้อม ลองใหม่อีกครั้งนะ";
+export const FILE_EXPIRED_TEXT = "ไฟล์นี้หมดเวลาหรือจัดการไปแล้ว ส่งใหม่ได้เลยนะ";
+export const FILE_SEND_NOW_TEXT = "ส่งไฟล์มาได้เลย พี่ฮูกรออยู่ 5 นาที";
+export const FILE_NOT_FOUND_TEXT = "ยังไม่มีไฟล์ที่เก็บไว้";
+export const FILE_VIDEO_ELSEWHERE_TEXT = "วิดีโอนี้อยู่นอก LINE พี่ฮูกเก็บให้ไม่ได้นะ";
+export const FILE_NAMING_HINT_TEXT = 'ตั้งชื่อให้หาง่าย พิมพ์ เช่น "ชื่อไฟล์ รูปบัตร"';
+export const fileRenamedText = (name: string) => `เปลี่ยนชื่อเป็น "${name}" แล้ว`;
+
 // ── notes ──
 export const NOTE_SAVED_TEXT = (preview: string, url?: string) =>
   `จดโน้ตแล้ว 📝\n"${preview}"${url ? `\nดู แก้ไข หรือค้นหาทั้งหมด: ${url}` : ""}`;

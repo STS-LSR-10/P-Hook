@@ -149,6 +149,17 @@ import type { Owl } from "@/lib/ai/owl";
 import { inOwlMode, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 import type { IntentRouter } from "@/lib/ai/intent-router";
 import { needsRouter } from "@/lib/ai/route-text";
+import {
+  handleFilePick,
+  handleIncomingFile,
+  offerToKeep,
+  runFileRename,
+  runFileSave,
+  saveWaitingFile,
+  type FileChatDeps,
+} from "./file-handlers";
+import { rememberMedia, takeFileWait } from "@/lib/file-repo";
+import type { SaveDeps } from "@/lib/file-save";
 import { askAboutSecret, handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
 import { countNotes, createNote, deleteNote, listNotes } from "@/lib/note-repo";
@@ -241,6 +252,10 @@ import {
   REMINDER_USAGE_TEXT,
   NOTE_EMPTY_TEXT,
   NOTE_FULL_TEXT,
+  FILE_EXPIRED_TEXT,
+  FILE_NOT_FOUND_TEXT,
+  FILE_UNAVAILABLE_TEXT,
+  FILE_VIDEO_ELSEWHERE_TEXT,
   NOTE_SAVED_TEXT,
   NOTE_SECRET_WARNING_TEXT,
   NOTE_SEARCH_USAGE_TEXT,
@@ -304,7 +319,7 @@ import {
   pdfRecordedText,
   text,
 } from "./messages";
-import { log } from "@/lib/log";
+import { log, safeMessage } from "@/lib/log";
 import type { Transcriber } from "@/lib/voice/transcribe";
 import { handleVoiceMessage, type VoiceDeps } from "./voice";
 
@@ -321,6 +336,8 @@ export interface LineEvent {
     /** File messages: the name and size LINE reports. */
     fileName?: string;
     fileSize?: number;
+    /** Video messages: "line" when LINE holds the content, "external" when it is elsewhere. */
+    contentProvider?: { type: string };
   };
   postback?: {
     data: string;
@@ -352,6 +369,11 @@ export interface HandlerDeps {
   structurer?: TextStructurer;
   /** AI that sorts plain messages into groups. Absent -> the ordinary rules handle everything. */
   router?: IntentRouter;
+  /** Kept files. Absent -> pictures and files behave as they did before the file store. */
+  files?: {
+    fetchFile: SaveDeps["fetchFile"];
+    store: SaveDeps["store"];
+  };
   /** Voice messages. Absent (no AI key that hears audio) -> a polite "not available" reply. */
   voice?: {
     fetchAudio: VoiceDeps["fetchAudio"];
@@ -381,7 +403,7 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
   // Spam / cost guard, before any database or paid-API work. Over the limit we answer once
   // (on the first excess hit of the window) and then stay quiet instead of flooding the chat.
   if (deps.limit && (event.type === "message" || event.type === "postback")) {
-    const isImage = event.message?.type === "image";
+    const isImage = event.message?.type === "image" || event.message?.type === "video";
     const isAudio = event.message?.type === "audio";
     const isFile = event.message?.type === "file";
     const [bucket, rule] =
@@ -420,9 +442,18 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
         await reply(await handleText(event.message.text, user, deps));
       } else if (event.message?.type === "image") {
         const { slip } = deps;
+        const files = fileChatDeps(deps);
         if (slip && event.message.id) {
-          // an image right after "แนบรูป" belongs to that entry, everything else is a slip
+          const media = {
+            messageId: event.message.id,
+            kind: "image" as const,
+            fileName: null,
+            fileSize: null,
+          };
+          // an image right after "แนบรูป" belongs to that entry, after "เก็บไฟล์" it is kept, and
+          // everything else is a slip
           const wait = await getLivePhotoWait(deps.db, user.id, deps.now());
+          const keep = !wait && files ? await takeFileWait(deps.db, user.id, deps.now()) : null;
           if (wait) {
             await reply(
               await handlePhotoImage(
@@ -432,7 +463,14 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
                 wait,
               ),
             );
+          } else if (keep && files) {
+            await reply(await saveWaitingFile(files, user, media, keep.name));
           } else {
+            if (files) {
+              await rememberMedia(deps.db, user.id, media, deps.now()).catch((error: unknown) =>
+                log.warn("remember_media_failed", { reason: safeMessage(error) }),
+              );
+            }
             await reply(
               await handleSlipImage(
                 {
@@ -443,6 +481,7 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
                   editUrl: (txId) => pageUrl(`/transactions?edit=${txId}`),
                   logoUrl: appBaseUrl() ? `${appBaseUrl()}/success-logo.png?v=2` : undefined,
                   extras: (made) => receiptCardExtras(deps, user, made),
+                  onNotSlip: files ? () => offerToKeep(files, user, media) : undefined,
                 },
                 user,
                 event.message.id,
@@ -453,27 +492,46 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
           await reply([text(SLIP_SOON_TEXT)]);
         }
       } else if (event.message?.type === "file" && event.message.id) {
-        const { pdf } = deps;
-        if (!pdf) {
-          await reply([text(PDF_UNAVAILABLE_TEXT)]);
-        } else {
+        const files = fileChatDeps(deps);
+        const message = {
+          id: event.message.id,
+          fileName: event.message.fileName,
+          fileSize: event.message.fileSize,
+        };
+        if (files) {
+          const media = {
+            messageId: message.id,
+            kind: "file" as const,
+            fileName: message.fileName ?? null,
+            fileSize: message.fileSize ?? null,
+          };
+          const keep = await takeFileWait(deps.db, user.id, deps.now());
           await reply(
-            await handlePdfMessage(
-              {
-                db: deps.db,
-                now: deps.now,
-                fetchPdf: pdf.fetchPdf,
-                reader: pdf.reader,
-                limit: deps.limit,
-              },
-              user,
-              {
-                id: event.message.id,
-                fileName: event.message.fileName,
-                fileSize: event.message.fileSize,
-              },
-              lineUserId,
-            ),
+            keep
+              ? await saveWaitingFile(files, user, media, keep.name)
+              : await handleIncomingFile(files, user, media),
+          );
+        } else {
+          await reply(await readPdf(message, user, deps, lineUserId));
+        }
+      } else if (event.message?.type === "video" && event.message.id) {
+        const files = fileChatDeps(deps);
+        if (files) {
+          if (event.message.contentProvider?.type === "external") {
+            await reply([text(FILE_VIDEO_ELSEWHERE_TEXT)]);
+            return;
+          }
+          const media = {
+            messageId: event.message.id,
+            kind: "video" as const,
+            fileName: null,
+            fileSize: null,
+          };
+          const keep = await takeFileWait(deps.db, user.id, deps.now());
+          await reply(
+            keep
+              ? await saveWaitingFile(files, user, media, keep.name)
+              : await offerToKeep(files, user, media),
           );
         }
       } else if (event.message?.type === "audio" && event.message.id) {
@@ -516,6 +574,36 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
 /** The public app URL without a trailing slash, when it is configured. */
 function appBaseUrl(): string | undefined {
   return process.env.APP_BASE_URL?.replace(/\/$/, "") || undefined;
+}
+
+/** Hand a file to the AI reader, which asks the plan and the quota first. */
+async function readPdf(
+  message: { id: string; fileName?: string; fileSize?: number },
+  user: UserRow,
+  deps: HandlerDeps,
+  lineUserId: string,
+): Promise<LineMessage[]> {
+  const { pdf } = deps;
+  if (!pdf) return [text(PDF_UNAVAILABLE_TEXT)];
+  return handlePdfMessage(
+    {
+      db: deps.db,
+      now: deps.now,
+      fetchPdf: pdf.fetchPdf,
+      reader: pdf.reader,
+      limit: deps.limit,
+    },
+    user,
+    message,
+    lineUserId,
+  );
+}
+
+/** What keeping a file needs from the handler's dependencies. Null without a file store. */
+function fileChatDeps(deps: HandlerDeps): FileChatDeps | null {
+  const { files } = deps;
+  if (!files) return null;
+  return { db: deps.db, now: deps.now, store: files.store, fetchFile: files.fetchFile, pageUrl };
 }
 
 /** What sorting a plain message needs from the handler's dependencies. */
@@ -2171,6 +2259,17 @@ async function runCommand(
     case "search-usage":
       return [text(SEARCH_USAGE_TEXT)];
 
+    case "file-save":
+    case "file-rename":
+    case "file-search":
+    case "file-list": {
+      const files = fileChatDeps(deps);
+      if (!files) return [text(FILE_UNAVAILABLE_TEXT)];
+      if (command.kind === "file-save") return runFileSave(files, user, command.name);
+      if (command.kind === "file-rename") return runFileRename(files, user, command.name);
+      return [text(FILE_NOT_FOUND_TEXT)];
+    }
+
     case "note-add": {
       const body = cleanNoteBody(command.body);
       if (!body) return [text(NOTE_EMPTY_TEXT)];
@@ -2385,6 +2484,24 @@ async function handlePostback(
         (await cancelReminder(deps.db, user.id, id)) ? REMINDER_CANCELLED_TEXT : REMINDER_GONE_TEXT,
       ),
     ];
+  }
+  // The buttons under a file that was sent: keep it, or read a PDF for its entries.
+  if (action === "fsv" || action === "frd") {
+    const id = params.get("id") ?? "";
+    const files = fileChatDeps(deps);
+    if (!files || !UUID_RE.test(id)) return [text(FILE_EXPIRED_TEXT)];
+    return handleFilePick(files, user, action, id, (media) =>
+      readPdf(
+        {
+          id: media.messageId,
+          fileName: media.fileName ?? undefined,
+          fileSize: media.fileSize ?? undefined,
+        },
+        user,
+        deps,
+        user.line_user_id,
+      ),
+    );
   }
   // The buttons under a message the AI was not sure about.
   if (action === "irp") {

@@ -4,10 +4,34 @@ import {
   defaultFileName,
   fileCapacity,
   fileDayLimit,
+  formatBytes,
   isBlockedFile,
   MAX_FILE_BYTES,
   MAX_NAME_LENGTH,
+  withExtensionOf,
 } from "./file";
+
+describe("formatBytes", () => {
+  it.each([
+    [512 * 1024, "512 KB"],
+    [12 * 1024 * 1024, "12 MB"],
+    [1.5 * 1024 ** 3, "1.5 GB"],
+    [500 * 1024 * 1024, "500 MB"],
+    [10, "1 KB"],
+  ])("%d is %s", (n, label) => expect(formatBytes(n)).toBe(label));
+});
+
+describe("withExtensionOf", () => {
+  it("adds the extension of the real file", () => {
+    expect(withExtensionOf("สัญญา", "a.pdf")).toBe("สัญญา.pdf");
+  });
+  it("leaves a name that has one", () => {
+    expect(withExtensionOf("สัญญา.PDF", "a.pdf")).toBe("สัญญา.PDF");
+  });
+  it("leaves a name when the file has none", () => {
+    expect(withExtensionOf("บัตร", "รูป 1 พ.ย. 2569 19:30")).toBe("บัตร");
+  });
+});
 
 describe("file rules", () => {
   it.each(["setup.exe", "APP.APK", "x.msi", "run.bat", "a.b.sh", " tool.exe "])("blocks %s", (n) =>

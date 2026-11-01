@@ -164,6 +164,7 @@ const decision = (d: Partial<IntentDecision>): IntentDecision => ({
   reminderQuery: null,
   whenText: null,
   searchTerm: null,
+  fileName: null,
   ...d,
 });
 const reminder = (id: string, body: string, repeat: ReminderDto["repeat"] = null): ReminderDto => ({

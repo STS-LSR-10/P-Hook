@@ -57,6 +57,8 @@ export interface SlipDeps {
   editUrl?: (txId: string) => string | undefined;
   /** Public https picture for the card header. */
   logoUrl?: string;
+  /** What to say about a picture that is no slip. Absent -> the plain "not a slip" text. */
+  onNotSlip?: () => Promise<LineMessage[]>;
   /**
    * After the entries are recorded: what the card carries below the rows (budget, warnings, the
    * "จ่ายด้วย" row) and the messages that follow it (points...). Absent -> a plain card.
@@ -163,6 +165,7 @@ export async function handleSlipImage(
     }
     if (!result.ok) {
       await discardUpload().catch(() => undefined);
+      if (result.reason === "not_slip" && deps.onNotSlip) return deps.onNotSlip();
       return [text(result.reason === "not_slip" ? NOT_A_SLIP_TEXT : SLIP_UNREADABLE_TEXT)];
     }
     const data = result.data;

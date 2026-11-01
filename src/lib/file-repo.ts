@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { FileDto, MediaKind } from "@/lib/file";
+import { withExtensionOf, type FileDto, type MediaKind } from "@/lib/file";
 import { escapeLike } from "@/lib/note-repo";
 
 const WAIT_MS = 5 * 60_000;
@@ -53,11 +53,7 @@ export async function reserveFile(
   return data === true;
 }
 
-export async function markFileReady(
-  db: SupabaseClient,
-  userId: string,
-  id: string,
-): Promise<void> {
+export async function markFileReady(db: SupabaseClient, userId: string, id: string): Promise<void> {
   const { error } = await db
     .from("stored_files")
     .update({ status: "ready" })
@@ -138,16 +134,14 @@ export async function renameLatestFile(
 ): Promise<FileDto | null> {
   const { items } = await listFiles(db, userId, { limit: 1 });
   const [latest] = items;
-  if (!latest || !(await renameFile(db, userId, latest.id, name))) return null;
-  return { ...latest, name };
+  if (!latest) return null;
+  const named = withExtensionOf(name, latest.name);
+  return (await renameFile(db, userId, latest.id, named)) ? { ...latest, name: named } : null;
 }
 
 /** Bytes in use, pending files too, the same sum `file_reserve` makes. */
 export async function fileUsage(db: SupabaseClient, userId: string): Promise<number> {
-  const { data, error } = await db
-    .from("stored_files")
-    .select("size_bytes")
-    .eq("user_id", userId);
+  const { data, error } = await db.from("stored_files").select("size_bytes").eq("user_id", userId);
   if (error) fail("file usage", error);
   return ((data ?? []) as { size_bytes: number | string }[]).reduce(
     (sum, r) => sum + Number(r.size_bytes),

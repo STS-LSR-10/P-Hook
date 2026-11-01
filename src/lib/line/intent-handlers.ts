@@ -46,6 +46,7 @@ const CONFIRM_LABEL: Record<RoutedIntent, string> = {
   reminder_edit: "เลื่อนเตือน",
   note_add: "จดเป็นโน้ต",
   search: "ค้นหาในโน้ต",
+  file_save: "เก็บไฟล์",
   ask: "ให้พี่ฮูกตอบ",
   unclear: "จัดการข้อความนี้",
 };
@@ -153,6 +154,8 @@ function execute(
       return deps.run({ kind: "note-add", body: input });
     case "search":
       return deps.run({ kind: "note-search", term: decision.searchTerm });
+    case "file_save":
+      return deps.run({ kind: "file-save", name: decision.fileName });
     case "ask":
       return deps.ask(input);
     case "money":

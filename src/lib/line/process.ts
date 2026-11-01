@@ -10,7 +10,8 @@ import { buildTranscriber } from "@/lib/voice/transcribe";
 import { claimEvent, releaseEvent } from "@/lib/repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createLineClient } from "./client";
-import { fetchLineAudio, fetchLineImage, fetchLinePdf } from "./content";
+import { getFileStore } from "@/lib/file-store";
+import { fetchLineAudio, fetchLineFile, fetchLineImage, fetchLinePdf } from "./content";
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 import { ERROR_TEXT, text } from "./messages";
 import { log } from "@/lib/log";
@@ -90,6 +91,12 @@ export async function processEvents(rawEvents: unknown[]): Promise<void> {
       reader: pdfReader,
     };
   }
+
+  // Kept files live in R2; outside Workers there is no bucket and the chat says so.
+  deps.files = {
+    fetchFile: (messageId) => fetchLineFile(env.LINE_CHANNEL_ACCESS_TOKEN, messageId),
+    store: await getFileStore(),
+  };
 
   // Voice messages need an AI that can hear (Gemini or OpenAI key); without one they get a polite no.
   const transcriber = buildTranscriber(env);
