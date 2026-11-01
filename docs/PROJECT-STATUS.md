@@ -20,7 +20,7 @@
 
 | ส่วน       | ที่อยู่                                                                                                                                                                                                                                                                            |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| โค้ด       | GitHub `STS-LSR-10/JodTang` (private) branch `main` · remote `origin` = repo ใหม่, `old-origin` = repo เก่า (ไม่ใช้แล้ว)                                                                                                                                                           |
+| โค้ด       | GitHub `STS-LSR-10/P-Hook` (private) branch `main` · remote `origin` = repo ใหม่, `old-origin` = repo เก่า (ไม่ใช้แล้ว)                                                                                                                                                           |
 | เว็บ + API | **Cloudflare Workers** (Worker `phook`, OpenNext) โดเมน **`https://app.p-hook.com`** · deploy: `pnpm cf:deploy` หรือ Workers Builds (docs/DEPLOY.md § 10) · ย้ายจาก Vercel เมื่อ 1 พ.ย. 2569 (ต้องใช้ Workers Paid: CPU ต่อคำขอเกิน 10 ms)                                         |
 | ฐานข้อมูล  | Supabase โปรเจกต์ใหม่ (Singapore) เริ่มข้อมูลใหม่ ไม่ได้คัดลอกข้อมูลจากของเก่า                                                                                                                                                                                                     |
 | LINE       | ช่อง Messaging API + LINE Login (LIFF) **ใช้ช่องเดิม** ไม่ได้ย้าย · Webhook และ LIFF Endpoint ชี้โดเมนใหม่แล้ว                                                                                                                                                                     |
@@ -247,7 +247,7 @@ Cloudflare (Workers → `phook` → Variables and Secrets) · ตัวที่
 
 ## 13) ย้ายเครื่องทำงานต่อ
 
-1. ติดตั้ง Git, Node 22 (ใช้ pnpm ผ่าน `npx` ได้) แล้ว `git clone https://github.com/STS-LSR-10/JodTang.git` → `npx --yes pnpm@10.34.7 install`
+1. ติดตั้ง Git, Node 22 (ใช้ pnpm ผ่าน `npx` ได้) แล้ว `git clone https://github.com/STS-LSR-10/P-Hook.git` → `npx --yes pnpm@10.34.7 install`
 2. สร้าง `.env.local` เอง (แม่แบบ `.env.example`) โดยคัดลอกจากเครื่องเก่าผ่านช่องทางปลอดภัย หรือเอาค่าจาก Vercel/Supabase/LINE/Stripe
 3. ถ้าจะรัน e2e: `npx --yes pnpm@10.34.7 exec playwright install chromium`
 4. ประวัติแชทกับ AI ไม่ตามไปด้วย — ให้เซสชันใหม่อ่านไฟล์นี้ + `README.md` + `docs/DEPLOY.md` ก่อนเริ่ม
