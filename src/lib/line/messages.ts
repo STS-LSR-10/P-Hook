@@ -394,6 +394,8 @@ export const REMINDER_FULL_TEXT = (limit: number) =>
 export const REMINDER_EMPTY_TEXT = ["ยังไม่มีเตือนที่รออยู่", "", REMINDER_USAGE_TEXT].join("\n");
 export const REMINDER_NOT_MATCHED_TEXT = 'ไม่พบเตือนนี้ พิมพ์ "รายการเตือน" เพื่อดูเตือนทั้งหมดได้';
 export const REMINDER_WHICH_TEXT = "มีหลายเตือนที่ตรง อันไหนนะ?";
+export const REMINDER_WHICH_MORE_TEXT =
+  "มีหลายเตือนที่ตรง นี่คือ 4 อันแรก ถ้าไม่มีอันที่ต้องการ ลองพิมพ์ชื่อเตือนให้ชัดขึ้นนะ";
 export const REMINDER_CANCELLED_TEXT = "ยกเลิกเตือนแล้ว";
 export const REMINDER_GONE_TEXT = "ไม่พบเตือนนี้แล้ว (อาจส่งไปแล้วหรือถูกยกเลิก)";
 /** The push that arrives at the time. */

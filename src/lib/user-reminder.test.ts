@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeReminder, parseReminder, reminderCapacity } from "./user-reminder";
+import { describeReminder, parseReminder, reminderCapacity, moveReminderTime } from "./user-reminder";
 
 // Wednesday 28 Oct 2026, 10:00 in Bangkok
 const NOW = new Date("2026-10-28T03:00:00Z");
@@ -166,5 +166,49 @@ describe("reminderCapacity and describeReminder", () => {
     expect(describeReminder(new Date("2026-10-29T02:00:00Z"), "daily")).toBe(
       "29 ต.ค. 2569 09:00 · ทุกวัน",
     );
+  });
+});
+
+describe("moveReminderTime", () => {
+  const SUNDAY_NOON = new Date("2026-11-01T05:00:00Z");
+  const at = (iso: string, when: string) => moveReminderTime(when, new Date(iso), SUNDAY_NOON);
+  const time = (r: ReturnType<typeof at>) => (r.ok ? r.remindAt.toISOString() : r.reason);
+
+  it("a time alone keeps the day of a monthly reminder", () => {
+    expect(time(at("2026-11-05T01:00:00Z", "3 ทุ่ม"))).toBe("2026-11-05T14:00:00.000Z");
+  });
+
+  it("a time alone keeps the day of a one-off reminder", () => {
+    expect(time(at("2026-11-06T02:00:00Z", "3 ทุ่ม"))).toBe("2026-11-06T14:00:00.000Z");
+  });
+
+  it("a day alone keeps the time", () => {
+    expect(time(at("2026-11-05T01:00:00Z", "พรุ่งนี้"))).toBe("2026-11-02T01:00:00.000Z");
+  });
+
+  it("a day and a time replace both", () => {
+    expect(time(at("2026-11-05T01:00:00Z", "พรุ่งนี้ 3 ทุ่ม"))).toBe("2026-11-02T14:00:00.000Z");
+  });
+
+  it("counts from now for a relative time", () => {
+    expect(time(at("2026-11-05T01:00:00Z", "อีก 30 นาที"))).toBe("2026-11-01T05:30:00.000Z");
+  });
+
+  it("moves on to the next time when the kept day has passed for that time", () => {
+    expect(time(at("2026-11-01T01:00:00Z", "7 โมง"))).toBe("2026-11-02T00:00:00.000Z");
+  });
+
+  it("midnight is the end of the kept day", () => {
+    expect(time(at("2026-11-05T01:00:00Z", "เที่ยงคืน"))).toBe("2026-11-05T17:00:00.000Z");
+  });
+
+  it("a new repeat is taken as given", () => {
+    const r = at("2026-11-05T01:00:00Z", "ทุกวัน 3 ทุ่ม");
+    expect(r.ok && r.repeat).toBe("daily");
+    expect(time(r)).toBe("2026-11-01T14:00:00.000Z");
+  });
+
+  it("says when no time was given", () => {
+    expect(time(at("2026-11-05T01:00:00Z", "เร็วๆ นี้"))).toBe("no_time");
   });
 });

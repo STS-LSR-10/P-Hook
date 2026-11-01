@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parseMessage } from "@/lib/parse/text-parser";
 import { ROUTER_DAILY_LIMIT } from "@/lib/plan";
 import type { IntentRouter } from "./intent-router";
-import { hasClockWords, needsRouter, runRouter } from "./route-text";
+import { clockIsTheAmount, needsRouter, runRouter } from "./route-text";
 
 const take = vi.fn(async () => true);
 const refund = vi.fn(async () => undefined);
@@ -33,16 +33,36 @@ describe("needsRouter", () => {
     expect(needsRouter(t, read(t))).toBe(true);
   });
 
+  it.each(["ค่าถ่ายเอกสาร 20", "ซื้อของเก็บไว้ 300", "ค่าส่งไฟล์ 30", "ค่าที่อยู่ 500"])(
+    "does not spend a use on the entry %s",
+    (t) => expect(needsRouter(t, read(t))).toBe(false),
+  );
+
+  it.each(["กินยา 18:00", "กินยาบ่าย 3", "ปลุกตี 5", "กินยาอีก 30 นาที", "ที่อยู่หอซอย 5"])(
+    "sends %s to the router",
+    (t) => expect(needsRouter(t, read(t))).toBe(true),
+  );
+
   it("keeps a typed list of entries with the rules", () => {
     const t = "กาแฟ 50\nข้าว 60\nน้ำ 20";
     expect(needsRouter(t, read(t))).toBe(false);
   });
 });
 
-describe("hasClockWords", () => {
-  it("sees a time of day or a repeat", () => {
-    expect(hasClockWords("กินยา 6 โมงเย็น")).toBe(true);
-    expect(hasClockWords("กาแฟ 50 เมื่อเช้า")).toBe(false);
+describe("clockIsTheAmount", () => {
+  it.each(["กินยา 6 โมงเย็น", "กินยา 18:00", "กินยาบ่าย 3", "ปลุกตี 5", "กินยาอีก 30 นาที", "กินยา ๖ โมงเย็น"])(
+    "sees the time was read as money in %s",
+    (t) => expect(clockIsTheAmount(t, read(t).entries)).toBe(true),
+  );
+
+  it.each([
+    "เมื่อเช้า 8 โมง กาแฟ 60",
+    "เมื่อวาน 6 โมงเย็น กินข้าว 120",
+    "ค่าจอดรถ 2 ชั่วโมง 40",
+    "ค่าเน็ตทุกเดือน 599",
+    "กาแฟ 50 เมื่อเช้า",
+  ])("leaves the real amount in %s", (t) => {
+    expect(clockIsTheAmount(t, read(t).entries)).toBe(false);
   });
 });
 

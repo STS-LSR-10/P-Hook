@@ -24,6 +24,7 @@ export async function callJson(
   schema: Record<string, unknown>,
   toolName: string,
   fetchImpl: typeof fetch = fetch,
+  timeoutMs?: number,
 ): Promise<unknown> {
   switch (cfg.provider) {
     case "gemini": {
@@ -36,6 +37,7 @@ export async function callJson(
           generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
         },
         fetchImpl,
+        timeoutMs,
       )) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
       return parseJsonObject(
         data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "",
@@ -55,6 +57,7 @@ export async function callJson(
           messages: [{ role: "user", content: prompt }],
         },
         fetchImpl,
+        timeoutMs,
       )) as { content?: { type: string; input?: unknown; text?: string }[] };
       const tool = data.content?.find((b) => b.type === "tool_use");
       if (tool?.input) return tool.input;
@@ -72,6 +75,7 @@ export async function callJson(
           messages: [{ role: "user", content: prompt }],
         },
         fetchImpl,
+        timeoutMs,
       )) as { choices?: { message?: { content?: string } }[] };
       return parseJsonObject(data.choices?.[0]?.message?.content ?? "");
     }

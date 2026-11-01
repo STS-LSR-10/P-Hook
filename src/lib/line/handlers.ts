@@ -149,7 +149,7 @@ import type { Owl } from "@/lib/ai/owl";
 import { inOwlMode, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 import type { IntentRouter } from "@/lib/ai/intent-router";
 import { needsRouter } from "@/lib/ai/route-text";
-import { handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
+import { askAboutSecret, handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
 import { countNotes, createNote, deleteNote, listNotes } from "@/lib/note-repo";
 import { looksSecret } from "@/lib/secret-text";
@@ -577,7 +577,9 @@ async function handleText(
   }
 
   // In พี่ฮูก mode (a few minutes after "ถามพี่ฮูก") what is typed is a question, not an entry.
-  if (await inOwlMode(owlDeps(deps), user)) {
+  // A button already said what the message is, so that answer goes straight to the money path.
+  if (!options.routed && (await inOwlMode(owlDeps(deps), user))) {
+    if (looksSecret(input)) return askAboutSecret(input, false, user, intentDeps(user, deps));
     return owlAsk(owlDeps(deps), user, input, true, user.line_user_id);
   }
 
@@ -600,6 +602,7 @@ async function handleText(
   if (
     deps.structurer &&
     can(plan, "smartParse") &&
+    !looksSecret(input) &&
     !entries.some((e) => e.foreign) &&
     needsSmartParse(input, parsed)
   ) {

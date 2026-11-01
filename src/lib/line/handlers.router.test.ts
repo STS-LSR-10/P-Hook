@@ -10,6 +10,7 @@ import {
   MONEY_HINT_TEXT,
   REMINDER_GONE_TEXT,
   REMINDER_NOT_MATCHED_TEXT,
+  REMINDER_WHICH_MORE_TEXT,
   ROUTER_REMINDER_HINT_TEXT,
   SECRET_ASK_TEXT,
 } from "./messages";
@@ -140,7 +141,10 @@ function setup() {
   };
   return { deps, reply };
 }
-type Sent = { text?: string; quickReply?: { items: { action: { data?: string } }[] } };
+type Sent = {
+  text?: string;
+  quickReply?: { items: { action: { data?: string; label?: string } }[] };
+};
 const sent = (reply: ReturnType<typeof setup>["reply"]) =>
   (reply.mock.calls[0]?.[1] ?? []) as Sent[];
 const said = (reply: ReturnType<typeof setup>["reply"]) =>
@@ -149,6 +153,9 @@ const said = (reply: ReturnType<typeof setup>["reply"]) =>
     .join("\n");
 const buttons = (reply: ReturnType<typeof setup>["reply"]) =>
   sent(reply).flatMap((m) => m.quickReply?.items.map((i) => i.action.data) ?? []);
+
+const labels = (reply: ReturnType<typeof setup>["reply"]) =>
+  sent(reply).flatMap((m) => m.quickReply?.items.map((i) => i.action.label) ?? []);
 
 const decision = (d: Partial<IntentDecision>): IntentDecision => ({
   intent: "unclear",
@@ -243,7 +250,7 @@ describe("plain messages", () => {
   it("falls back when the AI fails", async () => {
     route.mockRejectedValue(new Error("down"));
     const { deps } = setup();
-    await handleEvent(say("ค่าที่อยู่ 500"), deps);
+    await handleEvent(say("อย่าลืมค่าเช่า 500"), deps);
     expect(entries).toHaveLength(1);
   });
 
@@ -269,6 +276,29 @@ describe("plain messages", () => {
     await handleEvent(say("กินยา 6 โมงเย็น"), deps);
     expect(entries).toEqual([]);
     expect(said(reply)).toBe(ROUTER_REMINDER_HINT_TEXT);
+  });
+
+  it("real money with a clock word still records without the AI", async () => {
+    quota = false;
+    const { deps } = setup();
+    await handleEvent(say("ค่าเน็ตทุกเดือน 599"), deps);
+    expect(entries).toHaveLength(1);
+  });
+
+  it("asks before recording money when the AI is unsure", async () => {
+    route.mockResolvedValue(decision({ intent: "money", confidence: 0.1 }));
+    const { deps, reply } = setup();
+    await handleEvent(say("กินยา 6 โมงเย็น"), deps);
+    expect(entries).toEqual([]);
+    expect(buttons(reply)).toContain(`a=irp&id=${PENDING}&p=yes`);
+  });
+
+  it("a secret typed in owl mode asks instead of going to the owl", async () => {
+    owlMode = true;
+    const { deps, reply } = setup();
+    await handleEvent(say("รหัสไวไฟ 12345678"), deps);
+    expect(asked).not.toHaveBeenCalled();
+    expect(said(reply)).toBe(SECRET_ASK_TEXT);
   });
 
   it("money for Free with nothing readable shows a hint", async () => {
@@ -312,7 +342,36 @@ describe("moving a reminder", () => {
     await handleEvent(say("เลื่อนเตือนกินยาเป็น 1 ทุ่ม"), deps);
     expect(moves).toHaveLength(1);
     expect(moves[0]).toMatchObject({ id: ID, repeat: "daily" });
-    expect(moves[0]?.remindAt.toISOString()).toBe("2026-11-01T12:00:00.000Z");
+    expect(moves[0]?.remindAt.toISOString()).toBe("2026-11-02T12:00:00.000Z");
+  });
+
+  it("ignores a time inside the reminder's own text", async () => {
+    reminders = [reminder(ID, "ประชุม 3 โมง")];
+    moved = reminders[0] ?? null;
+    route.mockResolvedValue({ ...edit, reminderQuery: "ประชุม" });
+    const { deps } = setup();
+    await handleEvent(say("เลื่อนเตือนประชุมเป็น 1 ทุ่ม"), deps);
+    expect(moves[0]?.remindAt.toISOString()).toBe("2026-11-02T12:00:00.000Z");
+  });
+
+  it("tells same-named reminders apart by their time", async () => {
+    reminders = [
+      { ...reminder(ID, "กินยา"), remindAt: "2026-11-02T01:00:00Z" },
+      { ...reminder(ID2, "กินยา"), remindAt: "2026-11-02T11:00:00Z" },
+    ];
+    route.mockResolvedValue(edit);
+    const { deps, reply } = setup();
+    await handleEvent(say("เลื่อนเตือนกินยาเป็น 1 ทุ่ม"), deps);
+    expect(labels(reply)).toEqual(["2/11 08:00 กินยา", "2/11 18:00 กินยา"]);
+  });
+
+  it("says when there are more matches than buttons", async () => {
+    reminders = [1, 2, 3, 4, 5].map((n) => reminder(`${n}${ID.slice(1)}`, `กินยา ${n}`));
+    route.mockResolvedValue(edit);
+    const { deps, reply } = setup();
+    await handleEvent(say("เลื่อนเตือนกินยาเป็น 1 ทุ่ม"), deps);
+    expect(buttons(reply)).toHaveLength(4);
+    expect(said(reply)).toBe(REMINDER_WHICH_MORE_TEXT);
   });
 
   it("asks which one when several match", async () => {
@@ -372,6 +431,32 @@ describe("answering the buttons", () => {
     await handleEvent(tap(`a=irp&id=${PENDING}&p=money`), deps);
     expect(entries).toHaveLength(1);
     expect(route).not.toHaveBeenCalled();
+  });
+
+  it("money on a secret stays away from the smart reader", async () => {
+    plan = "ultimate";
+    pending = { id: PENDING, input: "รหัสไวไฟ 12345678", decision: null };
+    const structure = vi.fn(async () => ({ entries: [] }));
+    const { deps } = setup();
+    deps.structurer = { name: "s", structure };
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=money`), deps);
+    expect(structure).not.toHaveBeenCalled();
+  });
+
+  it("money on a secret stays away from the owl", async () => {
+    owlMode = true;
+    pending = { id: PENDING, input: "รหัสล็อก 500", decision: null };
+    const { deps } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=money`), deps);
+    expect(asked).not.toHaveBeenCalled();
+    expect(entries).toHaveLength(1);
+  });
+
+  it("yes on unsure money records it", async () => {
+    pending = { id: PENDING, input: "กาแฟ 50", decision: decision({ intent: "money", confidence: 0.5 }) };
+    const { deps } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=yes`), deps);
+    expect(entries).toHaveLength(1);
   });
 
   it("no says cancelled and saves nothing", async () => {

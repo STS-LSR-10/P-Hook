@@ -357,6 +357,33 @@ export function parseReminder(input: string, now: Date): ReminderParse {
 }
 
 /** "พรุ่งนี้ 28 ต.ค. 2569 09:00 · ทุกวัน": how a reminder is shown back to the person. */
+/**
+ * The new time of a reminder from what was typed. A time alone stays on the reminder's day, and a day
+ * alone keeps its time, so "3 ทุ่ม" on Friday's reminder does not bring it forward to tonight.
+ */
+export function moveReminderTime(when: string, current: Date, now: Date): ReminderParse {
+  const parsed = parseReminder(`${when} x`, now);
+  if (!parsed.ok || parsed.repeat) return parsed;
+  const typed = numberWordsToDigits(normalizeThaiDigits(when));
+  if (/อีก\s*\d/.test(typed)) return parsed;
+  const { clock, rest } = takeTime(typed);
+  const { date } = takeDate(rest);
+  const kept = bangkokParts(current);
+
+  if (clock && !date && !clock.today) {
+    const hour = clock.midnight ? 24 : clock.hour;
+    const remindAt = fromBangkok(kept.year, kept.month, kept.day, hour, clock.minute);
+    return remindAt > now ? { ...parsed, remindAt } : parsed;
+  }
+  if (date && !clock) {
+    const day = bangkokParts(parsed.remindAt);
+    const remindAt = fromBangkok(day.year, day.month, day.day, kept.hour, kept.minute);
+    if (remindAt <= now) return { ok: false, reason: "past" };
+    return { ...parsed, remindAt, timeDefaulted: false };
+  }
+  return parsed;
+}
+
 export function describeReminder(remindAt: Date, repeat: Repeat | null): string {
   return `${formatThaiDate(remindAt, true)}${repeat ? ` · ${REPEAT_LABEL[repeat]}` : ""}`;
 }

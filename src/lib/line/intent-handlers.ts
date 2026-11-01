@@ -5,7 +5,7 @@ import {
   type IntentRouter,
   type RoutedIntent,
 } from "@/lib/ai/intent-router";
-import { hasClockWords, runRouter } from "@/lib/ai/route-text";
+import { clockIsTheAmount, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
 import { putPendingIntent, takePendingIntent } from "@/lib/pending-intent-repo";
@@ -14,7 +14,8 @@ import { matchReminders } from "@/lib/reminder-match";
 import type { UserRow } from "@/lib/repo";
 import { looksSecret } from "@/lib/secret-text";
 import type { LineMessage } from "@/lib/types";
-import { parseReminder, type ReminderDto } from "@/lib/user-reminder";
+import { bangkokParts } from "@/lib/thai-date";
+import { moveReminderTime, type ReminderDto } from "@/lib/user-reminder";
 import { listReminders, rescheduleReminder } from "@/lib/user-reminder-repo";
 import {
   INTENT_CANCELLED_TEXT,
@@ -24,7 +25,10 @@ import {
   MONEY_HINT_TEXT,
   REMINDER_GONE_TEXT,
   REMINDER_NOT_MATCHED_TEXT,
+  REMINDER_PAST_TEXT,
+  REMINDER_TOO_FAR_TEXT,
   REMINDER_USAGE_TEXT,
+  REMINDER_WHICH_MORE_TEXT,
   REMINDER_WHICH_TEXT,
   ROUTER_REMINDER_HINT_TEXT,
   SECRET_ASK_TEXT,
@@ -80,8 +84,16 @@ async function moveReminder(
   user: UserRow,
   deps: IntentDeps,
 ): Promise<LineMessage[]> {
-  const parsed = parseReminder(`${decision.whenText ?? ""} ${reminder.body}`, deps.now());
-  if (!parsed.ok) return [text(REMINDER_USAGE_TEXT)];
+  const parsed = moveReminderTime(
+    decision.whenText ?? "",
+    new Date(reminder.remindAt),
+    deps.now(),
+  );
+  if (!parsed.ok) {
+    if (parsed.reason === "past") return [text(REMINDER_PAST_TEXT)];
+    if (parsed.reason === "too_far") return [text(REMINDER_TOO_FAR_TEXT)];
+    return [text(REMINDER_USAGE_TEXT)];
+  }
   const repeat = parsed.repeat ?? reminder.repeat;
   const made = await rescheduleReminder(deps.db, user.id, reminder.id, {
     remindAt: parsed.remindAt,
@@ -100,6 +112,13 @@ async function moveReminder(
   ];
 }
 
+/** What tells two reminders apart on a button: "2/11 08:00 กินยา". */
+function reminderLabel(reminder: ReminderDto): string {
+  const p = bangkokParts(new Date(reminder.remindAt));
+  const clock = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+  return `${p.day}/${p.month} ${clock} ${reminder.body}`;
+}
+
 async function editReminder(
   input: string,
   decision: IntentDecision,
@@ -114,9 +133,9 @@ async function editReminder(
   const id = await putPendingIntent(deps.db, user.id, { text: input, decision }, deps.now());
   return [
     choices(
-      REMINDER_WHICH_TEXT,
+      found.length > MAX_REMINDER_CHOICES ? REMINDER_WHICH_MORE_TEXT : REMINDER_WHICH_TEXT,
       id,
-      found.slice(0, MAX_REMINDER_CHOICES).map((r) => [r.body, `rm:${r.id}`]),
+      found.slice(0, MAX_REMINDER_CHOICES).map((r) => [reminderLabel(r), `rm:${r.id}`]),
     ),
   ];
 }
@@ -146,6 +165,22 @@ function execute(
   }
 }
 
+/** Text that looks secret stays away from the AI: ask what to do with it. */
+export async function askAboutSecret(
+  input: string,
+  canBeMoney: boolean,
+  user: UserRow,
+  deps: IntentDeps,
+): Promise<LineMessage[]> {
+  const id = await putPendingIntent(deps.db, user.id, { text: input, decision: null }, deps.now());
+  const picks: [string, string][] = [
+    ["บันทึกเป็นโน้ต", "note"],
+    ["ไม่บันทึก", "no"],
+  ];
+  if (canBeMoney) picks.splice(1, 0, ["จดเป็นรายการเงิน", "money"]);
+  return [choices(SECRET_ASK_TEXT, id, picks)];
+}
+
 /**
  * Sort a message the rules cannot be trusted with, then act or ask. Null carries on down the money
  * path: it was money, or the AI could not help and the message reads as an ordinary entry.
@@ -157,32 +192,17 @@ export async function routeText(
   deps: IntentDeps,
 ): Promise<LineMessage[] | null> {
   const { db } = deps;
-  const hold = (decision: IntentDecision | null) =>
+  if (looksSecret(input)) return askAboutSecret(input, parsed.entries.length > 0, user, deps);
+
+  const hold = (decision: IntentDecision) =>
     putPendingIntent(db, user.id, { text: input, decision }, deps.now());
-
-  if (looksSecret(input)) {
-    const id = await hold(null);
-    const picks: [string, string][] = [
-      ["บันทึกเป็นโน้ต", "note"],
-      ["ไม่บันทึก", "no"],
-    ];
-    if (parsed.entries.length > 0) picks.splice(1, 0, ["จดเป็นรายการเงิน", "money"]);
-    return [choices(SECRET_ASK_TEXT, id, picks)];
-  }
-
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
   const decision = await runRouter(
     { router: deps.router, now: deps.now },
     { db, userId: user.id, plan, text: input },
   );
   if (!decision) {
-    // "กินยา 6 โมงเย็น" read by the rules alone would be a 6 baht entry
-    return parsed.entries.length > 0 && hasClockWords(input)
-      ? [text(ROUTER_REMINDER_HINT_TEXT)]
-      : null;
-  }
-  if (decision.intent === "money") {
-    return parsed.entries.length === 0 && !can(plan, "smartParse") ? [text(MONEY_HINT_TEXT)] : null;
+    return clockIsTheAmount(input, parsed.entries) ? [text(ROUTER_REMINDER_HINT_TEXT)] : null;
   }
   if (decision.intent === "unclear") {
     const id = await hold(decision);
@@ -203,6 +223,11 @@ export async function routeText(
         ["ไม่ใช่", "no"],
       ]),
     ];
+  }
+  if (decision.intent === "money") {
+    return parsed.entries.length === 0 && !can(plan, "smartParse")
+      ? [text(MONEY_HINT_TEXT)]
+      : null;
   }
   return execute(input, decision, user, deps);
 }

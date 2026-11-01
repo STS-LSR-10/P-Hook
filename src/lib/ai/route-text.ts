@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { log, safeMessage } from "@/lib/log";
-import type { ParseResult } from "@/lib/parse/text-parser";
+import type { ParsedEntry, ParseResult } from "@/lib/parse/text-parser";
+import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { ROUTER_DAILY_LIMIT, type Plan } from "@/lib/plan";
 import { looksSecret } from "@/lib/secret-text";
 import { dayKey, refundUsage, takeUsage } from "@/lib/usage";
@@ -12,11 +13,24 @@ import {
 } from "./intent-router";
 import { needsSmartParse } from "./smart-parse";
 
-const CLOCK_RE = /โมง|ทุ่ม|พรุ่งนี้|มะรืน|ทุกวัน|ทุกสัปดาห์|ทุกเดือน/;
-const KEEP_RE = /ต้องซื้อ|ต้องเตรียม|จดไว้|ฝากจำ|อย่าลืม|ที่อยู่|เก็บไว้|ไฟล์|เอกสาร/;
+const CLOCK_RE =
+  /(?<!ชั่ว)โมง|ทุ่ม|พรุ่งนี้|มะรืน|ทุกวัน|ทุกสัปดาห์|ทุกเดือน|\d{1,2}:\d{2}|บ่าย\s*\d|ตี\s*\d|อีก\s*\d+\s*(?:นาที|ชั่วโมง|ชม)/;
+const KEEP_RE = /ต้องซื้อ|ต้องเตรียม|จดไว้|ฝากจำ|อย่าลืม|(?<!ค่า)ที่อยู่/;
+const CLOCK_NUMBER_RE =
+  /(\d{1,2})\s*(?:โมง|ทุ่ม)|(\d{1,2}):\d{2}|บ่าย\s*(\d)|ตี\s*(\d)|อีก\s*(\d+)\s*(?:นาที|ชั่วโมง|ชม)/g;
 
-/** Words of a time or a repeat: the numbers next to them are not amounts of money. */
-export const hasClockWords = (input: string): boolean => CLOCK_RE.test(input);
+/**
+ * Did the rules take the number of a time for an amount? "กินยา 6 โมงเย็น" read as 6 baht is wrong;
+ * "เมื่อเช้า 8 โมง กาแฟ 60" is a real entry of 60 baht.
+ */
+export function clockIsTheAmount(input: string, entries: ParsedEntry[]): boolean {
+  const numbers = new Set(
+    [...normalizeThaiDigits(input).matchAll(CLOCK_NUMBER_RE)].map((m) =>
+      Number(m.slice(1).find(Boolean)),
+    ),
+  );
+  return entries.some((e) => !e.backdated && numbers.has(e.amountSatang / 100));
+}
 
 /** Three lines or more, most with no number: a list of things, not a list of entries. */
 function isPlainList(input: string): boolean {
@@ -33,7 +47,7 @@ export function needsRouter(input: string, result: ParseResult): boolean {
   return (
     needsSmartParse(input, result) ||
     looksSecret(input) ||
-    hasClockWords(input) ||
+    CLOCK_RE.test(input) ||
     KEEP_RE.test(input) ||
     isPlainList(input)
   );
