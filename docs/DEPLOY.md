@@ -70,7 +70,7 @@ pnpm exec wrangler r2 bucket create phook-files
 
 Bucket ต้องเป็นส่วนตัว ห้ามเปิด public access
 
-Migration ที่ต้องรันใน Supabase SQL Editor ก่อน push: `0046_pending_intents.sql` และ `0047_stored_files.sql`
+Migration ที่ต้องรันใน Supabase SQL Editor ก่อน push: `0046_pending_intents.sql`, `0047_stored_files.sql` และ `0048_file_previews.sql`
 
 ## 5) Rollback
 
