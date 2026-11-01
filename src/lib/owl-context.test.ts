@@ -299,6 +299,28 @@ describe("what a money plan needs", () => {
     expect(out).not.toContain("ยกเลิกแล้ว");
   });
 
+  it("says when not everything is listed, and how often a bill comes", async () => {
+    bills = Array.from({ length: 10 }, (_, i) =>
+      bill({ name: `บิล${i}`, cadence: i === 0 ? "yearly" : "monthly" }),
+    );
+    rules = Array.from({ length: 9 }, (_, i) => rule({ title: `ประจำ${i}` }));
+    const out = await context();
+    expect(out).toContain("บิลที่ต้องจ่าย (แสดง 8 จาก 10):");
+    expect(out).toContain("บิล0 ฿599 รายปี");
+    expect(out).toContain("รายการประจำ (แสดง 8 จาก 9):");
+  });
+
+  it("leaves out what looks like a password, wherever it was typed", async () => {
+    debts = [debt({ person: "รหัสแม่ 1234" })];
+    goals = [goal({ name: "password ทริป" })];
+    bills = [bill({ name: "otp ค่าเน็ต" })];
+    rules = [rule({ title: "รหัสบัตร" })];
+    const out = await context();
+    expect(out).not.toContain("รหัส");
+    expect(out).not.toContain("password");
+    expect(out).not.toContain("otp");
+  });
+
   it("a failing part leaves the rest of the plan", async () => {
     failDebts = true;
     goals = [goal({})];

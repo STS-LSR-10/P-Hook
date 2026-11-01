@@ -101,6 +101,7 @@ export function routerPrompt(input: { text: string; today: string }): string {
     '- file_save: wants a file or picture they sent kept. "เก็บไว้ให้หน่อย", "ฝากรูปนี้ไว้ด้วย"',
     '- ask: any question, including about how much they spent, their reminders or planning their money. "เดือนนี้ใช้เงินไปเท่าไร", "พรุ่งนี้มีเตือนอะไรบ้าง", "ควรออมเดือนละเท่าไร", "ทำไมฟ้าสีฟ้า"',
     "- unclear: none of these, or you cannot tell. Asking to delete or reset anything is unclear.",
+    'A question stays ask even with an amount or a time in it: "ค่าไฟ 2000 แพงไหม", "พรุ่งนี้ 9 โมงมีอะไร".',
     "Fields:",
     "- reminderText for reminder_add: what, then when, in the person's own words. Keep every word",
     '  about the day, the time and the repeat. "พรุ่งนี้ต้องไปหาหมอ 10 โมง" gives "ไปหาหมอ พรุ่งนี้ 10 โมง".',

@@ -634,7 +634,7 @@ function intentDeps(user: UserRow, deps: HandlerDeps, inOwl = false): IntentDeps
     router: deps.router,
     run: (command) => runCommand(command, user, deps),
     ask: (question) => owlAsk(owlDeps(deps), user, question, inOwl, user.line_user_id),
-    recordMoney: (input) => handleText(input, user, deps, { routed: true }),
+    recordMoney: (input) => handleText(input, user, deps, { routed: true, showCard: inOwl }),
     listUrl: pageUrl("/reminders"),
   };
 }
@@ -648,7 +648,7 @@ async function handleText(
   input: string,
   user: UserRow,
   deps: HandlerDeps,
-  options: { routed?: boolean } = {},
+  options: { routed?: boolean; showCard?: boolean } = {},
 ): Promise<LineMessage[]> {
   const command = parseCommand(input);
   if (command?.kind === "transfer") {
@@ -767,7 +767,7 @@ async function handleText(
       walletIds.set(e, found.wallet.id);
     }
   }
-  return saveEntries(entries, user, deps, walletIds);
+  return saveEntries(entries, user, deps, walletIds, options.showCard);
 }
 
 /** Wallet balance as text, e.g. "เงินสด คงเหลือ ฿9,500". */
@@ -1458,6 +1458,7 @@ async function saveEntries(
   user: UserRow,
   deps: HandlerDeps,
   walletIds: Map<ParsedEntry, string> = new Map(),
+  showCard = false,
 ): Promise<LineMessage[]> {
   const { db } = deps;
   const [settings, categories, memory] = await Promise.all([
@@ -1570,7 +1571,7 @@ async function saveEntries(
       );
       cardWarned ||= out.noticed;
     }
-  } else if (settings.confirm_style !== "off" && confirmed.length > 0) {
+  } else if ((showCard || settings.confirm_style !== "off") && confirmed.length > 0) {
     if (confirmed.length <= MAX_CARDS_PER_REPLY) {
       for (const c of confirmed) {
         messages.push(
@@ -2528,7 +2529,10 @@ async function handlePostback(
   if (action === "irp") {
     const id = params.get("id") ?? "";
     if (!UUID_RE.test(id)) return [text(NOT_FOUND_TEXT)];
-    return handleIntentPick(id, params.get("p") ?? "", user, intentDeps(user, deps));
+    const chatting = await inOwlMode(owlDeps(deps), user);
+    const picks = intentDeps(user, deps, chatting);
+    const replies = await handleIntentPick(id, params.get("p") ?? "", user, picks, chatting);
+    return chatting ? keepOwlOpen(owlDeps(deps), user, replies) : replies;
   }
   // "ยกเลิกโน้ตนี้" under a note that was just saved.
   if (action === "ntx") {

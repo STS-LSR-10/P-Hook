@@ -39,13 +39,17 @@ import { buildReminderCard } from "./reminder-flex";
 const MAX_REMINDER_CHOICES = 4;
 const MAX_LABEL = 20; // LINE's limit for a quick reply
 const UUID_RE = /^[0-9a-f-]{36}$/;
+/** In the พี่ฮูก mode these wait for a yes when the words read as a question. */
+const SAVES: readonly RoutedIntent[] = ["money", "reminder_add", "note_add"];
+const QUESTION_RE =
+  /\?|ไหม|มั้ย|เท่าไร|เท่าไหร่|กี่|ยังไง|อย่างไร|อะไร|ทำไม|หรือเปล่า|รึเปล่า|^\s*ถ้า/;
 
 const CONFIRM_LABEL: Record<RoutedIntent, string> = {
   money: "จดเป็นรายการเงิน",
   reminder_add: "ตั้งเตือน",
   reminder_edit: "เลื่อนเตือน",
   note_add: "จดเป็นโน้ต",
-  search: "ค้นหาในโน้ต",
+  search: "ค้นหาไฟล์และโน้ต",
   file_save: "เก็บไฟล์",
   ask: "ให้พี่ฮูกตอบ",
   unclear: "จัดการข้อความนี้",
@@ -203,7 +207,13 @@ export async function routeText(
     { router: deps.router, now: deps.now },
     { db, userId: user.id, plan, text: input },
   );
-  if (chatting && (!decision || decision.intent === "ask" || decision.intent === "unclear")) {
+  const reads = QUESTION_RE.test(input);
+  if (chatting && !decision) {
+    // no AI to ask: what the rules read as a plain entry is one, like outside the mode
+    const entry = parsed.entries.length > 0 && !reads && !clockIsTheAmount(input, parsed.entries);
+    return entry ? null : deps.ask(input);
+  }
+  if (chatting && (decision?.intent === "ask" || decision?.intent === "unclear")) {
     return deps.ask(input);
   }
   if (!decision) {
@@ -220,7 +230,8 @@ export async function routeText(
       ]),
     ];
   }
-  if (decision.confidence < ROUTER_ACT_CONFIDENCE) {
+  const heldQuestion = chatting && reads && SAVES.includes(decision.intent);
+  if (decision.confidence < ROUTER_ACT_CONFIDENCE || heldQuestion) {
     const id = await hold(decision);
     return [
       choices(INTENT_CONFIRM_TEXT(CONFIRM_LABEL[decision.intent]), id, [
@@ -236,12 +247,17 @@ export async function routeText(
   return execute(input, decision, user, deps);
 }
 
-/** The answer to `choices`. The waiting message is taken once, so a second tap does nothing. */
+/**
+ * The answer to `choices`. The waiting message is taken once, so a second tap does nothing.
+ * `chatting`: a "no" to what the AI guessed in the พี่ฮูก mode means it was a question. A secret
+ * has no decision, so it never goes that way.
+ */
 export async function handleIntentPick(
   id: string,
   pick: string,
   user: UserRow,
   deps: IntentDeps,
+  chatting = false,
 ): Promise<LineMessage[]> {
   const pending = await takePendingIntent(deps.db, user.id, id, deps.now());
   if (!pending) return [text(INTENT_EXPIRED_TEXT)];
@@ -251,7 +267,7 @@ export async function handleIntentPick(
   if (pick === "note") return deps.run({ kind: "note-add", body: input });
   if (pick === "reminder") return deps.run({ kind: "remind-add", text: input });
   if (pick === "money") return deps.recordMoney(input);
-  if (pick === "no") return [text(INTENT_CANCELLED_TEXT)];
+  if (pick === "no") return chatting && decision ? deps.ask(input) : [text(INTENT_CANCELLED_TEXT)];
   if (pick.startsWith("rm:") && decision) {
     const reminderId = pick.slice(3);
     if (!UUID_RE.test(reminderId)) return [text(INTENT_EXPIRED_TEXT)];

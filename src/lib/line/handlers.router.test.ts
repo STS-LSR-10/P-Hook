@@ -353,12 +353,14 @@ describe("in the พี่ฮูก mode", () => {
     expect(asked).not.toHaveBeenCalled();
   });
 
-  it("records money that has an amount", async () => {
+  it("records money that has an amount, and always shows it so it can be undone", async () => {
     route.mockResolvedValue(decision({ intent: "money" }));
-    const { deps } = setup();
+    const { deps, reply } = setup();
     await handleEvent(say("กินข้าว50"), deps);
     expect(entries).toHaveLength(1);
     expect(asked).not.toHaveBeenCalled();
+    expect(JSON.stringify(sent(reply))).toContain("a=del&id=t1");
+    expect(buttons(reply)).toContain("a=owlx");
   });
 
   it("answers money with nothing to record, instead of a hint about typing", async () => {
@@ -399,13 +401,76 @@ describe("in the พี่ฮูก mode", () => {
     expect(putPending).toHaveBeenCalled();
   });
 
-  it("falls back to an answer when the day's sorting is used up", async () => {
+  it.each([
+    ["money", "ค่าไฟ 2000 แพงไหม"],
+    ["reminder_add", "พรุ่งนี้ 9 โมงมีอะไร"],
+    ["note_add", "ถ้าใช้วันละ 300 เดือนนึงเท่าไร"],
+  ] as const)("%s on what reads as a question asks first: %s", async (intent, input) => {
+    route.mockResolvedValue(decision({ intent, confidence: 1, reminderText: input }));
+    const { deps, reply } = setup();
+    await handleEvent(say(input), deps);
+    expect(entries).toEqual([]);
+    expect(madeReminders).toEqual([]);
+    expect(notes).toEqual([]);
+    expect(labels(reply)).toEqual(["ใช่", "ไม่ใช่", "จบการถาม"]);
+  });
+
+  it("outside the mode a question-like sentence is not held back", async () => {
+    owlMode = false;
+    route.mockResolvedValue(decision({ intent: "reminder_add", reminderText: "กินยา 6 โมงเย็น" }));
+    const { deps } = setup();
+    await handleEvent(say("เตือนกินยา 6 โมงเย็นได้ไหม"), deps);
+    expect(madeReminders).toHaveLength(1);
+  });
+
+  it("ไม่ใช่ on a held question answers it, and the mode stays open", async () => {
+    pending = { id: PENDING, input: "ค่าไฟ 2000 แพงไหม", decision: decision({ intent: "money" }) };
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=no`), deps);
+    expect(asked).toHaveBeenCalledWith("ค่าไฟ 2000 แพงไหม");
+    expect(buttons(reply)).toContain("a=owlx");
+  });
+
+  it("ไม่ใช่ on a secret never reaches the owl", async () => {
+    pending = { id: PENDING, input: "รหัสไวไฟ 12345678", decision: null };
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=no`), deps);
+    expect(asked).not.toHaveBeenCalled();
+    expect(said(reply)).toBe(INTENT_CANCELLED_TEXT);
+  });
+
+  it("ใช่ does the action and the mode stays open", async () => {
+    pending = {
+      id: PENDING,
+      input: "จดว่าล้างแอร์ได้ไหม",
+      decision: decision({ intent: "note_add" }),
+    };
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=yes`), deps);
+    expect(notes).toEqual(["จดว่าล้างแอร์ได้ไหม"]);
+    expect(buttons(reply)).toContain("a=owlx");
+  });
+
+  it("a clear entry is still recorded when the day's sorting is used up", async () => {
     quota = false;
     const { deps } = setup();
-    await handleEvent(say("กินยา 6 โมงเย็น"), deps);
+    await handleEvent(say("กาแฟ 50"), deps);
     expect(route).not.toHaveBeenCalled();
-    expect(asked).toHaveBeenCalledTimes(1);
+    expect(entries).toHaveLength(1);
+    expect(asked).not.toHaveBeenCalled();
   });
+
+  it.each(["กินยา 6 โมงเย็น", "ค่าไฟ 2000 แพงไหม", "ทำยังไงดี"])(
+    "falls back to an answer when the day's sorting is used up: %s",
+    async (input) => {
+      quota = false;
+      const { deps } = setup();
+      await handleEvent(say(input), deps);
+      expect(route).not.toHaveBeenCalled();
+      expect(entries).toEqual([]);
+      expect(asked).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("falls back to an answer when the AI cannot sort it", async () => {
     route.mockRejectedValue(new Error("429"));

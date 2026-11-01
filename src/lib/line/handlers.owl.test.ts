@@ -111,13 +111,13 @@ describe("พี่ฮูก in the chat", () => {
     expect(said(reply)).toBe("คำตอบ");
   });
 
-  it("in the mode, plain text is a question, not an entry", async () => {
+  it("in the mode with no AI to sort it, a question is answered and a clear entry is recorded", async () => {
     live = true;
     const { deps } = setup();
     await handleEvent(say("เหลืองบเท่าไร"), deps);
     await handleEvent(say("กาแฟ 50"), deps);
-    expect(asked).toEqual(["mode:เหลืองบเท่าไร", "mode:กาแฟ 50"]);
-    expect(entries).toHaveLength(0);
+    expect(asked).toEqual(["mode:เหลืองบเท่าไร"]);
+    expect(entries).toHaveLength(1);
   });
 
   it("in the mode, a real command still works, and จบ leaves", async () => {

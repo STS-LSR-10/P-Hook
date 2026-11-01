@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { BillCadence } from "@/lib/bill";
 import { listBills } from "@/lib/bill-repo";
 import { calendarMonthRange, cycleRange } from "@/lib/budget-cycle";
 import { listDebts } from "@/lib/debt-repo";
@@ -34,10 +35,12 @@ const MAX_GOALS = 5;
 const MAX_BILLS = 8;
 const MAX_RECURRING = 8;
 
-const CADENCE_LABEL: Record<Cadence, string> = {
+const CADENCE_LABEL: Record<Cadence | BillCadence, string> = {
   daily: "รายวัน",
   weekly: "รายสัปดาห์",
   monthly: "รายเดือน",
+  yearly: "รายปี",
+  once: "ครั้งเดียว",
 };
 
 export interface Money {
@@ -82,7 +85,9 @@ export interface OwlFacts {
     dueOn: Date | null;
     monthlyNeededSatang: number | null;
   }[];
-  bills: { name: string; amountSatang: number | null; nextDueOn: Date }[];
+  /** All of them, so the person can be told when only some are listed. */
+  bills: { name: string; amountSatang: number | null; cadence: BillCadence; nextDueOn: Date }[];
+  /** All of them, as with `bills`. */
   recurring: {
     type: "income" | "expense";
     title: string;
@@ -105,6 +110,10 @@ function dayOf(ymd: string): Date {
   const [year = 0, month = 1, day = 1] = ymd.split("-").map(Number);
   return fromBangkok(year, month, day);
 }
+
+/** A heading that says when the list below is not all of it. */
+const heading = (label: string, shown: number, total: number) =>
+  `${label}${total > shown ? ` (แสดง ${shown} จาก ${total})` : ""}:`;
 
 function debtLines(debts: OwlFacts["debts"]): string[] {
   if (debts.length === 0) return [];
@@ -200,16 +209,18 @@ export function renderOwlContext(f: OwlFacts): string {
     }
   }
   if (f.bills.length > 0) {
-    lines.push("บิลที่ต้องจ่าย:");
-    for (const b of f.bills) {
+    const listed = f.bills.slice(0, MAX_BILLS);
+    lines.push(heading("บิลที่ต้องจ่าย", listed.length, f.bills.length));
+    for (const b of listed) {
       lines.push(
-        `- ${oneLine(b.name, 40)} ${b.amountSatang === null ? "ยังไม่ระบุยอด" : baht(b.amountSatang)} | ครบ ${formatThaiDate(b.nextDueOn)}`,
+        `- ${oneLine(b.name, 40)} ${b.amountSatang === null ? "ยังไม่ระบุยอด" : baht(b.amountSatang)} ${CADENCE_LABEL[b.cadence]} | ครบ ${formatThaiDate(b.nextDueOn)}`,
       );
     }
   }
   if (f.recurring.length > 0) {
-    lines.push("รายการประจำ:");
-    for (const r of f.recurring) {
+    const listed = f.recurring.slice(0, MAX_RECURRING);
+    lines.push(heading("รายการประจำ", listed.length, f.recurring.length));
+    for (const r of listed) {
       lines.push(
         `- ${r.type === "income" ? "รายรับ" : "รายจ่าย"} ${oneLine(r.title, 40)} ${baht(r.amountSatang)} ${CADENCE_LABEL[r.cadence]}`,
       );
@@ -345,7 +356,8 @@ export async function loadOwlFacts(
           .order("occurred_at", { ascending: false })
           .limit(MAX_RECENT);
         if (error) throw new Error(error.message);
-        return (data ?? []).map((r) => {
+        const rows = (data ?? []).filter((r) => !looksSecret(String(r.title ?? "")));
+        return rows.map((r) => {
           const cat = Array.isArray(r.categories) ? r.categories[0] : r.categories;
           return {
             occurredAt: new Date(r.occurred_at as string),
@@ -399,14 +411,16 @@ export async function loadOwlFacts(
     budgets: budgetPart.rows,
     cycleLabel: budgetPart.label || null,
     recent,
-    reminders: reminders.map((r) => ({
-      remindAt: new Date(r.remindAt),
-      body: r.body,
-      repeat: r.repeat,
-    })),
+    reminders: reminders
+      .filter((r) => !looksSecret(r.body))
+      .map((r) => ({
+        remindAt: new Date(r.remindAt),
+        body: r.body,
+        repeat: r.repeat,
+      })),
     notes: notes.map((n) => ({ createdAt: new Date(n.createdAt), body: n.body })),
     debts: debts
-      .filter((d) => d.remainingSatang > 0)
+      .filter((d) => d.remainingSatang > 0 && !looksSecret(d.person))
       .map((d) => ({
         direction: d.direction,
         person: d.person,
@@ -414,7 +428,7 @@ export async function loadOwlFacts(
         dueAt: d.dueAt ? new Date(d.dueAt) : null,
       })),
     goals: goals
-      .filter((g) => !g.archived && !g.done)
+      .filter((g) => !g.archived && !g.done && !looksSecret(g.name))
       .slice(0, MAX_GOALS)
       .map((g) => ({
         name: g.name,
@@ -423,14 +437,16 @@ export async function loadOwlFacts(
         dueOn: g.dueOn ? dayOf(g.dueOn) : null,
         monthlyNeededSatang: g.monthlyNeededSatang,
       })),
-    bills: bills.slice(0, MAX_BILLS).map((b) => ({
-      name: b.name,
-      amountSatang: b.amountSatang,
-      nextDueOn: dayOf(b.nextDueOn),
-    })),
+    bills: bills
+      .filter((b) => !looksSecret(b.name))
+      .map((b) => ({
+        name: b.name,
+        amountSatang: b.amountSatang,
+        cadence: b.cadence,
+        nextDueOn: dayOf(b.nextDueOn),
+      })),
     recurring: rules
-      .filter((r) => r.is_active)
-      .slice(0, MAX_RECURRING)
+      .filter((r) => r.is_active && !looksSecret(r.title))
       .map((r) => ({
         type: r.type,
         title: r.title,

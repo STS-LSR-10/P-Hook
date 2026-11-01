@@ -460,6 +460,8 @@ export const OWL_EXAMPLES = [
 export const OWL_END_TEXT = "กลับมาจดรายการตามปกติแล้ว 🦉";
 export const OWL_NOT_IN_MODE_TEXT = 'ตอนนี้ไม่ได้ถามพี่ฮูกอยู่นะ พิมพ์ "ถามพี่ฮูก" เมื่ออยากถาม';
 export const OWL_TOO_LONG_TEXT = (max: number) => `ถามสั้นลงหน่อยนะ (ไม่เกิน ${max} ตัวอักษร)`;
+export const OWL_SECRET_TEXT =
+  "ข้อความนี้ดูเหมือนมีรหัสหรือเลขสำคัญ พี่ฮูกเลยไม่ส่งให้ AI นะ ลองถามแบบไม่ใส่เลขดู";
 export const OWL_FAILED_TEXT = "พี่ฮูกตอบไม่ได้ตอนนี้ ลองถามใหม่อีกครั้งนะ (ไม่นับโควตาครั้งนี้)";
 export const OWL_DAY_LIMIT_TEXT = "วันนี้ถามพี่ฮูกเยอะแล้ว พรุ่งนี้ค่อยมาถามใหม่นะ";
 export const owlQuotaText = (plan: "free" | "plus" | "ultimate", limit: number) =>

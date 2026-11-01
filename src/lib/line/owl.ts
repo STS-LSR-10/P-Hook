@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData, type Owl } from "@/lib/ai/owl";
 import { clearAskWait, isAskWaitLive, startAskWait } from "@/lib/ask-repo";
 import { log, safeMessage } from "@/lib/log";
+import { looksSecret } from "@/lib/secret-text";
 import { loadOwlFacts, renderOwlContext } from "@/lib/owl-context";
 import { effectivePlan, OWL_LIMIT } from "@/lib/plan";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
@@ -15,6 +16,7 @@ import {
   OWL_FAILED_TEXT,
   OWL_NOT_IN_MODE_TEXT,
   OWL_PROMPT_TEXT,
+  OWL_SECRET_TEXT,
   OWL_TOO_LONG_TEXT,
   OWL_UNAVAILABLE_TEXT,
   owlQuotaText,
@@ -117,6 +119,7 @@ export async function owlAsk(
   const q = question.replace(/\s+/g, " ").trim();
   if (!q) return owlStart(deps, user);
   if (q.length > MAX_QUESTION_LENGTH) return [text(OWL_TOO_LONG_TEXT(MAX_QUESTION_LENGTH))];
+  if (looksSecret(q)) return [text(OWL_SECRET_TEXT)];
 
   const now = deps.now();
   if (deps.limit) {

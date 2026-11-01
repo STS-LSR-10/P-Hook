@@ -7,6 +7,7 @@ import {
   OWL_END_TEXT,
   OWL_FAILED_TEXT,
   OWL_NOT_IN_MODE_TEXT,
+  OWL_SECRET_TEXT,
   OWL_UNAVAILABLE_TEXT,
   owlQuotaText,
 } from "./messages";
@@ -142,6 +143,15 @@ describe("after an action in the mode", () => {
   it("gives more time when nothing is sent back", async () => {
     expect(await keepOwlOpen(deps(), user(), [])).toEqual([]);
     expect(waits).toEqual(["start"]);
+  });
+});
+
+describe("what looks like a password", () => {
+  it("never reaches the AI, and costs nothing", async () => {
+    usageLeft = 0;
+    const r = await owlAsk(deps(), user(), "รหัสเอทีเอ็ม 1234", false, "U1");
+    expect(answer).not.toHaveBeenCalled();
+    expect(first(r).text).toBe(OWL_SECRET_TEXT);
   });
 });
 

@@ -128,6 +128,11 @@ describe("needsPersonalData: the person's records go along only for a question a
     "ควรออมเดือนละเท่าไร",
     "ผ่อนก้อนไหนก่อนดี",
     "เป้าทริปญี่ปุ่นทันไหม",
+    "ถึงเป้าออมเมื่อไหร่",
+    "กู้เงินซื้อรถไหวไหม",
+    "พรุ่งนี้มีนัดอะไรบ้าง",
+    "พรุ่งนี้ 9 โมงมีอะไร",
+    "วันนี้มีอะไรต้องทำ",
     "how much did I spend on food",
   ])("%s -> yes", (q) => {
     expect(needsPersonalData(q)).toBe(true);
@@ -140,6 +145,11 @@ describe("needsPersonalData: the person's records go along only for a question a
     "เขียนคำขอบคุณลูกค้าให้หน่อย",
     "what is the capital of Japan",
     "ผมควรอ่านหนังสืออะไรดี",
+    "วิธีผ่อนคลายความเครียด",
+    "กู้ภัยโทรเบอร์อะไร",
+    "กู้ไฟล์ที่ลบไปยังไง",
+    "เป้าหมายชีวิตคืออะไร",
+    "เป้าอุ้มลูกยี่ห้อไหนดี",
   ])("%s -> no", (q) => {
     expect(needsPersonalData(q)).toBe(false);
   });
