@@ -12,9 +12,18 @@ import type { AiProviderName } from "../src/lib/ocr/provider";
 
 const MUTATING: RoutedIntent[] = ["money", "reminder_add", "reminder_edit", "note_add"];
 
-const CASES: { text: string; expected?: RoutedIntent; never?: RoutedIntent[] }[] = [
+const CASES: {
+  text: string;
+  expected?: RoutedIntent;
+  never?: RoutedIntent[];
+  /** Words the reminder text must keep. */
+  keeps?: string;
+}[] = [
   { text: "เตือนกินยา 6 โมงเย็นหน่อย", expected: "reminder_add" },
-  { text: "พรุ่งนี้ต้องไปหาหมอ 10 โมง", expected: "reminder_add" },
+  { text: "พรุ่งนี้ต้องไปหาหมอ 10 โมง", expected: "reminder_add", keeps: "พรุ่งนี้" },
+  { text: "มะรืนนี้บ่าย 2 นัดลูกค้า", expected: "reminder_add", keeps: "มะรืน" },
+  { text: "วันศุกร์ 9 โมงส่งรายงาน", expected: "reminder_add", keeps: "ศุกร์" },
+  { text: "ช่วยเตือนจ่ายค่าไฟทุกวันที่ 5", expected: "reminder_add", keeps: "ทุกวันที่ 5" },
   { text: "เลื่อนเตือนกินยาเป็น 1 ทุ่ม", expected: "reminder_edit" },
   { text: "ไปเที่ยวต้องซื้อครีมกันแดด หมวก ยากันยุง", expected: "note_add" },
   { text: "ของที่ต้องเตรียมไปงานมีเสื้อสูท รองเท้า", expected: "note_add" },
@@ -49,9 +58,13 @@ async function main(): Promise<void> {
   for (const c of CASES) {
     const d = sanitizeDecision(await router.route({ text: c.text, today }));
     const pass =
-      d !== null && (c.expected ? d.intent === c.expected : !c.never?.includes(d.intent));
+      d !== null &&
+      (c.expected ? d.intent === c.expected : !c.never?.includes(d.intent)) &&
+      (!c.keeps || (d.reminderText ?? "").includes(c.keeps));
     if (!pass) wrong += 1;
-    console.log(`${pass ? "PASS" : "FAIL"} ${d?.intent ?? "-"} ${d?.confidence ?? "-"} ${c.text}`);
+    console.log(
+      `${pass ? "PASS" : "FAIL"} ${d?.intent ?? "-"} ${d?.confidence ?? "-"} ${c.text} ${d?.reminderText ?? ""}`,
+    );
   }
   console.log(`${CASES.length - wrong}/${CASES.length} correct on ${router.name}`);
   if (wrong > MAX_WRONG) process.exit(1);
