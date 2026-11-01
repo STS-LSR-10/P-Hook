@@ -141,7 +141,8 @@ function setup() {
   return { deps, reply };
 }
 type Sent = { text?: string; quickReply?: { items: { action: { data?: string } }[] } };
-const sent = (reply: ReturnType<typeof setup>["reply"]) => (reply.mock.calls[0]?.[1] ?? []) as Sent[];
+const sent = (reply: ReturnType<typeof setup>["reply"]) =>
+  (reply.mock.calls[0]?.[1] ?? []) as Sent[];
 const said = (reply: ReturnType<typeof setup>["reply"]) =>
   sent(reply)
     .map((m) => m.text)

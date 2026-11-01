@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { callJson } from "./json-call";
-import {
-  chooseAiProvider,
-  STRUCTURER_DEFAULT_MODELS,
-  type StructurerEnv,
-} from "./text-structurer";
+import { chooseAiProvider, STRUCTURER_DEFAULT_MODELS, type StructurerEnv } from "./text-structurer";
 
 /** At or above this the bot acts straight away; below it, it asks first. */
 export const ROUTER_ACT_CONFIDENCE = 0.8;

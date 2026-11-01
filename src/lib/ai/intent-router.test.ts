@@ -34,7 +34,11 @@ describe("sanitizeDecision", () => {
   });
 
   it("turns an edit without query or time into unclear", () => {
-    const d = sanitizeDecision({ intent: "reminder_edit", confidence: 0.9, reminderQuery: "กินยา" });
+    const d = sanitizeDecision({
+      intent: "reminder_edit",
+      confidence: 0.9,
+      reminderQuery: "กินยา",
+    });
     expect(d?.intent).toBe("unclear");
   });
 

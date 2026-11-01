@@ -56,9 +56,6 @@ export async function takePendingIntent(
 
 /** Messages nobody answered must not stay around: they may hold a secret. */
 export async function purgeExpiredIntents(db: SupabaseClient, now: Date): Promise<void> {
-  const { error } = await db
-    .from("pending_intents")
-    .delete()
-    .lte("expires_at", now.toISOString());
+  const { error } = await db.from("pending_intents").delete().lte("expires_at", now.toISOString());
   if (error) fail("purge pending intents", error);
 }

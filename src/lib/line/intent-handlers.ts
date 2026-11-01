@@ -182,9 +182,7 @@ export async function routeText(
       : null;
   }
   if (decision.intent === "money") {
-    return parsed.entries.length === 0 && !can(plan, "smartParse")
-      ? [text(MONEY_HINT_TEXT)]
-      : null;
+    return parsed.entries.length === 0 && !can(plan, "smartParse") ? [text(MONEY_HINT_TEXT)] : null;
   }
   if (decision.intent === "unclear") {
     const id = await hold(decision);

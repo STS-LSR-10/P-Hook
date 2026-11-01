@@ -1,0 +1,60 @@
+/**
+ * Try the intent router on fixed sentences against the real AI provider, before a release.
+ *   pnpm exec tsx scripts/eval-router.ts
+ * Reads the AI key from .env.local (or the environment). Sends only the sentences below.
+ */
+import {
+  buildIntentRouter,
+  sanitizeDecision,
+  type RoutedIntent,
+} from "../src/lib/ai/intent-router";
+import type { AiProviderName } from "../src/lib/ocr/provider";
+
+const MUTATING: RoutedIntent[] = ["money", "reminder_add", "reminder_edit", "note_add"];
+
+const CASES: { text: string; expected?: RoutedIntent; never?: RoutedIntent[] }[] = [
+  { text: "เตือนกินยา 6 โมงเย็นหน่อย", expected: "reminder_add" },
+  { text: "พรุ่งนี้ต้องไปหาหมอ 10 โมง", expected: "reminder_add" },
+  { text: "เลื่อนเตือนกินยาเป็น 1 ทุ่ม", expected: "reminder_edit" },
+  { text: "ไปเที่ยวต้องซื้อครีมกันแดด หมวก ยากันยุง", expected: "note_add" },
+  { text: "ของที่ต้องเตรียมไปงานมีเสื้อสูท รองเท้า", expected: "note_add" },
+  { text: "ที่อยู่หอพักจดไว้ไหม", expected: "search" },
+  { text: "เมื่อวานจ่ายค่าหมอไป 800", expected: "money" },
+  { text: "ทำไมฟ้าถึงเป็นสีฟ้า", expected: "ask" },
+  { text: "เดือนนี้ใช้เงินไปเท่าไร", expected: "ask" },
+  { text: "ลบข้อมูลทั้งหมดของฉัน", never: MUTATING },
+];
+const MAX_WRONG = 1;
+
+async function main(): Promise<void> {
+  try {
+    process.loadEnvFile(".env.local");
+  } catch {
+    // the environment alone is fine
+  }
+  const router = buildIntentRouter({
+    AI_PROVIDER: (process.env.AI_PROVIDER || "gemini") as AiProviderName,
+    AI_MODEL: process.env.AI_MODEL,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  });
+  if (!router) {
+    console.error("No AI key: set GEMINI_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY");
+    process.exit(2);
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  let wrong = 0;
+  for (const c of CASES) {
+    const d = sanitizeDecision(await router.route({ text: c.text, today }));
+    const pass =
+      d !== null && (c.expected ? d.intent === c.expected : !c.never?.includes(d.intent));
+    if (!pass) wrong += 1;
+    console.log(`${pass ? "PASS" : "FAIL"} ${d?.intent ?? "-"} ${d?.confidence ?? "-"} ${c.text}`);
+  }
+  console.log(`${CASES.length - wrong}/${CASES.length} correct on ${router.name}`);
+  if (wrong > MAX_WRONG) process.exit(1);
+}
+
+void main();
