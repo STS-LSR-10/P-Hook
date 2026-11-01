@@ -16,7 +16,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { fieldClass } from "@/components/liff/settings/types";
@@ -42,6 +42,8 @@ interface FilesResponse {
   viewToken: string;
 }
 
+type Usage = Pick<FilesResponse, "usedBytes" | "capacityBytes"> | "failed";
+
 type Tab = "all" | "note" | "link" | "image" | "file";
 const TABS: { key: Tab; label: string }[] = [
   { key: "all", label: "ทั้งหมด" },
@@ -50,6 +52,17 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "image", label: "รูป" },
   { key: "file", label: "ไฟล์" },
 ];
+const EMPTY: Record<Tab, { title: string; hint: string }> = {
+  all: {
+    title: "ยังไม่มีอะไรในคลังเลยครับ",
+    hint: "ส่งรูป ไฟล์ หรือพิมพ์คุยกับพี่ฮูกในแชทได้เลยนะครับ เดี๋ยวพี่ฮูกจะเก็บรวบรวมไว้ที่นี่เอง!",
+  },
+  note: { title: "ยังไม่มีโน้ต", hint: 'กดปุ่ม + หรือพิมพ์ในแชท เช่น "โน้ต ซื้อนม"' },
+  link: { title: "ยังไม่มีลิงก์", hint: "จดโน้ตที่มีลิงก์ แล้วจะขึ้นที่นี่ครับ" },
+  image: { title: "ยังไม่มีรูป", hint: 'ส่งรูปในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"' },
+  file: { title: "ยังไม่มีไฟล์", hint: 'ส่งไฟล์ในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"' },
+};
+
 const isTab = (value: string | null): value is Tab => TABS.some((t) => t.key === value);
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
@@ -76,6 +89,7 @@ export default function VaultPage() {
 
 function Vault() {
   const { api, openExternal, status } = useLiff();
+  const router = useRouter();
   const params = useSearchParams();
   const requested = params.get("tab");
   const requestedOpen = params.get("open") ?? "";
@@ -84,55 +98,14 @@ function Vault() {
   const [tab, setTab] = useState<Tab>(isTab(requested) ? requested : "all");
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [typed, setTyped] = useState(search);
-  const [grid, setGrid] = useState(false);
-  const [moreNotes, setMoreNotes] = useState<NoteDto[]>([]);
-  const [moreFiles, setMoreFiles] = useState<FileDto[]>([]);
-  const [notesHaveMore, setNotesHaveMore] = useState<boolean | null>(null);
-  const [filesHaveMore, setFilesHaveMore] = useState<boolean | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [openNote, setOpenNote] = useState<NoteDto | null>(null);
-  const [openFile, setOpenFile] = useState<FileDto | null>(null);
-  const [openPicture, setOpenPicture] = useState<FileDto | null>(null);
+  const [usage, setUsage] = useState<Usage | null>(null);
+  const shown = usage !== null && usage !== "failed" ? usage : null;
+  const [canAdd, setCanAdd] = useState(true);
+  // bumped after a change, so the list below loads again
+  const [version, setVersion] = useState(0);
   const opened = useRef(false);
-
-  const q = search || null;
-  const showsNotes = tab === "all" || tab === "note" || tab === "link";
-  const showsFiles = tab === "all" || tab === "image" || tab === "file";
-  const links = tab === "link" ? "1" : null;
-  const kind = tab === "image" || tab === "file" ? tab : null;
-  const notes = useApi<NotesResponse>(`/api/notes${query({ q, links })}`);
-  // always asked for: the space bar needs it on every tab
-  const files = useApi<FilesResponse>(`/api/files${query({ q, kind })}`);
-
-  useEffect(() => {
-    setMoreNotes([]);
-    setNotesHaveMore(null);
-  }, [notes.data]);
-  useEffect(() => {
-    setMoreFiles([]);
-    setFilesHaveMore(null);
-  }, [files.data]);
-
-  const noteItems = showsNotes ? [...(notes.data?.items ?? []), ...moreNotes] : [];
-  const fileItems = showsFiles ? [...(files.data?.items ?? []), ...moreFiles] : [];
-  const entries = [
-    ...noteItems.map((note) => ({ at: note.createdAt, note, file: null })),
-    ...fileItems.map((file) => ({ at: file.createdAt, note: null, file })),
-  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-  const hasMore =
-    (showsNotes && (notesHaveMore ?? notes.data?.hasMore ?? false)) ||
-    (showsFiles && (filesHaveMore ?? files.data?.hasMore ?? false));
-  const loading =
-    (showsFiles && files.loading && !files.data) || (showsNotes && notes.loading && !notes.data);
-  const failure =
-    (showsFiles && !files.data && files.error) || (showsNotes && !notes.data && notes.error);
-  const token = files.data?.viewToken ?? "";
-
-  const reload = () => {
-    notes.reload();
-    files.reload();
-  };
 
   const download = useCallback(
     async (id: string) => {
@@ -147,58 +120,28 @@ function Vault() {
     [api, openExternal],
   );
 
-  // the button on a card in the chat lands here
+  // the button on a card in the chat lands here; the address loses it, so a reload opens nothing
   useEffect(() => {
     if (!toOpen || opened.current || status !== "ready") return;
     opened.current = true;
     void download(toOpen);
-  }, [toOpen, status, download]);
+    router.replace("/vault");
+  }, [toOpen, status, download, router]);
 
-  async function loadMore() {
-    try {
-      const lastNote = noteItems[noteItems.length - 1];
-      const lastFile = fileItems[fileItems.length - 1];
-      if (showsNotes && lastNote && (notesHaveMore ?? notes.data?.hasMore)) {
-        const before = lastNote.createdAt;
-        const page = await api<NotesResponse>(`/api/notes${query({ q, links, before })}`);
-        setMoreNotes((m) => [...m, ...page.items]);
-        setNotesHaveMore(page.hasMore);
-      }
-      if (showsFiles && lastFile && (filesHaveMore ?? files.data?.hasMore)) {
-        const before = lastFile.createdAt;
-        const page = await api<FilesResponse>(`/api/files${query({ q, kind, before })}`);
-        setMoreFiles((m) => [...m, ...page.items]);
-        setFilesHaveMore(page.hasMore);
-      }
-    } catch (err) {
-      setNotice(err instanceof Error ? err.message : "โหลดเพิ่มไม่สำเร็จ");
-    }
-  }
-
-  function done(message: string) {
-    setOpenNote(null);
-    setOpenFile(null);
-    setOpenPicture(null);
+  const done = useCallback((message: string) => {
     setAdding(false);
     setNotice(message);
-    reload();
-  }
-
-  function openItem(file: FileDto) {
-    if (isViewableImage(file.mimeType)) setOpenPicture(file);
-    else setOpenFile(file);
-  }
+    setVersion((v) => v + 1);
+  }, []);
 
   function submitSearch(e: FormEvent) {
     e.preventDefault();
     setSearch(typed.trim());
   }
 
-  const usage = files.data;
-  const percent = usage
-    ? Math.min(100, Math.round((usage.usedBytes / usage.capacityBytes) * 100))
+  const percent = shown
+    ? Math.min(100, Math.round((shown.usedBytes / shown.capacityBytes) * 100))
     : 0;
-  const pictureList = tab === "image" && grid;
 
   return (
     <main className="-mb-24 flex min-h-screen flex-col bg-[#FAF7F2] pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800">
@@ -276,88 +219,17 @@ function Vault() {
             {notice}
           </p>
         ) : null}
-
-        {tab === "image" && entries.length > 0 ? (
-          <div className="flex justify-end">
-            <div className="flex rounded-lg bg-[#EAE3D6] p-0.5 text-xs">
-              {[
-                { on: false, label: "รายการ", Icon: List },
-                { on: true, label: "รูปเล็ก", Icon: LayoutGrid },
-              ].map(({ on, label, Icon }) => (
-                <button
-                  key={label}
-                  type="button"
-                  aria-pressed={grid === on}
-                  onClick={() => setGrid(on)}
-                  className={cn(
-                    "flex items-center gap-1 rounded-md px-2.5 py-1 text-stone-700",
-                    grid === on && "bg-white font-semibold text-stone-900",
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" aria-hidden />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {loading ? (
-          <LoadingBlock rows={3} />
-        ) : failure ? (
-          <ErrorState message={failure} onRetry={reload} />
-        ) : entries.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-            <Logo size={140} />
-            <h2 className="mt-2 text-lg font-bold text-stone-950">
-              {search ? "ไม่พบรายการที่ค้นหา" : "ยังไม่มีอะไรในคลังเลยครับ"}
-            </h2>
-            <p className="text-sm text-stone-700">
-              {search
-                ? "ลองเปลี่ยนคำค้นนะครับ"
-                : "ส่งรูป ไฟล์ หรือพิมพ์คุยกับพี่ฮูกในแชทได้เลยนะครับ เดี๋ยวพี่ฮูกจะเก็บรวบรวมไว้ที่นี่เอง!"}
-            </p>
-          </div>
-        ) : pictureList ? (
-          <ul aria-label="รูปเล็ก" className="grid grid-cols-3 gap-2">
-            {fileItems.map((file) => (
-              <li key={file.id}>
-                <button
-                  type="button"
-                  aria-label={file.name}
-                  onClick={() => openItem(file)}
-                  className="block aspect-square w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-100"
-                >
-                  <Thumb file={file} token={token} className="h-full w-full" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <ul aria-label="รายการในคลัง" className="space-y-2.5">
-            {entries.map(({ note, file }) =>
-              note ? (
-                <li key={`n-${note.id}`}>
-                  <NoteRow note={note} onOpen={() => setOpenNote(note)} />
-                </li>
-              ) : file ? (
-                <li key={`f-${file.id}`}>
-                  <FileRow file={file} token={token} onOpen={() => openItem(file)} />
-                </li>
-              ) : null,
-            )}
-          </ul>
-        )}
-
-        {!loading && hasMore ? (
-          <button
-            type="button"
-            onClick={() => void loadMore()}
-            className="h-11 w-full rounded-2xl border border-stone-300 text-sm font-semibold text-[#2D7347]"
-          >
-            ดูเพิ่ม
-          </button>
-        ) : null}
+        {/* a new key starts clean: no old list, and an answer to an old request lands nowhere */}
+        <VaultList
+          key={`${tab}|${search}|${version}`}
+          tab={tab}
+          search={search}
+          onUsage={setUsage}
+          onCanAdd={setCanAdd}
+          onDone={done}
+          onDownload={download}
+          onOpenLink={openExternal}
+        />
       </div>
 
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-stone-200 bg-[#FAF7F2] px-4 py-2.5">
@@ -365,11 +237,13 @@ function Vault() {
           <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-900">
             <Archive className="h-4 w-4" aria-hidden /> พื้นที่เก็บไฟล์
           </p>
-          {usage ? (
-            <p className="num text-xs text-stone-700">
-              {formatBytes(usage.usedBytes)} / {formatBytes(usage.capacityBytes)}
-            </p>
-          ) : null}
+          <p className="num text-xs text-stone-700">
+            {usage === null
+              ? ""
+              : usage === "failed"
+                ? "โหลดไม่สำเร็จ"
+                : `${formatBytes(usage.usedBytes)} / ${formatBytes(usage.capacityBytes)}`}
+          </p>
           <button
             type="button"
             aria-label="เพิ่มโน้ต"
@@ -393,25 +267,249 @@ function Vault() {
 
       {adding ? (
         <AddNoteSheet
-          canAdd={notes.data?.canAdd ?? true}
+          canAdd={canAdd}
           onClose={() => setAdding(false)}
           onSaved={() => done("จดแล้ว")}
         />
       ) : null}
+    </main>
+  );
+}
+
+/** One tab and one search. It is replaced, not changed, when either of them changes. */
+function VaultList({
+  tab,
+  search,
+  onUsage,
+  onCanAdd,
+  onDone,
+  onDownload,
+  onOpenLink,
+}: {
+  tab: Tab;
+  search: string;
+  onUsage: (usage: Usage) => void;
+  onCanAdd: (canAdd: boolean) => void;
+  onDone: (message: string) => void;
+  onDownload: (id: string) => Promise<void>;
+  onOpenLink: (url: string) => Promise<void>;
+}) {
+  const { api } = useLiff();
+  const [grid, setGrid] = useState(false);
+  const [moreNotes, setMoreNotes] = useState<NoteDto[]>([]);
+  const [moreFiles, setMoreFiles] = useState<FileDto[]>([]);
+  const [notesHaveMore, setNotesHaveMore] = useState<boolean | null>(null);
+  const [filesHaveMore, setFilesHaveMore] = useState<boolean | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [moreFailed, setMoreFailed] = useState<string | null>(null);
+  const [openNote, setOpenNote] = useState<NoteDto | null>(null);
+  const [openFile, setOpenFile] = useState<FileDto | null>(null);
+  const [openPicture, setOpenPicture] = useState<FileDto | null>(null);
+
+  const q = search || null;
+  const showsNotes = tab === "all" || tab === "note" || tab === "link";
+  const showsFiles = tab === "all" || tab === "image" || tab === "file";
+  const links = tab === "link" ? "1" : null;
+  const kind = tab === "image" || tab === "file" ? tab : null;
+  const notes = useApi<NotesResponse>(`/api/notes${query({ q, links })}`);
+  // always asked for: the space bar needs it on every tab
+  const files = useApi<FilesResponse>(`/api/files${query({ q, kind })}`);
+
+  useEffect(() => {
+    if (files.data) onUsage(files.data);
+    else if (files.error) onUsage("failed");
+  }, [files.data, files.error, onUsage]);
+  useEffect(() => {
+    if (notes.data) onCanAdd(notes.data.canAdd);
+  }, [notes.data, onCanAdd]);
+
+  const noteItems = showsNotes ? [...(notes.data?.items ?? []), ...moreNotes] : [];
+  const fileItems = showsFiles ? [...(files.data?.items ?? []), ...moreFiles] : [];
+  const lastNote = noteItems[noteItems.length - 1];
+  const lastFile = fileItems[fileItems.length - 1];
+  const noteMore = showsNotes && (notesHaveMore ?? notes.data?.hasMore ?? false);
+  const fileMore = showsFiles && (filesHaveMore ?? files.data?.hasMore ?? false);
+
+  // Each list has its own pages, so one may reach far further back than the other. What is older than
+  // the end of a list with more to come waits, or it would show above things not loaded yet.
+  const ends = [noteMore ? lastNote : undefined, fileMore ? lastFile : undefined]
+    .filter((item) => item !== undefined)
+    .map((item) => new Date(item.createdAt).getTime());
+  const cutoff = ends.length > 0 ? Math.max(...ends) : -Infinity;
+  const entries = [
+    ...noteItems.map((note) => ({ at: note.createdAt, note, file: null })),
+    ...fileItems.map((file) => ({ at: file.createdAt, note: null, file })),
+  ]
+    .filter((entry) => new Date(entry.at).getTime() >= cutoff)
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+  const notesFailed = showsNotes && !notes.data && !notes.loading ? notes.error : null;
+  const filesFailed = showsFiles && !files.data && !files.loading ? files.error : null;
+  const loading =
+    (showsFiles && files.loading && !files.data) || (showsNotes && notes.loading && !notes.data);
+  const shownLists = (showsNotes ? 1 : 0) + (showsFiles ? 1 : 0);
+  const failedLists = (notesFailed ? 1 : 0) + (filesFailed ? 1 : 0);
+  const failure = failedLists === shownLists ? (notesFailed ?? filesFailed) : null;
+  const token = files.data?.viewToken ?? "";
+
+  const reload = () => {
+    if (notesFailed) notes.reload();
+    if (filesFailed) files.reload();
+    if (!notesFailed && !filesFailed) {
+      notes.reload();
+      files.reload();
+    }
+  };
+
+  async function loadMore() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    setMoreFailed(null);
+    try {
+      const at = (item: { createdAt: string } | undefined) =>
+        item ? new Date(item.createdAt).getTime() : -Infinity;
+      if (noteMore && lastNote && at(lastNote) === cutoff) {
+        const before = lastNote.createdAt;
+        const page = await api<NotesResponse>(`/api/notes${query({ q, links, before })}`);
+        setMoreNotes((m) => [...m, ...page.items]);
+        setNotesHaveMore(page.hasMore);
+      }
+      if (fileMore && lastFile && at(lastFile) === cutoff) {
+        const before = lastFile.createdAt;
+        const page = await api<FilesResponse>(`/api/files${query({ q, kind, before })}`);
+        setMoreFiles((m) => [...m, ...page.items]);
+        setFilesHaveMore(page.hasMore);
+      }
+    } catch (err) {
+      setMoreFailed(err instanceof Error ? err.message : "โหลดเพิ่มไม่สำเร็จ");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  function openItem(file: FileDto) {
+    if (isViewableImage(file.mimeType)) setOpenPicture(file);
+    else setOpenFile(file);
+  }
+
+  const partial = failure
+    ? null
+    : notesFailed
+      ? "โหลดโน้ตไม่สำเร็จ"
+      : filesFailed
+        ? "โหลดไฟล์ไม่สำเร็จ"
+        : null;
+  const empty = EMPTY[tab];
+
+  return (
+    <>
+      {partial ? (
+        <div className="flex items-center justify-between gap-2 rounded-2xl bg-amber-100 px-4 py-2 text-sm text-amber-900">
+          <span>{partial}</span>
+          <button type="button" onClick={reload} className="font-semibold">
+            ลองอีกครั้ง
+          </button>
+        </div>
+      ) : null}
+
+      {tab === "image" && entries.length > 0 ? (
+        <div className="flex justify-end">
+          <div className="flex rounded-lg bg-[#EAE3D6] p-0.5 text-xs">
+            {[
+              { on: false, label: "รายการ", Icon: List },
+              { on: true, label: "รูปเล็ก", Icon: LayoutGrid },
+            ].map(({ on, label, Icon }) => (
+              <button
+                key={label}
+                type="button"
+                aria-pressed={grid === on}
+                onClick={() => setGrid(on)}
+                className={cn(
+                  "flex items-center gap-1 rounded-md px-2.5 py-1 text-stone-700",
+                  grid === on && "bg-white font-semibold text-stone-900",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" aria-hidden />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {loading ? (
+        <LoadingBlock rows={3} />
+      ) : failure ? (
+        <ErrorState message={failure} onRetry={reload} />
+      ) : entries.length === 0 && !partial ? (
+        <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+          <Logo size={140} />
+          <h2 className="mt-2 text-lg font-bold text-stone-950">
+            {search ? "ไม่พบรายการที่ค้นหา" : empty.title}
+          </h2>
+          <p className="text-sm text-stone-700">{search ? "ลองเปลี่ยนคำค้นนะครับ" : empty.hint}</p>
+        </div>
+      ) : tab === "image" && grid ? (
+        <ul aria-label="รูปเล็ก" className="grid grid-cols-3 gap-2">
+          {fileItems.map((file) => (
+            <li key={file.id}>
+              <button
+                type="button"
+                aria-label={file.name}
+                onClick={() => openItem(file)}
+                className="block aspect-square w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-100"
+              >
+                <Thumb file={file} token={token} className="h-full w-full" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul aria-label="รายการในคลัง" className="space-y-2.5">
+          {entries.map(({ note, file }) =>
+            note ? (
+              <li key={`n-${note.id}`}>
+                <NoteRow note={note} onOpen={() => setOpenNote(note)} />
+              </li>
+            ) : file ? (
+              <li key={`f-${file.id}`}>
+                <FileRow file={file} token={token} onOpen={() => openItem(file)} />
+              </li>
+            ) : null,
+          )}
+        </ul>
+      )}
+
+      {moreFailed ? (
+        <p role="alert" className="text-sm text-expense">
+          {moreFailed}
+        </p>
+      ) : null}
+      {!loading && !failure && (noteMore || fileMore) ? (
+        <button
+          type="button"
+          disabled={loadingMore}
+          onClick={() => void loadMore()}
+          className="h-11 w-full rounded-2xl border border-stone-300 text-sm font-semibold text-[#2D7347] disabled:opacity-60"
+        >
+          {loadingMore ? "กำลังโหลด…" : "ดูเพิ่ม"}
+        </button>
+      ) : null}
+
       {openNote ? (
         <NoteSheet
           note={openNote}
           onClose={() => setOpenNote(null)}
-          onDone={done}
-          onOpenLink={(url) => void openExternal(url)}
+          onDone={onDone}
+          onOpenLink={(url) => void onOpenLink(url)}
         />
       ) : null}
       {openFile ? (
         <FileSheet
           file={openFile}
           onClose={() => setOpenFile(null)}
-          onDone={done}
-          onDownload={() => void download(openFile.id)}
+          onDone={onDone}
+          onDownload={() => void onDownload(openFile.id)}
         />
       ) : null}
       {openPicture ? (
@@ -419,14 +517,14 @@ function Vault() {
           file={openPicture}
           token={token}
           onClose={() => setOpenPicture(null)}
-          onDownload={() => void download(openPicture.id)}
+          onDownload={() => void onDownload(openPicture.id)}
           onMore={() => {
             setOpenFile(openPicture);
             setOpenPicture(null);
           }}
         />
       ) : null}
-    </main>
+    </>
   );
 }
 
@@ -753,11 +851,24 @@ function Lightbox({
   onDownload: () => void;
   onMore: () => void;
 }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={file.name}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-30 flex items-center justify-center bg-black/85 p-3"
     >
       <div className="flex max-h-full w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-[#FAF7F2]">
@@ -778,12 +889,17 @@ function Lightbox({
           </button>
         </div>
         <div className="flex min-h-64 items-center justify-center bg-stone-950 p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={viewUrl(file.id, token)}
-            alt={file.name}
-            className="max-h-[60vh] max-w-full rounded-lg object-contain"
-          />
+          {failed ? (
+            <p className="text-sm text-stone-200">โหลดรูปไม่สำเร็จ ลองดาวน์โหลดแทนนะครับ</p>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={viewUrl(file.id, token)}
+              alt={file.name}
+              onError={() => setFailed(true)}
+              className="max-h-[60vh] max-w-full rounded-lg object-contain"
+            />
+          )}
         </div>
         <div className="flex gap-2 p-3">
           <button

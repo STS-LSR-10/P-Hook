@@ -65,6 +65,10 @@ const BASE = {
   "GET /api/files": filtered,
 };
 const tab = (name: string) => ({ name, exact: true });
+const PIXEL = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+  "base64",
+);
 
 test.describe("vault page (360px)", () => {
   test("mixes notes and files, shows the space, with no accessibility or overflow problems", async ({
@@ -92,12 +96,127 @@ test.describe("vault page (360px)", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("the old pages lead here, and keep what they carried", async ({ page }) => {
+  test("the old pages lead to the whole vault, and keep what they carried", async ({ page }) => {
     await mockApi(page, BASE);
     await page.goto("/notes?q=นม");
-    await expect(page).toHaveURL(/\/vault\?tab=note&q=/);
+    await expect(page).toHaveURL(/\/vault\?q=/);
     await page.goto("/files");
-    await expect(page).toHaveURL(/\/vault\?tab=file/);
+    await expect(page).toHaveURL(/\/vault$/);
+    await expect(page.getByRole("button", { name: "ทั้งหมด", exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  test("a tab with nothing says what is missing", async ({ page }) => {
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/files": (_r: Route, url: URL) =>
+        url.searchParams.get("kind") === "image" ? FILES([]) : FILES([file]),
+    });
+    await page.goto("/vault?tab=image");
+    await expect(page.getByText("ยังไม่มีรูป")).toBeVisible();
+    await expect(page.getByText("ยังไม่มีอะไรในคลังเลยครับ")).toBeHidden();
+  });
+
+  test("a search that fails says so, and never shows the old list", async ({ page }) => {
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/files": (_r: Route, url: URL) =>
+        url.searchParams.get("q") ? { status: 500, body: { error: "ระบบสะดุด" } } : FILES([file]),
+      "GET /api/notes": (_r: Route, url: URL) =>
+        url.searchParams.get("q")
+          ? { status: 500, body: { error: "ระบบสะดุด" } }
+          : NOTES([note(N1, "ซื้อนม")]),
+    });
+    await page.goto("/vault");
+    await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
+    await page.getByRole("searchbox").fill("คำอื่น");
+    await page.getByRole("button", { name: "ค้นหา" }).click();
+    await expect(page.getByRole("button", { name: "ลองอีกครั้ง" })).toBeVisible();
+    await expect(page.getByText("สัญญาเช่า.pdf")).toBeHidden();
+  });
+
+  test("while a tab loads, the list of the last tab is gone", async ({ page }) => {
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((done) => (release = done));
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/files": async (_r: Route, url: URL) => {
+        if (url.searchParams.get("kind") === "file") await held;
+        return filtered(_r, url);
+      },
+    });
+    await page.goto("/vault?tab=image");
+    await expect(page.getByText("รูปบัตร.jpg")).toBeVisible();
+    await page.getByRole("button", tab("ไฟล์")).click();
+    await expect(page.getByText("รูปบัตร.jpg")).toBeHidden();
+    release();
+    await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
+  });
+
+  test("older things in the mixed list come in date order", async ({ page }) => {
+    const old = { ...file, createdAt: "2026-01-01T05:00:00.000Z" };
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/files": FILES([old]),
+      "GET /api/notes": (_r: Route, url: URL) =>
+        url.searchParams.get("before")
+          ? NOTES([note(N2, "โน้ตเก่า", 1)])
+          : NOTES([note(N1, "โน้ตใหม่", 3)], { hasMore: true }),
+    });
+    await page.goto("/vault");
+    await expect(page.getByText("โน้ตใหม่")).toBeVisible();
+    await expect(page.getByText("สัญญาเช่า.pdf")).toBeHidden();
+    await page.getByRole("button", { name: "ดูเพิ่ม" }).click();
+    await expect(page.getByText("โน้ตเก่า")).toBeVisible();
+    await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
+  });
+
+  test("a double tap on ดูเพิ่ม loads one page", async ({ page }) => {
+    let calls = 0;
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/files": async (_r: Route, url: URL) => {
+        if (!url.searchParams.get("before")) return FILES([file], { hasMore: true });
+        calls += 1;
+        await new Promise((done) => setTimeout(done, 200));
+        return FILES([{ ...file, id: P1, name: "เก่ากว่า.pdf" }]);
+      },
+    });
+    await page.goto("/vault?tab=file");
+    await page.getByRole("button", { name: "ดูเพิ่ม" }).dblclick();
+    await expect(page.getByText("เก่ากว่า.pdf")).toHaveCount(1);
+    expect(calls).toBe(1);
+  });
+
+  test("when one list fails the other stays, with a way to retry", async ({ page }) => {
+    let calls = 0;
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/files": FILES([file]),
+      "GET /api/notes": () => {
+        calls += 1;
+        return calls === 1
+          ? { status: 500, body: { error: "ระบบสะดุด" } }
+          : NOTES([note(N1, "ซื้อนม")]);
+      },
+    });
+    await page.goto("/vault");
+    await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
+    await expect(page.getByText("โหลดโน้ตไม่สำเร็จ")).toBeVisible();
+    await page.getByRole("button", { name: "ลองอีกครั้ง" }).click();
+    await expect(page.getByText("ซื้อนม")).toBeVisible();
+  });
+
+  test("the space bar says when it could not load", async ({ page }) => {
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/files": { status: 500, body: { error: "ระบบสะดุด" } },
+    });
+    await page.goto("/vault?tab=note");
+    await expect(page.getByText("ซื้อนม")).toBeVisible();
+    await expect(page.getByText("โหลดไม่สำเร็จ")).toBeVisible();
   });
 
   test("keeps a very long name inside the page", async ({ page }) => {
@@ -188,7 +307,7 @@ test.describe("vault page (360px)", () => {
     await page.getByRole("button", { name: "เพิ่มโน้ต" }).click();
     await page.getByRole("textbox", { name: "โน้ตใหม่" }).fill("จดใหม่");
     await page.getByRole("button", { name: "จดโน้ต" }).click();
-    await expect(page.getByRole("status")).toHaveText("จดแล้ว");
+    await expect(page.getByRole("status").filter({ hasText: "จดแล้ว" })).toBeVisible();
     expect(posted).toEqual({ body: "จดใหม่" });
   });
 
@@ -218,11 +337,11 @@ test.describe("vault page (360px)", () => {
     await page.getByRole("button", { name: /ซื้อนม/ }).click();
     await page.getByRole("textbox", { name: "เนื้อหาโน้ต" }).fill("แก้แล้ว");
     await page.getByRole("button", { name: "บันทึก" }).click();
-    await expect(page.getByRole("status")).toHaveText("แก้ไขแล้ว");
+    await expect(page.getByRole("status").filter({ hasText: "แก้ไขแล้ว" })).toBeVisible();
     expect(patched).toEqual({ body: "แก้แล้ว" });
     await page.getByRole("button", { name: /ซื้อนม/ }).click();
     await page.getByRole("button", { name: "ลบโน้ต" }).click();
-    await expect(page.getByRole("status")).toHaveText("ลบแล้ว");
+    await expect(page.getByRole("status").filter({ hasText: "ลบแล้ว" })).toBeVisible();
   });
 
   test("a link opens outside LINE", async ({ page }) => {
@@ -244,13 +363,7 @@ test.describe("vault page (360px)", () => {
   test("pictures show their small preview, in a list and as a grid", async ({ page }) => {
     await mockApi(page, BASE);
     await page.route(`**/api/files/${P1}/view**`, (route) =>
-      route.fulfill({
-        contentType: "image/png",
-        body: Buffer.from(
-          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
-          "base64",
-        ),
-      }),
+      route.fulfill({ contentType: "image/png", body: PIXEL }),
     );
     await page.goto("/vault?tab=image");
     await expect(page.locator('img[src*="size=thumb"]').first()).toHaveAttribute(
@@ -280,6 +393,9 @@ test.describe("vault page (360px)", () => {
       ...BASE,
       [`POST /api/files/${P1}/link`]: { url: "https://app.example.com/d?t=1" },
     });
+    await page.route(`**/api/files/${P1}/view**`, (route) =>
+      route.fulfill({ contentType: "image/png", body: PIXEL }),
+    );
     await page.goto("/vault?tab=image");
     await page.getByRole("button", { name: /รูปบัตร/ }).click();
     const dialog = page.getByRole("dialog", { name: "รูปบัตร.jpg" });
@@ -288,6 +404,16 @@ test.describe("vault page (360px)", () => {
     await expect
       .poll(() => page.evaluate(() => (window as unknown as { opened?: string }).opened))
       .toBe("https://app.example.com/d?t=1");
+  });
+
+  test("the large picture closes with Escape, and says when it cannot load", async ({ page }) => {
+    await mockApi(page, BASE);
+    await page.goto("/vault?tab=image");
+    await page.getByRole("button", { name: /รูปบัตร/ }).click();
+    const dialog = page.getByRole("dialog", { name: "รูปบัตร.jpg" });
+    await expect(dialog.getByText("โหลดรูปไม่สำเร็จ")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
   });
 
   test("renames a file", async ({ page }) => {
@@ -303,7 +429,7 @@ test.describe("vault page (360px)", () => {
     await page.getByRole("button", { name: /สัญญาเช่า/ }).click();
     await page.getByLabel("ชื่อไฟล์", { exact: true }).fill("สัญญาใหม่");
     await page.getByRole("button", { name: "บันทึกชื่อ" }).click();
-    await expect(page.getByRole("status")).toHaveText("เปลี่ยนชื่อแล้ว");
+    await expect(page.getByRole("status").filter({ hasText: "เปลี่ยนชื่อแล้ว" })).toBeVisible();
     expect(sent).toEqual({ name: "สัญญาใหม่" });
   });
 
@@ -313,7 +439,7 @@ test.describe("vault page (360px)", () => {
     await page.goto("/vault?tab=file");
     await page.getByRole("button", { name: /สัญญาเช่า/ }).click();
     await page.getByRole("button", { name: "ลบไฟล์" }).click();
-    await expect(page.getByRole("status")).toHaveText("ลบแล้ว");
+    await expect(page.getByRole("status").filter({ hasText: "ลบแล้ว" })).toBeVisible();
     expect(seen).toContain(`DELETE /api/files/${F1}`);
   });
 
@@ -332,6 +458,7 @@ test.describe("vault page (360px)", () => {
     await expect
       .poll(() => page.evaluate(() => (window as unknown as { opened?: string }).opened))
       .toBe("https://app.example.com/d?t=2");
+    await expect(page).not.toHaveURL(/open=/);
   });
 
   test("?open= with anything but an id asks for nothing", async ({ page }) => {

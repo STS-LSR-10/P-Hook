@@ -169,6 +169,15 @@ describe("GET /api/files/:id/view", () => {
     expect((await view("", "someone")).status).toBe(404);
   });
 
+  it("is 404 for an id that is no id", async () => {
+    const t = await signViewToken("u1", SECRET);
+    const res = await VIEW(
+      new Request(`https://app.example.com/api/files/x/view?t=${t}`),
+      params("x"),
+    );
+    expect(res.status).toBe(404);
+  });
+
   it("refuses a bad token", async () => {
     const res = await VIEW(
       new Request(`https://app.example.com/api/files/${F}/view?t=x`),

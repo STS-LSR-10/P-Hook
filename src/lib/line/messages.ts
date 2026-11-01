@@ -384,7 +384,7 @@ export const FILE_ASK_PDF_TEXT = "ไฟล์ PDF นี้ จะให้พ�
 export const FILE_BLOCKED_TEXT = "พี่ฮูกไม่รับไฟล์ติดตั้งโปรแกรม เช่น .exe หรือ .apk นะ";
 export const FILE_TOO_LARGE_TEXT = "ไฟล์ใหญ่เกิน 20 MB ลองย่อขนาดแล้วส่งใหม่นะ";
 export const fileFullText = (capacity: string) =>
-  `พื้นที่เก็บไฟล์เต็มแล้ว (${capacity}) ลบไฟล์เก่าในหน้าไฟล์ หรืออัปเกรดแผนเพื่อเพิ่มพื้นที่นะ`;
+  `พื้นที่เก็บไฟล์เต็มแล้ว (${capacity}) ลบไฟล์เก่าในคลัง หรืออัปเกรดแผนเพื่อเพิ่มพื้นที่นะ`;
 export const fileDayLimitText = (limit: number) =>
   `วันนี้เก็บไฟล์ครบ ${limit} ไฟล์แล้ว พรุ่งนี้ส่งใหม่ได้เลยนะ`;
 export const FILE_GONE_TEXT =
@@ -397,7 +397,7 @@ export const FILE_NOT_FOUND_TEXT = "ยังไม่มีไฟล์ที�
 export const FILE_VIDEO_ELSEWHERE_TEXT = "วิดีโอนี้อยู่นอก LINE พี่ฮูกเก็บให้ไม่ได้นะ";
 export const FILE_NAME_ASK_TEXT =
   'อยากตั้งชื่อใหม่ให้หาง่ายไหม? กดปุ่มตั้งชื่อใหม่ หรือพิมพ์ เช่น "ชื่อไฟล์ รูปบัตร"';
-export const FILE_NAME_MANY_TEXT = "ตั้งชื่อแต่ละไฟล์ให้หาง่ายได้ที่หน้าไฟล์";
+export const FILE_NAME_MANY_TEXT = "ตั้งชื่อแต่ละไฟล์ให้หาง่ายได้ที่คลัง";
 export const fileNotFoundText = (term: string) => `ไม่พบไฟล์หรือโน้ตที่มีคำว่า "${term}"`;
 export const fileSpaceText = (used: string, capacity: string, url?: string) =>
   `ใช้ไป ${used} จาก ${capacity}${url ? `\nดูไฟล์ทั้งหมด: ${url}` : ""}`;
@@ -412,7 +412,7 @@ export const NOTE_UNDONE_TEXT = "ยกเลิกโน้ตแล้ว";
 export const NOTE_TOO_LONG_TEXT = (max: number) =>
   `โน้ตยาวเกิน ${max.toLocaleString("en-US")} ตัวอักษร ลองแบ่งเป็นหลายโน้ตนะ`;
 export const NOTE_FULL_TEXT = (limit: number) =>
-  `โน้ตเต็ม ${limit.toLocaleString("en-US")} รายการแล้ว ลบอันเก่าที่หน้าโน้ต หรืออัปเกรดแผนเพื่อเก็บเพิ่มนะ`;
+  `โน้ตเต็ม ${limit.toLocaleString("en-US")} รายการแล้ว ลบอันเก่าในคลัง หรืออัปเกรดแผนเพื่อเก็บเพิ่มนะ`;
 export const NOTE_EMPTY_TEXT = 'ยังไม่มีโน้ต พิมพ์ เช่น "โน้ต ซื้อนม รหัสไวไฟ 1234" ได้เลย';
 export const NOTE_SEARCH_USAGE_TEXT = 'พิมพ์คำที่ต้องการหาต่อท้าย เช่น "ค้นหาโน้ต ไวไฟ"';
 export const noteNotFoundText = (term: string) => `ไม่เจอโน้ตที่มีคำว่า "${term}"`;

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { apiError, guard } from "@/lib/api";
 import { verifyViewToken } from "@/lib/auth/file-token";
 import { getServerEnv } from "@/lib/env";
@@ -18,6 +19,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(request: Request, { params }: Params): Promise<Response> {
   return guard(async () => {
     const { id } = await params;
+    if (!z.string().uuid().safeParse(id).success) return apiError("ไม่พบรูปนี้", 404);
     const url = new URL(request.url);
     const userId = await verifyViewToken(
       url.searchParams.get("t") ?? "",

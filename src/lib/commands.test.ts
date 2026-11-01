@@ -422,6 +422,7 @@ describe("kept files", () => {
     ["เก็บไฟล์ สัญญาเช่า", { kind: "file-save", name: "สัญญาเช่า" }],
     ["หาไฟล์ สัญญา", { kind: "file-search", term: "สัญญา" }],
     ["ไฟล์ของฉัน", { kind: "file-list" }],
+    ["คลัง", { kind: "file-list" }],
     ["ชื่อไฟล์ รูปบัตร", { kind: "file-rename", name: "รูปบัตร" }],
   ])("reads %s", (input, command) => {
     expect(parseCommand(input)).toEqual(command);

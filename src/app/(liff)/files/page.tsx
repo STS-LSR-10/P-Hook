@@ -7,5 +7,5 @@ export default async function FilesPage({
   searchParams: Promise<{ open?: string }>;
 }) {
   const { open } = await searchParams;
-  redirect(`/vault?tab=file${open ? `&open=${encodeURIComponent(open)}` : ""}`);
+  redirect(`/vault${open ? `?open=${encodeURIComponent(open)}` : ""}`);
 }

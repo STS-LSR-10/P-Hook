@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
     const { id } = await params;
     const token = new URL(request.url).searchParams.get("t") ?? "";
     const claims = await verifyFileToken(token, getServerEnv().SESSION_JWT_SECRET);
-    if (!claims) return apiError("ลิงก์หมดอายุ เปิดไฟล์จากหน้าไฟล์อีกครั้งนะ", 401);
+    if (!claims) return apiError("ลิงก์หมดอายุ เปิดไฟล์จากคลังอีกครั้งนะ", 401);
     if (claims.fileId !== id) return apiError("ลิงก์นี้ไม่ถูกต้อง", 403);
 
     const file = await getReadyFile(getAdminClient(), claims.userId, id);

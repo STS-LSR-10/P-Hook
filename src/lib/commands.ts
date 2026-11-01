@@ -86,7 +86,8 @@ export function parseCommand(input: string): Command | null {
   if (fileSearch?.[1]) return { kind: "file-search", term: fileSearch[1].trim() };
   const fileRename = /^ชื่อไฟล์\s+([\s\S]+)$/.exec(raw);
   if (fileRename?.[1]) return { kind: "file-rename", name: fileRename[1].trim() };
-  if (["ไฟล์ของฉัน", "ไฟล์ทั้งหมด", "หน้าไฟล์"].includes(text)) return { kind: "file-list" };
+  if (["ไฟล์ของฉัน", "ไฟล์ทั้งหมด", "หน้าไฟล์", "คลัง", "เปิดคลัง"].includes(text))
+    return { kind: "file-list" };
 
   // The pages that are not on the Rich Menu any more open from a short chat command.
   if (["หน้ารายการ", "รายการทั้งหมด", "ประวัติ", "ประวัติรายการ"].includes(text)) {

@@ -7,5 +7,5 @@ export default async function NotesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  redirect(`/vault?tab=note${q ? `&q=${encodeURIComponent(q)}` : ""}`);
+  redirect(`/vault${q ? `?q=${encodeURIComponent(q)}` : ""}`);
 }
