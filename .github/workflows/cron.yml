@@ -1,6 +1,7 @@
-name: Hourly cron (manual only: the schedule now runs as Cloudflare Cron Triggers, see wrangler.jsonc)
+name: Hourly cron (manual)
 
-# Scheduled jobs are called from here, not from the host (Vercel Cron), so the app can move to
+# The schedule now runs as Cloudflare Cron Triggers (wrangler.jsonc); this workflow is only for running the jobs by hand.
+# (Before: scheduled jobs were called from here, not from the host (Vercel Cron), so the app can move to
 # another host (Cloudflare Workers, ...) without touching them. Both endpoints are safe to call
 # often: the recurring one catches up on anything that was missed and claims each rule once, and the
 # reminders one only acts on what is due this hour.
