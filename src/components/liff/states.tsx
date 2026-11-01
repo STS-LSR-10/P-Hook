@@ -38,7 +38,7 @@ export function EmptyState({
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-      <Logo size={72} />
+      <Logo size={96} variant="error" />
       <p className="text-base font-semibold">เกิดข้อผิดพลาด</p>
       <p className="text-sm text-muted">{message}</p>
       {onRetry ? (

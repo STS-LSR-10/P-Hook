@@ -1,11 +1,19 @@
 import { cn } from "@/lib/utils";
 
 /** The mascot (public/logo.png, also the picture on the LINE cards). `size` is the box it fits in. */
-function Mark({ size, className }: { size: number; className?: string }) {
+function Mark({
+  size,
+  className,
+  variant = "default",
+}: {
+  size: number;
+  className?: string;
+  variant?: "default" | "error";
+}) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/logo.png"
+      src={variant === "error" ? "/error-logo.png" : "/logo.png"}
       alt="พี่ฮูก (P'Hook)"
       width={size}
       height={size}
@@ -19,16 +27,19 @@ function Mark({ size, className }: { size: number; className?: string }) {
 export function Logo({
   size = 96,
   withWordmark = false,
+  variant = "default",
   className,
 }: {
   size?: number;
   withWordmark?: boolean;
+  /** "error" is the warning owl (public/error-logo.png) for failure screens. */
+  variant?: "default" | "error";
   className?: string;
 }) {
-  if (!withWordmark) return <Mark size={size} className={className} />;
+  if (!withWordmark) return <Mark size={size} className={className} variant={variant} />;
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
-      <Mark size={size} />
+      <Mark size={size} variant={variant} />
       <p className="text-2xl font-bold tracking-tight" aria-hidden>
         <span className="text-foreground">Jod</span>
         <span className="text-primary">Tang</span>
