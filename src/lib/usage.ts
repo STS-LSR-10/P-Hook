@@ -1,7 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { bangkokParts } from "@/lib/thai-date";
 
-export type UsageKind = "voice" | "smart_parse" | "teaser_voice" | "group_slip" | "pdf" | "owl";
+export type UsageKind =
+  | "voice"
+  | "smart_parse"
+  | "teaser_voice"
+  | "group_slip"
+  | "pdf"
+  | "owl"
+  | "router";
 
 /** The "lifetime" bucket: a counter that never rolls over. */
 export const LIFETIME = "2000-01-01";
@@ -10,6 +17,12 @@ export const LIFETIME = "2000-01-01";
 export function monthKey(now: Date): string {
   const p = bangkokParts(now);
   return `${p.year}-${String(p.month).padStart(2, "0")}-01`;
+}
+
+/** The Bangkok day `now` falls in, as YYYY-MM-DD: the `month` of a counter that resets daily. */
+export function dayKey(now: Date): string {
+  const p = bangkokParts(now);
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
 }
 
 /**

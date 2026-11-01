@@ -193,10 +193,10 @@ export interface StructurerEnv {
 }
 
 /** The chosen AI provider, else the first one that has a key. Null when none is configured. */
-export function buildTextStructurer(
+/** The provider to use: the configured one when it has a key, else the first that does. */
+export function chooseAiProvider(
   env: StructurerEnv,
-  fetchImpl: typeof fetch = fetch,
-): TextStructurer | null {
+): { provider: AiProviderName; apiKey: string; model?: string } | null {
   const keys: Record<AiProviderName, string | undefined> = {
     gemini: env.GEMINI_API_KEY,
     anthropic: env.ANTHROPIC_API_KEY,
@@ -211,9 +211,17 @@ export function buildTextStructurer(
     if (!apiKey) continue;
     // AI_MODEL belongs to the provider it was set for
     const model = provider === env.AI_PROVIDER ? env.AI_MODEL : undefined;
-    return createTextStructurer({ provider, apiKey, model }, fetchImpl);
+    return { provider, apiKey, model };
   }
   return null;
+}
+
+export function buildTextStructurer(
+  env: StructurerEnv,
+  fetchImpl: typeof fetch = fetch,
+): TextStructurer | null {
+  const chosen = chooseAiProvider(env);
+  return chosen ? createTextStructurer(chosen, fetchImpl) : null;
 }
 
 export interface SmartEntry {

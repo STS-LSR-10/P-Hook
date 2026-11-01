@@ -73,6 +73,9 @@ export const PDF_LIMIT: Record<Plan, number> = { free: 0, plus: 10, ultimate: 30
 /** Questions to พี่ฮูก (the AI assistant) per month, by plan. Each one is a paid AI call. */
 export const OWL_LIMIT: Record<Plan, number> = { free: 5, plus: 50, ultimate: 300 };
 
+/** Messages the AI may sort into money, reminder, note and so on, per day. Past it the rules read. */
+export const ROUTER_DAILY_LIMIT: Record<Plan, number> = { free: 10, plus: 100, ultimate: 500 };
+
 /** Recurring entries ("รายการประจำ") a plan may have set up at once. */
 const RECURRING_LIMIT: Record<Plan, number> = { free: 0, plus: 20, ultimate: 100 };
 export const recurringLimit = (plan: Plan): number => RECURRING_LIMIT[plan];
