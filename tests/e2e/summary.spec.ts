@@ -43,12 +43,12 @@ test.describe("summary page (360px)", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("bottom navigation has five tabs and marks the current page", async ({ page }) => {
+  test("bottom navigation has six tabs and marks the current page", async ({ page }) => {
     await mockApi(page, { "GET /api/summary": SUMMARY, "GET /api/me": ME_FREE });
     await page.goto("/summary");
 
     const nav = page.getByRole("navigation", { name: "เมนูหลัก" });
-    await expect(nav.getByRole("link")).toHaveCount(5);
+    await expect(nav.getByRole("link")).toHaveCount(6);
     await expect(nav.getByRole("link", { name: "สรุป" })).toHaveAttribute("aria-current", "page");
   });
 
