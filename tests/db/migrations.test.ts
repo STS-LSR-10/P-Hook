@@ -3048,3 +3048,68 @@ describe("pending intents (0046)", () => {
     expect(r.n).toBe(0);
   });
 });
+
+describe("stored files (0047)", () => {
+  const reserve = (user: string, size: number, capacity = 100) =>
+    one<{ ok: boolean }>(
+      db,
+      "select file_reserve(gen_random_uuid(), $1, 'a', 'text/plain', $2, gen_random_uuid()::text, $3) as ok",
+      [user, size, capacity],
+    );
+  const count = async (table: string, user: string) =>
+    (
+      await one<{ n: number }>(db, `select count(*)::int as n from ${table} where user_id = $1`, [
+        user,
+      ])
+    ).n;
+
+  it("file_reserve stops at the capacity", async () => {
+    const u = await newUser(db, `file-cap-${Math.random()}`);
+    expect((await reserve(u, 60)).ok).toBe(true);
+    expect((await reserve(u, 50)).ok).toBe(false);
+    expect(await count("stored_files", u)).toBe(1);
+  });
+
+  it("file_reserve counts pending rows too, and allows an exact fit", async () => {
+    const u = await newUser(db, `file-exact-${Math.random()}`);
+    await reserve(u, 60);
+    expect((await reserve(u, 40)).ok).toBe(true);
+    expect((await reserve(u, 1)).ok).toBe(false);
+  });
+
+  it("files of another person do not count", async () => {
+    const a = await newUser(db, `file-a-${Math.random()}`);
+    const b = await newUser(db, `file-b-${Math.random()}`);
+    await reserve(a, 90);
+    expect((await reserve(b, 90)).ok).toBe(true);
+  });
+
+  it("keeps every table server only", async () => {
+    const r = await rows<{ relname: string; on: boolean; n: number }>(
+      db,
+      "select c.relname, c.relrowsecurity as on, (select count(*)::int from pg_policies p where p.tablename = c.relname) as n from pg_class c where c.relname in ('stored_files','file_waits','recent_media') order by 1",
+    );
+    expect(r).toEqual([
+      { relname: "file_waits", on: true, n: 0 },
+      { relname: "recent_media", on: true, n: 0 },
+      { relname: "stored_files", on: true, n: 0 },
+    ]);
+  });
+
+  it("removes the rows with the user", async () => {
+    const u = await newUser(db, `file-gone-${Math.random()}`);
+    await reserve(u, 10);
+    await db.query("delete from users where id = $1", [u]);
+    expect(await count("stored_files", u)).toBe(0);
+  });
+
+  it("refuses a name that is too long", async () => {
+    const u = await newUser(db, `file-name-${Math.random()}`);
+    await expect(
+      db.query(
+        "insert into stored_files (id, user_id, name, mime_type, size_bytes, r2_key) values (gen_random_uuid(), $1, $2, 'a', 1, 'k')",
+        [u, "ก".repeat(201)],
+      ),
+    ).rejects.toThrow();
+  });
+});
