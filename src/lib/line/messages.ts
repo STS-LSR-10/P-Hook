@@ -354,6 +354,9 @@ export const pdfRecordedText = (count: number) =>
 // ── notes ──
 export const NOTE_SAVED_TEXT = (preview: string, url?: string) =>
   `จดโน้ตแล้ว 📝\n"${preview}"${url ? `\nดู แก้ไข หรือค้นหาทั้งหมด: ${url}` : ""}`;
+export const NOTE_SECRET_WARNING_TEXT =
+  "⚠️ โน้ตเก็บเป็นข้อความธรรมดา ไม่ควรเก็บรหัสผ่านสำคัญหรือเลขบัตรไว้ที่นี่";
+export const NOTE_UNDONE_TEXT = "ยกเลิกโน้ตแล้ว";
 export const NOTE_TOO_LONG_TEXT = (max: number) =>
   `โน้ตยาวเกิน ${max.toLocaleString("en-US")} ตัวอักษร ลองแบ่งเป็นหลายโน้ตนะ`;
 export const NOTE_FULL_TEXT = (limit: number) =>

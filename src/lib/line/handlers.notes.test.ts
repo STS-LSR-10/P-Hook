@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NoteDto } from "@/lib/note";
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
+import { NOT_FOUND_TEXT, NOTE_SECRET_WARNING_TEXT, NOTE_UNDONE_TEXT } from "./messages";
 
 let plan = "free";
 let count = 0;
@@ -10,6 +11,8 @@ let hasMore = false;
 const created: string[] = [];
 const searched: (string | undefined)[] = [];
 const entries: string[] = [];
+const deleted: string[] = [];
+let noteExists = true;
 
 vi.mock("@/lib/repo", async (original) => ({
   ...(await original<typeof import("@/lib/repo")>()),
@@ -51,6 +54,10 @@ vi.mock("@/lib/note-repo", () => ({
     searched.push(o.q);
     return { items: listed, hasMore };
   },
+  deleteNote: async (_db: unknown, _u: string, id: string) => {
+    deleted.push(id);
+    return noteExists;
+  },
 }));
 
 const say = (t: string): LineEvent => ({
@@ -90,6 +97,8 @@ beforeEach(() => {
   created.length = 0;
   searched.length = 0;
   entries.length = 0;
+  deleted.length = 0;
+  noteExists = true;
   process.env.NEXT_PUBLIC_LIFF_ID = "1234-abcd";
 });
 
@@ -134,6 +143,52 @@ describe("saving a note from the chat", () => {
     await handleEvent(say("โน้ตบุ๊ก 25000"), deps);
     expect(created).toHaveLength(0);
     expect(entries).toEqual(["โน้ตบุ๊ก"]);
+  });
+});
+
+describe("taking a note back", () => {
+  const NOTE_ID = "11111111-1111-1111-1111-111111111111";
+  const tap = (data: string): LineEvent => ({
+    type: "postback",
+    replyToken: "rt",
+    source: { type: "user", userId: "U" + "a".repeat(32) },
+    postback: { data },
+  });
+  const firstMessage = (reply: ReturnType<typeof setup>["reply"]) =>
+    reply.mock.calls[0]?.[1]?.[0] as {
+      quickReply?: { items: { action: { data?: string } }[] };
+    };
+
+  it("offers undo on a saved note", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("โน้ต ซื้อนม"), deps);
+    expect(firstMessage(reply).quickReply?.items[0]?.action.data).toBe("a=ntx&id=n");
+  });
+
+  it("undo deletes that note", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=ntx&id=${NOTE_ID}`), deps);
+    expect(deleted).toEqual([NOTE_ID]);
+    expect(said(reply)).toBe(NOTE_UNDONE_TEXT);
+  });
+
+  it("undo of a note that is gone says so", async () => {
+    noteExists = false;
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=ntx&id=${NOTE_ID}`), deps);
+    expect(said(reply)).toBe(NOT_FOUND_TEXT);
+  });
+
+  it("warns when the note looks secret", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("โน้ต รหัสไวไฟ 1234"), deps);
+    expect(said(reply)).toContain(NOTE_SECRET_WARNING_TEXT);
+  });
+
+  it("does not warn on an ordinary note", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("โน้ต ซื้อนม"), deps);
+    expect(said(reply)).not.toContain(NOTE_SECRET_WARNING_TEXT);
   });
 });
 

@@ -148,7 +148,8 @@ import { PRESET_TITLE, presetRange } from "@/lib/summary-range-text";
 import type { Owl } from "@/lib/ai/owl";
 import { inOwlMode, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
-import { countNotes, createNote, listNotes } from "@/lib/note-repo";
+import { countNotes, createNote, deleteNote, listNotes } from "@/lib/note-repo";
+import { looksSecret } from "@/lib/secret-text";
 import { ensureWallets, listWallets, setEntryWallet, setSlipWallet } from "@/lib/wallet-repo";
 import { balanceOf, resolveWallet, walletLabel, type Wallet } from "@/lib/wallet";
 import { walletCapacity } from "@/lib/plan";
@@ -238,8 +239,10 @@ import {
   NOTE_EMPTY_TEXT,
   NOTE_FULL_TEXT,
   NOTE_SAVED_TEXT,
+  NOTE_SECRET_WARNING_TEXT,
   NOTE_SEARCH_USAGE_TEXT,
   NOTE_TOO_LONG_TEXT,
+  NOTE_UNDONE_TEXT,
   noteNotFoundText,
   WALLET_MOVE_ASK_TEXT,
   WALLET_SLIP_ASK_TEXT,
@@ -2134,8 +2137,26 @@ async function runCommand(
       if (body.length > MAX_NOTE_LENGTH) return [text(NOTE_TOO_LONG_TEXT(MAX_NOTE_LENGTH))];
       const limit = noteCapacity(effectivePlan(user.plan, user.plan_expires_at, deps.now()));
       if ((await countNotes(db, user.id)) >= limit) return [text(NOTE_FULL_TEXT(limit))];
-      await createNote(db, user.id, body);
-      return [text(NOTE_SAVED_TEXT(noteTitle(body, 60), pageUrl("/notes")))];
+      const note = await createNote(db, user.id, body);
+      const saved = NOTE_SAVED_TEXT(noteTitle(body, 60), pageUrl("/notes"));
+      return [
+        {
+          ...text(looksSecret(body) ? `${saved}\n\n${NOTE_SECRET_WARNING_TEXT}` : saved),
+          quickReply: {
+            items: [
+              {
+                type: "action",
+                action: {
+                  type: "postback",
+                  label: "↩️ ยกเลิกโน้ตนี้",
+                  data: `a=ntx&id=${note.id}`,
+                  displayText: "ยกเลิกโน้ตนี้",
+                },
+              },
+            ],
+          },
+        },
+      ];
     }
 
     case "open-page": {
@@ -2323,6 +2344,12 @@ async function handlePostback(
         (await cancelReminder(deps.db, user.id, id)) ? REMINDER_CANCELLED_TEXT : REMINDER_GONE_TEXT,
       ),
     ];
+  }
+  // "ยกเลิกโน้ตนี้" under a note that was just saved.
+  if (action === "ntx") {
+    const id = params.get("id") ?? "";
+    if (!UUID_RE.test(id)) return [text(NOT_FOUND_TEXT)];
+    return [text((await deleteNote(deps.db, user.id, id)) ? NOTE_UNDONE_TEXT : NOT_FOUND_TEXT)];
   }
   // The card of a recorded slip / receipt: ❌ on a row deletes that entry, "ยกเลิกทั้งใบ" all of them.
   if (action === "rdx") {
