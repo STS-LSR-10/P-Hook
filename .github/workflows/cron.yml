@@ -1,4 +1,4 @@
-name: Hourly cron
+name: Hourly cron (manual only: the schedule now runs as Cloudflare Cron Triggers, see wrangler.jsonc)
 
 # Scheduled jobs are called from here, not from the host (Vercel Cron), so the app can move to
 # another host (Cloudflare Workers, ...) without touching them. Both endpoints are safe to call
@@ -9,8 +9,6 @@ name: Hourly cron
 # GitHub may start a scheduled run a few minutes late (or skip one under load): that is fine for both.
 
 on:
-  schedule:
-    - cron: "7 * * * *"
   workflow_dispatch:
 
 jobs:

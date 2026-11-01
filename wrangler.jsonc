@@ -9,5 +9,6 @@
     "binding": "ASSETS",
   },
   "keep_vars": true,
+  "triggers": { "crons": ["* * * * *", "7 * * * *"] },
   "observability": { "enabled": true },
 }

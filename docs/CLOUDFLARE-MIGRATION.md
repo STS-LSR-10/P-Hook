@@ -79,3 +79,11 @@
 8. เก็บ Vercel ไว้ ≥ 1 สัปดาห์เป็นทางย้อนกลับ (ย้อน = เปลี่ยน Endpoint/Webhook/GitHub secret กลับ) แล้วค่อยปิด
 
 **ดูปัญหา:** Cloudflare → Workers → `phook` → Logs/Observability หรือ `npx wrangler tail phook`
+
+## 6) ตัวตั้งเวลา (cron) ย้ายมาอยู่ที่ Cloudflare แล้ว
+
+- ปัญหาเดิม: GitHub Actions เริ่มรอบ `*/5` ช้าได้เป็นสิบๆ นาที (เตือน 09:04 มาถึง 09:25) → ใช้ **Cron Triggers ของ Cloudflare** แทน ตรงเวลาระดับนาที
+- `wrangler.jsonc` → `triggers.crons`: `* * * * *` (เตือนของผู้ใช้ `/api/cron/user-reminders`) และ `7 * * * *` (จดประจำ `/api/cron/recurring` + เตือน/สรุปอัตโนมัติ `/api/cron/reminders`)
+- `cf-worker.mjs` มี handler `scheduled` เรียก route เดิมภายใน Worker ด้วย `CRON_SECRET` + `APP_BASE_URL` (secret บน Cloudflare) ไม่ต้องมี GitHub secret อีกต่อไป
+- workflow ใน `.github/workflows/cron*.yml` ตัด `schedule` ออกแล้ว เหลือ `workflow_dispatch` ไว้ยิงมือเพื่อทดสอบ
+- ดู log: `npx wrangler tail phook` (บรรทัด `cf_cron`)
