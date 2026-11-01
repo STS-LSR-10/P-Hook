@@ -433,7 +433,7 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
                   fetchImage: slip.fetchImage,
                   ocr: slip.ocr,
                   editUrl: (txId) => pageUrl(`/transactions?edit=${txId}`),
-                  logoUrl: appBaseUrl() ? `${appBaseUrl()}/success-logo.png` : undefined,
+                  logoUrl: appBaseUrl() ? `${appBaseUrl()}/success-logo.png?v=2` : undefined,
                   extras: (made) => receiptCardExtras(deps, user, made),
                 },
                 user,
@@ -1761,7 +1761,7 @@ async function confirmCard(
         ? "รายสัปดาห์"
         : `รายเดือน (วันที่ ${settings.cycle_start_day})`,
     logoUrl: process.env.APP_BASE_URL
-      ? `${process.env.APP_BASE_URL.replace(/\/$/, "")}/success-logo.png`
+      ? `${process.env.APP_BASE_URL.replace(/\/$/, "")}/success-logo.png?v=2`
       : undefined,
   });
 }
