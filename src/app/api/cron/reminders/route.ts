@@ -4,6 +4,8 @@ import { isCronAuthorized } from "@/lib/cron-auth";
 import { getServerEnv } from "@/lib/env";
 import { createLineClient } from "@/lib/line/client";
 import { runBillReminders } from "@/lib/bill-run";
+import { cleanupFiles } from "@/lib/file-cleanup";
+import { getFileStore } from "@/lib/file-store";
 import { purgeExpiredIntents } from "@/lib/pending-intent-repo";
 import { runReminders } from "@/lib/reminder-run";
 import { runSummaries } from "@/lib/summary-run";
@@ -50,6 +52,9 @@ export async function GET(request: Request): Promise<Response> {
     });
     await purgeExpiredIntents(db, now).catch((error: unknown) => {
       log.error("cron_pending_intents_failed", error);
+    });
+    await cleanupFiles(db, await getFileStore(), now).catch((error: unknown) => {
+      log.error("cron_file_cleanup_failed", error);
     });
     return json({ ok: true, ...summary, summaries, bills });
   } catch (error) {

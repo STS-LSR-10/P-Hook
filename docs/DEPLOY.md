@@ -60,6 +60,18 @@ Cloudflare Cron (ทุกนาที) ─► /api/cron/user-reminders (เต�
    - เปิด `liff.line.me/<LIFF_ID>` เห็นหน้าสรุป
    - Cloudflare → Workers → `phook` → Logs ไม่มี `"level":"error"` ใหม่ (หรือ `npx wrangler tail phook`)
 
+### ที่ฝากไฟล์ (R2)
+
+ทำครั้งเดียวก่อนปล่อยเวอร์ชันแรกที่มี binding `FILES` ไม่เช่นนั้น deploy จะล้มเหลว:
+
+```bash
+pnpm exec wrangler r2 bucket create phook-files
+```
+
+Bucket ต้องเป็นส่วนตัว ห้ามเปิด public access
+
+Migration ที่ต้องรันใน Supabase SQL Editor ก่อน push: `0046_pending_intents.sql` และ `0047_stored_files.sql`
+
 ## 5) Rollback
 
 **โค้ด (ทันที):** Cloudflare → Workers → `phook` → **Deployments** → เลือกเวอร์ชันล่าสุดที่ปกติ → **Rollback** (หรือ `npx wrangler rollback`)

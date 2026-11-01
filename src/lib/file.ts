@@ -34,7 +34,6 @@ export const isBlockedFile = (name: string): boolean => BLOCKED_RE.test(name.tri
 
 /** One line, no control characters, and short enough, keeping the extension when it is cut. */
 export function cleanFileName(raw: string): string {
-  // eslint-disable-next-line no-control-regex
   const name = raw
     .replace(/[\u0000-\u001f\u007f]+/g, " ")
     .replace(/ {2,}/g, " ")

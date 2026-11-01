@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DELETE_CONFIRM_PHRASE, deleteAccountData, isDeleteConfirmed } from "./account";
+import { createMemoryStore } from "./file-store";
+
+let keys: string[] = [];
+vi.mock("@/lib/file-repo", () => ({ listAllKeys: async () => keys }));
+beforeEach(() => {
+  keys = [];
+});
 
 describe("isDeleteConfirmed", () => {
   it("accepts the exact phrase, tolerating spaces", () => {
@@ -78,5 +85,42 @@ describe("deleteAccountData", () => {
   it("surfaces a database failure", async () => {
     const { db } = fakeDb([[]], { deleteError: true });
     await expect(deleteAccountData(db, "u")).rejects.toThrow(/delete user/);
+  });
+});
+
+describe("deleteAccountData and kept files", () => {
+  it("removes their R2 files before the user row", async () => {
+    keys = ["u/u1/a", "u/u1/b"];
+    const { db, events } = fakeDb([[]]);
+    const store = createMemoryStore();
+    vi.spyOn(store, "delete").mockImplementation(async (k) => {
+      events.push(`r2:${k.join()}`);
+    });
+    await deleteAccountData(db, "u1", store);
+    expect(events.indexOf("r2:u/u1/a,u/u1/b")).toBeGreaterThanOrEqual(0);
+    expect(events[events.length - 1]).toBe("delete:users.id=u1");
+    expect(events.indexOf("r2:u/u1/a,u/u1/b")).toBeLessThan(events.length - 1);
+  });
+
+  it("stops when R2 fails, so the account stays and can retry", async () => {
+    keys = ["u/u1/a"];
+    const { db, events } = fakeDb([[]]);
+    const store = createMemoryStore();
+    vi.spyOn(store, "delete").mockRejectedValue(new Error("down"));
+    await expect(deleteAccountData(db, "u1", store)).rejects.toThrow("down");
+    expect(events.some((e) => e.startsWith("delete:users"))).toBe(false);
+  });
+
+  it("stops when the store is missing but files exist", async () => {
+    keys = ["u/u1/a"];
+    const { db, events } = fakeDb([[]]);
+    await expect(deleteAccountData(db, "u1", null)).rejects.toThrow();
+    expect(events.some((e) => e.startsWith("delete:users"))).toBe(false);
+  });
+
+  it("needs no store when there are no files", async () => {
+    const { db, events } = fakeDb([[]]);
+    await deleteAccountData(db, "u1", null);
+    expect(events[events.length - 1]).toBe("delete:users.id=u1");
   });
 });

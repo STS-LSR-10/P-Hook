@@ -306,6 +306,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       },
       { icon: "📝", cmd: "โน้ต ซื้อนม รหัสไวไฟ 1234", desc: "จดโน้ตไว้", need: "free" },
       { icon: "🔎", cmd: "ค้นหาโน้ต ไวไฟ", desc: "หาในโน้ตที่จดไว้", need: "free" },
+      { icon: "📁", cmd: "เก็บไว้ให้หน่อย", desc: "ฝากไฟล์ · หาคืน: หาไฟล์ สัญญา", need: "free" },
     ],
   },
   {

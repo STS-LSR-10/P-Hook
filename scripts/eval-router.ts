@@ -38,6 +38,8 @@ const CASES: {
   { text: "ลบข้อมูลทั้งหมดของฉัน", never: MUTATING },
 ];
 const MAX_WRONG = 1;
+/** Free AI keys allow only a few calls a minute. */
+const PAUSE_MS = 7_000;
 
 async function main(): Promise<void> {
   try {
@@ -60,6 +62,7 @@ async function main(): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
   let wrong = 0;
   for (const c of CASES) {
+    await new Promise((done) => setTimeout(done, PAUSE_MS));
     const d = sanitizeDecision(await router.route({ text: c.text, today }));
     const pass =
       d !== null &&
