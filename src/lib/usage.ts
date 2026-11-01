@@ -2,7 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { bangkokParts } from "@/lib/thai-date";
 
 export type UsageKind =
-  "voice" | "smart_parse" | "teaser_voice" | "group_slip" | "pdf" | "owl" | "router";
+  | "voice"
+  | "smart_parse"
+  | "teaser_voice"
+  | "group_slip"
+  | "pdf"
+  | "owl"
+  | "router"
+  | "file_save";
 
 /** The "lifetime" bucket: a counter that never rolls over. */
 export const LIFETIME = "2000-01-01";
