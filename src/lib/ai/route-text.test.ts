@@ -50,9 +50,15 @@ describe("needsRouter", () => {
 });
 
 describe("clockIsTheAmount", () => {
-  it.each(["กินยา 6 โมงเย็น", "กินยา 18:00", "กินยาบ่าย 3", "ปลุกตี 5", "กินยาอีก 30 นาที", "กินยา ๖ โมงเย็น"])(
-    "sees the time was read as money in %s",
-    (t) => expect(clockIsTheAmount(t, read(t).entries)).toBe(true),
+  it.each([
+    "กินยา 6 โมงเย็น",
+    "กินยา 18:00",
+    "กินยาบ่าย 3",
+    "ปลุกตี 5",
+    "กินยาอีก 30 นาที",
+    "กินยา ๖ โมงเย็น",
+  ])("sees the time was read as money in %s", (t) =>
+    expect(clockIsTheAmount(t, read(t).entries)).toBe(true),
   );
 
   it.each([

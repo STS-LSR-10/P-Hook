@@ -453,7 +453,11 @@ describe("answering the buttons", () => {
   });
 
   it("yes on unsure money records it", async () => {
-    pending = { id: PENDING, input: "กาแฟ 50", decision: decision({ intent: "money", confidence: 0.5 }) };
+    pending = {
+      id: PENDING,
+      input: "กาแฟ 50",
+      decision: decision({ intent: "money", confidence: 0.5 }),
+    };
     const { deps } = setup();
     await handleEvent(tap(`a=irp&id=${PENDING}&p=yes`), deps);
     expect(entries).toHaveLength(1);

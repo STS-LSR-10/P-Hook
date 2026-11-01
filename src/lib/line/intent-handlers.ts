@@ -84,11 +84,7 @@ async function moveReminder(
   user: UserRow,
   deps: IntentDeps,
 ): Promise<LineMessage[]> {
-  const parsed = moveReminderTime(
-    decision.whenText ?? "",
-    new Date(reminder.remindAt),
-    deps.now(),
-  );
+  const parsed = moveReminderTime(decision.whenText ?? "", new Date(reminder.remindAt), deps.now());
   if (!parsed.ok) {
     if (parsed.reason === "past") return [text(REMINDER_PAST_TEXT)];
     if (parsed.reason === "too_far") return [text(REMINDER_TOO_FAR_TEXT)];
@@ -225,9 +221,7 @@ export async function routeText(
     ];
   }
   if (decision.intent === "money") {
-    return parsed.entries.length === 0 && !can(plan, "smartParse")
-      ? [text(MONEY_HINT_TEXT)]
-      : null;
+    return parsed.entries.length === 0 && !can(plan, "smartParse") ? [text(MONEY_HINT_TEXT)] : null;
   }
   return execute(input, decision, user, deps);
 }

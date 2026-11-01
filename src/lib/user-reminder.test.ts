@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { describeReminder, parseReminder, reminderCapacity, moveReminderTime } from "./user-reminder";
+import {
+  describeReminder,
+  parseReminder,
+  reminderCapacity,
+  moveReminderTime,
+} from "./user-reminder";
 
 // Wednesday 28 Oct 2026, 10:00 in Bangkok
 const NOW = new Date("2026-10-28T03:00:00Z");
