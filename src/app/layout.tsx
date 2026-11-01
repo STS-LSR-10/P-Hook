@@ -12,7 +12,7 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "พี่ฮูก (P'Hook)",
+  title: "P-Hook",
   description: "จดง่าย เห็นเงินชัด",
 };
 

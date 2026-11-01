@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { contactText, LegalPage, Section } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "นโยบายความเป็นส่วนตัว · พี่ฮูก (P'Hook)",
+  title: "นโยบายความเป็นส่วนตัว · P-Hook",
   description: "ข้อมูลที่พี่ฮูกเก็บ วิธีใช้ ผู้ประมวลผลข้อมูล และสิทธิ์ของคุณ",
 };
 

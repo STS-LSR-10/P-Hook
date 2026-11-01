@@ -3,7 +3,7 @@ import Link from "next/link";
 import { contactText, LegalPage, Section } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "ข้อกำหนดการใช้งาน · พี่ฮูก (P'Hook)",
+  title: "ข้อกำหนดการใช้งาน · P-Hook",
   description: "เงื่อนไขการใช้บริการพี่ฮูก",
 };
 
