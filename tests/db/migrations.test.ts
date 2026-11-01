@@ -3137,3 +3137,21 @@ describe("file previews (0048)", () => {
     expect(r.has_thumb).toBe(false);
   });
 });
+
+describe("reminder categories (0049)", () => {
+  const add = (user: string, category: string | null) =>
+    db.query(
+      "insert into user_reminders (user_id, body, remind_at, category) values ($1, 'a', now(), $2)",
+      [user, category],
+    );
+
+  it("takes the four, or none", async () => {
+    const u = await newUser(db, `rc-${Math.random()}`);
+    for (const c of ["bill", "work", "health", "family", null]) await add(u, c);
+  });
+
+  it("refuses anything else", async () => {
+    const u = await newUser(db, `rc-${Math.random()}`);
+    await expect(add(u, "x")).rejects.toThrow();
+  });
+});
