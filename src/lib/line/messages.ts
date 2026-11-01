@@ -395,7 +395,9 @@ export const FILE_EXPIRED_TEXT = "ไฟล์นี้หมดเวลาห�
 export const FILE_SEND_NOW_TEXT = "ส่งไฟล์มาได้เลย พี่ฮูกรออยู่ 5 นาที";
 export const FILE_NOT_FOUND_TEXT = "ยังไม่มีไฟล์ที่เก็บไว้";
 export const FILE_VIDEO_ELSEWHERE_TEXT = "วิดีโอนี้อยู่นอก LINE พี่ฮูกเก็บให้ไม่ได้นะ";
-export const FILE_NAMING_HINT_TEXT = 'ตั้งชื่อให้หาง่าย พิมพ์ เช่น "ชื่อไฟล์ รูปบัตร"';
+export const FILE_NAME_ASK_TEXT =
+  'อยากตั้งชื่อใหม่ให้หาง่ายไหม? กดปุ่มตั้งชื่อใหม่ หรือพิมพ์ เช่น "ชื่อไฟล์ รูปบัตร"';
+export const FILE_NAME_MANY_TEXT = "ตั้งชื่อแต่ละไฟล์ให้หาง่ายได้ที่หน้าไฟล์";
 export const fileNotFoundText = (term: string) => `ไม่พบไฟล์หรือโน้ตที่มีคำว่า "${term}"`;
 export const fileSpaceText = (used: string, capacity: string, url?: string) =>
   `ใช้ไป ${used} จาก ${capacity}${url ? `\nดูไฟล์ทั้งหมด: ${url}` : ""}`;

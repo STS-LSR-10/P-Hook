@@ -24,7 +24,8 @@ import {
   FILE_EXPIRED_TEXT,
   FILE_FAILED_TEXT,
   FILE_GONE_TEXT,
-  FILE_NAMING_HINT_TEXT,
+  FILE_NAME_ASK_TEXT,
+  FILE_NAME_MANY_TEXT,
   FILE_NOT_FOUND_TEXT,
   FILE_SEND_NOW_TEXT,
   FILE_TOO_LARGE_TEXT,
@@ -47,6 +48,22 @@ type Media = Omit<RecentMedia, "id">;
 const MAX_RESULTS = 5;
 const LABEL_KEEP = "เก็บไฟล์";
 const LABEL_READ = "อ่านเป็นรายการ";
+
+/** Opens the keyboard with the command already typed: the person only adds the name. */
+const NAME_BUTTON = {
+  items: [
+    {
+      type: "action",
+      action: {
+        type: "postback",
+        label: "✏️ ตั้งชื่อใหม่",
+        data: "a=compose-go",
+        inputOption: "openKeyboard",
+        fillInText: "ชื่อไฟล์ ",
+      },
+    },
+  ],
+};
 
 const openUrlOf = (deps: FileChatDeps) => (id: string) => deps.pageUrl(`/files?open=${id}`);
 
@@ -95,26 +112,25 @@ async function saveAll(
 ): Promise<LineMessage[]> {
   const saved: FileDto[] = [];
   let failure: SaveFailure | null = null;
-  let unnamed = false;
   for (const { media, name } of items) {
     const result = await saveFile(deps, user, media, name);
     if (result.ok) {
       saved.push(result.file);
-      unnamed ||= !name && !media.fileName;
     } else {
       failure ??= result.reason;
     }
   }
   const messages: LineMessage[] = [];
   if (saved.length > 0) {
-    messages.push(
-      buildFilesSavedCard({
-        files: saved,
-        openUrl: openUrlOf(deps),
-        listUrl: deps.pageUrl("/files"),
-        hint: unnamed ? FILE_NAMING_HINT_TEXT : undefined,
-      }),
-    );
+    // "ชื่อไฟล์ ..." names the latest file, so the button is for one file kept with no name given
+    const ask = items.length === 1 && saved.length === 1 && !items[0]?.name;
+    const card = buildFilesSavedCard({
+      files: saved,
+      openUrl: openUrlOf(deps),
+      listUrl: deps.pageUrl("/files"),
+      hint: ask ? FILE_NAME_ASK_TEXT : items.some((i) => !i.name) ? FILE_NAME_MANY_TEXT : undefined,
+    });
+    messages.push(ask ? { ...card, quickReply: NAME_BUTTON } : card);
   }
   if (failure) messages.push(await failureText(failure, user, deps));
   return messages;

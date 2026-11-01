@@ -13,6 +13,8 @@ import {
   FILE_BLOCKED_TEXT,
   FILE_EXPIRED_TEXT,
   FILE_GONE_TEXT,
+  FILE_NAME_ASK_TEXT,
+  FILE_NAME_MANY_TEXT,
   FILE_NOT_FOUND_TEXT,
   FILE_SEND_NOW_TEXT,
   FILE_VIDEO_ELSEWHERE_TEXT,
@@ -490,6 +492,57 @@ describe("saying to keep it", () => {
   it("the file words reach the router", () => {
     const t = "เก็บรูปบัตร 2 ใบ";
     expect(needsRouter(t, parseMessage(t, new Date(), { currencies: true }))).toBe(true);
+  });
+});
+
+describe("asking for a new name", () => {
+  type Reply = {
+    quickReply?: {
+      items: { action: { label?: string; inputOption?: string; fillInText?: string } }[];
+    };
+  };
+  const nameButton = (reply: ReturnType<typeof setup>["reply"]) =>
+    (sent(reply) as Reply[]).at(-1)?.quickReply?.items[0]?.action;
+
+  it("a kept picture offers a button that starts the command in the keyboard", async () => {
+    recent = [media("a")];
+    const { deps, reply } = setup();
+    await handleEvent(say("เก็บไว้"), deps);
+    expect(nameButton(reply)).toMatchObject({
+      type: "postback",
+      label: "✏️ ตั้งชื่อใหม่",
+      inputOption: "openKeyboard",
+      fillInText: "ชื่อไฟล์ ",
+    });
+    expect(JSON.stringify(sent(reply))).toContain(JSON.stringify(FILE_NAME_ASK_TEXT).slice(1, -1));
+  });
+
+  it("a kept document is asked too, though it has a name", async () => {
+    byId = { id: ID, messageId: "f1", kind: "file", fileName: "scan001.pdf", fileSize: 100 };
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=fsv&id=${ID}`), deps);
+    expect(nameButton(reply)?.fillInText).toBe("ชื่อไฟล์ ");
+  });
+
+  it("a name already given is not asked for again", async () => {
+    recent = [media("a")];
+    const { deps, reply } = setup();
+    await handleEvent(say("เก็บไฟล์ บัตร"), deps);
+    expect(nameButton(reply)).toBeUndefined();
+  });
+
+  it("several files point to the files page, since the command names one", async () => {
+    recent = [media("a"), media("b")];
+    const { deps, reply } = setup();
+    await handleEvent(say("เก็บไว้"), deps);
+    expect(nameButton(reply)).toBeUndefined();
+    expect(JSON.stringify(sent(reply))).toContain(FILE_NAME_MANY_TEXT);
+  });
+
+  it("the button itself sends no reply", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(tap("a=compose-go"), deps);
+    expect(reply).not.toHaveBeenCalled();
   });
 });
 
