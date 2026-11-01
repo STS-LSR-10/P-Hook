@@ -6,6 +6,8 @@ const r = (body: string) => ({
   body,
   remindAt: "2026-11-02T11:00:00Z",
   repeat: null,
+  status: "active" as const,
+  category: null,
 });
 
 describe("matchReminders", () => {

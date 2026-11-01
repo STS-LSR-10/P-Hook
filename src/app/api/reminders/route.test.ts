@@ -6,6 +6,10 @@ const created: Record<string, unknown>[] = [];
 const cancelled: string[] = [];
 let found = true;
 const R = "11111111-1111-4111-8111-111111111111";
+const edits: Record<string, unknown>[] = [];
+const calls: string[] = [];
+let pageItems: unknown[] = [];
+let stored: Record<string, unknown> | null = null;
 
 vi.mock("@/lib/auth/require-user", () => ({
   requireUser: async () => ({ userId: "u1", lineUserId: "U1" }),
@@ -25,6 +29,24 @@ vi.mock("@/lib/user-reminder-repo", () => ({
     created.push(input);
     return { id: R, body: input.body, remindAt: String(input.remindAt), repeat: input.repeat };
   },
+  listRemindersForPage: async () => pageItems,
+  getReminder: async () => stored,
+  updateReminder: async (_db: unknown, _u: string, id: string, input: Record<string, unknown>) => {
+    edits.push({ id, ...input });
+    return stored;
+  },
+  setReminderDone: async () => {
+    calls.push("done");
+    return found;
+  },
+  reopenReminder: async () => {
+    calls.push("reopen");
+    return found;
+  },
+  rescheduleReminder: async (_db: unknown, _u: string, _id: string, input: { remindAt: Date }) => {
+    calls.push(`moved:${input.remindAt.toISOString()}`);
+    return found ? stored : null;
+  },
   cancelReminder: async (_db: unknown, _u: string, id: string) => {
     cancelled.push(id);
     return found;
@@ -32,7 +54,7 @@ vi.mock("@/lib/user-reminder-repo", () => ({
 }));
 
 import { GET, POST } from "./route";
-import { DELETE } from "./[id]/route";
+import { DELETE, PATCH } from "./[id]/route";
 
 const soon = () => new Date(Date.now() + 3 * 3_600_000).toISOString();
 const req = (method: string, body?: unknown) =>
@@ -48,6 +70,17 @@ beforeEach(() => {
   found = true;
   created.length = 0;
   cancelled.length = 0;
+  edits.length = 0;
+  calls.length = 0;
+  pageItems = [];
+  stored = {
+    id: R,
+    body: "กินยา",
+    remindAt: new Date(Date.now() + 86_400_000).toISOString(),
+    repeat: null,
+    status: "active",
+    category: null,
+  };
 });
 
 describe("GET /api/reminders", () => {
@@ -118,5 +151,103 @@ describe("DELETE /api/reminders/:id", () => {
     expect((await DELETE(req("DELETE"), { params: Promise.resolve({ id: "../x" }) })).status).toBe(
       404,
     );
+  });
+});
+
+describe("reminders on the page", () => {
+  const params = { params: Promise.resolve({ id: R }) };
+  const patch = (body: unknown) => PATCH(req("PATCH", body), params);
+  const future = () => new Date(Date.now() + 3 * 3_600_000).toISOString();
+  const past = () => new Date(Date.now() - 3_600_000).toISOString();
+
+  it("lists done ones too, and counts only those waiting", async () => {
+    active = 1;
+    pageItems = [
+      { id: "a", status: "active" },
+      { id: "b", status: "done" },
+    ];
+    const res = await GET(req("GET"));
+    expect(await res.json()).toMatchObject({
+      items: pageItems,
+      active: 1,
+      limit: 30,
+      canAdd: true,
+    });
+  });
+
+  it("keeps the category of a new reminder", async () => {
+    const res = await POST(req("POST", { body: "a", remindAt: soon(), category: "health" }));
+    expect(res.status).toBe(201);
+    expect(created[0]?.category).toBe("health");
+  });
+
+  it("refuses an unknown category", async () => {
+    const res = await POST(req("POST", { body: "a", remindAt: soon(), category: "x" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("edits a reminder", async () => {
+    const remindAt = future();
+    const res = await patch({ body: "ใหม่", remindAt, repeat: "daily", category: "work" });
+    expect(res.status).toBe(200);
+    expect(edits[0]).toMatchObject({ id: R, body: "ใหม่", repeat: "daily", category: "work" });
+  });
+
+  it("refuses an edit to a time that has passed", async () => {
+    expect((await patch({ body: "a", remindAt: past() })).status).toBe(400);
+    expect(edits).toEqual([]);
+  });
+
+  it("an edit that brings a done one back needs room in the plan", async () => {
+    stored = { ...stored, status: "done" };
+    plan = "free";
+    active = 3;
+    expect((await patch({ body: "a", remindAt: future() })).status).toBe(409);
+    expect(edits).toEqual([]);
+  });
+
+  it("a one-off that is ticked is done", async () => {
+    expect((await patch({ action: "done" })).status).toBe(200);
+    expect(calls).toEqual(["done"]);
+  });
+
+  it("a repeat that is ticked skips its round, and goes on", async () => {
+    const remindAt = "2030-01-01T02:00:00.000Z";
+    stored = { ...stored, repeat: "daily", remindAt };
+    expect((await patch({ action: "done" })).status).toBe(200);
+    expect(calls).toEqual(["moved:2030-01-02T02:00:00.000Z"]);
+  });
+
+  it("taking a tick back reopens one still ahead", async () => {
+    stored = { ...stored, status: "done" };
+    expect((await patch({ action: "undo" })).status).toBe(200);
+    expect(calls).toEqual(["reopen"]);
+  });
+
+  it("a tick cannot be taken back once its time has gone", async () => {
+    stored = { ...stored, status: "done", remindAt: past() };
+    expect((await patch({ action: "undo" })).status).toBe(409);
+    expect(calls).toEqual([]);
+  });
+
+  it("taking a tick back needs room in the plan", async () => {
+    stored = { ...stored, status: "done" };
+    plan = "free";
+    active = 3;
+    expect((await patch({ action: "undo" })).status).toBe(409);
+  });
+
+  it("is 404 for a reminder that is not theirs", async () => {
+    stored = null;
+    expect((await patch({ action: "done" })).status).toBe(404);
+  });
+
+  it("is 404 when the job sent it first", async () => {
+    found = false;
+    expect((await patch({ action: "done" })).status).toBe(404);
+  });
+
+  it("refuses what it does not know", async () => {
+    expect((await patch({ action: "x" })).status).toBe(400);
   });
 });

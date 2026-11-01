@@ -20,7 +20,20 @@ export interface ReminderDto {
   body: string;
   remindAt: string;
   repeat: Repeat | null;
+  /** "done": sent, or ticked before its time. */
+  status: ReminderStatus;
+  category: ReminderCategory | null;
 }
+
+export type ReminderStatus = "active" | "done";
+export const REMINDER_CATEGORIES = ["bill", "work", "health", "family"] as const;
+export type ReminderCategory = (typeof REMINDER_CATEGORIES)[number];
+export const CATEGORY_INFO: Record<ReminderCategory, { icon: string; label: string }> = {
+  bill: { icon: "💳", label: "บิล" },
+  work: { icon: "💼", label: "งาน" },
+  health: { icon: "🩺", label: "สุขภาพ" },
+  family: { icon: "📞", label: "ครอบครัว" },
+};
 
 export const REPEAT_LABEL: Record<Repeat, string> = {
   daily: "ทุกวัน",

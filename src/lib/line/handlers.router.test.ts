@@ -172,6 +172,8 @@ const reminder = (id: string, body: string, repeat: ReminderDto["repeat"] = null
   body,
   remindAt: "2026-11-02T11:00:00Z",
   repeat,
+  status: "active",
+  category: null,
 });
 
 beforeEach(() => {

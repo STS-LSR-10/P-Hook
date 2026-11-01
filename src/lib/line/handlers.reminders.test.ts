@@ -145,8 +145,22 @@ describe("listing and cancelling", () => {
     expect(said(none.reply)).toContain("ยังไม่มีเตือน");
     expect(said(none.reply)).toContain("เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ");
     listed = [
-      { id: "a", body: "จ่ายค่าไฟ", remindAt: "2026-10-29T02:00:00Z", repeat: null },
-      { id: "b", body: "กินยา", remindAt: "2026-10-29T01:00:00Z", repeat: "daily" },
+      {
+        id: "a",
+        body: "จ่ายค่าไฟ",
+        remindAt: "2026-10-29T02:00:00Z",
+        repeat: null,
+        status: "active",
+        category: null,
+      },
+      {
+        id: "b",
+        body: "กินยา",
+        remindAt: "2026-10-29T01:00:00Z",
+        repeat: "daily",
+        status: "active",
+        category: null,
+      },
     ];
     const { deps, reply } = setup();
     await handleEvent(say("เตือน"), deps);
