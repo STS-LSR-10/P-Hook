@@ -82,6 +82,29 @@ export async function cancelReminder(
   return data !== null;
 }
 
+/** Move a reminder that is still waiting. Null when it is not theirs, or has gone or been sent. */
+export async function rescheduleReminder(
+  db: SupabaseClient,
+  userId: string,
+  id: string,
+  input: { remindAt: Date; repeat: Repeat | null },
+): Promise<ReminderDto | null> {
+  const { data, error } = await db
+    .from("user_reminders")
+    .update({
+      remind_at: input.remindAt.toISOString(),
+      repeat: input.repeat,
+      last_sent_at: null,
+    })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .select(COLUMNS)
+    .maybeSingle();
+  if (error) fail("reschedule reminder", error);
+  return data ? toDto(data as Row) : null;
+}
+
 export interface DueReminder {
   id: string;
   userId: string;

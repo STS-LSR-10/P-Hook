@@ -3013,3 +3013,38 @@ describe("ask mode (0044)", () => {
     ).toBe(0);
   });
 });
+
+describe("pending intents (0046)", () => {
+  const add = (user: string, input: string) =>
+    db.query(
+      "insert into pending_intents (user_id, id, input, expires_at) values ($1, gen_random_uuid(), $2, now()) on conflict (user_id) do update set input = excluded.input",
+      [user, input],
+    );
+
+  it("keep one row per person, with RLS on and no policies", async () => {
+    const u = await newUser(db, "pending-one");
+    await add(u, "a");
+    await add(u, "b");
+    const r = await rows<{ input: string }>(
+      db,
+      `select input from pending_intents where user_id = '${u}'`,
+    );
+    expect(r).toEqual([{ input: "b" }]);
+    const rls = await one<{ on: boolean; n: number }>(
+      db,
+      "select c.relrowsecurity as on, (select count(*)::int from pg_policies p where p.tablename = 'pending_intents') as n from pg_class c where c.relname = 'pending_intents'",
+    );
+    expect(rls).toEqual({ on: true, n: 0 });
+  });
+
+  it("disappear with the user", async () => {
+    const u = await newUser(db, "pending-gone");
+    await add(u, "a");
+    await db.query("delete from users where id = $1", [u]);
+    const r = await one<{ n: number }>(
+      db,
+      `select count(*)::int as n from pending_intents where user_id = '${u}'`,
+    );
+    expect(r.n).toBe(0);
+  });
+});
