@@ -407,6 +407,7 @@ export default function BudgetsPage() {
   const [editing, setEditing] = useState<CategoryItem | null>(null);
   const [adding, setAdding] = useState(false);
   const [totalOpen, setTotalOpen] = useState(false);
+  const [cycleOpen, setCycleOpen] = useState(false);
   const [ordering, setOrdering] = useState(false);
   const [search, setSearch] = useState("");
   const [tipOff, setTipOff] = useState(true); // hidden until we know (no flash for people who closed it)
@@ -533,6 +534,7 @@ export default function BudgetsPage() {
                   alertsOff={alertsOff}
                   onMode={(mode) => putBudget({ mode })}
                   onAdjust={() => setTotalOpen(true)}
+                  onCycle={() => setCycleOpen(true)}
                 />
                 {budgets.data.daily ? (
                   <DailyBudgetCard
@@ -751,6 +753,18 @@ export default function BudgetsPage() {
           }}
         />
       ) : null}
+      {cycleOpen && budgets.data ? (
+        <CycleSheet
+          cycle={budgets.data.cycle}
+          startDay={budgets.data.cycleStartDay ?? 1}
+          onClose={() => setCycleOpen(false)}
+          onSaved={() => {
+            setCycleOpen(false);
+            setNotice("บันทึกรอบงบแล้ว");
+            refresh();
+          }}
+        />
+      ) : null}
       {adding && locked ? <CustomCategoryLockedSheet onClose={() => setAdding(false)} /> : null}
       {adding && !locked ? (
         <AddSheet
@@ -774,12 +788,14 @@ function BudgetHero({
   alertsOff,
   onMode,
   onAdjust,
+  onCycle,
 }: {
   data: BudgetsResponse;
   categoryLocked: boolean;
   alertsOff: boolean;
   onMode: (mode: "overall" | "category") => void;
   onAdjust: () => void;
+  onCycle: () => void;
 }) {
   const [menu, setMenu] = useState(false);
   const total =
@@ -922,13 +938,15 @@ function BudgetHero({
                 : `ทุกวันที่ ${data.cycleStartDay ?? 1} ของเดือน`}
             </strong>
           </span>
-          <Link
-            href="/settings"
+          <button
+            type="button"
+            onClick={onCycle}
+            aria-label="ตั้งค่ารอบงบ"
             className="flex h-8 items-center gap-1 font-semibold text-[var(--hero-ink)] underline underline-offset-2"
           >
             ตั้งค่า
             <Settings2 className="h-3 w-3" aria-hidden />
-          </Link>
+          </button>
         </div>
 
         {alertsOff || categoryLocked ? (
@@ -1118,6 +1136,114 @@ function TotalBudgetSheet({
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface"
         >
           บันทึก
+        </button>
+      </form>
+    </Sheet>
+  );
+}
+
+const CYCLE_CHOICES = [
+  { value: "weekly", label: "รายสัปดาห์" },
+  { value: "monthly", label: "รายเดือน" },
+] as const;
+const START_DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
+
+/** The budget cycle, set from this page: weekly or monthly, and the day a monthly cycle starts. */
+function CycleSheet({
+  cycle,
+  startDay,
+  onClose,
+  onSaved,
+}: {
+  cycle: BudgetsResponse["cycle"];
+  startDay: number;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { api } = useLiff();
+  const [value, setValue] = useState(cycle);
+  const [day, setDay] = useState(startDay);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await api("/api/settings", {
+        method: "PATCH",
+        body: JSON.stringify({ budget_cycle: value, cycle_start_day: day }),
+      });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Sheet title="รอบงบ" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-4">
+        <div role="radiogroup" aria-label="ชนิดรอบงบ" className="space-y-2">
+          {CYCLE_CHOICES.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={value === o.value}
+              onClick={() => setValue(o.value)}
+              className={cn(
+                "flex h-14 w-full items-center justify-between rounded-2xl border px-4 text-left text-base",
+                value === o.value
+                  ? "border-primary bg-primary-soft font-semibold text-primary"
+                  : "border-border text-foreground",
+              )}
+            >
+              {o.label}
+              {value === o.value ? <Check className="h-5 w-5" aria-hidden /> : null}
+            </button>
+          ))}
+        </div>
+        {value === "monthly" ? (
+          <div className="space-y-1.5">
+            <label htmlFor="cycle-start-day" className="block text-base font-bold">
+              วันที่เริ่มต้นงบประมาณ
+            </label>
+            <p className="text-xs text-muted">เลือกได้ถึงวันที่ 28 เพื่อให้มีทุกเดือน</p>
+            <div className="relative">
+              <select
+                id="cycle-start-day"
+                value={day}
+                onChange={(e) => setDay(Number(e.target.value))}
+                className="num h-12 w-full appearance-none rounded-2xl border border-border bg-background px-4 pr-10 text-sm"
+              >
+                {START_DAYS.map((d) => (
+                  <option key={d} value={d}>
+                    {d === 1 ? "วันแรกของเดือน" : `วันที่ ${d}`}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                aria-hidden
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted">รอบสัปดาห์เริ่มทุกวันจันทร์</p>
+        )}
+        {error ? (
+          <p role="alert" className="text-sm text-expense">
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={saving}
+          className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
+        >
+          {saving ? "กำลังบันทึก…" : "บันทึก"}
         </button>
       </form>
     </Sheet>

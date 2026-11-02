@@ -5,6 +5,7 @@ import {
   mockApi,
   ME_FREE,
   ME_PLUS,
+  SETTINGS,
 } from "./helpers";
 
 const SERIES = Array.from({ length: 6 }, (_, i) => ({
@@ -515,6 +516,90 @@ test.describe("daily budget (360px)", () => {
     await expect(section.getByLabel("งบรายวัน")).toBeDisabled();
     await expect(section.getByText("สำหรับแผน Pro")).toBeVisible();
     await expectNoHorizontalScroll(page);
+  });
+});
+
+test.describe("budget cycle sheet (360px)", () => {
+  test("ตั้งค่า opens a sheet that saves the cycle and shows it straight away", async ({ page }) => {
+    const bodies: unknown[] = [];
+    let cycle: Record<string, unknown> = { cycle: "monthly", cycleStartDay: 1 };
+    await mockApi(page, {
+      "GET /api/budgets": () => ({ ...BUDGETS, ...cycle }),
+      "GET /api/categories": CATEGORIES,
+      "GET /api/me": ME_FREE,
+      "PATCH /api/settings": async (route: Route) => {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        bodies.push(body);
+        cycle = { cycle: body.budget_cycle, cycleStartDay: body.cycle_start_day };
+        return { ...SETTINGS, ...body };
+      },
+    });
+    await page.goto("/budgets");
+    await expect(page.getByText("ทุกวันที่ 1 ของเดือน")).toBeVisible();
+
+    await page.getByRole("button", { name: "ตั้งค่ารอบงบ" }).click();
+    const sheet = page.getByRole("dialog", { name: "รอบงบ" });
+    await expect(sheet.getByRole("radio", { name: "รายเดือน" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await sheet.getByLabel("วันที่เริ่มต้นงบประมาณ").selectOption("25");
+    await expectNoHorizontalScroll(page);
+    await sheet.getByRole("button", { name: "บันทึก" }).click();
+
+    await expect(sheet).toBeHidden();
+    expect(bodies).toEqual([{ budget_cycle: "monthly", cycle_start_day: 25 }]);
+    await expect(page.getByText("ทุกวันที่ 25 ของเดือน")).toBeVisible();
+  });
+
+  test("weekly hides the day and says the week starts on Monday", async ({ page }) => {
+    const bodies: unknown[] = [];
+    await mockApi(page, {
+      "GET /api/budgets": BUDGETS,
+      "GET /api/categories": CATEGORIES,
+      "GET /api/me": ME_FREE,
+      "PATCH /api/settings": async (route: Route) => {
+        bodies.push(route.request().postDataJSON());
+        return SETTINGS;
+      },
+    });
+    await page.goto("/budgets");
+    await page.getByRole("button", { name: "ตั้งค่ารอบงบ" }).click();
+    const sheet = page.getByRole("dialog", { name: "รอบงบ" });
+    await sheet.getByRole("radio", { name: "รายสัปดาห์" }).click();
+    await expect(sheet.getByLabel("วันที่เริ่มต้นงบประมาณ")).toBeHidden();
+    await expect(sheet.getByText("เริ่มทุกวันจันทร์")).toBeVisible();
+    await sheet.getByRole("button", { name: "บันทึก" }).click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0]).toEqual({ budget_cycle: "weekly", cycle_start_day: 1 });
+  });
+
+  test("a failed save keeps the sheet open with the reason", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/budgets": BUDGETS,
+      "GET /api/categories": CATEGORIES,
+      "GET /api/me": ME_FREE,
+      "PATCH /api/settings": { status: 500, body: { error: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง" } },
+    });
+    await page.goto("/budgets");
+    await page.getByRole("button", { name: "ตั้งค่ารอบงบ" }).click();
+    const sheet = page.getByRole("dialog", { name: "รอบงบ" });
+    await sheet.getByRole("button", { name: "บันทึก" }).click();
+    await expect(sheet.getByRole("alert")).toBeVisible();
+    await expect(sheet).toBeVisible();
+    await expect(page.getByText("ทุกวันที่ 1 ของเดือน")).toBeVisible();
+  });
+
+  test("the sheet has no serious accessibility violations", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/budgets": BUDGETS,
+      "GET /api/categories": CATEGORIES,
+      "GET /api/me": ME_FREE,
+    });
+    await page.goto("/budgets");
+    await page.getByRole("button", { name: "ตั้งค่ารอบงบ" }).click();
+    await expect(page.getByRole("dialog", { name: "รอบงบ" })).toBeVisible();
+    await expectNoSeriousA11yViolations(page);
   });
 });
 
