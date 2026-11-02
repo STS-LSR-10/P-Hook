@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let plan = "plus";
 let active = 0;
+/** Repeating reminders waiting (their own limit); `active` is the one-offs. */
+let repeating = 0;
 const created: Record<string, unknown>[] = [];
 const cancelled: string[] = [];
 let found = true;
@@ -26,7 +28,8 @@ vi.mock("@/lib/rate-limit", async (original) => ({
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
 vi.mock("@/lib/user-reminder-repo", () => ({
   listReminders: async () => Array.from({ length: active }, (_, i) => ({ id: `r${i}` })),
-  countActiveReminders: async () => active,
+  countActiveReminders: async (_db: unknown, _u: string, kind?: string) =>
+    kind === "repeat" ? repeating : active,
   createReminder: async (_db: unknown, _u: string, input: Record<string, unknown>) => {
     created.push(input);
     return { id: R, body: input.body, remindAt: String(input.remindAt), repeat: input.repeat };
@@ -69,6 +72,7 @@ const req = (method: string, body?: unknown) =>
 beforeEach(() => {
   plan = "plus";
   active = 0;
+  repeating = 0;
   found = true;
   limited = false;
   created.length = 0;
@@ -90,7 +94,9 @@ describe("GET /api/reminders", () => {
   it("says what the plan allows", async () => {
     active = 3;
     plan = "free";
-    expect(await (await GET(req("GET"))).json()).toMatchObject({ limit: 3, canAdd: false });
+    expect(await (await GET(req("GET"))).json()).toMatchObject({ limit: 3, canAddOnce: false });
+    repeating = 1;
+    expect(await (await GET(req("GET"))).json()).toMatchObject({ canAdd: false });
     plan = "plus";
     expect(await (await GET(req("GET"))).json()).toMatchObject({ limit: 30, canAdd: true });
   });
@@ -141,6 +147,85 @@ describe("POST /api/reminders", () => {
     expect(await (await POST(req("POST", { body: "ก", remindAt: soon() }))).json()).toMatchObject({
       upgrade: false,
     });
+  });
+});
+
+describe("repeating reminders have their own limit", () => {
+  it("Free has 1, Pro 10, Elite 30, apart from the one-offs", async () => {
+    plan = "free";
+    repeating = 1;
+    const full = await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "daily" }));
+    expect(full.status).toBe(409);
+    expect(((await full.json()) as { error: string }).error).toContain("เตือนประจำ");
+    // a one-off still fits
+    expect((await POST(req("POST", { body: "ก", remindAt: soon() }))).status).toBe(201);
+    plan = "plus";
+    repeating = 9;
+    expect(
+      (await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "weekly" }))).status,
+    ).toBe(201);
+    repeating = 10;
+    expect(
+      (await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "weekly" }))).status,
+    ).toBe(409);
+    plan = "ultimate";
+    repeating = 30;
+    expect(
+      (await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "monthly" }))).status,
+    ).toBe(409);
+  });
+
+  it("one-offs full do not stop a repeating one", async () => {
+    plan = "free";
+    active = 3;
+    expect((await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "daily" }))).status).toBe(
+      201,
+    );
+  });
+
+  it("GET gives each kind's count and limit; it can add while either has room", async () => {
+    plan = "free";
+    active = 3;
+    repeating = 0;
+    expect(await (await GET(req("GET"))).json()).toMatchObject({
+      limit: 3,
+      repeatLimit: 1,
+      active: 3,
+      repeating: 0,
+      canAdd: true,
+      canAddOnce: false,
+      canAddRepeat: true,
+    });
+  });
+
+  it("turning a waiting one-off into a repeat needs room among the repeats", async () => {
+    plan = "free";
+    repeating = 1;
+    const res = await PATCH(
+      new Request(`https://app.example.com/api/reminders/${R}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ body: "กินยา", remindAt: soon(), repeat: "daily" }),
+      }),
+      { params: Promise.resolve({ id: R }) },
+    );
+    expect(res.status).toBe(409);
+    expect(edits).toEqual([]);
+  });
+
+  it("an edit that keeps a waiting repeat a repeat needs no more room", async () => {
+    plan = "free";
+    repeating = 1;
+    stored = { ...stored, repeat: "daily" };
+    const res = await PATCH(
+      new Request(`https://app.example.com/api/reminders/${R}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ body: "กินยาเย็น", remindAt: soon(), repeat: "daily" }),
+      }),
+      { params: Promise.resolve({ id: R }) },
+    );
+    expect(res.status).toBe(200);
   });
 });
 

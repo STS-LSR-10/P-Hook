@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ReminderCategory, ReminderDto, ReminderStatus, Repeat } from "@/lib/user-reminder";
+import type {
+  ReminderCategory,
+  ReminderDto,
+  ReminderKind,
+  ReminderStatus,
+  Repeat,
+} from "@/lib/user-reminder";
 
 /** The finished reminders the page keeps showing. */
 const MAX_DONE_SHOWN = 100;
@@ -77,12 +83,20 @@ export async function getReminder(
   return data ? toDto(data as Row) : null;
 }
 
-export async function countActiveReminders(db: SupabaseClient, userId: string): Promise<number> {
-  const { count, error } = await db
+/** Reminders waiting: all of them, or only the one-offs / the repeating ones (each has its own limit). */
+export async function countActiveReminders(
+  db: SupabaseClient,
+  userId: string,
+  kind?: ReminderKind,
+): Promise<number> {
+  let query = db
     .from("user_reminders")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("status", "active");
+  if (kind === "once") query = query.is("repeat", null);
+  if (kind === "repeat") query = query.not("repeat", "is", null);
+  const { count, error } = await query;
   if (error) fail("count reminders", error);
   return count ?? 0;
 }

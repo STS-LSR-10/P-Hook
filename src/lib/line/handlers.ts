@@ -141,7 +141,7 @@ import {
   createReminder,
   listReminders,
 } from "@/lib/user-reminder-repo";
-import { describeReminder, parseReminder, reminderCapacity } from "@/lib/user-reminder";
+import { capacityOf, describeReminder, parseReminder, reminderKind } from "@/lib/user-reminder";
 import { buildReminderCard } from "./reminder-flex";
 import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
 import { buildSummaryMenu } from "./summary-menu";
@@ -2370,9 +2370,10 @@ async function runCommand(
           ),
         ];
       }
-      const limit = reminderCapacity(effectivePlan(user.plan, user.plan_expires_at, deps.now()));
-      if ((await countActiveReminders(db, user.id)) >= limit) {
-        return [text(REMINDER_FULL_TEXT(limit))];
+      const kind = reminderKind(parsed.repeat);
+      const limit = capacityOf(effectivePlan(user.plan, user.plan_expires_at, deps.now()), kind);
+      if ((await countActiveReminders(db, user.id, kind)) >= limit) {
+        return [text(REMINDER_FULL_TEXT(limit, kind === "repeat"))];
       }
       const made = await createReminder(db, user.id, {
         body: parsed.body,

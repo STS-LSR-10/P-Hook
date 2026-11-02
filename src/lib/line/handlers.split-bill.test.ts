@@ -545,6 +545,15 @@ describe("the daily reminder (free: it rides on ordinary chat)", () => {
     expect(await chat("Uchom", tomorrow)).toContain("เตือนประจำวัน");
   });
 
+  it("counts each reminder sent against the owner's month, and stops at 200", async () => {
+    expect(await chat("Ubob", AT_ELEVEN)).toContain("เตือนประจำวัน");
+    expect(usage.get("group_remind|2026-10-01")).toBe(1);
+    reminded.clear();
+    usage.set("group_remind|2026-10-01", 200);
+    expect(await chat("Ubob", AT_ELEVEN)).toBe("[]");
+    expect(usage.get("group_remind|2026-10-01")).toBe(200);
+  });
+
   it("not before 10:00", async () => {
     expect(await chat("Ubob", AT_EIGHT)).toBe("[]");
     expect(await chat("Ubob", AT_ELEVEN)).toContain("เตือนประจำวัน"); // and then it still comes, later that day

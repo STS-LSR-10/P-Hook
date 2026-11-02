@@ -25,7 +25,11 @@ vi.mock("@/lib/note-repo", () => ({
     return 12;
   },
 }));
-vi.mock("@/lib/user-reminder-repo", () => ({ countActiveReminders: async () => 3 }));
+vi.mock("@/lib/user-reminder-repo", () => ({
+  countActiveReminders: async (_db: unknown, _u: string, kind?: string) =>
+    kind === "repeat" ? 1 : kind === "once" ? 3 : 99,
+}));
+vi.mock("@/lib/group-repo", () => ({ countOwnedGroups: async () => 2 }));
 vi.mock("@/lib/recurring-repo", () => ({ countRules: async () => 2 }));
 vi.mock("@/lib/photo-repo", () => ({ countPhotosThisMonth: async () => 6 }));
 vi.mock("@/lib/wallet-repo", () => ({
@@ -44,7 +48,10 @@ vi.mock("@/lib/usage", async (original) => ({
   readUsage: async (_db: unknown, _u: string, keys: { kind: string; month: string }[]) => {
     usageAsked.push(keys);
     return keys.map(
-      (k) => ({ voice: 5, teaser_voice: 1, pdf: 2, owl: 8, router: 9, file_save: 1 })[k.kind] ?? 0,
+      (k) =>
+        ({ voice: 5, teaser_voice: 1, pdf: 2, owl: 8, router: 9, file_save: 1, group_remind: 40 })[
+          k.kind
+        ] ?? 0,
     );
   },
 }));
@@ -53,9 +60,9 @@ import { GET } from "./route";
 
 const get = () => GET(new Request("https://app.example.com/api/quota"));
 const items = async (res: Response) => {
-  const body = (await res.json()) as { kept: { key: string }[]; counted: { key: string }[] };
+  const body = (await res.json()) as { main: { key: string }[]; others: { key: string }[] };
   return Object.fromEntries(
-    [...body.kept, ...body.counted].map((i) => [i.key, i as Record<string, unknown>]),
+    [...body.main, ...body.others].map((i) => [i.key, i as Record<string, unknown>]),
   );
 };
 
@@ -81,7 +88,10 @@ describe("GET /api/quota", () => {
     expect(q.wallets).toMatchObject({ used: 2 }); // only the person's own
     expect(q.goals).toMatchObject({ used: 1 }); // not the archived one
     expect(q.notes).toMatchObject({ used: 12 });
-    expect(q.reminders).toMatchObject({ used: 3 });
+    expect(q.reminders).toMatchObject({ used: 3 }); // the one-offs only
+    expect(q.repeatReminders).toMatchObject({ used: 1 });
+    expect(q.groups).toMatchObject({ used: 2 });
+    expect(q.groupReminders).toMatchObject({ used: 40 });
     expect(q.recurring).toMatchObject({ used: 2 });
     expect(q.slips).toMatchObject({ used: 4, period: "month" });
     expect(q.photos).toMatchObject({ used: 6 });
@@ -97,6 +107,7 @@ describe("GET /api/quota", () => {
       { kind: "owl", month: "2026-11-01" },
       { kind: "router", month: "2026-11-02" },
       { kind: "file_save", month: "2026-11-02" },
+      { kind: "group_remind", month: "2026-11-01" },
     ]);
   });
 

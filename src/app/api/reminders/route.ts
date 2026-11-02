@@ -10,7 +10,7 @@ import {
   reminderSchema,
   reminderTimeProblem,
 } from "@/lib/reminder-input";
-import { reminderCapacity } from "@/lib/user-reminder";
+import { reminderCapacity, reminderKind, repeatCapacity } from "@/lib/user-reminder";
 import {
   countActiveReminders,
   createReminder,
@@ -20,19 +20,35 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** GET /api/reminders — those waiting, the latest ones finished, and how many the plan allows. */
+/**
+ * GET /api/reminders — those waiting, the latest ones finished, and how many the plan allows:
+ * one-offs (`active` of `limit`) and repeating ones (`repeating` of `repeatLimit`) apart.
+ */
 export async function GET(request: Request): Promise<Response> {
   return guard(async () => {
     const auth = await requireUser(request);
     if (auth instanceof Response) return auth;
     const db = getAdminClient();
-    const [items, active, { plan }] = await Promise.all([
+    const [items, active, repeating, { plan }] = await Promise.all([
       listRemindersForPage(db, auth.userId),
-      countActiveReminders(db, auth.userId),
+      countActiveReminders(db, auth.userId, "once"),
+      countActiveReminders(db, auth.userId, "repeat"),
       getPlanInfo(db, auth.userId),
     ]);
     const limit = reminderCapacity(plan);
-    return json({ items, active, limit, canAdd: active < limit });
+    const repeatLimit = repeatCapacity(plan);
+    const canAddOnce = active < limit;
+    const canAddRepeat = repeating < repeatLimit;
+    return json({
+      items,
+      active,
+      limit,
+      repeating,
+      repeatLimit,
+      canAdd: canAddOnce || canAddRepeat,
+      canAddOnce,
+      canAddRepeat,
+    });
   });
 }
 
@@ -52,7 +68,7 @@ export async function POST(request: Request): Promise<Response> {
     const problem = reminderTimeProblem(remindAt);
     if (problem) return apiError(problem, 400);
 
-    const full = await reminderRoomProblem(db, auth.userId);
+    const full = await reminderRoomProblem(db, auth.userId, reminderKind(parsed.data.repeat));
     if (full) return full;
     const reminder = await createReminder(db, auth.userId, {
       body: parsed.data.body,

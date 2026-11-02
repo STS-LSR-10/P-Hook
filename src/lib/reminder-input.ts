@@ -6,7 +6,8 @@ import {
   MAX_AHEAD_DAYS,
   MAX_REMINDER_TEXT,
   REMINDER_CATEGORIES,
-  reminderCapacity,
+  capacityOf,
+  type ReminderKind,
 } from "@/lib/user-reminder";
 import { countActiveReminders } from "@/lib/user-reminder-repo";
 
@@ -31,20 +32,24 @@ export function reminderTimeProblem(remindAt: Date): string | null {
   return null;
 }
 
-/** The answer when the plan has no room for one more, or null. */
+/** The answer when the plan has no room for one more of `kind` (one-off or repeating), or null. */
 export async function reminderRoomProblem(
   db: SupabaseClient,
   userId: string,
+  kind: ReminderKind,
 ): Promise<Response | null> {
   const [{ plan }, count] = await Promise.all([
     getPlanInfo(db, userId),
-    countActiveReminders(db, userId),
+    countActiveReminders(db, userId, kind),
   ]);
-  const limit = reminderCapacity(plan);
+  const limit = capacityOf(plan, kind);
   if (count < limit) return null;
   return json(
     {
-      error: `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`,
+      error:
+        kind === "repeat"
+          ? `มีเตือนประจำ (เตือนซ้ำ) ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`
+          : `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`,
       upgrade: plan !== "ultimate",
     },
     409,

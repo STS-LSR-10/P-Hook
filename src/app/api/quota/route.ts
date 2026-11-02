@@ -2,6 +2,7 @@ import { guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { fileUsage } from "@/lib/file-repo";
 import { listGoals } from "@/lib/goal-repo";
+import { countOwnedGroups } from "@/lib/group-repo";
 import { countNotes } from "@/lib/note-repo";
 import { countPhotosThisMonth } from "@/lib/photo-repo";
 import { getPlanInfo } from "@/lib/plan-server";
@@ -29,25 +30,39 @@ export async function GET(request: Request): Promise<Response> {
     const month = monthKey(now);
     const day = dayKey(now);
 
-    const [storageBytes, wallets, goals, notes, reminders, recurring, slips, photos, counters] =
-      await Promise.all([
-        fileUsage(db, auth.userId),
-        listWallets(db, auth.userId),
-        listGoals(db, auth.userId, now),
-        countNotes(db, auth.userId),
-        countActiveReminders(db, auth.userId),
-        countRules(db, auth.userId),
-        paid ? countSlipsThisMonth(db, auth.userId, now) : countSlipsThisWeek(db, auth.userId, now),
-        countPhotosThisMonth(db, auth.userId, now),
-        readUsage(db, auth.userId, [
-          paid ? { kind: "voice", month } : { kind: "teaser_voice", month: LIFETIME },
-          { kind: "pdf", month },
-          { kind: "owl", month },
-          { kind: "router", month: day },
-          { kind: "file_save", month: day },
-        ]),
-      ]);
-    const [voice = 0, pdf = 0, owl = 0, router = 0, fileSaves = 0] = counters;
+    const [
+      storageBytes,
+      wallets,
+      goals,
+      notes,
+      reminders,
+      repeatReminders,
+      groups,
+      recurring,
+      slips,
+      photos,
+      counters,
+    ] = await Promise.all([
+      fileUsage(db, auth.userId),
+      listWallets(db, auth.userId),
+      listGoals(db, auth.userId, now),
+      countNotes(db, auth.userId),
+      countActiveReminders(db, auth.userId, "once"),
+      countActiveReminders(db, auth.userId, "repeat"),
+      countOwnedGroups(db, auth.userId),
+      countRules(db, auth.userId),
+      paid ? countSlipsThisMonth(db, auth.userId, now) : countSlipsThisWeek(db, auth.userId, now),
+      countPhotosThisMonth(db, auth.userId, now),
+      readUsage(db, auth.userId, [
+        paid ? { kind: "voice", month } : { kind: "teaser_voice", month: LIFETIME },
+        { kind: "pdf", month },
+        { kind: "owl", month },
+        { kind: "router", month: day },
+        { kind: "file_save", month: day },
+        { kind: "group_remind", month },
+      ]),
+    ]);
+    const [voice = 0, pdf = 0, owl = 0, router = 0, fileSaves = 0, groupReminders = 0] = counters;
 
     return json({
       plan,
@@ -59,6 +74,9 @@ export async function GET(request: Request): Promise<Response> {
         goals: goals.filter((g) => !g.archived).length,
         notes,
         reminders,
+        repeatReminders,
+        groups,
+        groupReminders,
         recurring,
         slips,
         photos,

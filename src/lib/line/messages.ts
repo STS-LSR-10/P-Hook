@@ -430,8 +430,10 @@ export const REMINDER_NO_TEXT_TEXT =
   'บอกด้วยว่าให้เตือนเรื่องอะไร เช่น "เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ"';
 export const REMINDER_PAST_TEXT = 'เวลานั้นผ่านไปแล้ว ลองระบุใหม่ เช่น "เตือน พรุ่งนี้ 9 โมง …"';
 export const REMINDER_TOO_FAR_TEXT = "ตั้งเตือนล่วงหน้าได้ไม่เกิน 1 ปีนะ ลองเช็กวันที่อีกครั้ง";
-export const REMINDER_FULL_TEXT = (limit: number) =>
-  `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`;
+export const REMINDER_FULL_TEXT = (limit: number, repeat = false) =>
+  repeat
+    ? `มีเตือนประจำ (เตือนซ้ำ) ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`
+    : `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`;
 export const REMINDER_EMPTY_TEXT = ["ยังไม่มีเตือนที่รออยู่", "", REMINDER_USAGE_TEXT].join("\n");
 export const REMINDER_NOT_MATCHED_TEXT = 'ไม่พบเตือนนี้ พิมพ์ "รายการเตือน" เพื่อดูเตือนทั้งหมดได้';
 export const REMINDER_WHICH_TEXT = "มีหลายเตือนที่ตรง อันไหนนะ?";

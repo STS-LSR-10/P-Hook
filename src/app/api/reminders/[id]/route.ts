@@ -18,6 +18,7 @@ import {
   skipReminderRound,
   updateReminder,
 } from "@/lib/user-reminder-repo";
+import { reminderKind } from "@/lib/user-reminder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,8 +66,13 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
         const problem = reminderTimeProblem(remindAt);
         if (problem) return apiError(problem, 400);
       }
-      if (reminder.status === "done" && !keepsDone) {
-        const full = await reminderRoomProblem(db, auth.userId);
+      // waiting again, or waiting as the other kind (one-off <-> repeat): it needs room there
+      const kind = reminderKind(edit.data.repeat);
+      const joins =
+        (reminder.status === "done" && !keepsDone) ||
+        (reminder.status === "active" && kind !== reminderKind(reminder.repeat));
+      if (joins) {
+        const full = await reminderRoomProblem(db, auth.userId, kind);
         if (full) return full;
       }
       const updated = await updateReminder(db, auth.userId, id, {
@@ -83,7 +89,7 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
       if (new Date(reminder.remindAt).getTime() <= Date.now() + 30_000) {
         return apiError("เลยเวลาแล้ว กดแก้เพื่อตั้งเวลาใหม่นะ", 409);
       }
-      const full = await reminderRoomProblem(db, auth.userId);
+      const full = await reminderRoomProblem(db, auth.userId, reminderKind(reminder.repeat));
       if (full) return full;
       return (await reopenReminder(db, auth.userId, id))
         ? json({ ok: true })

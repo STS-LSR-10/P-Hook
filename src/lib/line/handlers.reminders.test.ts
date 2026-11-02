@@ -12,6 +12,7 @@ import {
 
 let plan = "free";
 let active = 0;
+let repeating = 0;
 let listed: ReminderDto[] = [];
 let cancelFound = true;
 const created: Record<string, unknown>[] = [];
@@ -29,7 +30,8 @@ vi.mock("@/lib/repo", async (original) => ({
   }),
 }));
 vi.mock("@/lib/user-reminder-repo", () => ({
-  countActiveReminders: async () => active,
+  countActiveReminders: async (_db: unknown, _u: string, kind?: string) =>
+    kind === "repeat" ? repeating : active,
   listReminders: async () => listed,
   createReminder: async (_db: unknown, _u: string, input: Record<string, unknown>) => {
     created.push(input);
@@ -76,6 +78,7 @@ const said = (reply: ReturnType<typeof setup>["reply"]) =>
 
 beforeEach(() => {
   plan = "free";
+  repeating = 0;
   active = 0;
   listed = [];
   cancelFound = true;
@@ -127,6 +130,16 @@ describe("setting a reminder from the chat", () => {
     expect(said(free.reply)).toContain("ครบ 3 รายการ");
     plan = "plus";
     await handleEvent(say("เตือน พรุ่งนี้ 9 โมง อีกอัน"), setup().deps);
+    expect(created).toHaveLength(1);
+  });
+
+  it("a repeating reminder has its own limit: Free holds 1", async () => {
+    repeating = 1;
+    const full = setup();
+    await handleEvent(say("เตือน ทุกวัน 8 โมง กินยา"), full.deps);
+    expect(created).toHaveLength(0);
+    expect(said(full.reply)).toContain("เตือนประจำ");
+    await handleEvent(say("เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ"), setup().deps);
     expect(created).toHaveLength(1);
   });
 

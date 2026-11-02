@@ -443,71 +443,100 @@ test.describe("settings sections and search (360px)", () => {
   });
 });
 
-const QUOTA = (plan: "free" | "plus" | "ultimate") => ({
+type Plan = "free" | "plus" | "ultimate";
+const each = (
+  free: number | null,
+  plus: number | null,
+  ultimate: number | null,
+  period = "total",
+) => ({
+  free: { limit: free, period },
+  plus: { limit: plus, period },
+  ultimate: { limit: ultimate, period },
+});
+const row = (
+  plan: Plan,
+  key: string,
+  label: string,
+  icon: string,
+  word: string,
+  used: number,
+  plans: ReturnType<typeof each>,
+  unit = "count",
+) => ({
+  key,
+  label,
+  hint: `${label} ที่ใช้`,
+  word,
+  icon,
+  used,
+  limit: plans[plan].limit,
+  unit,
+  period: plans[plan].period,
+  plans,
+});
+
+const QUOTA = (plan: Plan) => ({
   plan,
   planExpiresAt: plan === "free" ? null : "2027-10-17T00:00:00Z",
-  kept: [
-    {
-      key: "storage",
-      label: "พื้นที่เก็บไฟล์",
-      used: 50 * 1024 * 1024,
-      limit: 500 * 1024 * 1024,
-      unit: "bytes",
-      period: "total",
-    },
-    { key: "reminders", label: "การเตือน", used: 3, limit: 3, unit: "count", period: "total" },
-    {
-      key: "recurring",
-      label: "รายการประจำ",
-      used: 0,
-      limit: plan === "free" ? 0 : 20,
-      unit: "count",
-      period: "total",
-    },
+  main: [
+    row(plan, "slips", "จดด้วยสลิป/ใบเสร็จ", "receipt", "ครั้ง", 2, {
+      free: { limit: 3, period: "week" },
+      plus: { limit: 30, period: "month" },
+      ultimate: { limit: null, period: "month" },
+    }),
+    row(plan, "pdf", "จดด้วย PDF", "pdf", "ไฟล์", 9, each(0, 10, 30, "month")),
+    row(plan, "groups", "กลุ่ม", "group", "กลุ่ม", 0, each(0, 0, 5)),
+    row(plan, "reminders", "เตือนครั้งเดียว", "bell", "รายการ", 3, each(3, 30, 100)),
+    row(plan, "repeatReminders", "เตือนประจำ", "repeat", "รายการ", 1, each(1, 10, 30)),
+    row(plan, "groupReminders", "เตือนกลุ่ม", "megaphone", "ครั้ง", 0, each(0, 0, 200, "month")),
+    row(
+      plan,
+      "storage",
+      "พื้นที่จัดเก็บ",
+      "storage",
+      "",
+      50 * 1024 * 1024,
+      each(500 * 1024 * 1024, 5 * 1024 ** 3, 50 * 1024 ** 3),
+      "bytes",
+    ),
   ],
-  counted: [
+  others: [
+    row(plan, "owl", "ถามพี่ฮูก", "owl", "ครั้ง", 4, each(5, 50, 300, "month")),
     {
-      key: "slips",
-      label: "อ่านสลิป",
-      used: 2,
-      limit: plan === "ultimate" ? null : plan === "free" ? 3 : 30,
-      unit: "count",
-      period: plan === "free" ? "week" : "month",
+      ...row(plan, "voice", "จดด้วยเสียง", "voice", "ครั้ง", 0, {
+        free: { limit: 1, period: "once" },
+        plus: { limit: 20, period: "month" },
+        ultimate: { limit: 200, period: "month" },
+      }),
     },
-    {
-      key: "voice",
-      label: "จดด้วยเสียง",
-      used: 0,
-      limit: plan === "free" ? 1 : 20,
-      unit: "count",
-      period: plan === "free" ? "once" : "month",
-    },
-    { key: "owl", label: "ถามพี่ฮูก", used: 4, limit: 5, unit: "count", period: "month" },
   ],
 });
 
 test.describe("quota page (360px)", () => {
-  test("Free: each quota with its use; full, near and locked ones say so", async ({ page }) => {
+  test("Free: the main quotas with their use; full, near and locked ones say so", async ({
+    page,
+  }) => {
     await mockApi(page, { "GET /api/quota": QUOTA("free") });
     await page.goto("/settings/quota");
 
     await expect(page.getByRole("heading", { name: "โควตาการใช้งาน" })).toBeVisible();
-    await expect(page.getByText("แผน Free")).toBeVisible();
-    await expect(page.getByText("50 MB")).toBeVisible();
-    await expect(page.getByRole("progressbar", { name: "การเตือน" })).toHaveAttribute(
-      "aria-valuenow",
-      "100",
-    );
-    await expect(page.getByText("ใช้ครบแล้ว")).toBeVisible();
-    await expect(page.getByText("ใกล้ครบแล้ว")).toBeVisible(); // owl 4 / 5
-    await expect(page.getByText("ต้องอัปเกรด")).toBeVisible(); // recurring on Free
-    await expect(page.getByText("สัปดาห์นี้")).toBeVisible(); // Free slips count by the week
-    await expect(page.getByText("ตลอดการใช้งาน")).toBeVisible(); // the one voice try
-    await expect(page.getByRole("progressbar", { name: "การเตือน" })).toHaveAttribute(
+    const main = page.getByRole("list", { name: "รายการโควตาหลัก" });
+    await expect(main.getByRole("listitem")).toHaveCount(7);
+    await expect(main.getByText("2 / 3 ครั้ง (เหลือ 1)")).toBeVisible(); // slips
+    await expect(main.getByText("50 MB / 500 MB (เหลือ 450 MB)")).toBeVisible();
+    await expect(main.getByText("3 / 3 รายการ (เต็มแล้ว)")).toBeVisible();
+    await expect(main.getByText("เต็มแล้ว", { exact: true }).first()).toBeVisible();
+    await expect(main.getByText("ต้องอัปเกรด").first()).toBeVisible(); // PDF, groups on Free
+    await expect(main.getByRole("progressbar", { name: "เตือนครั้งเดียว" })).toHaveAttribute(
       "aria-valuetext",
       "3 จาก 3",
     );
-    await expect(page.getByRole("link", { name: "อัปเกรดเพื่อเพิ่มโควตา" })).toHaveAttribute(
+    // the overview: an average over what can be measured, and how many are full
+    const overview = page.getByRole("region", { name: "ภาพรวมโควตา" });
+    await expect(overview.getByText("แผน Free")).toBeVisible();
+    await expect(overview.getByText(/เกือบหมด 2/)).toBeVisible();
+    await expect(page.getByRole("link", { name: "อัปเกรดแพ็กเกจ" })).toHaveAttribute(
       "href",
       "/upgrade",
     );
@@ -515,14 +544,34 @@ test.describe("quota page (360px)", () => {
     await expectNoSeriousA11yViolations(page);
   });
 
-  test("Elite: no plan limit reads as ไม่จำกัด and there is no upgrade button", async ({
-    page,
-  }) => {
+  test("a tap opens what the quota counts and what each plan gets", async ({ page }) => {
+    await mockApi(page, { "GET /api/quota": QUOTA("free") });
+    await page.goto("/settings/quota");
+    await page.getByRole("button", { name: /^จดด้วยสลิป/ }).click();
+    const sheet = page.getByRole("dialog", { name: "จดด้วยสลิป/ใบเสร็จ" });
+    await expect(sheet.getByText("นับใหม่ทุกวันจันทร์")).toBeVisible();
+    await expect(sheet.getByText("Free (แผนของคุณ)")).toBeVisible();
+    await expect(sheet.getByText("3 ครั้ง ต่อสัปดาห์")).toBeVisible();
+    await expect(sheet.getByText("30 ครั้ง ต่อเดือน")).toBeVisible();
+    await expect(sheet.getByText("ไม่จำกัด")).toBeVisible();
+  });
+
+  test("the other quotas open below, and PDF near its limit is marked", async ({ page }) => {
+    await mockApi(page, { "GET /api/quota": QUOTA("plus") });
+    await page.goto("/settings/quota");
+    await expect(page.getByText("ใกล้เต็ม", { exact: true })).toBeVisible(); // PDF 9 / 10
+    const others = page.getByRole("list", { name: "โควตาอื่น ๆ" });
+    await expect(others).toBeHidden();
+    await page.getByRole("button", { name: /โควตาอื่น ๆ/ }).click();
+    await expect(others.getByText("4 / 50 ครั้ง (เหลือ 46)")).toBeVisible();
+  });
+
+  test("Elite: slips read ไม่จำกัด and there is no upgrade button", async ({ page }) => {
     await mockApi(page, { "GET /api/quota": QUOTA("ultimate") });
     await page.goto("/settings/quota");
     await expect(page.getByText("แผน Elite")).toBeVisible();
-    await expect(page.getByText("ไม่จำกัด")).toBeVisible();
-    await expect(page.getByRole("link", { name: /อัปเกรด|ดูแผน/ })).toHaveCount(0);
+    await expect(page.getByText("ไม่จำกัด", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: /อัปเกรด/ })).toHaveCount(0);
   });
 
   test("a failed load can be retried, and the back link goes to settings", async ({ page }) => {
@@ -535,7 +584,7 @@ test.describe("quota page (360px)", () => {
     });
     await page.goto("/settings/quota");
     await page.getByRole("button", { name: "ลองอีกครั้ง" }).click();
-    await expect(page.getByText("แผน Pro")).toBeVisible();
+    await expect(page.getByText("แผน Pro").first()).toBeVisible();
     await expect(page.getByRole("link", { name: "กลับไปหน้าตั้งค่า" })).toHaveAttribute(
       "href",
       "/settings",

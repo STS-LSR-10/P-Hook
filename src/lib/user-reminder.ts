@@ -10,9 +10,20 @@ export const MAX_AHEAD_DAYS = 366;
 /** The time used when only a day was given ("พรุ่งนี้ จ่ายค่าไฟ"). */
 export const DEFAULT_HOUR = 9;
 
-/** Reminders a plan may have waiting at once (each one is a push message, so this is also a cost guard). */
+/** One-off reminders a plan may have waiting at once (each one is a push message, so also a cost guard). */
 const REMINDER_LIMIT: Record<Plan, number> = { free: 3, plus: 30, ultimate: 100 };
 export const reminderCapacity = (plan: Plan): number => REMINDER_LIMIT[plan];
+
+/** Repeating reminders a plan may have, apart from the one-offs: each sends again every round. */
+const REPEAT_LIMIT: Record<Plan, number> = { free: 1, plus: 10, ultimate: 30 };
+export const repeatCapacity = (plan: Plan): number => REPEAT_LIMIT[plan];
+
+/** Which limit a reminder counts against. */
+export type ReminderKind = "once" | "repeat";
+export const reminderKind = (repeat: string | null | undefined): ReminderKind =>
+  repeat ? "repeat" : "once";
+export const capacityOf = (plan: Plan, kind: ReminderKind): number =>
+  kind === "repeat" ? repeatCapacity(plan) : reminderCapacity(plan);
 
 /** A reminder as the web app receives it. */
 export interface ReminderDto {

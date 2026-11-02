@@ -67,6 +67,12 @@ export const FAIR_USE = { slips: 300, voice: 200, smartParse: 300 } as const;
 /** Voice messages a person can have read per month, by plan (Free has one free taste for life). */
 export const VOICE_LIMIT: Record<Plan, number> = { free: 0, plus: 20, ultimate: FAIR_USE.voice };
 
+/**
+ * Daily "who has not paid" reminders the bot posts in an owner's groups per month (group ledgers are
+ * Elite). They ride on replies, so this is a guard on volume rather than on cost.
+ */
+export const GROUP_REMINDS_PER_MONTH = 200;
+
 /** PDF files (statements, bills, lists) a person can have read per month. Free has none. */
 export const PDF_LIMIT: Record<Plan, number> = { free: 0, plus: 10, ultimate: 30 };
 
