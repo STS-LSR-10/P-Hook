@@ -20,6 +20,8 @@ const ID2 = "22222222-2222-4222-8222-222222222222";
 const PENDING = "33333333-3333-4333-8333-333333333333";
 
 let plan = "free";
+/** Repeating reminders waiting (their own limit). */
+let repeating = 0;
 let quota = true;
 let reminders: ReminderDto[] = [];
 let moved: ReminderDto | null = null;
@@ -76,7 +78,8 @@ vi.mock("@/lib/note-repo", () => ({
   },
 }));
 vi.mock("@/lib/user-reminder-repo", () => ({
-  countActiveReminders: async () => 0,
+  countActiveReminders: async (_db: unknown, _u: string, kind?: string) =>
+    kind === "repeat" ? repeating : 0,
   listReminders: async () => reminders,
   createReminder: async (_db: unknown, _u: string, i: { body: string; remindAt: Date }) => {
     madeReminders.push(i);
@@ -178,6 +181,7 @@ const reminder = (id: string, body: string, repeat: ReminderDto["repeat"] = null
 
 beforeEach(() => {
   plan = "free";
+  repeating = 0;
   quota = true;
   owlMode = false;
   reminders = [];
@@ -504,6 +508,21 @@ describe("moving a reminder", () => {
     intent: "reminder_edit",
     reminderQuery: "กินยา",
     whenText: "1 ทุ่ม",
+  });
+
+  it("turning a one-off into a repeat needs room among the repeats", async () => {
+    repeating = 1; // Free holds 1
+    reminders = [reminder(ID, "กินยา")];
+    moved = reminder(ID, "กินยา", "daily");
+    route.mockResolvedValue({ ...edit, whenText: "ทุกวัน 8 โมง" });
+    const full = setup();
+    await handleEvent(say("เลื่อนเตือนกินยาเป็นทุกวัน 8 โมง"), full.deps);
+    expect(moves).toEqual([]);
+    expect(said(full.reply)).toContain("เตือนประจำ");
+
+    repeating = 0;
+    await handleEvent(say("เลื่อนเตือนกินยาเป็นทุกวัน 8 โมง"), setup().deps);
+    expect(moves[0]).toMatchObject({ repeat: "daily" });
   });
 
   it("moves a reminder and keeps its repeat", async () => {

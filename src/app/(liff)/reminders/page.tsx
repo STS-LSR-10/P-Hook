@@ -30,18 +30,29 @@ import {
   MAX_REMINDER_TEXT,
   REMINDER_CATEGORIES,
   REPEAT_LABEL,
+  reminderKind,
   type ReminderCategory,
   type ReminderDto,
+  type ReminderKind,
   type Repeat,
 } from "@/lib/user-reminder";
 import { cn } from "@/lib/utils";
 
 interface RemindersResponse {
   items: ReminderDto[];
+  /** One-offs waiting, of `limit`. */
   active: number;
   limit: number;
+  /** Repeating ones waiting, of `repeatLimit` (their own limit). */
+  repeating: number;
+  repeatLimit: number;
   canAdd: boolean;
+  canAddOnce: boolean;
+  canAddRepeat: boolean;
 }
+
+/** Whether each kind of reminder has room, and its limit. */
+type Room = Record<ReminderKind, { full: boolean; limit: number }>;
 
 type Period = "day" | "week" | "month";
 type Filter = "all" | "active" | "done";
@@ -456,8 +467,10 @@ export default function RemindersPage() {
           reminder={form.reminder}
           day={selected}
           today={today}
-          full={form.reminder ? false : data ? !data.canAdd : false}
-          limit={data?.limit ?? 0}
+          room={{
+            once: { full: data ? !data.canAddOnce : false, limit: data?.limit ?? 0 },
+            repeat: { full: data ? !data.canAddRepeat : false, limit: data?.repeatLimit ?? 0 },
+          }}
           onClose={() => setForm(null)}
           onSaved={(message, ymd) => {
             setForm(null);
@@ -697,16 +710,14 @@ function ReminderSheet({
   reminder,
   day,
   today,
-  full,
-  limit,
+  room,
   onClose,
   onSaved,
 }: {
   reminder: ReminderDto | null;
   day: string;
   today: string;
-  full: boolean;
-  limit: number;
+  room: Room;
   onClose: () => void;
   onSaved: (message: string, ymd: string) => void;
 }) {
@@ -722,6 +733,12 @@ function ReminderSheet({
   const [repeat, setRepeat] = useState<Repeat | "">(reminder?.repeat ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // one-offs and repeats have their own limits: a new one, a finished one brought back, or one
+  // switched to the other kind needs room in the kind it will be
+  const kind = reminderKind(repeat || null);
+  const joins = !reminder || reminder.status === "done" || reminderKind(reminder.repeat) !== kind;
+  const full = joins && room[kind].full;
+  const limit = room[kind].limit;
 
   async function save(e: FormEvent) {
     e.preventDefault();
@@ -838,7 +855,9 @@ function ReminderSheet({
         </div>
         {full ? (
           <p className="text-sm text-warn">
-            มีเตือนที่รออยู่ครบ {limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ
+            {kind === "repeat"
+              ? `มีเตือนประจำ (เตือนซ้ำ) ครบ ${limit} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`
+              : `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`}
           </p>
         ) : null}
         {error ? (

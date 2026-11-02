@@ -376,6 +376,36 @@ describe("reminders on the page", () => {
     expect((await patch({ action: "undo" })).status).toBe(409);
   });
 
+  it("a done one-off edited into a repeat needs room among the repeats", async () => {
+    stored = { ...stored, status: "done" };
+    plan = "free";
+    repeating = 1;
+    expect((await patch({ body: "a", remindAt: future(), repeat: "daily" })).status).toBe(409);
+    repeating = 0;
+    active = 3; // the one-offs being full does not matter for a repeat
+    expect((await patch({ body: "a", remindAt: future(), repeat: "daily" })).status).toBe(200);
+  });
+
+  it("taking a tick back on a repeat needs room among the repeats", async () => {
+    stored = { ...stored, status: "done", repeat: "weekly" };
+    plan = "free";
+    repeating = 1;
+    expect((await patch({ action: "undo" })).status).toBe(409);
+    repeating = 0;
+    active = 3;
+    expect((await patch({ action: "undo" })).status).toBe(200);
+  });
+
+  it("fixing the name of a ticked one needs no room, even when full", async () => {
+    stored = { ...stored, status: "done" };
+    plan = "free";
+    active = 3;
+    repeating = 1;
+    const res = await patch({ body: "ชื่อใหม่", remindAt: String(stored?.remindAt) });
+    expect(res.status).toBe(200);
+    expect(edits[0]).toMatchObject({ status: "done" });
+  });
+
   it("is 404 for a reminder that is not theirs", async () => {
     stored = null;
     expect((await patch({ action: "done", remindAt: future() })).status).toBe(404);

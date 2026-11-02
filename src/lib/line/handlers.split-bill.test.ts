@@ -23,6 +23,8 @@ const usedSlips = new Set<string>();
 const announced = new Set<string>();
 const reminded = new Map<string, string>();
 const usage = new Map<string, number>();
+/** The usage counter cannot be reached. */
+let usageDown = false;
 let seq = 0;
 const slipImages: number[] = [];
 let slipLimited = false;
@@ -262,6 +264,7 @@ function setup() {
     db: {
       rpc: async (fn: string, args: Record<string, unknown>) => {
         const key = `${args.p_kind}|${args.p_month}`;
+        if (usageDown) return { data: null, error: { message: "down" } };
         if (fn === "take_usage") {
           const used = usage.get(key) ?? 0;
           if (used >= (args.p_limit as number)) return { data: false, error: null };
@@ -323,6 +326,7 @@ beforeEach(() => {
   announced.clear();
   reminded.clear();
   usage.clear();
+  usageDown = false;
   slipImages.length = 0;
   slipLimited = false;
   fetchFails = false;
@@ -552,6 +556,19 @@ describe("the daily reminder (free: it rides on ordinary chat)", () => {
     usage.set("group_remind|2026-10-01", 200);
     expect(await chat("Ubob", AT_ELEVEN)).toBe("[]");
     expect(usage.get("group_remind|2026-10-01")).toBe(200);
+  });
+
+  it("a counter that cannot be read lets the reminder go", async () => {
+    usageDown = true;
+    expect(await chat("Ubob", AT_ELEVEN)).toContain("เตือนประจำวัน");
+  });
+
+  it("a reminder that could not be sent gives its count back", async () => {
+    const s = setup();
+    s.deps.now = () => AT_ELEVEN;
+    s.reply.mockRejectedValueOnce(new Error("LINE down"));
+    await handleEvent(inGroup("Ubob", "หิวจัง"), s.deps);
+    expect(usage.get("group_remind|2026-10-01") ?? 0).toBe(0);
   });
 
   it("not before 10:00", async () => {

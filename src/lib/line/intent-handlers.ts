@@ -15,14 +15,15 @@ import type { UserRow } from "@/lib/repo";
 import { looksSecret } from "@/lib/secret-text";
 import type { LineMessage } from "@/lib/types";
 import { bangkokParts } from "@/lib/thai-date";
-import { moveReminderTime, type ReminderDto } from "@/lib/user-reminder";
-import { listReminders, rescheduleReminder } from "@/lib/user-reminder-repo";
+import { capacityOf, moveReminderTime, reminderKind, type ReminderDto } from "@/lib/user-reminder";
+import { countActiveReminders, listReminders, rescheduleReminder } from "@/lib/user-reminder-repo";
 import {
   INTENT_CANCELLED_TEXT,
   INTENT_CONFIRM_TEXT,
   INTENT_EXPIRED_TEXT,
   INTENT_UNCLEAR_TEXT,
   MONEY_HINT_TEXT,
+  REMINDER_FULL_TEXT,
   REMINDER_GONE_TEXT,
   REMINDER_NOT_MATCHED_TEXT,
   REMINDER_PAST_TEXT,
@@ -96,6 +97,13 @@ async function moveReminder(
     return [text(REMINDER_USAGE_TEXT)];
   }
   const repeat = parsed.repeat ?? reminder.repeat;
+  // a one-off that becomes a repeat counts against the repeats' own limit
+  if (reminderKind(repeat) === "repeat" && reminderKind(reminder.repeat) === "once") {
+    const limit = capacityOf(effectivePlan(user.plan, user.plan_expires_at, deps.now()), "repeat");
+    if ((await countActiveReminders(deps.db, user.id, "repeat")) >= limit) {
+      return [text(REMINDER_FULL_TEXT(limit, true))];
+    }
+  }
   const made = await rescheduleReminder(deps.db, user.id, reminder.id, {
     remindAt: parsed.remindAt,
     repeat,

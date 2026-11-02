@@ -88,18 +88,31 @@ const fmt = (item: QuotaItem, n: number) =>
 const withWord = (item: QuotaItem, n: number) =>
   item.word ? `${fmt(item, n)} ${item.word}` : fmt(item, n);
 
-type Level = "locked" | "unlimited" | "ok" | "near" | "critical";
+type Level = "locked" | "unlimited" | "ok" | "near" | "critical" | "full";
+
+/** The word for a row's state, shown as a badge and read out with the row. */
+const LEVEL_WORD: Partial<Record<Level, string>> = {
+  near: "ใกล้เต็ม",
+  critical: "วิกฤต",
+  full: "เต็มแล้ว",
+};
 
 function levelOf(item: QuotaItem): { level: Level; pct: number } {
   if (item.limit === 0) return { level: "locked", pct: 0 };
   if (item.limit === null) return { level: "unlimited", pct: 0 };
   const pct = Math.min(100, Math.round((item.used * 100) / item.limit));
+  if (item.used >= item.limit) return { level: "full", pct };
   return { level: pct >= 95 ? "critical" : pct >= 80 ? "near" : "ok", pct };
 }
 
 /** "142 / 300 ครั้ง (เหลือ 158)" */
 function usageLine(item: QuotaItem): string {
-  if (item.limit === 0) return "แผนนี้ยังใช้ไม่ได้";
+  // after a downgrade some may still be there (groups kept from Elite): say how many
+  if (item.limit === 0) {
+    return item.used > 0
+      ? `มีอยู่ ${withWord(item, item.used)} · แผนนี้เพิ่มไม่ได้`
+      : "แผนนี้ยังใช้ไม่ได้";
+  }
   if (item.limit === null) return `ใช้ไป ${withWord(item, item.used)} · ไม่จำกัด`;
   const left = Math.max(0, item.limit - item.used);
   const word = item.word ? ` ${item.word}` : "";
@@ -111,14 +124,15 @@ function QuotaRow({ item, onOpen }: { item: QuotaItem; onOpen: () => void }) {
   const { Icon, tint, bar } = ICON[item.icon];
   const { level, pct } = levelOf(item);
   const near = level === "near";
-  const critical = level === "critical";
-  const full = item.limit !== null && item.limit > 0 && item.used >= item.limit;
+  const full = level === "full";
+  // nearly or fully used: both shown in red
+  const critical = level === "critical" || full;
   return (
     <li>
       <button
         type="button"
         onClick={onOpen}
-        aria-label={`${item.label}: ${usageLine(item)}`}
+        aria-label={[item.label, LEVEL_WORD[level], usageLine(item)].filter(Boolean).join(": ")}
         className={cn(
           "w-full rounded-2xl border p-3 text-left shadow-sm transition active:scale-[0.99]",
           critical
@@ -389,6 +403,9 @@ export default function QuotaPage() {
                     </div>
                     <p className="text-[11px] text-slate-300">
                       ใช้เฉลี่ย {average}% • ปกติ {count("ok")}
+                      {count("full") > 0 ? (
+                        <span className="font-medium text-rose-300"> • เต็ม {count("full")}</span>
+                      ) : null}
                       {count("near") > 0 ? (
                         <span className="font-medium text-amber-300">
                           {" "}

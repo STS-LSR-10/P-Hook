@@ -23,7 +23,11 @@ const LIST = (items: unknown[], extra: Record<string, unknown> = {}) => ({
   items,
   active: items.length,
   limit: 3,
+  repeating: 0,
+  repeatLimit: 1,
   canAdd: true,
+  canAddOnce: true,
+  canAddRepeat: true,
   ...extra,
 });
 const THREE = [
@@ -159,11 +163,39 @@ test.describe("reminders page (360px)", () => {
   test("a full list blocks adding and says so", async ({ page }) => {
     await mockApi(page, {
       "GET /api/me": ME_FREE,
-      "GET /api/reminders": LIST(THREE, { canAdd: false }),
+      "GET /api/reminders": LIST(THREE, { canAdd: false, canAddOnce: false, canAddRepeat: false }),
     });
     await page.goto("/reminders");
     await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
     await expect(page.getByText("มีเตือนที่รออยู่ครบ 3 รายการแล้ว")).toBeVisible();
+    await expect(page.getByRole("button", { name: "บันทึกการเตือน" })).toBeDisabled();
+  });
+
+  test("one-offs and repeats have their own room: the form follows the repeat picked", async ({
+    page,
+  }) => {
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST(THREE, { canAddOnce: false, canAddRepeat: true }),
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
+    await expect(page.getByText("มีเตือนที่รออยู่ครบ 3 รายการแล้ว")).toBeVisible();
+    await page.getByLabel("ทำซ้ำ").selectOption("daily");
+    await expect(page.getByText("มีเตือนที่รออยู่ครบ")).toHaveCount(0);
+    await page.getByLabel("ชื่อรายการเตือน").fill("กินยา");
+    await expect(page.getByRole("button", { name: "บันทึกการเตือน" })).toBeEnabled();
+  });
+
+  test("a full repeat list says so when a repeat is picked", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST([], { repeating: 1, canAddRepeat: false }),
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
+    await page.getByLabel("ทำซ้ำ").selectOption("weekly");
+    await expect(page.getByText("มีเตือนประจำ (เตือนซ้ำ) ครบ 1 รายการแล้ว")).toBeVisible();
     await expect(page.getByRole("button", { name: "บันทึกการเตือน" })).toBeDisabled();
   });
 

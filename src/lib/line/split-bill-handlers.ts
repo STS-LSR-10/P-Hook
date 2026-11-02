@@ -34,7 +34,7 @@ import { bangkokDateKey } from "@/lib/points";
 import { bangkokParts } from "@/lib/thai-date";
 import { GROUP_REMINDS_PER_MONTH } from "@/lib/plan";
 import { log } from "@/lib/log";
-import { monthKey, takeUsage } from "@/lib/usage";
+import { monthKey, refundUsage, takeUsage } from "@/lib/usage";
 import type { LineMessage } from "@/lib/types";
 import {
   billQrBubble,
@@ -615,16 +615,25 @@ export async function runDailyReminder(ctx: BillContext, now: Date): Promise<voi
     due.push({ bill, members, payerName: nameOf(bill.payerLineUserId) });
   }
   if (due.length === 0) return;
-  // counted against the owner's month over all their groups (a count that cannot be read lets it go)
+  // counted against the owner's month over all their groups (a count that cannot be read lets it go);
+  // 200 is above what 5 groups use in a month, so it only stops runaway posting
+  const month = monthKey(now);
+  const owner = ctx.group.ownerUserId;
+  let counted = false;
   try {
-    const month = monthKey(now);
-    const owner = ctx.group.ownerUserId;
     if (!(await takeUsage(ctx.db, owner, "group_remind", GROUP_REMINDS_PER_MONTH, month))) return;
+    counted = true;
   } catch (error) {
     log.error("group_remind_quota_failed", error);
   }
-  return ctx.reply([
-    text("⏰ เตือนประจำวัน: ยังมีคนที่ยังไม่ได้จ่ายบิลนะ"),
-    buildChaseCard({ bills: due, nameOf, appUrl: ctx.appUrl }),
-  ]);
+  try {
+    await ctx.reply([
+      text("⏰ เตือนประจำวัน: ยังมีคนที่ยังไม่ได้จ่ายบิลนะ"),
+      buildChaseCard({ bills: due, nameOf, appUrl: ctx.appUrl }),
+    ]);
+  } catch (error) {
+    // nothing reached the group, so it does not count
+    if (counted) await refundUsage(ctx.db, owner, "group_remind", month).catch(() => undefined);
+    throw error;
+  }
 }

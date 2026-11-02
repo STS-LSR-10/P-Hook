@@ -535,7 +535,8 @@ test.describe("quota page (360px)", () => {
     // the overview: an average over what can be measured, and how many are full
     const overview = page.getByRole("region", { name: "ภาพรวมโควตา" });
     await expect(overview.getByText("แผน Free")).toBeVisible();
-    await expect(overview.getByText(/เกือบหมด 2/)).toBeVisible();
+    await expect(overview.getByText(/เต็ม 2/)).toBeVisible();
+    await expect(main.getByRole("button", { name: /^เตือนครั้งเดียว: เต็มแล้ว/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "อัปเกรดแพ็กเกจ" })).toHaveAttribute(
       "href",
       "/upgrade",
@@ -560,10 +561,19 @@ test.describe("quota page (360px)", () => {
     await mockApi(page, { "GET /api/quota": QUOTA("plus") });
     await page.goto("/settings/quota");
     await expect(page.getByText("ใกล้เต็ม", { exact: true })).toBeVisible(); // PDF 9 / 10
+    await expect(page.getByRole("button", { name: /^จดด้วย PDF: ใกล้เต็ม/ })).toBeVisible();
     const others = page.getByRole("list", { name: "โควตาอื่น ๆ" });
     await expect(others).toBeHidden();
     await page.getByRole("button", { name: /โควตาอื่น ๆ/ }).click();
     await expect(others.getByText("4 / 50 ครั้ง (เหลือ 46)")).toBeVisible();
+  });
+
+  test("groups kept after a downgrade still show how many", async ({ page }) => {
+    const q = QUOTA("plus");
+    q.main = q.main.map((i) => (i.key === "groups" ? { ...i, used: 2 } : i));
+    await mockApi(page, { "GET /api/quota": q });
+    await page.goto("/settings/quota");
+    await expect(page.getByText("มีอยู่ 2 กลุ่ม · แผนนี้เพิ่มไม่ได้")).toBeVisible();
   });
 
   test("Elite: slips read ไม่จำกัด and there is no upgrade button", async ({ page }) => {
