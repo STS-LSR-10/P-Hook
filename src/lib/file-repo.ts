@@ -18,8 +18,16 @@ interface FileRow {
   r2_key: string;
   created_at: string;
   has_thumb?: boolean;
+  group_id?: string | null;
+  saved_by?: string | null;
 }
-const COLUMNS = "id,name,mime_type,size_bytes,r2_key,created_at,has_thumb";
+const COLUMNS = "id,name,mime_type,size_bytes,r2_key,created_at,has_thumb,group_id,saved_by";
+
+/**
+ * Which of the owner's files a query reaches: their own ("personal"), one group's, or either ("any",
+ * for a link already signed for one file). Group files belong to the group's owner.
+ */
+export type FileScope = "personal" | "any" | { groupId: string };
 const toDto = (r: FileRow): FileDto => ({
   id: r.id,
   name: r.name,
@@ -40,6 +48,9 @@ export async function reserveFile(
     sizeBytes: number;
     r2Key: string;
     capacity: number;
+    /** A file kept in a group: which group, and the LINE id of who kept it. */
+    groupId?: string;
+    savedBy?: string;
   },
 ): Promise<boolean> {
   const { data, error } = await db.rpc("file_reserve", {
@@ -50,6 +61,7 @@ export async function reserveFile(
     p_size: input.sizeBytes,
     p_key: input.r2Key,
     p_capacity: input.capacity,
+    ...(input.groupId ? { p_group: input.groupId, p_saved_by: input.savedBy ?? null } : {}),
   });
   if (error) fail("reserve file", error);
   return data === true;
@@ -74,30 +86,46 @@ export async function dropFileRow(db: SupabaseClient, userId: string, id: string
   if (error) fail("drop file row", error);
 }
 
+export type ReadyFile = FileDto & { r2Key: string; groupId: string | null; savedBy: string | null };
+
 export async function getReadyFile(
   db: SupabaseClient,
   userId: string,
   id: string,
-): Promise<(FileDto & { r2Key: string }) | null> {
-  const { data, error } = await db
+  scope: FileScope = "personal",
+): Promise<ReadyFile | null> {
+  let query = db
     .from("stored_files")
     .select(COLUMNS)
     .eq("id", id)
     .eq("user_id", userId)
-    .eq("status", "ready")
-    .maybeSingle();
+    .eq("status", "ready");
+  if (scope === "personal") query = query.is("group_id", null);
+  else if (scope !== "any") query = query.eq("group_id", scope.groupId);
+  const { data, error } = await query.maybeSingle();
   if (error) fail("get file", error);
   if (!data) return null;
   const row = data as FileRow;
-  return { ...toDto(row), r2Key: row.r2_key };
+  return {
+    ...toDto(row),
+    r2Key: row.r2_key,
+    groupId: row.group_id ?? null,
+    savedBy: row.saved_by ?? null,
+  };
 }
 
-/** Newest first. `q` keeps files whose name contains it; `before` pages back from a moment. */
+/** A file in a list, with the LINE id of the member who kept it in a group (null for one's own). */
+export type ListedFile = FileDto & { savedBy: string | null };
+
+/**
+ * Newest first. `q` keeps files whose name contains it; `before` pages back from a moment. The
+ * person's own files, or with `groupId` that group's.
+ */
 export async function listFiles(
   db: SupabaseClient,
   userId: string,
-  options: { q?: string; before?: string; limit?: number; kind?: FileKind } = {},
-): Promise<{ items: FileDto[]; hasMore: boolean }> {
+  options: { q?: string; before?: string; limit?: number; kind?: FileKind; groupId?: string } = {},
+): Promise<{ items: ListedFile[]; hasMore: boolean }> {
   const limit = options.limit ?? 30;
   let query = db
     .from("stored_files")
@@ -106,6 +134,7 @@ export async function listFiles(
     .eq("status", "ready")
     .order("created_at", { ascending: false })
     .limit(limit + 1);
+  query = options.groupId ? query.eq("group_id", options.groupId) : query.is("group_id", null);
   const q = options.q?.trim();
   if (q) query = query.ilike("name", `%${escapeLike(q)}%`);
   if (options.kind === "image") query = query.like("mime_type", "image/%");
@@ -114,7 +143,10 @@ export async function listFiles(
   const { data, error } = await query;
   if (error) fail("list files", error);
   const rows = (data ?? []) as FileRow[];
-  return { items: rows.slice(0, limit).map(toDto), hasMore: rows.length > limit };
+  return {
+    items: rows.slice(0, limit).map((r) => ({ ...toDto(r), savedBy: r.saved_by ?? null })),
+    hasMore: rows.length > limit,
+  };
 }
 
 /** False when the file is not theirs (or is gone). */
@@ -129,6 +161,7 @@ export async function renameFile(
     .update({ name })
     .eq("id", id)
     .eq("user_id", userId)
+    .is("group_id", null)
     .select("id")
     .maybeSingle();
   if (error) fail("rename file", error);
@@ -152,6 +185,13 @@ export async function renameLatestFile(
 export async function fileUsage(db: SupabaseClient, userId: string): Promise<number> {
   const { data, error } = await db.rpc("file_usage", { p_user: userId });
   if (error) fail("file usage", error);
+  return Number(data ?? 0);
+}
+
+/** The part of that space the owner's groups take. */
+export async function groupFileUsage(db: SupabaseClient, userId: string): Promise<number> {
+  const { data, error } = await db.rpc("file_usage_groups", { p_user: userId });
+  if (error) fail("group file usage", error);
   return Number(data ?? 0);
 }
 
@@ -216,6 +256,44 @@ export async function takeFileWait(
     .select("name")
     .maybeSingle();
   if (error) fail("take file wait", error);
+  return (data as { name: string | null } | null) ?? null;
+}
+
+/** "เก็บไฟล์" in a group: the next file this member sends there is kept. */
+export async function startGroupFileWait(
+  db: SupabaseClient,
+  groupId: string,
+  lineUserId: string,
+  name: string | null,
+  now: Date,
+): Promise<void> {
+  const { error } = await db.from("group_file_waits").upsert(
+    {
+      group_id: groupId,
+      line_user_id: lineUserId,
+      name,
+      expires_at: new Date(now.getTime() + WAIT_MS).toISOString(),
+    },
+    { onConflict: "group_id,line_user_id" },
+  );
+  if (error) fail("start group file wait", error);
+}
+
+export async function takeGroupFileWait(
+  db: SupabaseClient,
+  groupId: string,
+  lineUserId: string,
+  now: Date,
+): Promise<{ name: string | null } | null> {
+  const { data, error } = await db
+    .from("group_file_waits")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("line_user_id", lineUserId)
+    .gt("expires_at", now.toISOString())
+    .select("name")
+    .maybeSingle();
+  if (error) fail("take group file wait", error);
   return (data as { name: string | null } | null) ?? null;
 }
 
@@ -346,4 +424,9 @@ export async function purgeExpiredMedia(db: SupabaseClient, now: Date): Promise<
   if (media.error) fail("purge recent media", media.error);
   const waits = await db.from("file_waits").delete().lte("expires_at", now.toISOString());
   if (waits.error) fail("purge file waits", waits.error);
+  const groupWaits = await db
+    .from("group_file_waits")
+    .delete()
+    .lte("expires_at", now.toISOString());
+  if (groupWaits.error) fail("purge group file waits", groupWaits.error);
 }

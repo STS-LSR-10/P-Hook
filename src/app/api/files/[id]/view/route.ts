@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiError, guard } from "@/lib/api";
-import { verifyViewToken } from "@/lib/auth/file-token";
+import { readViewToken } from "@/lib/auth/file-token";
 import { getServerEnv } from "@/lib/env";
 import { isViewableImage, thumbKey } from "@/lib/file";
 import { getReadyFile } from "@/lib/file-repo";
@@ -21,14 +21,20 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) return apiError("ไม่พบรูปนี้", 404);
     const url = new URL(request.url);
-    const userId = await verifyViewToken(
+    const claims = await readViewToken(
       url.searchParams.get("t") ?? "",
       getServerEnv().SESSION_JWT_SECRET,
     );
-    if (!userId) return apiError("ลิงก์หมดอายุ", 401);
+    if (!claims) return apiError("ลิงก์หมดอายุ", 401);
 
+    // a person's token reaches their own pictures, a group's token only that group's
     const preview = url.searchParams.get("size") === "thumb";
-    const file = await getReadyFile(getAdminClient(), userId, id);
+    const file = await getReadyFile(
+      getAdminClient(),
+      claims.userId,
+      id,
+      claims.groupId ? { groupId: claims.groupId } : "personal",
+    );
     if (!file || !(preview ? file.hasThumb : isViewableImage(file.mimeType))) {
       return apiError("ไม่พบรูปนี้", 404);
     }

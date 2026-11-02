@@ -5,8 +5,17 @@ import { STRUCTURER_DEFAULT_MODELS, type StructurerEnv } from "./text-structurer
 export interface Owl {
   readonly name: string;
   /** The raw model reply (untrusted: clean it with `cleanOwlAnswer`). */
-  /** `data` is empty when the question does not use the person's records. */
-  answer(input: { question: string; data: string }): Promise<string>;
+  /**
+   * `data` is empty when the question does not use the person's records. `group`: asked in a LINE
+   * group, and `data` is that group's shared ledger, never anybody's own records.
+   */
+  answer(input: OwlInput): Promise<string>;
+}
+
+export interface OwlInput {
+  question: string;
+  data: string;
+  group?: boolean;
 }
 
 export const MAX_QUESTION_LENGTH = 300;
@@ -69,14 +78,15 @@ export function needsPersonalData(question: string): boolean {
   );
 }
 
-export function owlUserPrompt(input: { question: string; data: string }): string {
-  return [
-    input.data
+export function owlUserPrompt(input: OwlInput): string {
+  const data = input.group
+    ? input.data
+      ? `DATA (this LINE group's shared ledger, read-only; asked by a member, in front of the group. There is no personal data of anyone: never guess at it):\n${input.data}`
+      : "DATA: none (asked in a LINE group; there is no personal data of anyone here)."
+    : input.data
       ? `DATA (the person's own, read-only):\n${input.data}`
-      : "DATA: none (this question does not use the person's records).",
-    "",
-    `QUESTION: ${JSON.stringify(input.question)}`,
-  ].join("\n");
+      : "DATA: none (this question does not use the person's records).";
+  return [data, "", `QUESTION: ${JSON.stringify(input.question)}`].join("\n");
 }
 
 export interface OwlConfig {

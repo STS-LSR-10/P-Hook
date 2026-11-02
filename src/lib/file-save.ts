@@ -63,15 +63,20 @@ async function savePreview(
   }
 }
 
+/** Whose space a file takes: the person, or for a group the group's owner. */
+export type FileOwner = Pick<UserRow, "id" | "plan" | "plan_expires_at">;
+
 /**
  * Keep one file. The bytes come first because LINE gives no size for a picture, so the space is
  * reserved for the real size; every failure after that leaves no row and gives the day's use back.
+ * `group` keeps it in a group's files instead of the owner's own (the same space and day limit).
  */
 export async function saveFile(
   deps: SaveDeps,
-  user: UserRow,
+  user: FileOwner,
   media: Omit<RecentMedia, "id">,
   given: string | null,
+  group?: { groupId: string; savedBy: string },
 ): Promise<SaveResult> {
   const { db, store } = deps;
   if (!store) return { ok: false, reason: "unavailable" };
@@ -107,6 +112,7 @@ export async function saveFile(
       sizeBytes: bytes.byteLength,
       r2Key,
       capacity: fileCapacity(plan),
+      ...(group ? { groupId: group.groupId, savedBy: group.savedBy } : {}),
     });
     if (!reserved) {
       await giveBack();

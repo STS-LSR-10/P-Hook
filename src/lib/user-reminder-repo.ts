@@ -42,6 +42,7 @@ export async function listReminders(
     .from("user_reminders")
     .select(COLUMNS)
     .eq("user_id", userId)
+    .is("group_id", null)
     .eq("status", "active")
     .order("remind_at", { ascending: true })
     .limit(limit);
@@ -60,6 +61,7 @@ export async function listRemindersForPage(
       .from("user_reminders")
       .select(COLUMNS)
       .eq("user_id", userId)
+      .is("group_id", null)
       .eq("status", "done")
       .order("remind_at", { ascending: false })
       .limit(MAX_DONE_SHOWN),
@@ -78,12 +80,16 @@ export async function getReminder(
     .select(COLUMNS)
     .eq("id", id)
     .eq("user_id", userId)
+    .is("group_id", null)
     .maybeSingle();
   if (error) fail("get reminder", error);
   return data ? toDto(data as Row) : null;
 }
 
-/** Reminders waiting: all of them, or only the one-offs / the repeating ones (each has its own limit). */
+/**
+ * Reminders waiting: all of them, or only the one-offs / the repeating ones (each has its own limit).
+ * Those set in the person's groups count too: a group's reminders take its owner's limits.
+ */
 export async function countActiveReminders(
   db: SupabaseClient,
   userId: string,
@@ -109,6 +115,9 @@ export async function createReminder(
     remindAt: Date;
     repeat: Repeat | null;
     category?: ReminderCategory | null;
+    /** A reminder set in a group (pushed to the group): which one, and the LINE id of who set it. */
+    groupId?: string;
+    createdBy?: string;
   },
 ): Promise<ReminderDto> {
   const { data, error } = await db
@@ -119,6 +128,7 @@ export async function createReminder(
       remind_at: input.remindAt.toISOString(),
       repeat: input.repeat,
       category: input.category ?? null,
+      ...(input.groupId ? { group_id: input.groupId, created_by: input.createdBy ?? null } : {}),
     })
     .select(COLUMNS)
     .single();
@@ -137,6 +147,7 @@ export async function cancelReminder(
     .delete()
     .eq("id", id)
     .eq("user_id", userId)
+    .is("group_id", null)
     .select("id")
     .maybeSingle();
   if (error) fail("cancel reminder", error);
@@ -159,6 +170,7 @@ export async function rescheduleReminder(
     })
     .eq("id", id)
     .eq("user_id", userId)
+    .is("group_id", null)
     .eq("status", "active")
     .select(COLUMNS)
     .maybeSingle();
@@ -191,6 +203,7 @@ export async function updateReminder(
     })
     .eq("id", id)
     .eq("user_id", userId)
+    .is("group_id", null)
     .select(COLUMNS)
     .maybeSingle();
   if (error) fail("update reminder", error);
@@ -213,6 +226,7 @@ export async function skipReminderRound(
     .update({ remind_at: to.toISOString() })
     .eq("id", id)
     .eq("user_id", userId)
+    .is("group_id", null)
     .eq("status", "active")
     .eq("remind_at", from)
     .select("id")
@@ -233,6 +247,7 @@ async function moveStatus(
     .update({ status: to })
     .eq("id", id)
     .eq("user_id", userId)
+    .is("group_id", null)
     .eq("status", from)
     .select("id")
     .maybeSingle();
@@ -248,12 +263,55 @@ export const setReminderDone = (db: SupabaseClient, userId: string, id: string) 
 export const reopenReminder = (db: SupabaseClient, userId: string, id: string) =>
   moveStatus(db, userId, id, "done", "active");
 
+export type GroupReminder = ReminderDto & { createdBy: string | null };
+
+/** A group's reminders still waiting, soonest first. */
+export async function listGroupReminders(
+  db: SupabaseClient,
+  groupId: string,
+  limit = 200,
+): Promise<GroupReminder[]> {
+  const { data, error } = await db
+    .from("user_reminders")
+    .select(`${COLUMNS},created_by`)
+    .eq("group_id", groupId)
+    .eq("status", "active")
+    .order("remind_at", { ascending: true })
+    .limit(limit);
+  if (error) fail("list group reminders", error);
+  return ((data ?? []) as (Row & { created_by: string | null })[]).map((r) => ({
+    ...toDto(r),
+    createdBy: r.created_by,
+  }));
+}
+
+/** False when it is not this group's, or already gone. */
+export async function cancelGroupReminder(
+  db: SupabaseClient,
+  groupId: string,
+  id: string,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("user_reminders")
+    .delete()
+    .eq("id", id)
+    .eq("group_id", groupId)
+    .select("id")
+    .maybeSingle();
+  if (error) fail("cancel group reminder", error);
+  return data !== null;
+}
+
 export interface DueReminder {
   id: string;
   userId: string;
   lineUserId: string;
   body: string;
   repeat: Repeat | null;
+  /** The LINE group it goes to (null: to the person). */
+  lineGroupId: string | null;
+  /** False when the bot has left that group: taken, but not sent. */
+  groupOpen: boolean;
 }
 
 /** Take the reminders due at `now` (each one once; repeating ones are moved to their next time). */
@@ -262,7 +320,7 @@ export async function claimDueReminders(
   now: Date,
   limit = 200,
 ): Promise<DueReminder[]> {
-  const { data, error } = await db.rpc("claim_due_reminders", {
+  const { data, error } = await db.rpc("claim_due_reminders_with_groups", {
     p_now: now.toISOString(),
     p_limit: limit,
   });
@@ -274,6 +332,8 @@ export async function claimDueReminders(
       r_line: string;
       r_body: string;
       r_repeat: Repeat | null;
+      r_group?: string | null;
+      r_group_open?: boolean | null;
     }[]
   ).map((r) => ({
     id: r.r_id,
@@ -281,5 +341,7 @@ export async function claimDueReminders(
     lineUserId: r.r_line,
     body: r.r_body,
     repeat: r.r_repeat,
+    lineGroupId: r.r_group ?? null,
+    groupOpen: r.r_group_open === true,
   }));
 }

@@ -31,6 +31,17 @@ export async function getGroup(db: SupabaseClient, lineGroupId: string): Promise
   return data ? toGroup(data as GroupDb) : null;
 }
 
+/** A ledger by its own id (the one a page link carries). */
+export async function getGroupById(db: SupabaseClient, id: string): Promise<GroupRow | null> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .select("id,line_group_id,owner_user_id,is_active")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) fail("get group by id", error);
+  return data ? toGroup(data as GroupDb) : null;
+}
+
 /** How many open ledgers this person owns. */
 export async function countOwnedGroups(db: SupabaseClient, ownerUserId: string): Promise<number> {
   const { count, error } = await db

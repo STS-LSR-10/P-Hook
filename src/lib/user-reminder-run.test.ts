@@ -14,6 +14,8 @@ const r = (over: Partial<DueReminder> = {}): DueReminder => ({
   lineUserId: "U1",
   body: "จ่ายค่าไฟ",
   repeat: null,
+  lineGroupId: null,
+  groupOpen: false,
   ...over,
 });
 const sentText = (call: unknown[]) => ((call[1] as { text: string }[])[0] ?? { text: "" }).text;
@@ -44,6 +46,25 @@ describe("runUserReminders", () => {
     expect(sentText(push.mock.calls[0] ?? [])).toBe(
       "⏰ เตือน: จ่ายค่าไฟ\n(ทุกวัน · ยกเลิกได้ที่ https://liff.line.me/x/reminders)",
     );
+  });
+
+  it("a group's reminder goes to the group, with no link to the owner's page", async () => {
+    due = [r({ lineGroupId: "Cgroup", groupOpen: true, repeat: "weekly", body: "ประชุม" })];
+    const push = vi.fn(async (...args: unknown[]) => void args.length);
+    const out = await runUserReminders({} as SupabaseClient, push as never, NOW, "https://x/r");
+    expect(out.sent).toBe(1);
+    expect(push.mock.calls[0]?.[0]).toBe("Cgroup");
+    const sent = sentText(push.mock.calls[0] ?? []);
+    expect(sent).toContain("⏰ เตือนกลุ่ม: ประชุม");
+    expect(sent).not.toContain("https://");
+  });
+
+  it("a group the bot has left gets nothing", async () => {
+    due = [r({ lineGroupId: "Cgone", groupOpen: false })];
+    const push = vi.fn(async (...args: unknown[]) => void args.length);
+    const out = await runUserReminders({} as SupabaseClient, push as never, NOW);
+    expect(push).not.toHaveBeenCalled();
+    expect(out).toEqual({ claimed: 1, sent: 0, errors: 0 });
   });
 
   it("one failing push (a blocked account) does not stop the others, and is counted", async () => {

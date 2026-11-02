@@ -31,6 +31,7 @@ function fakeDb(result: { data?: unknown; count?: number } = {}) {
     upsert: note("upsert"),
     delete: note("delete"),
     eq: note("eq"),
+    is: note("is"),
     gt: note("gt"),
     lt: note("lt"),
     lte: note("lte"),
@@ -85,6 +86,45 @@ describe("stored files", () => {
     expect(file).toMatchObject({ id: "f1", sizeBytes: 10, r2Key: "u/u1/f1" });
     expect(has(calls, "eq", "user_id", "u1")).toBe(true);
     expect(has(calls, "eq", "status", "ready")).toBe(true);
+  });
+
+  it("keeps a group's files apart from the owner's own", async () => {
+    const own = fakeDb({ data: row });
+    await getReadyFile(own.db, "u1", "f1");
+    expect(has(own.calls, "is", "group_id", null)).toBe(true);
+
+    const group = fakeDb({ data: row });
+    await getReadyFile(group.db, "u1", "f1", { groupId: "g1" });
+    expect(has(group.calls, "eq", "group_id", "g1")).toBe(true);
+    expect(has(group.calls, "is", "group_id", null)).toBe(false);
+
+    const any = fakeDb({ data: row });
+    await getReadyFile(any.db, "u1", "f1", "any");
+    expect(any.calls.some((c) => c[1] === "group_id")).toBe(false);
+
+    const listOwn = fakeDb({ data: [row] });
+    await listFiles(listOwn.db, "u1");
+    expect(has(listOwn.calls, "is", "group_id", null)).toBe(true);
+    const listGroup = fakeDb({ data: [{ ...row, saved_by: "Uanna" }] });
+    const { items } = await listFiles(listGroup.db, "u1", { groupId: "g1" });
+    expect(has(listGroup.calls, "eq", "group_id", "g1")).toBe(true);
+    expect(items[0]?.savedBy).toBe("Uanna");
+  });
+
+  it("reserves a group's file with who kept it", async () => {
+    const { db, calls } = fakeDb({ data: true });
+    await reserveFile(db, {
+      id: "f1",
+      userId: "u1",
+      name: "a",
+      mimeType: "t",
+      sizeBytes: 5,
+      r2Key: "k",
+      capacity: 100,
+      groupId: "g1",
+      savedBy: "Uanna",
+    });
+    expect(calls[0]?.[2]).toMatchObject({ p_user: "u1", p_group: "g1", p_saved_by: "Uanna" });
   });
 
   it("lists finished files, with % in a search matching itself", async () => {

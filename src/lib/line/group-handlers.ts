@@ -58,6 +58,17 @@ import {
   runDailyReminder,
 } from "./split-bill-handlers";
 import { checkGroupSlip } from "./split-bill-slip";
+import {
+  addGroupReminder,
+  askOwlInGroup,
+  cancelGroupReminderAt,
+  cancelGroupReminderById,
+  keepIfWaiting,
+  listGroupFiles,
+  listGroupRemindersText,
+  startGroupKeep,
+  type GroupExtraContext,
+} from "./group-extras";
 import type { HandlerDeps, LineEvent } from "./handlers";
 import {
   GROUP_ALREADY_OPEN_TEXT,
@@ -104,6 +115,33 @@ function appBaseUrl(): string | undefined {
   return process.env.APP_BASE_URL?.replace(/\/$/, "") || undefined;
 }
 
+/** A page of the web app, through the LIFF link inside LINE (undefined when no address is known). */
+function pageUrl(path: string): string | undefined {
+  const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+  if (liffId) return `https://liff.line.me/${liffId}${path}`;
+  const base = appBaseUrl();
+  return base ? `${base}${path}` : undefined;
+}
+
+/** What the files, reminders and พี่ฮูก of a group need. */
+async function extraContext(
+  group: GroupRow,
+  userId: string | undefined,
+  deps: HandlerDeps,
+): Promise<GroupExtraContext> {
+  const { owner, writable } = await ownerState(deps.db, group, deps.now());
+  return {
+    db: deps.db,
+    deps,
+    group,
+    owner,
+    writable,
+    userId,
+    isOwner: owner !== null && userId !== undefined && owner.lineUserId === userId,
+    pageUrl,
+  };
+}
+
 export async function handleGroupEvent(event: LineEvent, deps: HandlerDeps): Promise<void> {
   const groupId = event.source?.groupId;
   if (!groupId) return;
@@ -128,9 +166,25 @@ export async function handleGroupEvent(event: LineEvent, deps: HandlerDeps): Pro
       await handleGroupPostback(event, groupId, deps, reply);
       return;
     case "message": {
-      // a picture: a slip from someone who owes on a bill (anyone else's picture gets no answer)
-      if (event.message?.type === "image" && event.message.id) {
-        await handleGroupImage(event, groupId, event.message.id, deps, reply);
+      // a file, picture or video right after "เก็บไฟล์" is kept for the group; any other picture
+      // may be a slip from someone who owes on a bill (anyone else's gets no answer)
+      const message = event.message;
+      if (
+        message?.id &&
+        (message.type === "image" || message.type === "video" || message.type === "file")
+      ) {
+        const kept = await keepGroupMedia(event, groupId, deps, {
+          messageId: message.id,
+          kind: message.type,
+          fileName: message.type === "file" ? (message.fileName ?? null) : null,
+          fileSize: message.type === "file" ? (message.fileSize ?? null) : null,
+        });
+        if (kept) {
+          await reply(kept);
+          return;
+        }
+        if (message.type === "image")
+          await handleGroupImage(event, groupId, message.id, deps, reply);
         return;
       }
       if (event.message?.type !== "text" || event.message.text === undefined) return;
@@ -176,6 +230,25 @@ async function remindIfDue(groupId: string, deps: HandlerDeps, reply: Reply): Pr
   } catch (error) {
     log.error("bill_reminder_failed", error);
   }
+}
+
+/** Keep the file when its sender asked to; null otherwise (and for a video stored outside LINE). */
+async function keepGroupMedia(
+  event: LineEvent,
+  groupId: string,
+  deps: HandlerDeps,
+  media: {
+    messageId: string;
+    kind: "image" | "video" | "file";
+    fileName: string | null;
+    fileSize: number | null;
+  },
+): Promise<LineMessage[] | null> {
+  if (!event.source?.userId || !deps.files) return null;
+  if (media.kind === "video" && event.message?.contentProvider?.type === "external") return null;
+  const group = await getGroup(deps.db, groupId);
+  if (!group || !group.isActive) return null;
+  return keepIfWaiting(await extraContext(group, event.source.userId, deps), media);
 }
 
 /** A picture in a group: only looked at when the sender still owes on a bill of this ledger. */
@@ -338,6 +411,31 @@ async function runGroupCommand(
     case "trip-close":
     case "trip-old":
       return runTripCommand(command, userId, group, writable, isOwner, deps, reply);
+
+    case "file-keep":
+    case "file-list":
+    case "remind-add":
+    case "remind-list":
+    case "remind-cancel":
+    case "owl": {
+      const ctx: GroupExtraContext = {
+        db,
+        deps,
+        group,
+        owner,
+        writable,
+        userId,
+        isOwner,
+        pageUrl,
+      };
+      if (command.kind === "file-keep") return reply(await startGroupKeep(ctx, command.name));
+      if (command.kind === "file-list") return reply(await listGroupFiles(ctx, command.term));
+      if (command.kind === "remind-add") return reply(await addGroupReminder(ctx, command.text));
+      if (command.kind === "remind-list") return reply(await listGroupRemindersText(ctx));
+      if (command.kind === "remind-cancel")
+        return reply(await cancelGroupReminderAt(ctx, command.index));
+      return reply(await askOwlInGroup(ctx, command.question));
+    }
 
     default:
       return;
@@ -642,10 +740,24 @@ async function handleGroupPostback(
 ): Promise<void> {
   const params = new URLSearchParams(event.postback?.data ?? "");
   const action = params.get("a");
-  if (action !== "gdx" && action !== "gtj" && !(action && BILL_POSTBACKS.has(action))) return;
+  if (
+    action !== "gdx" &&
+    action !== "gtj" &&
+    action !== "grmx" &&
+    !(action && BILL_POSTBACKS.has(action))
+  )
+    return;
   const userId = event.source?.userId;
   if (!userId) return reply([text(GROUP_NO_USER_TEXT)]);
   const { db } = deps;
+
+  // "ยกเลิกเตือนนี้" under a group's reminder
+  if (action === "grmx") {
+    const group = await getGroup(db, groupId);
+    if (!group || !group.isActive) return reply([text(GROUP_NOT_OPEN_TEXT)]);
+    const ctx = await extraContext(group, userId, deps);
+    return reply(await cancelGroupReminderById(ctx, params.get("id") ?? ""));
+  }
 
   // the buttons on a split bill: join, close the list, cancel, my QR, got the money from …
   if (action && BILL_POSTBACKS.has(action)) {
