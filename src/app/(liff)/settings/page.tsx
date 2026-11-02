@@ -35,6 +35,7 @@ import { RecurringCard } from "@/components/liff/settings/recurring-card";
 import { cardClass, type Me, type Settings } from "@/components/liff/settings/types";
 import { Sheet } from "@/components/liff/sheet";
 import { ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
+import { MAX_START_DAY } from "@/lib/budget-cycle";
 import { cn } from "@/lib/utils";
 
 const CONFIRM_OPTIONS: { value: Settings["confirm_style"]; label: string; hint: string }[] = [
@@ -48,7 +49,7 @@ const CYCLE_OPTIONS: { value: Settings["budget_cycle"]; label: string }[] = [
   { value: "weekly", label: "รายสัปดาห์" },
 ];
 
-const START_DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
+const START_DAYS = Array.from({ length: MAX_START_DAY }, (_, i) => i + 1);
 
 export default function SettingsPage() {
   const { api } = useLiff();

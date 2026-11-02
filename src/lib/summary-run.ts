@@ -9,6 +9,7 @@ import {
   isWeeklySummaryDue,
   lastMonthRange,
   lastWeekRange,
+  monthlyStartDay,
   rangeLabel,
   previousRange,
   summarize,
@@ -108,7 +109,11 @@ export async function runSummaries(
         kind === "weekly"
           ? lastWeekRange(now)
           : lastMonthRange(now, row.budget_cycle, row.cycle_start_day);
-      const previous = previousRange(kind, range);
+      const previous = previousRange(
+        kind,
+        range,
+        monthlyStartDay(row.budget_cycle, row.cycle_start_day),
+      );
 
       // Mark first: a failing push (blocked account) must not be retried every hour.
       const mark = await db

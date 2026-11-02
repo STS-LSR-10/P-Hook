@@ -56,9 +56,20 @@ describe("monthly schedule", () => {
     expect(isMonthlySummaryDue(new Date("2026-11-01T03:00:00Z"), "weekly", 25, null)).toBe(true);
   });
 
-  it("clamps the start day to 1-28", () => {
-    expect(monthlyStartDay("monthly", 31)).toBe(28);
+  it("keeps a start day up to 31, and clamps outside 1-31", () => {
+    expect(monthlyStartDay("monthly", 31)).toBe(31);
+    expect(monthlyStartDay("monthly", 40)).toBe(31);
     expect(monthlyStartDay("monthly", 0)).toBe(1);
+  });
+
+  it("a start day past the end of the month sends on the last day", () => {
+    const apr30 = new Date("2027-04-30T03:00:00Z");
+    expect(isMonthlySummaryDue(apr30, "monthly", 31, null)).toBe(true);
+    expect(isMonthlySummaryDue(apr30, "monthly", 30, null)).toBe(true);
+    expect(isMonthlySummaryDue(new Date("2027-04-29T03:00:00Z"), "monthly", 31, null)).toBe(false);
+    expect(isMonthlySummaryDue(new Date("2027-02-28T03:00:00Z"), "monthly", 29, null)).toBe(true);
+    expect(isMonthlySummaryDue(new Date("2028-02-28T03:00:00Z"), "monthly", 29, null)).toBe(false);
+    expect(isMonthlySummaryDue(new Date("2027-05-31T03:00:00Z"), "monthly", 31, null)).toBe(true);
   });
 });
 
@@ -76,6 +87,21 @@ describe("ranges", () => {
     const calendar = lastMonthRange(new Date("2026-11-01T03:00:00Z"), "monthly", 1);
     expect(calendar.from.toISOString()).toBe("2026-09-30T17:00:00.000Z"); // 1 Oct
     expect(calendar.to.toISOString()).toBe("2026-10-31T17:00:00.000Z"); // 1 Nov
+  });
+
+  it("last month with day 31 runs between the last days of short months", () => {
+    const r = lastMonthRange(new Date("2027-04-30T03:00:00Z"), "monthly", 31);
+    expect(r.from.toISOString()).toBe("2027-03-30T17:00:00.000Z"); // 31 Mar
+    expect(r.to.toISOString()).toBe("2027-04-29T17:00:00.000Z"); // 30 Apr
+  });
+
+  it("the month before a clamped cycle starts on the chosen day again", () => {
+    // the cycle from 28 Feb (31 chosen) follows the one from 31 Jan, not 28 Jan
+    const feb = lastMonthRange(new Date("2027-03-31T03:00:00Z"), "monthly", 31);
+    expect(feb.from.toISOString()).toBe("2027-02-27T17:00:00.000Z"); // 28 Feb
+    expect(previousRange("monthly", feb, 31).from.toISOString()).toBe(
+      "2027-01-30T17:00:00.000Z", // 31 Jan
+    );
   });
 
   it("the previous period is a week / a month earlier", () => {

@@ -77,6 +77,7 @@ import { daySpecFromIso, resolveRange, type DaySpec } from "@/lib/summary-range"
 import {
   buildSummaryCard,
   expenseChangePercent,
+  monthlyStartDay,
   previousRange,
   rangeLabel,
   summarize,
@@ -1792,6 +1793,10 @@ async function safeDailyAlerts(
 }
 
 /** The "จ่ายด้วย" pills: the chosen wallet first, then the others; with more than four, three and "อื่น ๆ". */
+/** The day the person's month starts, for comparing with the one before (1 for a weekly cycle). */
+const startDayOf = (settings: SettingsRow) =>
+  monthlyStartDay(settings.budget_cycle, settings.cycle_start_day);
+
 function walletPills(wallets: Wallet[], chosen: Wallet) {
   // one row of three: three places, or two and "อื่น ๆ"
   const shown = wallets.length <= 3 ? 3 : 2;
@@ -1993,7 +1998,7 @@ async function runCommand(
         settings.budget_cycle === "monthly"
           ? cycleRange(now, "monthly", settings.cycle_start_day)
           : calendarMonthRange(now);
-      const previous = previousRange("monthly", range);
+      const previous = previousRange("monthly", range, startDayOf(settings));
       const data = summarize(
         await loadSummaryTransactions(db, user.id, previous.from, range.to),
         range,
@@ -2078,7 +2083,7 @@ async function runCommand(
         settings.budget_cycle === "monthly"
           ? cycleRange(now, "monthly", settings.cycle_start_day)
           : calendarMonthRange(now);
-      const span = sameSpanRanges(cycle, now);
+      const span = sameSpanRanges(cycle, now, startDayOf(settings));
       const result = await loadCategoryCompare(db, user.id, span.current, span.previous);
       if (result.currentSatang === 0 && result.previousSatang === 0) {
         return [text(COMPARE_EMPTY_TEXT)];
@@ -2228,7 +2233,7 @@ async function runCommand(
         settings.budget_cycle === "monthly"
           ? cycleRange(now, "monthly", settings.cycle_start_day)
           : calendarMonthRange(now);
-      const span = sameSpanRanges(cycle, now);
+      const span = sameSpanRanges(cycle, now, startDayOf(settings));
       const facts = await loadInsightFacts(db, user.id, span.current, span.previous, {
         current: rangeLabel(span.current),
         previous: "เดือนก่อน",

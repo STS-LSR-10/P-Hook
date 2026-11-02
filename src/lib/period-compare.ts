@@ -14,15 +14,16 @@ export interface SpanPair {
 /**
  * This budget cycle so far against the same number of days at the start of the cycle before, so
  * half a month is never held against a whole one. On the last day of a cycle the two spans are the
- * whole cycles (the earlier one is cut to its own length if it is shorter).
+ * whole cycles (the earlier one is cut to its own length if it is shorter). `startDay`: the chosen
+ * start day of a monthly cycle (see `previousRange`).
  */
-export function sameSpanRanges(cycle: DateRange, now: Date): SpanPair {
+export function sameSpanRanges(cycle: DateRange, now: Date, startDay?: number): SpanPair {
   const today = bangkokParts(now);
   const tomorrow = fromBangkok(today.year, today.month, today.day + 1);
   const end = tomorrow.getTime() < cycle.to.getTime() ? tomorrow : cycle.to;
   const days = Math.max(1, Math.round((end.getTime() - cycle.from.getTime()) / DAY_MS));
 
-  const before = previousRange("monthly", cycle);
+  const before = previousRange("monthly", cycle, startDay);
   const spanEnd = Math.min(before.from.getTime() + days * DAY_MS, before.to.getTime());
   return {
     current: { from: cycle.from, to: end },

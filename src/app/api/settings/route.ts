@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
+import { MAX_START_DAY } from "@/lib/budget-cycle";
 import { requireFeature } from "@/lib/plan-server";
 import { DEFAULT_PERSONA, DEFAULT_THEME, PERSONA_IDS, THEME_IDS } from "@/lib/personalize";
 import { normalizeTime } from "@/lib/reminder";
@@ -22,7 +23,7 @@ const patchSchema = z
   .object({
     confirm_style: z.enum(["full", "short", "off"]),
     budget_cycle: z.enum(["monthly", "weekly"]),
-    cycle_start_day: z.number().int().min(1).max(28),
+    cycle_start_day: z.number().int().min(1).max(MAX_START_DAY),
     daily_reminder_enabled: z.boolean(),
     /** "HH:MM" Bangkok time */
     daily_reminder_time: z.string(),

@@ -24,6 +24,7 @@ import { sliceColor } from "@/components/liff/slice-color";
 import { EmptyState, ErrorState, PageHeader, Skeleton } from "@/components/liff/states";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { budgetState, percentUsed } from "@/lib/budget";
+import { MAX_START_DAY } from "@/lib/budget-cycle";
 import { EMOJI_CHOICES, isSingleEmoji } from "@/lib/category-emoji";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatBaht } from "@/lib/money";
@@ -935,7 +936,7 @@ function BudgetHero({
             <strong className="font-semibold text-[var(--hero-ink)]">
               {data.cycle === "weekly"
                 ? "ทุกวันจันทร์"
-                : `ทุกวันที่ ${data.cycleStartDay ?? 1} ของเดือน`}
+                : `ทุกวันที่ ${data.cycleStartDay ?? 1} ของเดือน${(data.cycleStartDay ?? 1) > 28 ? " (หรือวันสุดท้าย)" : ""}`}
             </strong>
           </span>
           <button
@@ -1146,7 +1147,7 @@ const CYCLE_CHOICES = [
   { value: "weekly", label: "รายสัปดาห์" },
   { value: "monthly", label: "รายเดือน" },
 ] as const;
-const START_DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
+const START_DAYS = Array.from({ length: MAX_START_DAY }, (_, i) => i + 1);
 
 /** The budget cycle, set from this page: weekly or monthly, and the day a monthly cycle starts. */
 function CycleSheet({
@@ -1210,7 +1211,10 @@ function CycleSheet({
             <label htmlFor="cycle-start-day" className="block text-base font-bold">
               วันที่เริ่มต้นงบประมาณ
             </label>
-            <p className="text-xs text-muted">เลือกได้ถึงวันที่ 28 เพื่อให้มีทุกเดือน</p>
+            <p className="text-xs text-muted">
+              ถ้าเดือนนั้นไม่มีวันที่เลือก จะเริ่มวันสุดท้ายของเดือนแทน เช่น เลือก 31
+              เดือนเมษายนจะเริ่มวันที่ 30
+            </p>
             <div className="relative">
               <select
                 id="cycle-start-day"

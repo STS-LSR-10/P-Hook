@@ -1,4 +1,4 @@
-import type { DateRange } from "@/lib/budget-cycle";
+import { clampStartDay, monthStart, type DateRange } from "@/lib/budget-cycle";
 import { formatBaht } from "@/lib/money";
 import { bangkokParts, formatThaiDayMonth, fromBangkok } from "@/lib/thai-date";
 import type { BudgetCycle, LineMessage } from "@/lib/types";
@@ -29,7 +29,7 @@ export function isWeeklySummaryDue(now: Date, lastSentOn: string | null): boolea
  * (day 1 for a weekly budget cycle, which has no start day) at 09:00 or later, once.
  */
 export function monthlyStartDay(cycle: BudgetCycle, cycleStartDay: number): number {
-  return cycle === "weekly" ? 1 : Math.min(Math.max(Math.trunc(cycleStartDay), 1), 28);
+  return cycle === "weekly" ? 1 : clampStartDay(cycleStartDay);
 }
 
 export function isMonthlySummaryDue(
@@ -39,11 +39,9 @@ export function isMonthlySummaryDue(
   lastSentOn: string | null,
 ): boolean {
   const p = bangkokParts(now);
-  return (
-    p.day === monthlyStartDay(cycle, cycleStartDay) &&
-    p.hour >= SUMMARY_HOUR &&
-    lastSentOn !== bangkokDay(now)
-  );
+  // a day past the end of the month falls on its last day
+  const startsOn = bangkokParts(monthStart(p.year, p.month, monthlyStartDay(cycle, cycleStartDay)));
+  return p.day === startsOn.day && p.hour >= SUMMARY_HOUR && lastSentOn !== bangkokDay(now);
 }
 
 /** The Monday-to-Sunday week that ended before the Monday of `now`. */
@@ -60,19 +58,23 @@ export function lastWeekRange(now: Date): DateRange {
 export function lastMonthRange(now: Date, cycle: BudgetCycle, cycleStartDay: number): DateRange {
   const day = monthlyStartDay(cycle, cycleStartDay);
   const p = bangkokParts(now);
-  const thisStart = p.day >= day ? p.month : p.month - 1;
+  const thisStart = now >= monthStart(p.year, p.month, day) ? p.month : p.month - 1;
   return {
-    from: fromBangkok(p.year, thisStart - 1, day),
-    to: fromBangkok(p.year, thisStart, day),
+    from: monthStart(p.year, thisStart - 1, day),
+    to: monthStart(p.year, thisStart, day),
   };
 }
 
-/** The period right before `range`, of the same kind (a week before a week, a month before a month). */
-export function previousRange(kind: SummaryKind, range: DateRange): DateRange {
+/**
+ * The period right before `range`, of the same kind (a week before a week, a month before a month).
+ * `startDay`: the cycle's chosen start day, so a cycle cut short by its month (28 Feb for 31) is
+ * preceded by one from the chosen day (31 Jan); without it the range's own start day is used.
+ */
+export function previousRange(kind: SummaryKind, range: DateRange, startDay?: number): DateRange {
   if (kind === "weekly")
     return { from: new Date(range.from.getTime() - 7 * DAY_MS), to: range.from };
   const p = bangkokParts(range.from);
-  return { from: fromBangkok(p.year, p.month - 1, p.day), to: range.from };
+  return { from: monthStart(p.year, p.month - 1, startDay ?? p.day), to: range.from };
 }
 
 export interface SummaryTx {

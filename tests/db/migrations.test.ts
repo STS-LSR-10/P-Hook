@@ -65,8 +65,13 @@ describe("constraints", () => {
         [u],
       ),
     ).rejects.toThrow();
+    // a monthly cycle may start on 1-31 (a short month uses its last day)
+    await db.query("update user_settings set cycle_start_day = 31 where user_id = $1", [u]);
     await expect(
-      db.query("update user_settings set cycle_start_day = 31 where user_id = $1", [u]),
+      db.query("update user_settings set cycle_start_day = 32 where user_id = $1", [u]),
+    ).rejects.toThrow();
+    await expect(
+      db.query("update user_settings set cycle_start_day = 0 where user_id = $1", [u]),
     ).rejects.toThrow();
     await expect(
       db.query("update user_settings set budget_mode = 'weird' where user_id = $1", [u]),

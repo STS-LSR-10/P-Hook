@@ -552,6 +552,30 @@ test.describe("budget cycle sheet (360px)", () => {
     await expect(page.getByText("ทุกวันที่ 25 ของเดือน")).toBeVisible();
   });
 
+  test("a day up to 31 can be chosen; a short month uses its last day", async ({ page }) => {
+    const bodies: unknown[] = [];
+    let cycle: Record<string, unknown> = { cycle: "monthly", cycleStartDay: 1 };
+    await mockApi(page, {
+      "GET /api/budgets": () => ({ ...BUDGETS, ...cycle }),
+      "GET /api/categories": CATEGORIES,
+      "GET /api/me": ME_FREE,
+      "PATCH /api/settings": async (route: Route) => {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        bodies.push(body);
+        cycle = { cycle: body.budget_cycle, cycleStartDay: body.cycle_start_day };
+        return { ...SETTINGS, ...body };
+      },
+    });
+    await page.goto("/budgets");
+    await page.getByRole("button", { name: "ตั้งค่ารอบงบ" }).click();
+    const sheet = page.getByRole("dialog", { name: "รอบงบ" });
+    await expect(sheet.getByText("เลือก 31 เดือนเมษายนจะเริ่มวันที่ 30")).toBeVisible();
+    await sheet.getByLabel("วันที่เริ่มต้นงบประมาณ").selectOption("31");
+    await sheet.getByRole("button", { name: "บันทึก" }).click();
+    await expect.poll(() => bodies).toEqual([{ budget_cycle: "monthly", cycle_start_day: 31 }]);
+    await expect(page.getByText("ทุกวันที่ 31 ของเดือน (หรือวันสุดท้าย)")).toBeVisible();
+  });
+
   test("weekly hides the day and says the week starts on Monday", async ({ page }) => {
     const bodies: unknown[] = [];
     await mockApi(page, {

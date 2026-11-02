@@ -40,6 +40,13 @@ describe("sameSpanRanges", () => {
     expect(iso(s.previous.to)).toBe(iso(at(2026, 9, 28)));
   });
 
+  it("a cycle cut short by its month compares with the one from the chosen day", () => {
+    // 31 chosen: this cycle starts 28 Feb 2027, the one before on 31 Jan
+    const c = { from: at(2027, 2, 28), to: at(2027, 3, 31) };
+    const s = sameSpanRanges(c, new Date("2027-03-01T08:00:00Z"), 31); // 1 Mar
+    expect(iso(s.previous.from)).toBe(iso(at(2027, 1, 31)));
+  });
+
   it("the two spans are never longer than each other's month and never overlap", () => {
     const s = sameSpanRanges(cycle, new Date("2026-10-20T08:00:00Z"));
     expect(s.previous.to.getTime()).toBeLessThanOrEqual(s.current.from.getTime());
