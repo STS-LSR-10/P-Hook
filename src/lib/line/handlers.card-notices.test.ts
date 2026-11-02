@@ -208,27 +208,26 @@ describe("choosing how it was paid", () => {
     expect(cardOf(reply)).not.toContain("a=wl");
   });
 
-  it("up to four wallets are all shown; with more, three and อื่น ๆ for the rest", async () => {
+  it("up to three wallets are all shown; with more, two and อื่น ๆ for the rest", async () => {
     budgetSpent = 400_000;
-    const four = [
+    const three = [
       wallet({}),
       wallet({ id: "w2", name: "KTC", kind: "card", isDefault: false }),
       wallet({ id: "w3", name: "ออมสิน", kind: "bank", isDefault: false }),
-      wallet({ id: "w4", name: "ทรูมันนี่", kind: "ewallet", isDefault: false }),
     ];
-    wallets = four;
+    wallets = three;
     const a = setup();
     await handleEvent(say("กาแฟ 50"), a.deps);
-    expect(cardOf(a.reply)).toContain("&w=w4");
+    expect(cardOf(a.reply)).toContain("&w=w3");
     expect(cardOf(a.reply)).not.toContain("a=wl");
 
-    wallets = [...four, wallet({ id: "w5", name: "ShopeePay", kind: "ewallet", isDefault: false })];
+    wallets = [...three, wallet({ id: "w4", name: "ทรูมันนี่", kind: "ewallet", isDefault: false })];
     const b = setup();
     await handleEvent(say("กาแฟ 50"), b.deps);
     expect(cardOf(b.reply)).toContain("a=wl");
     expect(cardOf(b.reply)).toContain("อื่น ๆ");
+    expect(cardOf(b.reply)).not.toContain("&w=w3");
     expect(cardOf(b.reply)).not.toContain("&w=w4");
-    expect(cardOf(b.reply)).not.toContain("&w=w5");
   });
 
   it("Pro with only the cash wallet sees it chosen and a way to add a channel", async () => {

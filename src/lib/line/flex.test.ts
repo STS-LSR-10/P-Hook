@@ -530,11 +530,14 @@ describe("the look of the saved-entry card", () => {
     } as Parameters<typeof buildConfirmMessage>[0]);
   const json = (over: Record<string, unknown> = {}) => JSON.stringify(full(over));
 
-  it("has a green header with the tick after the title, on a cream body", () => {
-    const out = json();
-    expect(out).toContain('"text":"จดสำเร็จ ✅"');
-    expect(out).toContain('"size":"xxl"');
-    expect(out).toContain("#FAF8F2"); // the cream body
+  it("has a compact green header with the tick after the title, on a white body", () => {
+    const card = full() as unknown as { contents: { header: unknown; body: { backgroundColor: string } } };
+    const header = JSON.stringify(card.contents.header);
+    expect(header).toContain('"text":"จดสำเร็จ ✅"');
+    expect(header).toContain('"size":"xl"');
+    expect(header).not.toContain('"size":"xxl"');
+    expect(card.contents.body.backgroundColor).toBe("#FFFFFF");
+    expect(json()).not.toContain("#FAF8F2");
   });
 
   it("edit and delete are icon buttons beside the amount", () => {
@@ -544,30 +547,69 @@ describe("the look of the saved-entry card", () => {
     expect(out).toContain('"data":"a=del&id=');
   });
 
-  it("the budget sits in its own white card with a thick bar", () => {
+  it("the budget sits in its own light grey box with a thick bar", () => {
     const out = json({
       budget: { scopeName: "อาหาร", spentSatang: 357_100, limitSatang: 300_000, level: "over" },
       cycleLabel: "รายเดือน (วันที่ 1)",
     });
-    expect(out).toContain('"cornerRadius":"18px"');
-    expect(out).toContain('"size":"3xl"'); // the amount spent
-    expect(out).toContain('"height":"12px"'); // the bar
+    expect(out).toContain('"backgroundColor":"#F6F8F9"');
+    expect(out).toContain('"size":"xxl"'); // the amount spent
+    expect(out).toContain('"height":"10px"'); // the bar
     expect(out).toContain("ใช้ไป 119%");
     expect(out).toContain("เกินงบ ฿571");
   });
 
-  it("the payment channels are two to a row, the chosen one ticked", () => {
-    const wallets = [
-      { id: "w1", label: "💵 เงินสด", selected: true },
-      { id: "w2", label: "💳 KTC", selected: false },
-      { id: "w3", label: "📱 TrueMoney", selected: false },
-    ];
-    const card = full({ walletChoices: wallets, addWalletUrl: "https://liff.line.me/1/wallets" });
+  /** The texts of the pills in each "จ่ายด้วย" row. */
+  const payRows = (over: Record<string, unknown>) => {
+    const rows: string[][] = [];
+    const walk = (node: unknown) => {
+      if (Array.isArray(node)) return node.forEach(walk);
+      if (!node || typeof node !== "object") return;
+      const box = node as { layout?: string; contents?: unknown[] };
+      const pills = (Array.isArray(box.contents) ? box.contents : []).filter(
+        (c) => (c as { height?: string }).height === "38px",
+      );
+      if (box.layout === "horizontal" && pills.length > 0) {
+        rows.push(pills.map((c) => JSON.stringify(c).match(/"text":"([^"]*)"/)?.[1] ?? ""));
+        return;
+      }
+      Object.values(box).forEach(walk);
+    };
+    walk(full(over));
+    return rows;
+  };
+  const wallet = (n: number) => ({ id: `w${n}`, label: `กระเป๋า${n}`, selected: n === 1 });
+
+  it("the payment channels sit on one row of three, the chosen one ticked", () => {
+    const card = full({
+      walletChoices: [wallet(1), wallet(2), wallet(3)],
+      addWalletUrl: "https://liff.line.me/1/wallets",
+    });
     const out = JSON.stringify(card);
-    expect(out).toContain("✓ 💵 เงินสด");
-    expect(out).toContain("＋ เพิ่มช่องทาง"); // the fourth pill, with the third on a row of its own
+    expect(payRows({ walletChoices: [wallet(1), wallet(2), wallet(3)] })).toEqual([
+      ["✓ กระเป๋า1", "กระเป๋า2", "กระเป๋า3"],
+    ]);
+    expect(out).not.toContain("＋ เพิ่มช่องทาง"); // no room left on the row
+    expect(out).not.toContain("เลื่อน"); // the row does not scroll, so nothing says it does
     expect(out).toContain('"borderWidth":"2px"'); // the chosen one
     expect(out.match(/"text":"จ่ายด้วย"/g)).toHaveLength(1);
+  });
+
+  it("more places than fit end the row with อื่น ๆ", () => {
+    expect(payRows({ walletChoices: [wallet(1), wallet(2)], moreWallets: true })).toEqual([
+      ["✓ กระเป๋า1", "กระเป๋า2", "อื่น ๆ"],
+    ]);
+  });
+
+  it("a short row offers to add a place, and keeps its pills a third wide", () => {
+    const rows = payRows({
+      walletChoices: [wallet(1)],
+      addWalletUrl: "https://liff.line.me/1/wallets",
+    });
+    expect(rows).toEqual([["✓ กระเป๋า1", "＋ เพิ่มช่องทาง"]]);
+    expect(JSON.stringify(full({ walletChoices: [wallet(1)] }))).toContain(
+      '{"type":"box","layout":"vertical","flex":1,"contents":[]}',
+    );
   });
 
   it("the แนบรูป pill is wide and centred along the foot", () => {

@@ -1793,7 +1793,8 @@ async function safeDailyAlerts(
 
 /** The "จ่ายด้วย" pills: the chosen wallet first, then the others; with more than four, three and "อื่น ๆ". */
 function walletPills(wallets: Wallet[], chosen: Wallet) {
-  const shown = wallets.length <= 4 ? 4 : 3;
+  // one row of three: three places, or two and "อื่น ๆ"
+  const shown = wallets.length <= 3 ? 3 : 2;
   const ordered = [chosen, ...wallets.filter((w) => w.id !== chosen.id)];
   return {
     choices: ordered.slice(0, shown).map((w) => ({
@@ -1875,7 +1876,7 @@ async function confirmCard(
     }
   }
   if (extras.out) extras.out.noticed = notices.length > 0;
-  // "จ่ายด้วย": the chosen wallet first, then the others; more than three become "อื่น ๆ"
+  // "จ่ายด้วย": the chosen wallet first, then the others; past three the rest go under "อื่น ๆ"
   let walletChoices: { id: string; label: string; selected: boolean }[] | undefined;
   let moreWallets = false;
   const chosenWallet =
