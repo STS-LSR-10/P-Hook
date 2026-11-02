@@ -2,14 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { bangkokParts } from "@/lib/thai-date";
 
 export type UsageKind =
-  | "voice"
-  | "smart_parse"
-  | "teaser_voice"
-  | "group_slip"
-  | "pdf"
-  | "owl"
-  | "router"
-  | "file_save";
+  "voice" | "smart_parse" | "teaser_voice" | "group_slip" | "pdf" | "owl" | "router" | "file_save";
 
 /** The "lifetime" bucket: a counter that never rolls over. */
 export const LIFETIME = "2000-01-01";
@@ -56,4 +49,22 @@ export async function refundUsage(
 ): Promise<void> {
   const { error } = await db.rpc("refund_usage", { p_user: userId, p_kind: kind, p_month: month });
   if (error) throw new Error(`refund usage: ${error.message}`);
+}
+
+/** What each counter has used (0 for one never taken), in the order asked. */
+export async function readUsage(
+  db: SupabaseClient,
+  userId: string,
+  keys: { kind: UsageKind; month: string }[],
+): Promise<number[]> {
+  if (keys.length === 0) return [];
+  const { data, error } = await db
+    .from("usage_counters")
+    .select("kind,month,used")
+    .eq("user_id", userId)
+    .in("kind", [...new Set(keys.map((k) => k.kind))])
+    .in("month", [...new Set(keys.map((k) => k.month))]);
+  if (error) throw new Error(`read usage: ${error.message}`);
+  const rows = (data ?? []) as { kind: string; month: string; used: number }[];
+  return keys.map((k) => rows.find((r) => r.kind === k.kind && r.month === k.month)?.used ?? 0);
 }

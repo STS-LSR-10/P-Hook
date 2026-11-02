@@ -3,6 +3,7 @@ import {
   expectNoHorizontalScroll,
   expectNoSeriousA11yViolations,
   mockApi,
+  openSettings,
   ME_FREE,
   SETTINGS,
 } from "./helpers";
@@ -55,7 +56,7 @@ test.describe("invite page (360px)", () => {
       "GET /api/me": { ...ME_FREE, referrals: 2 },
       "GET /api/settings": SETTINGS,
     });
-    await page.goto("/settings");
+    await openSettings(page);
     await expect(page.getByRole("link", { name: "ชวนเพื่อน" })).toHaveAttribute("href", "/invite");
     await expect(page.getByLabel("รหัสของเพื่อน")).toHaveCount(0);
   });

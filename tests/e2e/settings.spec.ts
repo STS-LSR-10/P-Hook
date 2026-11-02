@@ -3,6 +3,7 @@ import {
   expectNoHorizontalScroll,
   expectNoSeriousA11yViolations,
   mockApi,
+  openSettings,
   ME_FREE,
   ME_PLUS,
   SETTINGS,
@@ -14,13 +15,11 @@ const COMMON = {
 };
 
 test.describe("settings page (360px)", () => {
-  test("Free: shows the plan, quota and Plus locks instead of errors", async ({ page }) => {
+  test("Free: shows the plan and Plus locks instead of errors", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/me": ME_FREE });
-    await page.goto("/settings");
+    await openSettings(page);
 
     await expect(page.getByText("สมชาย ทดสอบ")).toBeVisible();
-    await expect(page.getByText("การอ่านสลิปใช้ได้ตั้งแต่แผน Pro")).toBeVisible();
-    await expect(page.getByRole("progressbar", { name: "โควตาสลิปเดือนนี้" })).toHaveCount(0);
     await expect(page.getByText("สำหรับแผน Pro").first()).toBeVisible();
     await expect(page.getByRole("switch", { name: "เปิดเตือนจดประจำวัน" })).toBeDisabled();
     await expect(page.getByRole("switch", { name: "เปิดสรุปรายสัปดาห์" })).toBeDisabled();
@@ -38,7 +37,7 @@ test.describe("settings page (360px)", () => {
       "GET /api/me": ME_PLUS,
       "GET /api/memory": { items: [] },
     });
-    await page.goto("/settings");
+    await openSettings(page);
 
     await expect(page.getByRole("switch", { name: "เปิดเตือนจดประจำวัน" })).toBeEnabled();
     await page.getByRole("button", { name: "รายการประจำ" }).click();
@@ -49,8 +48,6 @@ test.describe("settings page (360px)", () => {
       .getByRole("dialog", { name: "รายการประจำ" })
       .getByRole("button", { name: "ปิด" })
       .click();
-    await expect(page.getByRole("progressbar", { name: "โควตาสลิปเดือนนี้" })).toBeVisible();
-    await expect(page.getByText("3 / 5")).toBeVisible();
   });
 
   test("Pro: automatic summaries are off by default and saved when switched on", async ({
@@ -67,7 +64,7 @@ test.describe("settings page (360px)", () => {
         return { ...SETTINGS, ...body };
       },
     });
-    await page.goto("/settings");
+    await openSettings(page);
 
     const weekly = page.getByRole("switch", { name: "เปิดสรุปรายสัปดาห์" });
     const monthly = page.getByRole("switch", { name: "เปิดสรุปรายเดือน" });
@@ -88,7 +85,7 @@ test.describe("settings page (360px)", () => {
       "GET /api/me": ME_FREE,
       "POST /api/account/delete": { ok: true },
     });
-    await page.goto("/settings");
+    await openSettings(page);
 
     await page.getByRole("button", { name: "ลบข้อมูลทั้งหมด" }).click(); // step 1: warning
     await expect(page.getByRole("dialog", { name: "ลบข้อมูลทั้งหมด?" })).toBeVisible();
@@ -126,7 +123,7 @@ test.describe("settings page (360px)", () => {
         return { ok: true };
       },
     });
-    await page.goto("/settings");
+    await openSettings(page);
 
     await page.getByRole("button", { name: "ล้างประวัติการเงินทั้งหมด" }).click();
     const dialog = page.getByRole("dialog", { name: "ล้างประวัติการเงินทั้งหมด?" });
@@ -166,7 +163,7 @@ test.describe("settings page (360px)", () => {
         return { ok: true };
       },
     });
-    await page.goto("/settings");
+    await openSettings(page);
 
     await page.getByRole("button", { name: "ลบเฉพาะเดือน" }).click();
     await page.getByLabel("เดือนที่จะลบ").selectOption("2026-10");
@@ -195,14 +192,14 @@ test.describe("settings page (360px)", () => {
         keptShared: 0,
       },
     });
-    await page.goto("/settings");
+    await openSettings(page);
     await page.getByRole("button", { name: "ล้างประวัติการเงินทั้งหมด" }).click();
     await expect(page.getByRole("button", { name: "ไม่มีอะไรให้ลบ" })).toBeDisabled();
   });
 
   test("links to the privacy policy and terms", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/me": ME_FREE });
-    await page.goto("/settings");
+    await openSettings(page);
     await expect(page.getByRole("link", { name: "นโยบายความเป็นส่วนตัว" })).toHaveAttribute(
       "href",
       "/privacy",
@@ -215,7 +212,7 @@ test.describe("settings page (360px)", () => {
 
   test("has no serious accessibility violations", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/me": ME_FREE });
-    await page.goto("/settings");
+    await openSettings(page);
     await expect(page.getByText("สมชาย ทดสอบ")).toBeVisible();
     await expectNoSeriousA11yViolations(page);
   });
@@ -234,7 +231,7 @@ test.describe("settings page (360px)", () => {
         return { ...SETTINGS, ...body };
       },
     });
-    await page.goto("/settings");
+    await openSettings(page);
     const card = page.getByRole("region", { name: "การแจ้งเตือนและสรุปอัตโนมัติ" });
     await expect(card.getByRole("switch", { name: "เปิดสรุปรายสัปดาห์" })).toBeVisible();
     await expect(card.getByLabel("เวลาที่เตือน")).toHaveCount(0);
@@ -260,6 +257,7 @@ test.describe("settings page (360px)", () => {
       .getByRole("dialog", { name: "รายการประจำ" })
       .getByRole("button", { name: "ปิด" })
       .click();
+    await page.getByRole("button", { name: "เปิดทั้งหมด" }).click();
     await page.getByRole("button", { name: "จัดหมวดด้วยความจำ" }).click();
     await expect(
       page.getByRole("dialog", { name: "จัดหมวดด้วยความจำ" }).getByText("ร้านลุงหนวด"),
@@ -295,7 +293,7 @@ test.describe("settings page (360px)", () => {
       },
       "GET /api/memory": { items: [] },
     });
-    await page.goto("/settings");
+    await openSettings(page);
     await expect(page.getByRole("link", { name: "อัปเกรด" })).toHaveAttribute("href", "/upgrade");
     // general: only what the app really supports, shown as information
     const general = page.getByRole("list", { name: "ทั่วไป" });
@@ -308,5 +306,161 @@ test.describe("settings page (360px)", () => {
     await expect(dialog.getByText("ชำระแล้ว")).toBeVisible();
     await expect(dialog.getByText("คืนเงินแล้ว")).toBeVisible();
     await expectNoSeriousA11yViolations(page);
+  });
+});
+
+test.describe("settings sections and search (360px)", () => {
+  test("sections start closed, open one at a time, and all at once", async ({ page }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });
+    await page.goto("/settings");
+
+    const bot = page.getByRole("button", { name: "การแจ้งเตือนและแชทบอท" });
+    await expect(bot).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("switch", { name: "เปิดสรุปรายสัปดาห์" })).toBeHidden();
+    await bot.click();
+    await expect(bot).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("switch", { name: "เปิดสรุปรายสัปดาห์" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "กระเป๋าเงิน" })).toBeHidden();
+
+    await page.getByRole("button", { name: "เปิดทั้งหมด" }).click();
+    await expect(page.getByRole("link", { name: "กระเป๋าเงิน" })).toBeVisible();
+    await page.getByRole("button", { name: "ย่อทั้งหมด" }).click();
+    await expect(bot).toHaveAttribute("aria-expanded", "false");
+    await expectNoHorizontalScroll(page);
+  });
+
+  test("search keeps only the sections that match, opened, and says when nothing does", async ({
+    page,
+  }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });
+    await page.goto("/settings");
+
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("ชวนเพื่อน");
+    await expect(page.getByRole("link", { name: "ชวนเพื่อน" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "การแจ้งเตือนและแชทบอท" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "เปิดทั้งหมด" })).toHaveCount(0);
+
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("ไม่มีแน่นอน");
+    await expect(page.getByText("ไม่พบการตั้งค่า")).toBeVisible();
+
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("");
+    await expect(page.getByRole("button", { name: "การแจ้งเตือนและแชทบอท" })).toBeVisible();
+  });
+
+  test("the budget cycle sits with the money settings and still saves", async ({ page }) => {
+    const bodies: unknown[] = [];
+    await mockApi(page, {
+      ...COMMON,
+      "GET /api/me": ME_FREE,
+      "PATCH /api/settings": (route: Route) => {
+        const body = route.request().postDataJSON();
+        bodies.push(body);
+        return { ...SETTINGS, ...body };
+      },
+    });
+    await page.goto("/settings");
+    await page.getByRole("button", { name: "รอบงบ บัญชี และเป้าหมาย" }).click();
+    await page.getByRole("radio", { name: "รายสัปดาห์" }).click();
+    await expect.poll(() => bodies).toEqual([{ budget_cycle: "weekly" }]);
+    await expect(page.getByText("บันทึกแล้ว")).toBeVisible();
+  });
+
+  test("the profile shows the plan, coins and streak, with a quota button", async ({ page }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS });
+    await page.goto("/settings");
+    const profile = page.getByRole("region", { name: "โปรไฟล์และแผน" });
+    await expect(profile.getByText("แผน Pro")).toBeVisible();
+    await expect(profile.getByText("เหรียญสะสม")).toBeVisible();
+    await expect(profile.getByText("จดต่อเนื่อง")).toBeVisible();
+    await expect(profile.getByRole("link", { name: "โควตา" })).toHaveAttribute(
+      "href",
+      "/settings/quota",
+    );
+  });
+});
+
+const QUOTA = (plan: "free" | "plus" | "ultimate") => ({
+  plan,
+  planExpiresAt: plan === "free" ? null : "2027-10-17T00:00:00Z",
+  kept: [
+    {
+      key: "storage",
+      label: "พื้นที่เก็บไฟล์",
+      used: 50 * 1024 * 1024,
+      limit: 500 * 1024 * 1024,
+      unit: "bytes",
+      period: "total",
+    },
+    { key: "reminders", label: "การเตือน", used: 3, limit: 3, unit: "count", period: "total" },
+    {
+      key: "recurring",
+      label: "รายการประจำ",
+      used: 0,
+      limit: plan === "free" ? 0 : 20,
+      unit: "count",
+      period: "total",
+    },
+  ],
+  counted: [
+    {
+      key: "slips",
+      label: "อ่านสลิป",
+      used: 2,
+      limit: plan === "ultimate" ? null : 30,
+      unit: "count",
+      period: "month",
+    },
+    { key: "owl", label: "ถามพี่ฮูก", used: 4, limit: 5, unit: "count", period: "month" },
+  ],
+});
+
+test.describe("quota page (360px)", () => {
+  test("Free: each quota with its use; full, near and locked ones say so", async ({ page }) => {
+    await mockApi(page, { "GET /api/quota": QUOTA("free") });
+    await page.goto("/settings/quota");
+
+    await expect(page.getByRole("heading", { name: "โควตาการใช้งาน" })).toBeVisible();
+    await expect(page.getByText("แผน Free")).toBeVisible();
+    await expect(page.getByText("50 MB")).toBeVisible();
+    await expect(page.getByRole("progressbar", { name: "การเตือน" })).toHaveAttribute(
+      "aria-valuenow",
+      "100",
+    );
+    await expect(page.getByText("ใช้ครบแล้ว")).toBeVisible();
+    await expect(page.getByText("ใกล้ครบแล้ว")).toBeVisible(); // owl 4 / 5
+    await expect(page.getByText("ต้องอัปเกรด")).toBeVisible(); // recurring on Free
+    await expect(page.getByRole("link", { name: "อัปเกรดเพื่อเพิ่มโควตา" })).toHaveAttribute(
+      "href",
+      "/upgrade",
+    );
+    await expectNoHorizontalScroll(page);
+    await expectNoSeriousA11yViolations(page);
+  });
+
+  test("Elite: no plan limit reads as ไม่จำกัด and there is no upgrade button", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/quota": QUOTA("ultimate") });
+    await page.goto("/settings/quota");
+    await expect(page.getByText("แผน Elite")).toBeVisible();
+    await expect(page.getByText("ไม่จำกัด")).toBeVisible();
+    await expect(page.getByRole("link", { name: /อัปเกรด|ดูแผน/ })).toHaveCount(0);
+  });
+
+  test("a failed load can be retried, and the back link goes to settings", async ({ page }) => {
+    let calls = 0;
+    await mockApi(page, {
+      "GET /api/quota": () => {
+        calls += 1;
+        return calls === 1 ? { status: 500, body: { error: "โหลดไม่สำเร็จ" } } : QUOTA("plus");
+      },
+    });
+    await page.goto("/settings/quota");
+    await page.getByRole("button", { name: "ลองอีกครั้ง" }).click();
+    await expect(page.getByText("แผน Pro")).toBeVisible();
+    await expect(page.getByRole("link", { name: "กลับไปหน้าตั้งค่า" })).toHaveAttribute(
+      "href",
+      "/settings",
+    );
   });
 });

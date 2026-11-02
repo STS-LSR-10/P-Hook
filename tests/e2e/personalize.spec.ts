@@ -3,6 +3,7 @@ import {
   expectNoHorizontalScroll,
   expectNoSeriousA11yViolations,
   mockApi,
+  openSettings,
   ME_FREE,
   ME_PLUS,
   SETTINGS,
@@ -17,7 +18,7 @@ const COMMON = {
 test.describe("theme and bot manner (360px)", () => {
   test("Free sees the choices but only the default ones can be picked", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/settings": SETTINGS, "GET /api/me": ME_FREE });
-    await page.goto("/settings");
+    await openSettings(page);
 
     const card = page.getByRole("region", { name: "ธีมการ์ดและนิสัยบอท" });
     await expect(card).toBeVisible();
@@ -41,7 +42,7 @@ test.describe("theme and bot manner (360px)", () => {
         return { ...SETTINGS, ...body };
       },
     });
-    await page.goto("/settings");
+    await openSettings(page);
 
     const card = page.getByRole("region", { name: "ธีมการ์ดและนิสัยบอท" });
     await card.getByRole("radio", { name: "ฟ้าทะเล" }).click();
@@ -67,7 +68,7 @@ test.describe("theme and bot manner (360px)", () => {
       "GET /api/settings": SETTINGS,
       "PATCH /api/settings": { status: 500, body: { error: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง" } },
     });
-    await page.goto("/settings");
+    await openSettings(page);
     const card = page.getByRole("region", { name: "ธีมการ์ดและนิสัยบอท" });
     await card.getByRole("radio", { name: "ชมพูพีช" }).click();
     await expect(card.getByText("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง")).toBeVisible();
@@ -81,7 +82,7 @@ test.describe("theme and bot manner (360px)", () => {
 test.describe("photo offer after a save (360px)", () => {
   test("Free sees it locked; Pro can switch it off", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/settings": SETTINGS, "GET /api/me": ME_FREE });
-    await page.goto("/settings");
+    await openSettings(page);
     const free = page.getByRole("region", { name: "ปุ่มแนบรูปบนการ์ด" });
     await expect(free.getByText("สำหรับแผน Pro")).toBeVisible();
     await expect(free.getByRole("switch")).toBeDisabled();
@@ -99,7 +100,7 @@ test.describe("photo offer after a save (360px)", () => {
         return { ...SETTINGS, photo_prompt: false };
       },
     });
-    await page.goto("/settings");
+    await openSettings(page);
     const card = page.getByRole("region", { name: "ปุ่มแนบรูปบนการ์ด" });
     await expect(card.getByRole("switch")).toBeChecked();
     await card.getByRole("switch").click();

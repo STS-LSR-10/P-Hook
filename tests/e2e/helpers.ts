@@ -50,6 +50,12 @@ export async function mockApi(page: Page, mocks: ApiMocks) {
   return { seen };
 }
 
+/** Open the settings page with every section open, as it all was on one page before. */
+export async function openSettings(page: Page, path = "/settings") {
+  await page.goto(path);
+  await page.getByRole("button", { name: "เปิดทั้งหมด" }).click();
+}
+
 /** The page must not scroll sideways at phone width. */
 export async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => ({
