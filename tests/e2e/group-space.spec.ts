@@ -11,13 +11,18 @@ const F1 = "00000000-0000-4000-8000-00000000000a";
 const F2 = "00000000-0000-4000-8000-00000000000b";
 const R1 = "00000000-0000-4000-8000-00000000000c";
 
-const files = (items: unknown[]) => ({
+const files = (items: unknown[], owner = true) => ({
   items,
   hasMore: false,
-  usedBytes: 30 * 1024 * 1024,
-  groupBytes: 12 * 1024 * 1024,
-  capacityBytes: 2 * 1024 * 1024 * 1024,
-  isOwner: false,
+  ...(owner
+    ? {
+        usedBytes: 30 * 1024 * 1024,
+        groupBytes: 12 * 1024 * 1024,
+        capacityBytes: 2 * 1024 * 1024 * 1024,
+      }
+    : { usedBytes: null, groupBytes: null, capacityBytes: null }),
+  spaceLow: !owner,
+  isOwner: owner,
   viewToken: "tok",
 });
 const file = (id: string, name: string, mine: boolean) => ({
@@ -54,7 +59,7 @@ test.describe("a group's files and reminders (360px)", () => {
     await expect(page.getByRole("heading", { name: "คลังกลุ่ม | พี่ฮูก" })).toBeVisible();
     await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
     await expect(page.getByText(/ใช้ไป 30 MB จาก 2 GB/)).toBeVisible();
-    await expect(page.getByText(/ไฟล์กลุ่ม 12 MB/)).toBeVisible();
+    await expect(page.getByText(/ไฟล์ในกลุ่มของคุณ 12 MB/)).toBeVisible();
     await expectNoHorizontalScroll(page);
     await expectNoSeriousA11yViolations(page);
 
@@ -62,6 +67,19 @@ test.describe("a group's files and reminders (360px)", () => {
     await page.getByText("เมนูร้าน.pdf").click();
     await expect(page.getByRole("button", { name: "ลบไฟล์" })).toHaveCount(0);
     await expect(page.getByText("ลบได้เฉพาะคนที่เก็บไฟล์นี้")).toBeVisible();
+  });
+
+  test("a member sees only that the owner's space is running out, not the figures", async ({
+    page,
+  }) => {
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      [`GET /api/groups/${G}/files`]: files([file(F1, "สัญญาเช่า.pdf", true)], false),
+    });
+    await page.goto(`/group?id=${G}`);
+    await expect(page.getByText("พื้นที่เก็บไฟล์ของเจ้าของสมุดใกล้เต็มแล้ว")).toBeVisible();
+    await expect(page.getByText(/ใช้ไป/)).toHaveCount(0);
+    await expectNoSeriousA11yViolations(page);
   });
 
   test("lists the group's reminders, and cancels one", async ({ page }) => {

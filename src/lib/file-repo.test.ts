@@ -4,8 +4,10 @@ import {
   fileUsage,
   forgetMedia,
   getMediaById,
+  getGroupFile,
   getReadyFile,
   listFiles,
+  listGroupFiles,
   markFileReady,
   rememberMedia,
   renameFile,
@@ -106,9 +108,16 @@ describe("stored files", () => {
     await listFiles(listOwn.db, "u1");
     expect(has(listOwn.calls, "is", "group_id", null)).toBe(true);
     const listGroup = fakeDb({ data: [{ ...row, saved_by: "Uanna" }] });
-    const { items } = await listFiles(listGroup.db, "u1", { groupId: "g1" });
+    const { items } = await listGroupFiles(listGroup.db, "g1");
     expect(has(listGroup.calls, "eq", "group_id", "g1")).toBe(true);
+    // every file of the group, whoever owned the ledger when it was kept
+    expect(listGroup.calls.some((c) => c[1] === "user_id")).toBe(false);
     expect(items[0]?.savedBy).toBe("Uanna");
+
+    const one = fakeDb({ data: { ...row, user_id: "old-owner" } });
+    const file = await getGroupFile(one.db, "g1", "f1");
+    expect(file?.userId).toBe("old-owner");
+    expect(has(one.calls, "eq", "group_id", "g1")).toBe(true);
   });
 
   it("reserves a group's file with who kept it", async () => {

@@ -80,6 +80,21 @@ export async function closeGroup(db: SupabaseClient, lineGroupId: string): Promi
   if (error) fail("close group", error);
 }
 
+/** Members who left the LINE group: they no longer see its files and reminders. */
+export async function removeMembers(
+  db: SupabaseClient,
+  groupId: string,
+  lineUserIds: string[],
+): Promise<void> {
+  if (lineUserIds.length === 0) return;
+  const { error } = await db
+    .from("group_members")
+    .delete()
+    .eq("group_id", groupId)
+    .in("line_user_id", lineUserIds);
+  if (error) fail("remove members", error);
+}
+
 export async function upsertMember(
   db: SupabaseClient,
   groupId: string,

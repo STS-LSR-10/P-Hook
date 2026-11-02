@@ -285,6 +285,25 @@ export async function listGroupReminders(
   }));
 }
 
+/**
+ * Finish a group's reminders still waiting, so they stop taking anyone's limits: when the ledger closes,
+ * and when it changes hands (`exceptOwner`: the new owner's own stay).
+ */
+export async function endGroupReminders(
+  db: SupabaseClient,
+  groupId: string,
+  exceptOwner?: string,
+): Promise<void> {
+  let query = db
+    .from("user_reminders")
+    .update({ status: "done" })
+    .eq("group_id", groupId)
+    .eq("status", "active");
+  if (exceptOwner) query = query.neq("user_id", exceptOwner);
+  const { error } = await query;
+  if (error) fail("end group reminders", error);
+}
+
 /** False when it is not this group's, or already gone. */
 export async function cancelGroupReminder(
   db: SupabaseClient,

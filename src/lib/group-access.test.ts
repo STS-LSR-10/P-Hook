@@ -32,10 +32,22 @@ describe("groupForViewer", () => {
     expect(check).not.toHaveBeenCalled();
   });
 
-  it("lets a known member in", async () => {
-    known.set("Uanna", { name: "แอน", updatedAt: "" });
-    const out = await groupForViewer(db, "g1", anna, async () => null);
+  it("lets a member seen in the last day in without asking LINE", async () => {
+    known.set("Uanna", { name: "แอน", updatedAt: new Date().toISOString() });
+    const check = vi.fn(async () => null);
+    const out = await groupForViewer(db, "g1", anna, check);
     expect(out).toEqual({ group, isOwner: false });
+    expect(check).not.toHaveBeenCalled();
+  });
+
+  it("asks LINE again about a member seen long ago, who may have left", async () => {
+    known.set("Uanna", { name: "แอน", updatedAt: "2026-01-01T00:00:00Z" });
+    expect(await groupForViewer(db, "g1", anna, async () => null)).toBeNull();
+    // LINE down: the member the bot knows keeps access
+    const out = await groupForViewer(db, "g1", anna, async () => {
+      throw new Error("down");
+    });
+    expect(out?.isOwner).toBe(false);
   });
 
   it("asks LINE about anyone else, and remembers a member", async () => {
@@ -53,10 +65,14 @@ describe("groupForViewer", () => {
     ).toBeNull();
   });
 
-  it("keeps everyone out of a closed ledger", async () => {
+  it("keeps a closed ledger reachable, so what it kept can be removed", async () => {
     group = { id: "g1", lineGroupId: "C1", ownerUserId: "app-owner", isActive: false };
-    expect(
-      await groupForViewer(db, "g1", { userId: "app-owner", lineUserId: "Uo" }, vi.fn()),
-    ).toBeNull();
+    const out = await groupForViewer(db, "g1", { userId: "app-owner", lineUserId: "Uo" }, vi.fn());
+    expect(out?.isOwner).toBe(true);
+  });
+
+  it("keeps everyone out of a ledger never opened", async () => {
+    group = null;
+    expect(await groupForViewer(db, "g1", anna, async () => ({}))).toBeNull();
   });
 });

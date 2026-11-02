@@ -3,6 +3,7 @@ import { calendarMonthRange } from "@/lib/budget-cycle";
 import type { GroupEntryRow, TripRow } from "@/lib/group";
 import { memberNames, openTrip, payerTotals, recentEntries, tripEntries } from "@/lib/group-repo";
 import { formatBaht } from "@/lib/money";
+import { looksSecret } from "@/lib/secret-text";
 import type { BillRow } from "@/lib/split-bill";
 import { listBills } from "@/lib/split-bill-repo";
 import { formatThaiDate } from "@/lib/thai-date";
@@ -76,12 +77,13 @@ export async function loadGroupOwlFacts(
       entries: entries.length,
     };
   }
+  // members write these names: one that looks like a password or card number never goes to the AI
   return {
     today: now,
     month,
-    recent,
+    recent: recent.filter((e) => !looksSecret(e.title)),
     trip: tripTotals,
-    bills,
+    bills: bills.filter((b) => !looksSecret(b.title)),
     names: new Map([...names].map(([id, v]) => [id, v.name])),
   };
 }

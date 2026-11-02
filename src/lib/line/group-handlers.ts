@@ -30,6 +30,7 @@ import {
   memberNames,
   openGroup,
   payerTotals,
+  removeMembers,
   recentEntries,
   upsertMember,
 } from "@/lib/group-repo";
@@ -58,6 +59,7 @@ import {
   runDailyReminder,
 } from "./split-bill-handlers";
 import { checkGroupSlip } from "./split-bill-slip";
+import { endGroupReminders } from "@/lib/user-reminder-repo";
 import {
   addGroupReminder,
   askOwlInGroup,
@@ -161,7 +163,15 @@ export async function handleGroupEvent(event: LineEvent, deps: HandlerDeps): Pro
       return;
     case "leave":
       await closeGroup(deps.db, groupId);
+      await endRemindersOf(groupId, deps);
       return;
+    case "memberLeft": {
+      // someone left: they no longer see the group's files and reminders
+      const ids = (event.left?.members ?? []).flatMap((m) => (m.userId ? [m.userId] : []));
+      const group = ids.length > 0 ? await getGroup(deps.db, groupId) : null;
+      if (group) await removeMembers(deps.db, group.id, ids);
+      return;
+    }
     case "postback":
       await handleGroupPostback(event, groupId, deps, reply);
       return;
@@ -207,6 +217,12 @@ export async function handleGroupEvent(event: LineEvent, deps: HandlerDeps): Pro
 }
 
 type Reply = (messages: LineMessage[]) => Promise<void>;
+
+/** A closed ledger's reminders stop, and stop taking the owner's limits. */
+async function endRemindersOf(lineGroupId: string, deps: HandlerDeps): Promise<void> {
+  const group = await getGroup(deps.db, lineGroupId);
+  if (group) await endGroupReminders(deps.db, group.id);
+}
 
 /** Ordinary chat in a group: if a bill still has people who have not paid, the day's reminder rides on it. */
 async function remindIfDue(groupId: string, deps: HandlerDeps, reply: Reply): Promise<void> {
@@ -324,7 +340,11 @@ async function runGroupCommand(
     ) {
       return reply([text(GROUP_TOO_MANY_TEXT)]);
     }
-    await openGroup(db, groupId, user.id);
+    const opened = await openGroup(db, groupId, user.id);
+    // a ledger that changed hands: the old owner's reminders stop (they used the old owner's limits)
+    if (existing && existing.ownerUserId !== user.id) {
+      await endGroupReminders(db, opened.id, user.id);
+    }
     return reply([text(GROUP_OPENED_TEXT)]);
   }
 
@@ -337,6 +357,7 @@ async function runGroupCommand(
     case "close":
       if (!isOwner) return reply([text(GROUP_OWNER_ONLY_TEXT)]);
       await closeGroup(db, groupId);
+      await endGroupReminders(db, group.id);
       return reply([text(GROUP_CLOSED_TEXT)]);
 
     case "summary": {

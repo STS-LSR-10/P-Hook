@@ -3,7 +3,7 @@ import { apiError, guard, json } from "@/lib/api";
 import { signGroupViewToken } from "@/lib/auth/file-token";
 import { getServerEnv } from "@/lib/env";
 import { fileCapacity } from "@/lib/file";
-import { fileUsage, groupFileUsage, listFiles } from "@/lib/file-repo";
+import { fileUsage, groupFileUsage, listGroupFiles } from "@/lib/file-repo";
 import { requireGroupViewer } from "@/lib/group-api";
 import { getPlanInfo } from "@/lib/plan-server";
 
@@ -11,6 +11,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ gid: string }> };
+
+/** The share of the space used at which members are told it is running out. */
+const SPACE_LOW = 0.9;
 
 const querySchema = z.object({
   q: z.string().trim().max(100).optional(),
@@ -20,8 +23,8 @@ const querySchema = z.object({
 
 /**
  * GET /api/groups/:gid/files?q=&before=&kind= — a group's files, newest first, for its owner and its
- * members. The space shown is the owner's (shared with the owner's own files); `mine` marks the files
- * this person may delete.
+ * members (a closed ledger's too, so they can still be removed). The owner sees the space, which their
+ * own files share; members see only `spaceLow`. `mine` marks the files this person may delete.
  */
 export async function GET(request: Request, { params }: Params): Promise<Response> {
   return guard(async () => {
@@ -39,7 +42,7 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
 
     const owner = viewer.group.ownerUserId;
     const [{ items, hasMore }, usedBytes, groupBytes, { plan }] = await Promise.all([
-      listFiles(db, owner, { ...parsed.data, groupId: viewer.group.id }),
+      listGroupFiles(db, viewer.group.id, parsed.data),
       fileUsage(db, owner),
       groupFileUsage(db, owner),
       getPlanInfo(db, owner),
@@ -55,9 +58,11 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
         mine: viewer.isOwner || savedBy === auth.lineUserId,
       })),
       hasMore,
-      usedBytes,
-      groupBytes,
-      capacityBytes: fileCapacity(plan),
+      // the owner's own use is theirs: a member sees only whether the space is running out
+      ...(viewer.isOwner
+        ? { usedBytes, groupBytes, capacityBytes: fileCapacity(plan) }
+        : { usedBytes: null, groupBytes: null, capacityBytes: null }),
+      spaceLow: usedBytes >= fileCapacity(plan) * SPACE_LOW,
       isOwner: viewer.isOwner,
       viewToken,
     });

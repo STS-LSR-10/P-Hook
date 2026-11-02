@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData } from "@/lib/ai/owl";
 import { fileCapacity, fileDayLimit, formatBytes, type FileDto } from "@/lib/file";
 import {
-  listFiles,
+  listGroupFiles as listFilesOfGroup,
   startGroupFileWait,
   takeGroupFileWait,
   type RecentMedia,
@@ -178,8 +178,7 @@ export async function listGroupFiles(
   ctx: GroupExtraContext,
   term: string | null,
 ): Promise<LineMessage[]> {
-  const { items } = await listFiles(ctx.db, ctx.group.ownerUserId, {
-    groupId: ctx.group.id,
+  const { items } = await listFilesOfGroup(ctx.db, ctx.group.id, {
     q: term ?? undefined,
     limit: MAX_FILES_SHOWN,
   });
@@ -305,11 +304,8 @@ export async function askOwlInGroup(
   const owner = ownerOf(ctx);
   if (!ctx.writable || !owner) return [text(GROUP_PAUSED_TEXT)];
 
+  // the owner's monthly quota first: a question it refuses does not use up the member's day
   const now = ctx.deps.now();
-  if (ctx.deps.limit) {
-    const day = await ctx.deps.limit("owl_day", ctx.userId, LIMITS.owlDay);
-    if (!day.allowed) return [text(OWL_DAY_LIMIT_TEXT)];
-  }
   const limit = OWL_LIMIT[ownerPlan(ctx, owner)];
   const month = monthKey(now);
   try {
@@ -323,6 +319,10 @@ export async function askOwlInGroup(
 
   let answered = false;
   try {
+    if (ctx.deps.limit) {
+      const day = await ctx.deps.limit("owl_day", ctx.userId, LIMITS.owlDay);
+      if (!day.allowed) return [text(OWL_DAY_LIMIT_TEXT)];
+    }
     // the ledger goes to the AI only for a question about money; "แปลว่าอะไร" gets none
     const data = needsPersonalData(q)
       ? renderGroupOwlContext(await loadGroupOwlFacts(ctx.db, ctx.group.id, now))

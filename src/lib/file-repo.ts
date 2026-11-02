@@ -114,17 +114,73 @@ export async function getReadyFile(
   };
 }
 
+/**
+ * A group's file, whoever owned the ledger when it was kept: a ledger that changed hands still shows
+ * (and lets its keeper or owner delete) the files from before. `userId` is whose space it takes.
+ */
+export async function getGroupFile(
+  db: SupabaseClient,
+  groupId: string,
+  id: string,
+): Promise<(ReadyFile & { userId: string }) | null> {
+  const { data, error } = await db
+    .from("stored_files")
+    .select(`${COLUMNS},user_id`)
+    .eq("id", id)
+    .eq("group_id", groupId)
+    .eq("status", "ready")
+    .maybeSingle();
+  if (error) fail("get group file", error);
+  if (!data) return null;
+  const row = data as FileRow & { user_id: string };
+  return {
+    ...toDto(row),
+    r2Key: row.r2_key,
+    groupId: row.group_id ?? null,
+    savedBy: row.saved_by ?? null,
+    userId: row.user_id,
+  };
+}
+
+/** A group's files, newest first, whoever owned the ledger when each was kept. */
+export async function listGroupFiles(
+  db: SupabaseClient,
+  groupId: string,
+  options: { q?: string; before?: string; limit?: number; kind?: FileKind } = {},
+): Promise<{ items: ListedFile[]; hasMore: boolean }> {
+  const limit = options.limit ?? 30;
+  let query = db
+    .from("stored_files")
+    .select(COLUMNS)
+    .eq("group_id", groupId)
+    .eq("status", "ready")
+    .order("created_at", { ascending: false })
+    .limit(limit + 1);
+  const q = options.q?.trim();
+  if (q) query = query.ilike("name", `%${escapeLike(q)}%`);
+  if (options.kind === "image") query = query.like("mime_type", "image/%");
+  if (options.kind === "file") query = query.not("mime_type", "like", "image/%");
+  if (options.before) query = query.lt("created_at", options.before);
+  const { data, error } = await query;
+  if (error) fail("list group files", error);
+  const rows = (data ?? []) as FileRow[];
+  return {
+    items: rows.slice(0, limit).map((r) => ({ ...toDto(r), savedBy: r.saved_by ?? null })),
+    hasMore: rows.length > limit,
+  };
+}
+
 /** A file in a list, with the LINE id of the member who kept it in a group (null for one's own). */
 export type ListedFile = FileDto & { savedBy: string | null };
 
 /**
- * Newest first. `q` keeps files whose name contains it; `before` pages back from a moment. The
- * person's own files, or with `groupId` that group's.
+ * The person's own files (never those kept in a group), newest first. `q` keeps files whose name
+ * contains it; `before` pages back from a moment.
  */
 export async function listFiles(
   db: SupabaseClient,
   userId: string,
-  options: { q?: string; before?: string; limit?: number; kind?: FileKind; groupId?: string } = {},
+  options: { q?: string; before?: string; limit?: number; kind?: FileKind } = {},
 ): Promise<{ items: ListedFile[]; hasMore: boolean }> {
   const limit = options.limit ?? 30;
   let query = db
@@ -134,7 +190,7 @@ export async function listFiles(
     .eq("status", "ready")
     .order("created_at", { ascending: false })
     .limit(limit + 1);
-  query = options.groupId ? query.eq("group_id", options.groupId) : query.is("group_id", null);
+  query = query.is("group_id", null);
   const q = options.q?.trim();
   if (q) query = query.ilike("name", `%${escapeLike(q)}%`);
   if (options.kind === "image") query = query.like("mime_type", "image/%");

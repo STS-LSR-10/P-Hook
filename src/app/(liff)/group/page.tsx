@@ -15,9 +15,11 @@ type GroupFile = FileDto & { mine: boolean };
 interface FilesResponse {
   items: GroupFile[];
   hasMore: boolean;
-  usedBytes: number;
-  groupBytes: number;
-  capacityBytes: number;
+  /** The space figures are the owner's: null for a member, who sees only `spaceLow`. */
+  usedBytes: number | null;
+  groupBytes: number | null;
+  capacityBytes: number | null;
+  spaceLow: boolean;
   isOwner: boolean;
   viewToken: string;
 }
@@ -148,29 +150,17 @@ function GroupFiles({ groupId, toOpen }: { groupId: string; toOpen: string | nul
   if (files.error || !files.data) {
     return <ErrorState message={files.error ?? "โหลดไฟล์ไม่สำเร็จ"} onRetry={files.reload} />;
   }
-  const { items, usedBytes, groupBytes, capacityBytes, viewToken } = files.data;
-  const percent = Math.min(100, Math.round((usedBytes / Math.max(1, capacityBytes)) * 100));
+  const { items, usedBytes, groupBytes, capacityBytes, spaceLow, viewToken } = files.data;
 
   return (
     <div className="space-y-3">
-      <section aria-label="พื้นที่" className={cn(CARD, "space-y-2 p-3.5")}>
-        <p className="num text-sm font-semibold text-stone-900">
-          พื้นที่ของเจ้าของสมุด ใช้ไป {formatBytes(usedBytes)} จาก {formatBytes(capacityBytes)}
+      {usedBytes !== null && capacityBytes !== null ? (
+        <SpaceCard used={usedBytes} group={groupBytes ?? 0} capacity={capacityBytes} />
+      ) : spaceLow ? (
+        <p role="status" className={cn(CARD, "p-3.5 text-sm text-[#7A4A06]")}>
+          พื้นที่เก็บไฟล์ของเจ้าของสมุดใกล้เต็มแล้ว ลบไฟล์ที่ไม่ใช้ก่อนเก็บเพิ่มนะ
         </p>
-        <div
-          role="progressbar"
-          aria-label="พื้นที่ที่ใช้"
-          aria-valuenow={percent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="h-2 overflow-hidden rounded-full bg-[#E7DFD2]"
-        >
-          <div className="h-full rounded-full bg-[#2D7347]" style={{ width: `${percent}%` }} />
-        </div>
-        <p className="num text-xs text-stone-600">
-          ไฟล์กลุ่ม {formatBytes(groupBytes)} · ใช้พื้นที่เดียวกับไฟล์ส่วนตัวของเจ้าของ
-        </p>
-      </section>
+      ) : null}
       {notice ? (
         <p role="status" className="text-sm text-stone-700">
           {notice}
@@ -233,6 +223,31 @@ function GroupFiles({ groupId, toOpen }: { groupId: string; toOpen: string | nul
         </Sheet>
       ) : null}
     </div>
+  );
+}
+
+/** The owner's space, which their own files share. */
+function SpaceCard({ used, group, capacity }: { used: number; group: number; capacity: number }) {
+  const percent = Math.min(100, Math.round((used / Math.max(1, capacity)) * 100));
+  return (
+    <section aria-label="พื้นที่" className={cn(CARD, "space-y-2 p-3.5")}>
+      <p className="num text-sm font-semibold text-stone-900">
+        พื้นที่ของคุณ ใช้ไป {formatBytes(used)} จาก {formatBytes(capacity)}
+      </p>
+      <div
+        role="progressbar"
+        aria-label="พื้นที่ที่ใช้"
+        aria-valuenow={percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className="h-2 overflow-hidden rounded-full bg-[#E7DFD2]"
+      >
+        <div className="h-full rounded-full bg-[#2D7347]" style={{ width: `${percent}%` }} />
+      </div>
+      <p className="num text-xs text-stone-600">
+        ไฟล์ในกลุ่มของคุณ {formatBytes(group)} · ใช้พื้นที่เดียวกับไฟล์ส่วนตัว
+      </p>
+    </section>
   );
 }
 

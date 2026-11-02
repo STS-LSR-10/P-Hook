@@ -11,6 +11,7 @@ let viewer: GroupViewer | null = null;
 let viewerLine = "Uanna";
 let fileSavedBy: string | null = "Uanna";
 let fileFound = true;
+let fileOwner = "app-owner";
 const dropped: string[] = [];
 const cancelled: string[] = [];
 const scopes: unknown[] = [];
@@ -32,8 +33,8 @@ vi.mock("@/lib/file-store", () => ({
   getFileStore: async () => ({ delete: async () => undefined }),
 }));
 vi.mock("@/lib/file-repo", () => ({
-  listFiles: async (_db: unknown, userId: string, o: { groupId?: string }) => {
-    scopes.push({ userId, groupId: o.groupId });
+  listGroupFiles: async (_db: unknown, groupId: string) => {
+    scopes.push({ groupId });
     return {
       items: [
         {
@@ -60,8 +61,8 @@ vi.mock("@/lib/file-repo", () => ({
   },
   fileUsage: async () => 100,
   groupFileUsage: async () => 6,
-  getReadyFile: async (_db: unknown, userId: string, id: string, scope: unknown) => {
-    scopes.push({ userId, id, scope });
+  getGroupFile: async (_db: unknown, groupId: string, id: string) => {
+    scopes.push({ groupId, id });
     return fileFound
       ? {
           id,
@@ -73,10 +74,11 @@ vi.mock("@/lib/file-repo", () => ({
           r2Key: "k",
           groupId: GID,
           savedBy: fileSavedBy,
+          userId: fileOwner,
         }
       : null;
   },
-  dropFileRow: async (_db: unknown, _u: string, id: string) => void dropped.push(id),
+  dropFileRow: async (_db: unknown, u: string, id: string) => void dropped.push(`${u}/${id}`),
 }));
 vi.mock("@/lib/user-reminder-repo", () => ({
   listGroupReminders: async () => [
@@ -111,6 +113,7 @@ beforeEach(() => {
   viewerLine = "Uanna";
   fileSavedBy = "Uanna";
   fileFound = true;
+  fileOwner = "app-owner";
   dropped.length = 0;
   cancelled.length = 0;
   scopes.length = 0;
@@ -120,8 +123,14 @@ describe("a group's files", () => {
   it("are the owner's files of that group, with the owner's space", async () => {
     const res = await FILES(req(), at());
     const body = await res.json();
-    expect(scopes).toEqual([{ userId: "app-owner", groupId: GID }]);
-    expect(body).toMatchObject({ usedBytes: 100, groupBytes: 6, isOwner: false });
+    expect(scopes).toEqual([{ groupId: GID }]);
+    // a member never sees the owner's own figures
+    expect(body).toMatchObject({
+      usedBytes: null,
+      groupBytes: null,
+      capacityBytes: null,
+      isOwner: false,
+    });
     expect(body.items.map((f: { mine: boolean }) => f.mine)).toEqual([true, false]);
     expect(JSON.stringify(body.items)).not.toContain("savedBy");
     // the pictures' token reaches only this group
@@ -146,7 +155,7 @@ describe("a group's files", () => {
       userId: "app-owner",
       fileId: F,
     });
-    expect(scopes).toEqual([{ userId: "app-owner", id: F, scope: { groupId: GID } }]);
+    expect(scopes).toEqual([{ groupId: GID, id: F }]);
   });
 
   it("are deleted only by who kept them, or the owner", async () => {
@@ -156,7 +165,21 @@ describe("a group's files", () => {
 
     viewer = { group, isOwner: true };
     expect((await DELETE_FILE(req("DELETE"), at())).status).toBe(200);
-    expect(dropped).toEqual([F]);
+    expect(dropped).toEqual([`app-owner/${F}`]);
+  });
+
+  it("from before the ledger changed hands may be removed by whose space they take", async () => {
+    viewerLine = "Uold";
+    fileSavedBy = "Ubob";
+    fileOwner = "app-Uold";
+    expect((await DELETE_FILE(req("DELETE"), at())).status).toBe(200);
+    expect(dropped).toEqual([`app-Uold/${F}`]);
+  });
+
+  it("show the owner the space", async () => {
+    viewer = { group, isOwner: true };
+    const body = await (await FILES(req(), at())).json();
+    expect(body).toMatchObject({ usedBytes: 100, groupBytes: 6, isOwner: true, spaceLow: false });
   });
 });
 

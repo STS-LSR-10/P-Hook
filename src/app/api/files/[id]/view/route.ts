@@ -3,7 +3,7 @@ import { apiError, guard } from "@/lib/api";
 import { readViewToken } from "@/lib/auth/file-token";
 import { getServerEnv } from "@/lib/env";
 import { isViewableImage, thumbKey } from "@/lib/file";
-import { getReadyFile } from "@/lib/file-repo";
+import { getGroupFile, getReadyFile } from "@/lib/file-repo";
 import { getFileStore } from "@/lib/file-store";
 import { getAdminClient } from "@/lib/supabase/admin";
 
@@ -29,12 +29,10 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
 
     // a person's token reaches their own pictures, a group's token only that group's
     const preview = url.searchParams.get("size") === "thumb";
-    const file = await getReadyFile(
-      getAdminClient(),
-      claims.userId,
-      id,
-      claims.groupId ? { groupId: claims.groupId } : "personal",
-    );
+    const db = getAdminClient();
+    const file = claims.groupId
+      ? await getGroupFile(db, claims.groupId, id)
+      : await getReadyFile(db, claims.userId, id);
     if (!file || !(preview ? file.hasThumb : isViewableImage(file.mimeType))) {
       return apiError("ไม่พบรูปนี้", 404);
     }

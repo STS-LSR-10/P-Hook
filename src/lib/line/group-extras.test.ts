@@ -10,10 +10,11 @@ const NOW = new Date("2026-10-18T05:00:00Z");
 let group: GroupRow | null = null;
 let ownerPlan = "ultimate";
 let waits = new Map<string, { name: string | null }>();
-let saved: { owner: string; name: string | null; group?: { groupId: string; savedBy: string } }[] = [];
+let saved: { owner: string; name: string | null; group?: { groupId: string; savedBy: string } }[] =
+  [];
 let saveOutcome: "ok" | "full" = "ok";
 let groupFiles: { id: string; name: string }[] = [];
-let listCalls: { userId: string; groupId?: string; q?: string }[] = [];
+let listCalls: { groupId?: string; q?: string }[] = [];
 let reminders: (GroupReminder & { groupId: string })[] = [];
 let activeCount = 0;
 let created: { userId: string; body: string; groupId?: string; createdBy?: string }[] = [];
@@ -21,12 +22,16 @@ let owlTaken = 0;
 let owlRefunded = 0;
 let owlAllowed = true;
 let slipChecks = 0;
+const removed: string[] = [];
 
 vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
   getOwner: async () => ({ lineUserId: "Uowner", plan: ownerPlan, planExpiresAt: null }),
   memberNames: async () => new Map([["Uanna", { name: "แอน", updatedAt: NOW.toISOString() }]]),
   upsertMember: async () => undefined,
+  removeMembers: async (_db: unknown, _g: string, ids: string[]) => {
+    removed.push(...ids);
+  },
   payerTotals: async () => [{ lineUserId: "Uanna", totalSatang: 45000, entries: 3 }],
   recentEntries: async () => [],
   openTrip: async () => null,
@@ -51,12 +56,8 @@ vi.mock("@/lib/file-repo", async (original) => ({
     waits.delete(`${g}/${u}`);
     return w;
   },
-  listFiles: async (
-    _db: unknown,
-    userId: string,
-    options: { groupId?: string; q?: string },
-  ) => {
-    listCalls.push({ userId, groupId: options.groupId, q: options.q });
+  listGroupFiles: async (_db: unknown, groupId: string, options: { q?: string }) => {
+    listCalls.push({ groupId, q: options.q });
     const items = groupFiles
       .filter((f) => !options.q || f.name.includes(options.q))
       .map((f) => ({
@@ -196,6 +197,22 @@ beforeEach(() => {
   owlRefunded = 0;
   owlAllowed = true;
   slipChecks = 0;
+  removed.length = 0;
+});
+
+describe("members leaving", () => {
+  it("forgets who left, so they no longer see the group's files", async () => {
+    const { deps } = setup();
+    await handleEvent(
+      {
+        type: "memberLeft",
+        source: { type: "group", groupId: GID },
+        left: { members: [{ type: "user", userId: "Ubob" }] },
+      },
+      deps,
+    );
+    expect(removed).toEqual(["Ubob"]);
+  });
 });
 
 describe("files in a group", () => {
@@ -251,7 +268,7 @@ describe("files in a group", () => {
     ];
     const { deps, reply } = setup();
     await handleEvent(say("Ubob", "หาไฟล์ สัญญา"), deps);
-    expect(listCalls).toEqual([{ userId: "app-owner", groupId: "g1", q: "สัญญา" }]);
+    expect(listCalls).toEqual([{ groupId: "g1", q: "สัญญา" }]);
     expect(said(reply)).toContain("สัญญาเช่า.pdf");
     expect(said(reply)).not.toContain("เมนู.jpg");
 
@@ -358,6 +375,15 @@ describe("พี่ฮูก in a group", () => {
     await handleEvent(say("Uanna", "ฮูก สรุปเดือนนี้"), deps);
     expect(said(reply)).toContain("สิทธิ์ถามพี่ฮูกของเจ้าของสมุด");
     expect(asked).toEqual([]);
+  });
+
+  it("a member over their daily cap gets the owner's question back", async () => {
+    const { deps, reply, asked } = setup();
+    deps.limit = async (bucket) => ({ allowed: bucket !== "owl_day", hits: 1, limit: 30 });
+    await handleEvent(say("Uanna", "ฮูก สรุปเดือนนี้"), deps);
+    expect(asked).toEqual([]);
+    expect(owlRefunded).toBe(1);
+    expect(reply).toHaveBeenCalledTimes(1);
   });
 
   it("gives the quota back when the AI fails", async () => {

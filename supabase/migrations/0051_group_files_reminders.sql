@@ -54,10 +54,53 @@ language sql stable security invoker as $$
 $$;
 revoke execute on function file_usage_groups(uuid) from public, anon, authenticated;
 
--- claim_due_reminders, saying also where a reminder goes: r_group is the LINE group id for one set in
--- a group (null for a personal one), and r_group_open is false when the bot has left that group, so it
--- is taken but not sent. A new name, because a function cannot change what it returns; the old one
--- stays for the code that runs until this version is deployed.
+-- claim_due_reminders (the code deployed before this version) leaves group reminders alone, so it can
+-- never push one to the owner's own chat. Same body as 0043 with that one filter.
+create or replace function claim_due_reminders(p_now timestamptz, p_limit int)
+returns table (r_id uuid, r_user uuid, r_line text, r_body text, r_repeat text)
+language plpgsql security invoker as $$
+declare
+  r record;
+  step interval;
+  local_at timestamp;
+  guard int;
+begin
+  for r in
+    select ur.id as rid, ur.user_id as uid, ur.body as rbody, ur.remind_at as rat,
+           ur.repeat as rrep, u.line_user_id as rline
+    from user_reminders ur
+    join users u on u.id = ur.user_id
+    where ur.status = 'active' and ur.remind_at <= p_now and ur.group_id is null
+    order by ur.remind_at
+    limit p_limit
+    for update of ur skip locked
+  loop
+    if r.rrep is null then
+      update user_reminders set status = 'done', last_sent_at = p_now where id = r.rid;
+    else
+      step := case r.rrep when 'daily' then interval '1 day' when 'weekly' then interval '7 days' else interval '1 month' end;
+      local_at := r.rat at time zone 'Asia/Bangkok';
+      guard := 0;
+      loop
+        local_at := local_at + step;
+        guard := guard + 1;
+        exit when (local_at at time zone 'Asia/Bangkok') > p_now or guard > 1000;
+      end loop;
+      update user_reminders
+        set remind_at = local_at at time zone 'Asia/Bangkok', last_sent_at = p_now
+        where id = r.rid;
+    end if;
+    r_id := r.rid; r_user := r.uid; r_line := r.rline; r_body := r.rbody; r_repeat := r.rrep;
+    return next;
+  end loop;
+end $$;
+revoke execute on function claim_due_reminders(timestamptz, int) from public, anon, authenticated;
+
+-- claim_due_reminders_with_groups also says where a reminder goes: r_group is the LINE group id for one
+-- set in a group (null for a personal one). A group's reminder is sent only while its ledger is open and
+-- still has the owner whose limits it uses; otherwise it is finished (status done, so it frees the
+-- limit) and returned with r_group_open false, not to be sent. A new name, because a function cannot
+-- change what it returns.
 create or replace function claim_due_reminders_with_groups(p_now timestamptz, p_limit int)
 returns table (
   r_id uuid, r_user uuid, r_line text, r_body text, r_repeat text, r_group text, r_group_open boolean
@@ -72,7 +115,8 @@ begin
   for r in
     select ur.id as rid, ur.user_id as uid, ur.body as rbody, ur.remind_at as rat,
            ur.repeat as rrep, u.line_user_id as rline, g.line_group_id as gline,
-           coalesce(g.is_active, false) as gopen
+           ur.group_id is not null as ingroup,
+           coalesce(g.is_active and g.owner_user_id = ur.user_id, false) as gopen
     from user_reminders ur
     join users u on u.id = ur.user_id
     left join bot_groups g on g.id = ur.group_id
@@ -81,7 +125,7 @@ begin
     limit p_limit
     for update of ur skip locked
   loop
-    if r.rrep is null then
+    if r.rrep is null or (r.ingroup and not r.gopen) then
       update user_reminders set status = 'done', last_sent_at = p_now where id = r.rid;
     else
       step := case r.rrep when 'daily' then interval '1 day' when 'weekly' then interval '7 days' else interval '1 month' end;

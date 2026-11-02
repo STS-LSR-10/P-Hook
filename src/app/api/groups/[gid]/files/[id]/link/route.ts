@@ -2,7 +2,7 @@ import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { FILE_LINK_TTL_SECONDS, signFileToken } from "@/lib/auth/file-token";
 import { getServerEnv } from "@/lib/env";
-import { getReadyFile } from "@/lib/file-repo";
+import { getGroupFile } from "@/lib/file-repo";
 import { requireGroupViewer } from "@/lib/group-api";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 
@@ -23,13 +23,11 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     const limited = await limitOr429(db, "file_link", auth.userId, LIMITS.fileLink);
     if (limited) return limited;
 
-    const owner = viewer.group.ownerUserId;
-    if (!(await getReadyFile(db, owner, id, { groupId: viewer.group.id }))) {
-      return apiError("ไม่พบไฟล์นี้", 404);
-    }
-    // the file is the owner's: the link names them, and only this one file
+    const file = await getGroupFile(db, viewer.group.id, id);
+    if (!file) return apiError("ไม่พบไฟล์นี้", 404);
+    // the link names whose space the file takes, and only this one file
     const token = await signFileToken(
-      { userId: owner, fileId: id },
+      { userId: file.userId, fileId: id },
       getServerEnv().SESSION_JWT_SECRET,
     );
     const url = new URL(`/api/files/${id}/download`, request.url);
