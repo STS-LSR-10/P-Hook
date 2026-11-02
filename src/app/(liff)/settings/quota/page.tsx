@@ -70,6 +70,7 @@ function QuotaRow({ item }: { item: QuotaItem }) {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
+            aria-valuetext={`${amount(item, item.used)} จาก ${amount(item, item.limit)}`}
             className="h-2 overflow-hidden rounded-full bg-border"
           >
             <div

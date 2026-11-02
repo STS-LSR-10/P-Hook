@@ -12,7 +12,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { dayKey, LIFETIME, monthKey, readUsage } from "@/lib/usage";
 import { countActiveReminders } from "@/lib/user-reminder-repo";
 import { ownedWallets } from "@/lib/wallet";
-import { ensureWallets } from "@/lib/wallet-repo";
+import { listWallets } from "@/lib/wallet-repo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export async function GET(request: Request): Promise<Response> {
     const [storageBytes, wallets, goals, notes, reminders, recurring, slips, photos, counters] =
       await Promise.all([
         fileUsage(db, auth.userId),
-        ensureWallets(db, auth.userId),
+        listWallets(db, auth.userId),
         listGoals(db, auth.userId, now),
         countNotes(db, auth.userId),
         countActiveReminders(db, auth.userId),

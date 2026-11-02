@@ -25,6 +25,7 @@ export function SettingsSection({
   tone = "primary",
   open,
   onToggle,
+  hidden = false,
   children,
 }: {
   id: string;
@@ -36,11 +37,14 @@ export function SettingsSection({
   tone?: SectionTone;
   open: boolean;
   onToggle: () => void;
+  /** Left out by a search (kept in the page so nothing typed in it is lost). */
+  hidden?: boolean;
   children: ReactNode;
 }) {
   const danger = tone === "danger";
   return (
     <div
+      hidden={hidden}
       className={cn(
         "overflow-hidden rounded-3xl border bg-surface shadow-card",
         danger ? "border-rose-500/30" : "border-border",

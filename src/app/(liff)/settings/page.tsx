@@ -6,6 +6,7 @@ import {
   Clock,
   Coins,
   Crown,
+  Gauge,
   Gift,
   Languages,
   MessageCircle,
@@ -89,7 +90,7 @@ const SECTIONS: SectionDef[] = [
     tone: "sky",
     icon: <Wallet className="h-5 w-5" />,
     words:
-      "รอบงบ งบ รายเดือน รายสัปดาห์ วันเริ่ม กระเป๋าเงิน บัญชี บัตร เป้าหมาย ออม บิล รายการประจำ ความจำ หมวด",
+      "รอบงบ งบ รายเดือน รายสัปดาห์ วันเริ่ม กระเป๋าเงิน บัญชี บัตร เป้าหมาย ออม บิล รายการประจำ ความจำ หมวด สลิป ผู้รับ",
   },
   {
     id: "member",
@@ -125,21 +126,27 @@ export default function SettingsPage() {
   const settings = useApi<Settings>("/api/settings");
   const me = useApi<Me>("/api/me");
   const [override, setOverride] = useState<Settings | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  // shown in the section whose setting was changed, so it is never off-screen
+  const [notice, setNotice] = useState<{ at: SectionId; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [sheet, setSheet] = useState<"recurring" | "memory" | "payments" | null>(null);
   const [opened, setOpened] = useState<Set<SectionId>>(new Set());
+  // sections closed by hand while a search is on (it opens everything it finds)
+  const [closedInSearch, setClosedInSearch] = useState<Set<SectionId>>(new Set());
   const [search, setSearch] = useState("");
 
   // /settings#recurring (from the entries page) opens the recurring list straight away
   useEffect(() => {
-    if (window.location.hash === "#recurring") setSheet("recurring");
+    if (window.location.hash === "#recurring") {
+      setSheet("recurring");
+      setOpened(new Set(["money"])); // closing the sheet shows the row it came from
+    }
   }, []);
 
   const current = override ?? settings.data;
   const user = me.data;
 
-  async function save(patch: Partial<Settings>) {
+  async function save(at: SectionId, patch: Partial<Settings>) {
     if (!current) return;
     const previous = current;
     setOverride({ ...current, ...patch }); // optimistic
@@ -151,27 +158,34 @@ export default function SettingsPage() {
         body: JSON.stringify(patch),
       });
       setOverride(saved);
-      setNotice("บันทึกแล้ว");
+      setNotice({ at, text: "บันทึกแล้ว" });
     } catch (e) {
       setOverride(previous);
-      setNotice(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
+      setNotice({ at, text: e instanceof Error ? e.message : "บันทึกไม่สำเร็จ" });
     } finally {
       setSaving(false);
     }
   }
 
   const term = search.trim().toLowerCase();
-  const shown = term ? SECTIONS.filter((s) => matches(s, term)) : SECTIONS;
+  const found = term ? SECTIONS.filter((s) => matches(s, term)) : SECTIONS;
   // a search opens what it finds; otherwise each section is as the person left it
-  const isOpen = (id: SectionId) => (term ? true : opened.has(id));
+  const isOpen = (id: SectionId) => (term ? !closedInSearch.has(id) : opened.has(id));
   const allOpen = SECTIONS.every((s) => opened.has(s.id));
+  const flip = (set: Set<SectionId>, id: SectionId) => {
+    const next = new Set(set);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  };
   const toggle = (id: SectionId) =>
-    setOpened((now) => {
-      const next = new Set(now);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    term ? setClosedInSearch((now) => flip(now, id)) : setOpened((now) => flip(now, id));
+  const noticeIn = (at: SectionId) =>
+    notice?.at === at ? (
+      <p role="status" className="rounded-2xl bg-primary-soft px-4 py-2 text-sm text-primary">
+        {notice.text}
+      </p>
+    ) : null;
 
   const loading = settings.loading || me.loading;
   const error = settings.error ?? me.error;
@@ -202,6 +216,7 @@ export default function SettingsPage() {
       case "bot":
         return (
           <>
+            {noticeIn("bot")}
             <section className={cardClass} aria-label="การ์ดยืนยันหลังจด">
               <div>
                 <h3 className="text-sm font-semibold">การ์ดยืนยันหลังจด</h3>
@@ -215,7 +230,7 @@ export default function SettingsPage() {
                     role="radio"
                     aria-checked={data.confirm_style === o.value}
                     disabled={saving}
-                    onClick={() => save({ confirm_style: o.value })}
+                    onClick={() => save("bot", { confirm_style: o.value })}
                     className={cn(
                       "min-h-14 rounded-2xl border px-2 py-2 text-center",
                       data.confirm_style === o.value
@@ -237,6 +252,7 @@ export default function SettingsPage() {
       case "money":
         return (
           <>
+            {noticeIn("money")}
             <section className={cardClass} aria-label="รอบงบ">
               <div>
                 <h3 className="text-sm font-semibold">รอบงบ</h3>
@@ -250,7 +266,7 @@ export default function SettingsPage() {
                     role="radio"
                     aria-checked={data.budget_cycle === o.value}
                     disabled={saving}
-                    onClick={() => save({ budget_cycle: o.value })}
+                    onClick={() => save("money", { budget_cycle: o.value })}
                     className={cn(
                       "h-11 rounded-2xl border text-sm font-semibold",
                       data.budget_cycle === o.value
@@ -268,7 +284,7 @@ export default function SettingsPage() {
                   <select
                     value={data.cycle_start_day}
                     disabled={saving}
-                    onChange={(e) => save({ cycle_start_day: Number(e.target.value) })}
+                    onChange={(e) => save("money", { cycle_start_day: Number(e.target.value) })}
                     className="num h-11 w-24 rounded-2xl border border-border bg-background px-3 text-center"
                   >
                     {START_DAYS.map((d) => (
@@ -339,6 +355,12 @@ export default function SettingsPage() {
                 title={person.plan === "free" ? "อัปเกรด" : "อัปเกรด / ต่ออายุ"}
                 ariaLabel="อัปเกรด"
                 sub="ปลดล็อกฟีเจอร์พรีเมียมทั้งหมด"
+              />
+              <MenuLink
+                href="/settings/quota"
+                icon={<Gauge className="h-[18px] w-[18px]" />}
+                title="โควตาการใช้งาน"
+                sub="ดูว่าใช้ไปเท่าไรจากโควตาของแผน"
               />
               <MenuLink
                 href="/invite"
@@ -413,7 +435,10 @@ export default function SettingsPage() {
               <input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setClosedInSearch(new Set());
+                }}
                 aria-label="ค้นหาการตั้งค่า"
                 placeholder="ค้นหาการตั้งค่า เช่น แจ้งเตือน, ธีม, สรุป"
                 className="h-11 w-full rounded-2xl border border-border bg-surface pl-10 pr-4 text-sm outline-none focus:border-primary"
@@ -421,15 +446,6 @@ export default function SettingsPage() {
             </div>
 
             <ProfileCard me={user} />
-
-            {notice ? (
-              <p
-                role="status"
-                className="rounded-2xl bg-primary-soft px-4 py-2 text-sm text-primary"
-              >
-                {notice}
-              </p>
-            ) : null}
 
             <div className="flex items-center justify-between px-1">
               <h2 className="text-xs font-semibold text-muted">หมวดการตั้งค่า</h2>
@@ -446,27 +462,28 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {shown.length === 0 ? (
+            {found.length === 0 ? (
               <EmptyState title="ไม่พบการตั้งค่า" hint={`ไม่มีหมวดที่ตรงกับ "${search.trim()}"`} />
-            ) : (
-              <div className="space-y-3">
-                {shown.map((s) => (
-                  <SettingsSection
-                    key={s.id}
-                    id={`settings-${s.id}`}
-                    icon={s.icon}
-                    title={s.title}
-                    sub={s.sub}
-                    tone={s.tone}
-                    badge={badgeOf(s.id)}
-                    open={isOpen(s.id)}
-                    onToggle={() => toggle(s.id)}
-                  >
-                    {contentOf(s.id, current, user)}
-                  </SettingsSection>
-                ))}
-              </div>
-            )}
+            ) : null}
+            {/* every section stays in the page, so a search never loses what was typed in one */}
+            <div className="space-y-3">
+              {SECTIONS.map((s) => (
+                <SettingsSection
+                  key={s.id}
+                  hidden={!found.includes(s)}
+                  id={`settings-${s.id}`}
+                  icon={s.icon}
+                  title={s.title}
+                  sub={s.sub}
+                  tone={s.tone}
+                  badge={badgeOf(s.id)}
+                  open={isOpen(s.id)}
+                  onToggle={() => toggle(s.id)}
+                >
+                  {contentOf(s.id, current, user)}
+                </SettingsSection>
+              ))}
+            </div>
           </>
         )}
       </div>

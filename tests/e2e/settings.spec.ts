@@ -365,6 +365,70 @@ test.describe("settings sections and search (360px)", () => {
     await expect(page.getByText("บันทึกแล้ว")).toBeVisible();
   });
 
+  test("a save notice shows inside the section where the setting was changed", async ({ page }) => {
+    await mockApi(page, {
+      ...COMMON,
+      "GET /api/me": ME_FREE,
+      "PATCH /api/settings": { status: 500, body: { error: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง" } },
+    });
+    await openSettings(page);
+    const money = page.getByRole("region", { name: "รอบงบ บัญชี และเป้าหมาย" });
+    await money.getByRole("radio", { name: "รายสัปดาห์" }).click();
+    await expect(money.getByRole("status")).toContainText("บันทึกไม่สำเร็จ");
+    await expect(money.getByRole("radio", { name: "รายเดือน" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+
+  test("a section found by a search can still be closed, and clearing the search keeps the rest as it was", async ({
+    page,
+  }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });
+    await page.goto("/settings");
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("ธีม");
+    const bot = page.getByRole("button", { name: "การแจ้งเตือนและแชทบอท" });
+    await expect(bot).toHaveAttribute("aria-expanded", "true");
+    await bot.click();
+    await expect(bot).toHaveAttribute("aria-expanded", "false");
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("");
+    await expect(bot).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("search finds slips and the quota page", async ({ page }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });
+    await page.goto("/settings");
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("สลิป");
+    await expect(page.getByRole("button", { name: "จัดหมวดด้วยความจำ" })).toBeVisible();
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("โควตา");
+    const member = page.getByRole("region", { name: "สมาชิกและสิทธิประโยชน์" });
+    await expect(member.getByRole("link", { name: "โควตาการใช้งาน" })).toHaveAttribute(
+      "href",
+      "/settings/quota",
+    );
+  });
+
+  test("a search hides other sections without losing what was typed in them", async ({ page }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });
+    await openSettings(page);
+    const days = page.getByLabel("จำนวนวันที่จะแลก");
+    await days.selectOption("2");
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("ธีม");
+    await expect(page.getByRole("region", { name: "สมาชิกและสิทธิประโยชน์" })).toBeHidden();
+    await page.getByLabel("ค้นหาการตั้งค่า").fill("");
+    await expect(days).toHaveValue("2");
+  });
+
+  test("#recurring also opens the section it lives in", async ({ page }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });
+    await page.goto("/settings#recurring");
+    await page
+      .getByRole("dialog", { name: "รายการประจำ" })
+      .getByRole("button", { name: "ปิด" })
+      .click();
+    await expect(page.getByRole("button", { name: "รายการประจำ" })).toBeVisible();
+  });
+
   test("the profile shows the plan, coins and streak, with a quota button", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS });
     await page.goto("/settings");
@@ -406,9 +470,17 @@ const QUOTA = (plan: "free" | "plus" | "ultimate") => ({
       key: "slips",
       label: "อ่านสลิป",
       used: 2,
-      limit: plan === "ultimate" ? null : 30,
+      limit: plan === "ultimate" ? null : plan === "free" ? 3 : 30,
       unit: "count",
-      period: "month",
+      period: plan === "free" ? "week" : "month",
+    },
+    {
+      key: "voice",
+      label: "จดด้วยเสียง",
+      used: 0,
+      limit: plan === "free" ? 1 : 20,
+      unit: "count",
+      period: plan === "free" ? "once" : "month",
     },
     { key: "owl", label: "ถามพี่ฮูก", used: 4, limit: 5, unit: "count", period: "month" },
   ],
@@ -429,6 +501,12 @@ test.describe("quota page (360px)", () => {
     await expect(page.getByText("ใช้ครบแล้ว")).toBeVisible();
     await expect(page.getByText("ใกล้ครบแล้ว")).toBeVisible(); // owl 4 / 5
     await expect(page.getByText("ต้องอัปเกรด")).toBeVisible(); // recurring on Free
+    await expect(page.getByText("สัปดาห์นี้")).toBeVisible(); // Free slips count by the week
+    await expect(page.getByText("ตลอดการใช้งาน")).toBeVisible(); // the one voice try
+    await expect(page.getByRole("progressbar", { name: "การเตือน" })).toHaveAttribute(
+      "aria-valuetext",
+      "3 จาก 3",
+    );
     await expect(page.getByRole("link", { name: "อัปเกรดเพื่อเพิ่มโควตา" })).toHaveAttribute(
       "href",
       "/upgrade",
