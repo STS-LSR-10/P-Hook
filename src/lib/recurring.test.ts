@@ -83,3 +83,16 @@ describe("describeRule", () => {
     expect(describeRule("monthly", 25)).toBe("ทุกเดือน วันที่ 25");
   });
 });
+
+describe("recurring days in the owner's zone", () => {
+  it("runs at their midnight, not Bangkok's", async () => {
+    const { runInZone } = await import("@/lib/zone-scope");
+    const { firstRunAt: first } = await import("./recurring");
+    // 3 Nov 2026 12:00 UTC: the day is 3 Nov both in Bangkok and in New York (EST)
+    const now = new Date("2026-11-03T12:00:00Z");
+    expect(runInZone("America/New_York", () => first(now, "daily", null)).toISOString()).toBe(
+      "2026-11-03T05:00:00.000Z",
+    );
+    expect(first(now, "daily", null).toISOString()).toBe("2026-11-02T17:00:00.000Z");
+  });
+});

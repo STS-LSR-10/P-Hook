@@ -9,6 +9,7 @@ import {
   type SmartEntry,
   type StructurerEnv,
 } from "./text-structurer";
+import { currentZone } from "@/lib/thai-date";
 
 /** Most entries read from one PDF (the rest is dropped; the person is told to send it in parts). */
 export const MAX_PDF_ENTRIES = 30;
@@ -60,7 +61,7 @@ export function pdfPrompt(request: Pick<PdfRequest, "today" | "categories">): st
   return [
     "You read a PDF about the user's OWN money (Thai bank or e-wallet statement, credit-card",
     "statement, bill, receipt or a list of payments) and turn it into bookkeeping entries.",
-    `Today (Asia/Bangkok) is ${request.today}.`,
+    `Today (${currentZone()}) is ${request.today}.`,
     "Return ONLY a JSON object matching this JSON Schema, with no extra text:",
     JSON.stringify(JSON_SCHEMA),
     "Rules:",

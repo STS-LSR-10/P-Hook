@@ -309,6 +309,36 @@ test.describe("settings page (360px)", () => {
   });
 });
 
+test.describe("time zone (360px)", () => {
+  test("the zone opens a searchable list, the chosen one ticked; picking one saves it", async ({
+    page,
+  }) => {
+    const saved: unknown[] = [];
+    await mockApi(page, {
+      ...COMMON,
+      "GET /api/settings": { ...SETTINGS, timezone: "Asia/Bangkok" },
+      "GET /api/me": ME_PLUS,
+      "GET /api/memory": { items: [] },
+      "PATCH /api/settings": (route: Route) => {
+        saved.push(route.request().postDataJSON());
+        return { ...SETTINGS, timezone: "Asia/Tokyo" };
+      },
+    });
+    await openSettings(page);
+    await page.getByRole("button", { name: "โซนเวลา" }).click();
+    const dialog = page.getByRole("dialog", { name: "โซนเวลา" });
+    await expect(dialog.getByRole("button", { name: "Bangkok (UTC+07:00)" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await dialog.getByLabel("ค้นหาโซนเวลา").fill("tok");
+    await expect(dialog.getByRole("button", { name: /Bangkok/ })).toHaveCount(0);
+    await expectNoHorizontalScroll(page);
+    await dialog.getByRole("button", { name: "Tokyo (UTC+09:00)" }).click();
+    await expect.poll(() => saved).toEqual([{ timezone: "Asia/Tokyo" }]);
+  });
+});
+
 test.describe("settings sections and search (360px)", () => {
   test("sections start closed, open one at a time, and all at once", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });

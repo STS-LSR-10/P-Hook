@@ -1,5 +1,60 @@
-// Asia/Bangkok has a fixed UTC+7 offset (no DST), so plain arithmetic is safe.
-const OFFSET_MS = 7 * 60 * 60 * 1000;
+// Wall-clock times are read and written in the person's time zone: Bangkok unless they chose another
+// (see setZoneSource). Bangkok has a fixed UTC+7 offset (no DST), so it keeps a fast path; any other
+// zone is looked up through Intl, daylight saving included. The "bangkok" names are older than zones.
+export const DEFAULT_ZONE = "Asia/Bangkok";
+const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+let zoneSource: (() => string | null | undefined) | null = null;
+
+/** Where the current zone comes from: the request on the server, the signed-in person in the page. */
+export function setZoneSource(source: (() => string | null | undefined) | null): void {
+  zoneSource = source;
+}
+
+const formatters = new Map<string, Intl.DateTimeFormat | null>();
+function formatterOf(zone: string): Intl.DateTimeFormat | null {
+  if (!formatters.has(zone)) {
+    try {
+      formatters.set(
+        zone,
+        new Intl.DateTimeFormat("en-US", {
+          timeZone: zone,
+          hourCycle: "h23",
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+        }),
+      );
+    } catch {
+      formatters.set(zone, null); // not a zone this runtime knows
+    }
+  }
+  return formatters.get(zone) ?? null;
+}
+
+/** The zone times are shown and read in now. */
+export function currentZone(): string {
+  let zone: string | null | undefined;
+  try {
+    zone = zoneSource?.();
+  } catch {
+    zone = null;
+  }
+  return zone && (zone === DEFAULT_ZONE || formatterOf(zone)) ? zone : DEFAULT_ZONE;
+}
+
+/** How far the zone's clock is ahead of UTC at that moment. */
+export function zoneOffsetMs(date: Date, zone: string = currentZone()): number {
+  const f = zone === DEFAULT_ZONE ? null : formatterOf(zone);
+  if (!f) return BANGKOK_OFFSET_MS;
+  const p: Record<string, number> = {};
+  for (const part of f.formatToParts(date)) p[part.type] = Number(part.value);
+  const wall = Date.UTC(p.year ?? 0, (p.month ?? 1) - 1, p.day, p.hour, p.minute, p.second);
+  return wall - Math.floor(date.getTime() / 1000) * 1000;
+}
 
 export interface BangkokParts {
   year: number;
@@ -10,8 +65,9 @@ export interface BangkokParts {
   weekday: number; // 0 = Sunday
 }
 
-export function bangkokParts(date: Date): BangkokParts {
-  const d = new Date(date.getTime() + OFFSET_MS);
+/** The wall-clock parts of a moment in the person's zone. */
+export function bangkokParts(date: Date, zone: string = currentZone()): BangkokParts {
+  const d = new Date(date.getTime() + zoneOffsetMs(date, zone));
   return {
     year: d.getUTCFullYear(),
     month: d.getUTCMonth() + 1,
@@ -22,9 +78,27 @@ export function bangkokParts(date: Date): BangkokParts {
   };
 }
 
-/** Build a UTC Date from a Bangkok wall-clock time. Day/month overflow is normalized. */
-export function fromBangkok(year: number, month: number, day: number, hour = 0, minute = 0): Date {
-  return new Date(Date.UTC(year, month - 1, day, hour, minute) - OFFSET_MS);
+/** Build a UTC Date from a wall-clock time in the person's zone. Day/month overflow is normalized. */
+export function fromBangkok(
+  year: number,
+  month: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+  zone: string = currentZone(),
+): Date {
+  const wall = Date.UTC(year, month - 1, day, hour, minute);
+  // the offset at the guess, then at the answer (they differ only across a daylight saving change)
+  let at = wall - zoneOffsetMs(new Date(wall), zone);
+  const again = wall - zoneOffsetMs(new Date(at), zone);
+  if (again !== at) at = again;
+  return new Date(at);
+}
+
+/** The same wall-clock time `days` calendar days later in the person's zone (a day is not always 24h). */
+export function addLocalDays(date: Date, days: number, zone: string = currentZone()): Date {
+  const p = bangkokParts(date, zone);
+  return fromBangkok(p.year, p.month, p.day + days, p.hour, p.minute, zone);
 }
 
 export function isValidYmd(year: number, month: number, day: number): boolean {

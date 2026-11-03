@@ -2,7 +2,7 @@ import { z } from "zod";
 import { toSatang } from "@/lib/money";
 import { postJson, type AiProviderName } from "@/lib/ocr/provider";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
-import { bangkokParts, fromBangkok, isValidYmd } from "@/lib/thai-date";
+import { bangkokParts, currentZone, fromBangkok, isValidYmd } from "@/lib/thai-date";
 import type { TxType } from "@/lib/types";
 
 /** What the model is shown about the person's categories (names only, nothing else). */
@@ -71,7 +71,7 @@ export function structurePrompt(request: StructureRequest): string {
       .join(", ");
   return [
     "You turn a Thai message about the user's OWN money into bookkeeping entries.",
-    `Today (Asia/Bangkok) is ${request.today}.`,
+    `Today (${currentZone()}) is ${request.today}.`,
     "Return ONLY a JSON object matching this JSON Schema, with no extra text:",
     JSON.stringify(JSON_SCHEMA),
     "Rules:",

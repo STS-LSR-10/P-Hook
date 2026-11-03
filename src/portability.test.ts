@@ -8,7 +8,8 @@ import { describe, expect, it } from "vitest";
  * See docs/CLOUDFLARE-MIGRATION.md. If a new import fails here, check it against the Workers Node.js
  * compatibility list before adding it to ALLOWED_NODE.
  */
-const ALLOWED_NODE = new Set(["node:crypto"]);
+// node:async_hooks: AsyncLocalStorage is supported by Workers with nodejs_compat (the zone of a request)
+const ALLOWED_NODE = new Set(["node:crypto", "node:async_hooks"]);
 
 function sourceFiles(dir: string): string[] {
   const out: string[] = [];

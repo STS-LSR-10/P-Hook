@@ -17,6 +17,11 @@ describe("export token", () => {
     expect(await verifyExportToken(token, SECRET, NOW)).toEqual(claims);
   });
 
+  it("carries the zone of the request that made it, so the file's dates are the person's", async () => {
+    const token = await signExportToken({ ...claims, tz: "Asia/Tokyo" }, SECRET, NOW);
+    expect((await verifyExportToken(token, SECRET, NOW))?.tz).toBe("Asia/Tokyo");
+  });
+
   it("expires after the link TTL", async () => {
     const token = await signExportToken(claims, SECRET, NOW);
     const late = new Date(NOW.getTime() + (EXPORT_LINK_TTL_SECONDS + 5) * 1000);

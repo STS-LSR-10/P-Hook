@@ -1,6 +1,6 @@
 import type { DateRange } from "@/lib/budget-cycle";
 import { nextRunAfter, type Cadence } from "@/lib/recurring";
-import { bangkokParts, fromBangkok } from "@/lib/thai-date";
+import { addLocalDays, bangkokParts, fromBangkok } from "@/lib/thai-date";
 
 const DAY_MS = 86_400_000;
 /** Fewer days or entries than this and the rate is a guess: the card says so. */
@@ -115,7 +115,7 @@ function simulate(input: {
   let balance = input.netNow;
   let runsOutOn: Date | null = null;
   for (let day = input.elapsedDays - 1; day < input.totalDays; day++) {
-    const date = new Date(input.start.getTime() + day * DAY_MS);
+    const date = addLocalDays(input.start, day);
     for (const o of input.upcoming) {
       if (o.date.getTime() === date.getTime()) {
         balance += o.type === "income" ? o.amountSatang : -o.amountSatang;
@@ -166,7 +166,7 @@ export function forecastCycle(input: ForecastInput): Forecast {
     let exhaustedOn: Date | null = null;
     const overNow = spend >= limit;
     for (let day = elapsedDays - 1; day < totalDays; day++) {
-      const date = new Date(cycle.from.getTime() + day * DAY_MS);
+      const date = addLocalDays(cycle.from, day);
       for (const o of upcomingExpenses)
         if (o.date.getTime() === date.getTime()) spend += o.amountSatang;
       if (day >= elapsedDays) spend += rate;

@@ -156,3 +156,15 @@ describe("runSummaries and the AI Insight", () => {
     expect(loadFacts).not.toHaveBeenCalled();
   });
 });
+
+describe("the summaries in the person's own zone", () => {
+  it("Monday 09:00 is their Monday morning: not yet in Los Angeles at Bangkok's 09:30", async () => {
+    const weekly = { weekly_summary_enabled: true, monthly_summary_enabled: false };
+    const la = fakeDb("plus", { ...weekly, users: { timezone: "America/Los_Angeles" } });
+    expect((await runSummaries(la, push, MONDAY_NOW)).candidates).toBe(0);
+    // 09:30 Monday in Los Angeles (PST, UTC-8)
+    const laMorning = new Date("2026-11-02T17:30:00Z");
+    expect((await runSummaries(la, push, laMorning)).candidates).toBe(1);
+    expect(push).toHaveBeenCalledTimes(1);
+  });
+});

@@ -6,7 +6,9 @@ import { requireFeature } from "@/lib/plan-server";
 import { DEFAULT_PERSONA, DEFAULT_THEME, PERSONA_IDS, THEME_IDS } from "@/lib/personalize";
 import { normalizeTime } from "@/lib/reminder";
 import { getSettings } from "@/lib/repo";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { DEFAULT_ZONE, isZone } from "@/lib/zone";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,8 +17,19 @@ export async function GET(request: Request): Promise<Response> {
   return guard(async () => {
     const auth = await requireUser(request);
     if (auth instanceof Response) return auth;
-    return json(await getSettings(getAdminClient(), auth.userId));
+    return json(await settingsOf(getAdminClient(), auth.userId));
   });
+}
+
+/** The settings, and the time zone (kept on the person, not with the other settings). */
+async function settingsOf(db: SupabaseClient, userId: string) {
+  const [settings, user] = await Promise.all([
+    getSettings(db, userId),
+    db.from("users").select("timezone").eq("id", userId).single(),
+  ]);
+  if (user.error) throw new Error(`load zone: ${user.error.message}`);
+  const zone = (user.data as { timezone?: string } | null)?.timezone;
+  return { ...settings, timezone: isZone(zone) ? zone : DEFAULT_ZONE };
 }
 
 const patchSchema = z
@@ -32,6 +45,8 @@ const patchSchema = z
     card_theme: z.enum(THEME_IDS),
     bot_persona: z.enum(PERSONA_IDS),
     photo_prompt: z.boolean(),
+    /** One of the zones we list; the page signs in again after a change, so the session carries it. */
+    timezone: z.string().refine(isZone),
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0, "empty");
@@ -43,9 +58,15 @@ export async function PATCH(request: Request): Promise<Response> {
 
     const parsed = patchSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return apiError("ค่าที่ส่งมาไม่ถูกต้อง", 400);
-    const patch: Record<string, unknown> = { ...parsed.data };
+    const { timezone, ...rest } = parsed.data;
+    const patch: Record<string, unknown> = { ...rest };
 
     const db = getAdminClient();
+
+    if (timezone !== undefined) {
+      const { error } = await db.from("users").update({ timezone }).eq("id", auth.userId);
+      if (error) throw new Error(`save zone: ${error.message}`);
+    }
 
     if (parsed.data.daily_reminder_time !== undefined) {
       const time = normalizeTime(parsed.data.daily_reminder_time);
@@ -80,10 +101,12 @@ export async function PATCH(request: Request): Promise<Response> {
       if (locked) return locked;
     }
 
-    const { error } = await db
-      .from("user_settings")
-      .upsert({ user_id: auth.userId, ...patch }, { onConflict: "user_id" });
-    if (error) throw new Error(`save settings: ${error.message}`);
-    return json(await getSettings(db, auth.userId));
+    if (Object.keys(patch).length > 0) {
+      const { error } = await db
+        .from("user_settings")
+        .upsert({ user_id: auth.userId, ...patch }, { onConflict: "user_id" });
+      if (error) throw new Error(`save settings: ${error.message}`);
+    }
+    return json(await settingsOf(db, auth.userId));
   });
 }

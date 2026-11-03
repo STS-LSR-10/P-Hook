@@ -22,6 +22,7 @@ import {
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 import { ERROR_TEXT, text } from "./messages";
 import { log } from "@/lib/log";
+import { withZoneScope } from "@/lib/zone-scope";
 
 const TYPING_SECONDS = 20;
 
@@ -128,7 +129,8 @@ export async function processEvents(rawEvents: unknown[]): Promise<void> {
       const chatId = typingChatId(raw);
       if (chatId) void line.showLoading(chatId, TYPING_SECONDS).catch(() => undefined);
       try {
-        await handleEvent(raw, deps);
+        // each event runs in its sender's time zone (set once they are known)
+        await withZoneScope(() => handleEvent(raw, deps));
       } catch (error) {
         if (eventId) await releaseEvent(db, eventId).catch(() => undefined);
         throw error;

@@ -7,6 +7,7 @@ import { isReminderDue, reminderText } from "@/lib/reminder";
 import { dayRange } from "@/lib/budget-cycle";
 import type { LineMessage } from "@/lib/types";
 import { log } from "@/lib/log";
+import { runInZone } from "@/lib/zone-scope";
 
 export interface ReminderRunSummary {
   candidates: number;
@@ -21,7 +22,7 @@ const BATCH = 1000;
 /**
  * Push the daily nudge to Plus users who turned it on, whose chosen time has come, and who
  * have not recorded anything today. Run it often (hourly): each user is reminded at most once
- * per Bangkok day (`last_reminded_on`).
+ * per day (`last_reminded_on`). The time, "today" and the day's date are each person's own zone.
  */
 export async function runReminders(
   db: SupabaseClient,
@@ -35,11 +36,10 @@ export async function runReminders(
     skippedHadEntry: 0,
     errors: 0,
   };
-  const today = bangkokDateKey(now);
 
   const settings = await db
     .from("user_settings")
-    .select("user_id,daily_reminder_time,last_reminded_on")
+    .select("user_id,daily_reminder_time,last_reminded_on,users(timezone)")
     .eq("daily_reminder_enabled", true)
     .not("daily_reminder_time", "is", null)
     .limit(BATCH);
@@ -48,11 +48,15 @@ export async function runReminders(
     user_id: string;
     daily_reminder_time: string;
     last_reminded_on: string | null;
+    users: { timezone?: string | null } | null;
   }[];
   summary.candidates = rows.length;
 
+  const zoneOf = (r: (typeof rows)[number]) => r.users?.timezone ?? null;
   const dueRows = rows.filter((r) =>
-    isReminderDue({ now, time: r.daily_reminder_time, lastRemindedOn: r.last_reminded_on }),
+    runInZone(zoneOf(r), () =>
+      isReminderDue({ now, time: r.daily_reminder_time, lastRemindedOn: r.last_reminded_on }),
+    ),
   );
   summary.due = dueRows.length;
   if (dueRows.length === 0) return summary;
@@ -76,12 +80,18 @@ export async function runReminders(
     ).map((u) => [u.id, u]),
   );
 
-  const range = dayRange(now);
   for (const row of dueRows) {
-    const user = byId.get(row.user_id);
+    await runInZone(zoneOf(row), () => remindOne(row.user_id));
+  }
+  return summary;
+
+  async function remindOne(userId: string): Promise<void> {
+    const today = bangkokDateKey(now);
+    const range = dayRange(now);
+    const user = byId.get(userId);
     // Plus only (a lapsed Plus keeps its settings but stops getting reminders)
     if (!user || !can(effectivePlan(user.plan, user.plan_expires_at, now), "dailyReminder")) {
-      continue;
+      return;
     }
     try {
       const entries = await db
@@ -94,7 +104,7 @@ export async function runReminders(
       if (entries.error) throw new Error(`count today: ${entries.error.message}`);
       if ((entries.count ?? 0) > 0) {
         summary.skippedHadEntry += 1;
-        continue;
+        return;
       }
 
       const streak = currentStreak(await recentDailyKeys(db, user.id), now);
@@ -123,5 +133,4 @@ export async function runReminders(
       log.error("reminder_failed", error);
     }
   }
-  return summary;
 }

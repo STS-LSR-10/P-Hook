@@ -138,7 +138,8 @@ describe("loadYearData", () => {
       [0, 25_050],
     ]);
     const series = rpc.mock.calls.find((c) => c[0] === "analytics_series")![1];
-    expect(series).toMatchObject({ p_bucket: "month", p_user: "u1" });
+    // the chart's buckets are in the zone of the request, the same one the app counts in
+    expect(series).toMatchObject({ p_bucket: "month", p_user: "u1", p_tz: "Asia/Bangkok" });
   });
 
   it("throws when the monthly query fails", async () => {

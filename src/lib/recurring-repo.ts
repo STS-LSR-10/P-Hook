@@ -4,6 +4,7 @@ import { satangToString, toSatang } from "@/lib/money";
 import { dueRuns, resumeAfter, type Cadence } from "@/lib/recurring";
 import type { TxType } from "@/lib/types";
 import { log } from "@/lib/log";
+import { runInZone } from "@/lib/zone-scope";
 
 export interface RuleRow {
   id: string;
@@ -140,23 +141,36 @@ export async function runDueRules(db: SupabaseClient, now: Date): Promise<Recurr
   if (rules.length === 0) return summary;
 
   const userIds = [...new Set(rules.map((r) => r.user_id))];
-  const users = await db.from("users").select("id,plan,plan_expires_at").in("id", userIds);
+  const users = await db.from("users").select("id,plan,plan_expires_at,timezone").in("id", userIds);
   if (users.error) fail("load rule owners", users.error);
+  const owners = (users.data ?? []) as {
+    id: string;
+    plan: Plan;
+    plan_expires_at: string | null;
+    timezone?: string | null;
+  }[];
   const plusUsers = new Set(
-    ((users.data ?? []) as { id: string; plan: Plan; plan_expires_at: string | null }[])
+    owners
       .filter((u) => can(effectivePlan(u.plan, u.plan_expires_at, now), "recurring"))
       .map((u) => u.id),
   );
+  const zoneOf = new Map(owners.map((u) => [u.id, u.timezone ?? null]));
 
   for (const rule of rules) {
     if (!plusUsers.has(rule.user_id)) {
       summary.rulesSkippedFree += 1;
       continue;
     }
+    // a rule's days and its next run are counted in its owner's zone
+    await runInZone(zoneOf.get(rule.user_id), () => runRule(rule));
+  }
+  return summary;
+
+  async function runRule(rule: (typeof rules)[number]): Promise<void> {
     try {
       const current = new Date(rule.next_run_at);
       const runs = dueRuns(current, now, rule.cadence, rule.day_of_period);
-      if (runs.length === 0) continue;
+      if (runs.length === 0) return;
       const resume = resumeAfter(current, runs.length, rule.cadence, rule.day_of_period);
 
       // claim: only one concurrent run can move next_run_at away from the value we read
@@ -167,7 +181,7 @@ export async function runDueRules(db: SupabaseClient, now: Date): Promise<Recurr
         .eq("next_run_at", rule.next_run_at)
         .select("id");
       if (claim.error) fail("claim rule", claim.error);
-      if ((claim.data ?? []).length === 0) continue; // someone else got it
+      if ((claim.data ?? []).length === 0) return; // someone else got it
 
       const insert = await db.from("transactions").insert(
         runs.map((run) => ({
@@ -197,5 +211,4 @@ export async function runDueRules(db: SupabaseClient, now: Date): Promise<Recurr
       log.error("recurring_rule_failed", error);
     }
   }
-  return summary;
 }

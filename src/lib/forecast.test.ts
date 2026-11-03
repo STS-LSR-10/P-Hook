@@ -244,3 +244,26 @@ describe("upcomingOccurrences", () => {
     expect(out[0]).toMatchObject({ type: "income", amountSatang: baht(30_000) });
   });
 });
+
+describe("forecastCycle in a zone whose clocks change", () => {
+  it("counts a bill after the change on its own day (New York, clocks back on 1 Nov)", async () => {
+    const { runInZone } = await import("@/lib/zone-scope");
+    runInZone("America/New_York", () => {
+      const ny = (m: number, d: number) => fromBangkok(2026, m, d);
+      const f = forecastCycle({
+        now: new Date(ny(10, 20).getTime() + 8 * 3600_000),
+        cycle: { from: ny(10, 15), to: ny(11, 15) },
+        incomeSatang: baht(1000),
+        expenseSatang: 0,
+        recurringExpenseSatang: 0,
+        entryCount: 20,
+        last7VariableSatang: null,
+        upcoming: [{ date: ny(11, 5), type: "expense", amountSatang: baht(5000), title: "rent" }],
+        budgetSatang: baht(3000),
+      });
+      // the rent (after the change) is counted, so the money runs out on its day
+      expect(f.runsOutOn?.toISOString()).toBe(ny(11, 5).toISOString());
+      expect(f.budget?.exhaustedOn?.toISOString()).toBe(ny(11, 5).toISOString());
+    });
+  });
+});

@@ -12,7 +12,12 @@ import { useApi } from "@/components/liff/liff-provider";
 import { emojiOf } from "@/lib/category-emoji";
 import { formatBaht } from "@/lib/money";
 import type { SeriesPoint } from "@/lib/series";
-import { bangkokParts, formatThaiDayMonth, formatThaiMonthShort } from "@/lib/thai-date";
+import {
+  addLocalDays,
+  bangkokParts,
+  formatThaiDayMonth,
+  formatThaiMonthShort,
+} from "@/lib/thai-date";
 
 type View = "month" | "week" | "day";
 type Scope = "cycle" | "all";
@@ -50,7 +55,7 @@ function rangeLabel(series: SeriesPoint[], view: View): string | null {
   const b = new Date(last.start);
   const year = bangkokParts(b).year + 543;
   if (view === "month") return `${formatThaiMonthShort(a)} – ${formatThaiMonthShort(b)} ${year}`;
-  const end = view === "week" ? new Date(b.getTime() + 6 * 86_400_000) : b;
+  const end = view === "week" ? addLocalDays(b, 6) : b;
   return `${formatThaiDayMonth(a)} – ${formatThaiDayMonth(end)} ${year}`;
 }
 

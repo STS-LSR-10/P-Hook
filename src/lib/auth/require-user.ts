@@ -1,5 +1,6 @@
 import { getServerEnv } from "@/lib/env";
 import { apiError } from "@/lib/api";
+import { enterZone } from "@/lib/zone-scope";
 import { verifySession, type SessionClaims } from "./session";
 
 /**
@@ -22,5 +23,6 @@ export async function requireUser(request: Request): Promise<SessionClaims | Res
   }
   const claims = await verifySession(token, secret);
   if (!claims) return apiError("เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง", 401);
+  enterZone(claims.tz);
   return claims;
 }

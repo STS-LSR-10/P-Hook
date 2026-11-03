@@ -112,11 +112,12 @@ describe("previewErase / monthsWithData", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("lists months with their counts", async () => {
-    const { db } = fakeDb();
+  it("lists months with their counts, in the zone of the request", async () => {
+    const { db, calls } = fakeDb();
     expect(await monthsWithData(db, "u1")).toEqual([
       { month: "2026-10", entries: 7, transfers: 1 },
     ]);
+    expect(calls[0]?.args).toEqual({ p_user: "u1", p_tz: "Asia/Bangkok" });
   });
 });
 

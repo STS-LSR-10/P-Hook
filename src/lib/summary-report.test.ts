@@ -308,3 +308,17 @@ describe("the look of the summary card", () => {
     expect(out).toContain('"label":"ดูรายละเอียด"');
   });
 });
+
+describe("ranges across a clock change", () => {
+  it("a week before, and the label's last day, are calendar days (New York, 1 Nov)", async () => {
+    const { runInZone } = await import("@/lib/zone-scope");
+    const { fromBangkok } = await import("@/lib/thai-date");
+    const { previousRange: prev, rangeLabel: label } = await import("./summary-report");
+    runInZone("America/New_York", () => {
+      const week = { from: fromBangkok(2026, 11, 2), to: fromBangkok(2026, 11, 9) };
+      expect(prev("weekly", week).from.toISOString()).toBe(fromBangkok(2026, 10, 26).toISOString());
+      const across = { from: fromBangkok(2026, 10, 26), to: fromBangkok(2026, 11, 2) };
+      expect(label(across)).toBe("26 ต.ค. – 1 พ.ย.");
+    });
+  });
+});

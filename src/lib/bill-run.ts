@@ -17,6 +17,7 @@ import { log } from "@/lib/log";
 import { can, effectivePlan, type Plan } from "@/lib/plan";
 import type { LineMessage } from "@/lib/types";
 import { listWallets } from "@/lib/wallet-repo";
+import { runInZone } from "@/lib/zone-scope";
 
 export interface BillRunSummary {
   users: number;
@@ -63,7 +64,7 @@ export async function runBillReminders(
 
   const users = await db
     .from("users")
-    .select("id,line_user_id,plan,plan_expires_at")
+    .select("id,line_user_id,plan,plan_expires_at,timezone")
     .in("plan", ["ultimate"])
     .limit(BATCH);
   if (users.error) throw new Error(`load bill users: ${users.error.message}`);
@@ -73,6 +74,7 @@ export async function runBillReminders(
       line_user_id: string;
       plan: Plan;
       plan_expires_at: string | null;
+      timezone?: string | null;
     }[]
   ).filter((u) => can(effectivePlan(u.plan, u.plan_expires_at, now), "billReminder"));
   summary.users = ultimate.length;
@@ -85,8 +87,15 @@ export async function runBillReminders(
     sentKeysForUsers(db, ids, since),
   ]);
 
-  const today = todayKey(now);
-  for (const user of ultimate) {
+  // each person's bills fall due, and are reminded at their hour, in their own zone
+  for (const user of ultimate) await runInZone(user.timezone, () => remindOne(user));
+  await pruneReminders(db, new Date(now.getTime() - 120 * 86_400_000)).catch((error: unknown) =>
+    log.error("bill_prune_failed", error),
+  );
+  return summary;
+
+  async function remindOne(user: (typeof ultimate)[number]): Promise<void> {
+    const today = todayKey(now);
     try {
       const own: BillDto[] = billsByUser.get(user.id) ?? [];
       const wallets = await listWallets(db, user.id).catch(() => []);
@@ -107,8 +116,4 @@ export async function runBillReminders(
       log.error("bill_reminder_failed", error);
     }
   }
-  await pruneReminders(db, new Date(now.getTime() - 120 * 86_400_000)).catch((error: unknown) =>
-    log.error("bill_prune_failed", error),
-  );
-  return summary;
 }
