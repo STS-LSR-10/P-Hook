@@ -31,10 +31,11 @@ export default function HomePage() {
       }
       if (cancelled) return;
 
-      // The SDK may already have rewritten the URL (without a navigation).
+      // The SDK may already have rewritten the URL (without a navigation). Go there in this same page:
+      // reloading it loses that it was opened from a chat, and LINE then refuses liff.sendMessages.
       const { pathname, search } = window.location;
       if (pathname !== "/") {
-        window.location.replace(`${pathname}${search}`);
+        router.replace(`${pathname}${search}`);
         return;
       }
 
