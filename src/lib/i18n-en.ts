@@ -1340,4 +1340,203 @@ export const EN: Record<string, string> = {
     'You have a plan that renews automatically by card. Paying more with PromptPay would charge you twice. Upgrade by card instead, or manage it with the "Manage payments" button',
   "เปลี่ยนจากรายปีเป็นรายเดือนไม่ได้ระหว่างรอบ ยกเลิกต่ออายุที่ปุ่ม “จัดการการชำระเงิน” แล้วสมัครใหม่เมื่อครบรอบ":
     'You can\'t switch from yearly to monthly mid-period. Cancel renewal with the "Manage payments" button, then subscribe again when the period ends',
+  'ลองจดรายการสักอัน เช่น "กาแฟ 30" แล้วกราฟจะขึ้นมา':
+    'Try recording one, like "coffee 30", and the chart will appear',
+  'ลบบิล "{0}" ใช่ไหม? จะไม่เตือนอีก': 'Delete the bill "{0}"? You won\'t be reminded again',
+  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15"':
+    'Add one with the button below, or type in the chat, e.g. "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15"',
+  'ลบหมวด "{0}" ใช่ไหม? รายการในหมวดนี้จะย้ายไปหมวด "อื่นๆ"':
+    'Delete the category "{0}"? Its entries will move to "Other"',
+  'ลบหนี้ของ "{0}" ใช่ไหม? ยอดกระเป๋าจะกลับเป็นเหมือนไม่เคยมีหนี้ก้อนนี้':
+    'Delete the debt with "{0}"? The wallet balance goes back as if this debt never existed',
+  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "ให้ยืม สมชาย 500"':
+    'Add one with the button below, or type in the chat, e.g. "ให้ยืม สมชาย 500"',
+  'ลบเป้าหมาย "{0}" ใช่ไหม?{1}': 'Delete the goal "{0}"?{1}',
+  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000"':
+    'Add one with the button below, or type in the chat, e.g. "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000"',
+  'เปิดหน้านี้จากการ์ดในกลุ่ม LINE เช่น พิมพ์ "ไฟล์กลุ่ม" ในกลุ่ม':
+    'Open this page from a card in the LINE group, e.g. type "ไฟล์กลุ่ม" in the group',
+  'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสเหรียญสะสม':
+    "Let's track income and expenses easily in LINE with P'Hook! Add the bot and type \"ใช้รหัส {0}\" and we both get bonus coins",
+  'ลบเตือน "{0}" ทุกรอบใช่ไหม?': 'Delete the reminder "{0}" for every round?',
+  'ลบเตือน "{0}" ใช่ไหม?': 'Delete the reminder "{0}"?',
+  'มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ':
+    'You already have {0} repeating reminders. Choose "Once", delete ones you don\'t use, or upgrade to set more',
+  'เมื่อแก้หมวดสลิป บอทจะจำคู่ "ผู้รับ → หมวด" ไว้ใช้ครั้งต่อไป':
+    'When you change a slip\'s category, the bot remembers "payee → category" for next time',
+  'ไม่มีหมวดที่ตรงกับ "{0}"': 'No section matches "{0}"',
+  'พิมพ์ "กาแฟ 60" ในแชท บอทจะจดและจัดหมวดให้ทันที':
+    'Type "กาแฟ 60" in the chat and the bot records and categorises it right away',
+  'พิมพ์ "เมื่อวาน ข้าว 80" เพื่อจดย้อนหลัง (Pro ขึ้นไป)':
+    'Type "เมื่อวาน ข้าว 80" to record a past entry (Pro and above)',
+  'พิมพ์ "สรุปเดือนนี้" ในแชท เพื่อดูภาพรวมได้ทุกเมื่อ':
+    'Type "สรุปเดือนนี้" in the chat to see the overview any time',
+  'ลองพิมพ์ "กาแฟ 30" ในแชท หรือกดเพิ่มที่หน้ารายการได้เลย':
+    'Try typing "กาแฟ 30" in the chat, or add one on the entries page',
+  '{0} กด "ส่งการ์ดเข้าแชท" อีกครั้ง หรือพิมพ์ "แก้ไขเสร็จแล้ว" ในแชทก็ได้':
+    '{0} Tap "Send card to chat" again, or type "แก้ไขเสร็จแล้ว" in the chat',
+  'ลบ "{0}" ใช่ไหม?': 'Delete "{0}"?',
+  'พิมพ์ "กาแฟ 30" ในแชท หรือกดปุ่ม + เพื่อเพิ่มได้เลย':
+    'Type "กาแฟ 30" in the chat or tap + to add one',
+  'กดปุ่ม + หรือพิมพ์ในแชท เช่น "โน้ต ซื้อนม"': 'Tap + or type in the chat, e.g. "โน้ต ซื้อนม"',
+  'ส่งรูปในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"':
+    'Send a photo in the chat, then type "เก็บไว้ให้หน่อย"',
+  'ส่งไฟล์ในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"':
+    'Send a file in the chat, then type "เก็บไว้ให้หน่อย"',
+  'พิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง" หรือ "เก็บไฟล์" แล้วส่งไฟล์มา':
+    'Type in the group, e.g. "โน้ต ซื้อน้ำแข็ง", or "เก็บไฟล์" and then send the file',
+  'กดปุ่ม + หรือพิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง"':
+    'Tap + or type in the group, e.g. "โน้ต ซื้อน้ำแข็ง"',
+  'พิมพ์ "เก็บรูป" ในกลุ่ม แล้วส่งรูปมาภายใน 5 นาที':
+    'Type "เก็บรูป" in the group, then send the photo within 5 minutes',
+  'พิมพ์ "เก็บไฟล์" ในกลุ่ม แล้วส่งไฟล์มาภายใน 5 นาที':
+    'Type "เก็บไฟล์" in the group, then send the file within 5 minutes',
+  'ลบไฟล์ "{0}" ใช่ไหม? ลบแล้วกู้คืนไม่ได้': 'Delete the file "{0}"? This can\'t be undone',
+  'ยอดคงเหลือ = ยอดตั้งต้น + รายรับ − รายจ่าย · จดลงกระเป๋าอื่นในแชทโดยใส่ @ชื่อ เช่น "กาแฟ 45 @บัตร"':
+    'Balance = starting balance + income − expenses · Record into another wallet in the chat with @name, e.g. "กาแฟ 45 @บัตร"',
+  'ลบกระเป๋า "{0}" ใช่ไหม? รายการในกระเป๋านี้ไม่หาย แต่จะย้ายไปกระเป๋าหลัก':
+    'Delete the wallet "{0}"? Its entries aren\'t lost; they move to the main wallet',
+  'ออกจากกระเป๋า "{0}" ใช่ไหม? รายการที่เคยจดไว้ยังอยู่ในกระเป๋านั้น':
+    'Leave the wallet "{0}"? Entries you recorded stay in that wallet',
+  'เอา {0} ออกจากกระเป๋า "{1}" ใช่ไหม? รายการที่เขาเคยจดยังอยู่':
+    'Remove {0} from the wallet "{1}"? Entries they recorded stay',
+  พิมพ์ข้อความยืนยันให้ถูกต้องก่อนนะ: "Type the confirmation text correctly first",
+  ตัวเลือกไม่ถูกต้อง: "Invalid option",
+  ข้อมูลไม่ถูกต้อง: "Invalid data",
+  เดือนไม่ถูกต้อง: "Invalid month",
+  "เข้าสู่ระบบไม่สำเร็จ กรุณาเปิดใหม่อีกครั้ง": "Couldn't sign in. Please open the app again",
+  ไม่พบบิลนี้: "Bill not found",
+  ใส่จำนวนเงินที่จะจดด้วยนะ: "Enter the amount to record",
+  ใส่เดือนที่ครบกำหนดด้วยนะ: "Enter the due month",
+  มีบิลชื่อนี้อยู่แล้ว: "A bill with this name already exists",
+  ข้อมูลบิลไม่ถูกต้อง: "Invalid bill details",
+  ไม่พบหมวดนี้: "Category not found",
+  งบตั้งได้เฉพาะหมวดรายจ่ายนะ: "Budgets can only be set on expense categories",
+  'ซ่อนหมวด "อื่นๆ" ไม่ได้ เพราะใช้เป็นหมวดสำรอง':
+    "The \"Other\" category can't be hidden: it's the fallback category",
+  เลือกอีโมจิได้ตัวเดียวเท่านั้นนะ: "Choose only one emoji",
+  มีหมวดชื่อนี้อยู่แล้ว: "A category with this name already exists",
+  "หมวดมาตรฐานแก้ชื่อหรือสีไม่ได้ แต่ปรับคำค้น ซ่อน และเรียงลำดับได้นะ":
+    "Standard categories can't be renamed or recoloured, but you can adjust keywords, hide and reorder them",
+  "หมวดมาตรฐานลบไม่ได้ แต่ซ่อนได้นะ":
+    "Standard categories can't be deleted, but they can be hidden",
+  ไม่พบหมวดบางรายการ: "Some categories weren't found",
+  "กรอกชื่อหมวดให้ถูกต้องนะ (ไม่เกิน 30 ตัวอักษร)":
+    "Enter a valid category name (up to 30 characters)",
+  ไม่พบรายการชำระ: "Payment not found",
+  ไม่พบหนี้นี้: "Debt not found",
+  ชำระเกินยอดที่เหลือไม่ได้: "You can't pay more than what's left",
+  ไม่พบกระเป๋า: "Wallet not found",
+  ยอดหนี้ต้องไม่น้อยกว่าที่ชำระมาแล้ว: "The debt can't be less than what's already been paid",
+  ข้อมูลหนี้ไม่ถูกต้อง: "Invalid debt details",
+  ตัวเลือกส่งออกไม่ถูกต้อง: "Invalid export options",
+  "ลิงก์หมดอายุ เปิดไฟล์จากคลังอีกครั้งนะ":
+    "The link has expired. Open the file from the vault again",
+  ลิงก์นี้ไม่ถูกต้อง: "This link isn't valid",
+  ไม่พบไฟล์นี้: "File not found",
+  ตั้งชื่อไฟล์ให้ไม่ว่างนะ: "The file name can't be empty",
+  ตอนนี้ระบบเก็บไฟล์ยังไม่พร้อม: "File storage isn't ready yet",
+  ไม่พบรูปนี้: "Image not found",
+  ลิงก์หมดอายุ: "The link has expired",
+  คำค้นหรือหน้าที่ขอไม่ถูกต้อง: "Invalid search or page",
+  ไม่พบรายการนี้: "Entry not found",
+  "ลบรายการนี้ไม่ได้ เพราะมีการถอนที่ตามมา ลบการถอนก่อนนะ":
+    "This can't be deleted because a withdrawal came after it. Delete the withdrawal first",
+  ไม่พบเป้าหมายนี้: "Goal not found",
+  ถอนเกินยอดที่ออมไว้ไม่ได้: "You can't withdraw more than you've saved",
+  อีโมจิต้องเป็นรูปเดียว: "The emoji must be a single one",
+  มีเป้าหมายชื่อนี้อยู่แล้ว: "A goal with this name already exists",
+  "ตั้งชื่อเป้าหมายให้ถูกต้องนะ (ไม่เกิน 40 ตัวอักษร)":
+    "Enter a valid goal name (up to 40 characters)",
+  "ลบได้เฉพาะคนที่เก็บไฟล์นี้ หรือเจ้าของสมุดนะ":
+    "Only the person who saved this file or the ledger owner can delete it",
+  "สมุดกลุ่มนี้ปิดอยู่ หรือเจ้าของสมุดไม่ได้ใช้แผน Elite แล้ว จดเพิ่มไม่ได้":
+    "This group ledger is closed, or its owner no longer has Elite, so nothing more can be added",
+  "ยกเลิกได้เฉพาะคนที่ตั้งเตือนนี้ หรือเจ้าของสมุดนะ":
+    "Only the person who set this reminder or the ledger owner can cancel it",
+  ไม่พบโน้ตนี้: "Note not found",
+  เริ่มทดลองใช้ไม่ได้ในตอนนี้: "The trial can't be started right now",
+  จำนวนวันไม่ถูกต้อง: "Invalid number of days",
+  ไม่พบรายการประจำนี้: "Recurring entry not found",
+  กรอกข้อมูลรายการประจำให้ครบและถูกต้องนะ: "Fill in the recurring entry fully and correctly",
+  "จำนวนเงินต้องมากกว่า 0": "The amount must be more than 0",
+  หมวดหมู่ไม่ถูกต้อง: "Invalid category",
+  กรอกรหัสชวนเพื่อนให้ถูกต้องนะ: "Enter a valid invite code",
+  "เลยเวลาแล้ว กดแก้เพื่อตั้งเวลาใหม่นะ": "That time has passed. Tap edit to set a new time",
+  ค่าที่ส่งมาไม่ถูกต้อง: "Invalid values",
+  "เวลาไม่ถูกต้อง (เช่น 20:30)": "Invalid time (e.g. 20:30)",
+  เฉพาะคนที่จ่ายบิลนี้เลือกคนหารได้นะ:
+    "Only the person who paid this bill can choose who splits it",
+  เลือกคนหารไม่ถูกต้อง: "Invalid choice of people",
+  บิลนี้เลือกคนหารไปแล้ว: "People for this bill are already chosen",
+  มีคนที่ไม่ได้อยู่ในกลุ่มนี้: "Someone chosen isn't in this group",
+  "เลือกเพื่อนอย่างน้อย 1 คนนะ": "Choose at least one friend",
+  "หารได้ไม่เกิน 30 คนต่อบิล": "A bill can be split among up to 30 people",
+  ไม่พบรูปของรายการนี้: "No photo for this entry",
+  "การแนบรูปเป็นฟีเจอร์ของแผน Pro ขึ้นไป": "Attaching photos is a Pro-and-above feature",
+  ไม่พบไฟล์รูป: "Image file not found",
+  "รองรับเฉพาะรูป JPG, PNG หรือ WebP": "Only JPG, PNG or WebP images are supported",
+  "รูปใหญ่เกินไป (ไม่เกิน 4 MB)": "The image is too large (up to 4 MB)",
+  กรอกข้อมูลไม่ครบหรือไม่ถูกต้อง: "Some details are missing or invalid",
+  ไม่พบกระเป๋านี้: "Wallet not found",
+  ไม่พบสลิปของรายการนี้: "No slip for this entry",
+  "เลือกรายการไม่ถูกต้อง (สูงสุด 100 รายการ)": "Invalid selection (up to 100 entries)",
+  ตัวกรองไม่ถูกต้อง: "Invalid filters",
+  ไม่พบการโอนนี้: "Transfer not found",
+  ข้อมูลการโอนไม่ถูกต้อง: "Invalid transfer details",
+  โอนไปกระเป๋าเดียวกันไม่ได้: "You can't transfer to the same wallet",
+  ไม่พบกระเป๋าร่วมนี้: "Shared wallet not found",
+  เฉพาะเจ้าของที่เชิญคนเข้ากระเป๋าได้นะ: "Only the owner can invite people to the wallet",
+  ไม่พบสมาชิกนี้: "Member not found",
+  เฉพาะเจ้าของที่เอาคนอื่นออกจากกระเป๋าได้นะ: "Only the owner can remove others from the wallet",
+  "เจ้าของออกจากกระเป๋าไม่ได้ ถ้าไม่ใช้แล้วให้ลบกระเป๋าแทนนะ":
+    "The owner can't leave the wallet. If it's no longer needed, delete the wallet instead",
+  เฉพาะเจ้าของกระเป๋าร่วมที่แก้ได้นะ: "Only the shared wallet's owner can edit it",
+  กระเป๋าร่วมตั้งเป็นกระเป๋าหลักไม่ได้นะ: "A shared wallet can't be the main wallet",
+  กระเป๋าร่วมเป็นบัตรเครดิตไม่ได้นะ: "A shared wallet can't be a credit card",
+  ยอดตั้งต้นไม่ถูกต้อง: "Invalid starting balance",
+  มีกระเป๋าชื่อนี้อยู่แล้ว: "A wallet with this name already exists",
+  'เฉพาะเจ้าของที่ลบกระเป๋าร่วมได้ ถ้าไม่อยากร่วมแล้วให้กด "ออกจากกระเป๋า" นะ':
+    'Only the owner can delete a shared wallet. To stop sharing, tap "Leave this wallet"',
+  "ลบกระเป๋าหลักไม่ได้ ตั้งกระเป๋าอื่นเป็นกระเป๋าหลักก่อนนะ":
+    "The main wallet can't be deleted. Make another wallet the main one first",
+  'ยกเลิกเตือน "{0}" ของกลุ่มใช่ไหม?': 'Cancel the group\'s reminder "{0}"?',
+  'พิมพ์ในกลุ่ม เช่น "เตือน พรุ่งนี้ 9 โมง ประชุม"':
+    'Type in the group, e.g. "เตือน พรุ่งนี้ 9 โมง ประชุม"',
+  'ปลดล็อกกราฟ "วิเคราะห์รายรับรายจ่าย"': 'Unlock the "Income & expense analytics" charts',
+  'ปลดล็อกระบบ "วางแผนเก็บออม"': 'Unlock "Savings planning"',
+  'ใส่หมวด "{0}" ในรอบงบนี้': 'Category "{0}" this cycle',
+  'ถ้าอยากเก็บสำเนาไว้ ให้ส่งออกไฟล์ก่อนที่หน้า "รายการ" (ไอคอนดาวน์โหลด)':
+    'To keep a copy, export a file first on the "Entries" page (download icon)',
+  'เมื่อคุณแก้หมวดของสลิป บอทจะจำ "ผู้รับ → หมวด" ไว้ใช้ครั้งต่อไป':
+    'When you change a slip\'s category, the bot remembers "payee → category" for next time',
+  'ยังไม่มีที่จำไว้ ลองส่งสลิปแล้วกด "แก้ไขหมวด" ดูนะ':
+    'Nothing remembered yet. Try sending a slip and tapping "แก้ไขหมวด"',
+  'ลบรายการประจำ "{0}" ใช่ไหม? (รายการที่จดไปแล้วไม่หาย)':
+    'Delete the recurring entry "{0}"? (entries already recorded stay)',
+  กรุณาเข้าสู่ระบบอีกครั้ง: "Please sign in again",
+  ระบบยังตั้งค่าไม่ครบ: "The system isn't fully set up yet",
+  "เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง": "Your session has expired. Please sign in again",
+  ตั้งวงเงินและวันตัดรอบได้เฉพาะกระเป๋าบัตรเครดิต:
+    "A limit and statement day can only be set on credit card wallets",
+  "คนเดียวกันมีหนี้ค้างได้ไม่เกิน {0} ก้อน": "One person can have up to {0} open debts",
+  "เขียนโน้ตให้ไม่ว่างและไม่เกิน {0} ตัวอักษรนะ":
+    "Write a note that isn't empty and is up to {0} characters",
+  "โน้ตของเจ้าของสมุดเต็ม {0} รายการแล้ว ลบอันเก่าก่อนนะ":
+    "The ledger owner's notes are full ({0}). Delete old ones first",
+  "แนบรูปครบ {0} รูปของเดือนนี้แล้ว": "You've attached all {0} photos for this month",
+  "มีบิลได้สูงสุด {0} รายการ": "You can have up to {0} bills",
+  "เหรียญสะสมไม่พอ (ต้องใช้ {0} แต้ม)": "Not enough coins (needs {0} points)",
+  "ตั้งชื่อกระเป๋าให้ถูกต้องนะ (ไม่เกิน {0} ตัวอักษร)":
+    "Enter a valid wallet name (up to {0} characters)",
+  "สร้างหมวดของตัวเองได้ไม่เกิน {0} หมวด": "You can create up to {0} of your own categories",
+  "ตั้งรายการประจำได้สูงสุด {0} รายการนะ": "You can set up to {0} recurring entries",
+  "ทั้งหมด {0} หมวดหมู่{1}": "All {0} {1} categories",
+  "งบประมาณประจำ{0}": "Budget per {0}",
+  "· สร้างกระปุกออมสิน ตั้งเป้าและดูความคืบหน้า":
+    "· create savings jars, set targets and track progress",
+  "ส่งจากหน้านี้ไม่ได้ กลับไปที่กลุ่มแล้วพิมพ์คำนี้:":
+    "Couldn't send from this page. Go back to the group and type:",
+  "บันทึกแล้ว ปิดแล้วเปิดแอปใหม่เพื่อใช้ภาษาที่เลือก":
+    "Saved. Close and reopen the app to use the chosen language",
 };

@@ -27,7 +27,12 @@ import {
   ymdOf,
   type DayEntry,
 } from "@/lib/reminder-calendar";
-import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
+import {
+  formatThaiDate,
+  fromBangkokInputValue,
+  toBangkokInputValue,
+  yearOf,
+} from "@/lib/thai-date";
 import {
   CATEGORY_INFO,
   MAX_REMINDER_TEXT,
@@ -93,7 +98,7 @@ const monthOf = (ymd: string) => ({
   year: Number(ymd.slice(0, 4)),
   month: Number(ymd.slice(5, 7)),
 });
-const monthLabel = (year: number, month: number) => `${MONTHS[month - 1]} ${year + 543}`;
+const monthLabel = (year: number, month: number) => `${MONTHS[month - 1]} ${yearOf(year)}`;
 
 /** A time still ahead today, so saving a new reminder does not fail on the default. */
 function nextHour(): string {

@@ -6,6 +6,7 @@ import { MAX_CUSTOM_CATEGORIES, parseEmoji, emojiOf } from "@/lib/category-emoji
 import { requireFeature } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,7 +77,7 @@ export async function POST(request: Request): Promise<Response> {
     const db = getAdminClient();
     const existing = await loadCategories(db, auth.userId);
     if (existing.filter((c) => c.user_id === auth.userId).length >= MAX_CUSTOM_CATEGORIES) {
-      return apiError(`สร้างหมวดของตัวเองได้ไม่เกิน ${MAX_CUSTOM_CATEGORIES} หมวด`, 400);
+      return apiError(t("สร้างหมวดของตัวเองได้ไม่เกิน {0} หมวด", MAX_CUSTOM_CATEGORIES), 400);
     }
     const sameType = existing.filter((c) => c.type === body.type);
     if (sameType.some((c) => c.name === body.name)) return apiError("มีหมวดชื่อนี้อยู่แล้ว", 409);

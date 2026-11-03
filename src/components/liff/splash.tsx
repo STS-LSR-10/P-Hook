@@ -44,6 +44,7 @@ export function Splash() {
     <div
       role="status"
       aria-label={t("กำลังเปิดแอป")}
+      suppressHydrationWarning
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ backgroundColor: SPLASH_BG }}
     >

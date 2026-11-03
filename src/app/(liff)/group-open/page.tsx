@@ -115,8 +115,8 @@ export default function GroupOpenPage() {
                 role="alert"
                 className="rounded-2xl bg-primary-soft px-4 py-2 text-sm text-primary"
               >
-                {t("ส่งจากหน้านี้ไม่ได้ กลับไปที่กลุ่มแล้วพิมพ์")} <strong>เปิดสมุดกลุ่ม</strong>{" "}
-                {t("ได้เลย")}
+                {t("ส่งจากหน้านี้ไม่ได้ กลับไปที่กลุ่มแล้วพิมพ์คำนี้:")}{" "}
+                <strong>เปิดสมุดกลุ่ม</strong>
               </p>
             ) : null}
           </section>

@@ -7,6 +7,7 @@ import { clearPhoto, countPhotosThisMonth, getPhotoTx } from "@/lib/photo-repo";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getUserPlanRow, SLIP_BUCKET } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,7 +85,7 @@ export async function POST(
     if (!tx) return apiError("ไม่พบรายการนี้", 404);
     // replacing the photo of an entry that already has one does not use another of the month's photos
     if (!tx.photo_path && (await countPhotosThisMonth(db, auth.userId, now)) >= PHOTOS_PER_MONTH) {
-      return apiError(`แนบรูปครบ ${PHOTOS_PER_MONTH} รูปของเดือนนี้แล้ว`, 429);
+      return apiError(t("แนบรูปครบ {0} รูปของเดือนนี้แล้ว", PHOTOS_PER_MONTH), 429);
     }
 
     const form = await request.formData().catch(() => null);

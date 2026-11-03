@@ -16,6 +16,7 @@ import { requireFeature } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { listWallets } from "@/lib/wallet-repo";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,7 +87,7 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     if ((await listBills(db, auth.userId)).length >= MAX_ACTIVE_BILLS) {
-      return apiError(`มีบิลได้สูงสุด ${MAX_ACTIVE_BILLS} รายการ`, 400);
+      return apiError(t("มีบิลได้สูงสุด {0} รายการ", MAX_ACTIVE_BILLS), 400);
     }
     const cadence = b.cadence as BillCadence;
     const id = await createBill(db, auth.userId, {

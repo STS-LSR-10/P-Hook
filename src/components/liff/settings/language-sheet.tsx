@@ -29,7 +29,11 @@ export function LanguageSheet({ current, onClose }: { current?: string; onClose:
         method: "PATCH",
         body: JSON.stringify({ locale }),
       });
-      switchLocale(locale);
+      if (!switchLocale(locale)) {
+        // this browser keeps nothing: the next time the app opens, it is in the new language
+        setBusy(null);
+        setError(t("บันทึกแล้ว ปิดแล้วเปิดแอปใหม่เพื่อใช้ภาษาที่เลือก"));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t("บันทึกไม่สำเร็จ ลองใหม่อีกครั้งนะ"));
       setBusy(null);

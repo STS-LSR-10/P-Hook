@@ -8,6 +8,7 @@ import { requireFeature } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { ensureWallets } from "@/lib/wallet-repo";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,7 +67,7 @@ export async function POST(request: Request): Promise<Response> {
       openDebtsOf(debts, parsed.data.person, parsed.data.direction).length >=
       MAX_OPEN_DEBTS_PER_PERSON
     ) {
-      return apiError(`คนเดียวกันมีหนี้ค้างได้ไม่เกิน ${MAX_OPEN_DEBTS_PER_PERSON} ก้อน`, 400);
+      return apiError(t("คนเดียวกันมีหนี้ค้างได้ไม่เกิน {0} ก้อน", MAX_OPEN_DEBTS_PER_PERSON), 400);
     }
 
     const id = await createDebt(db, auth.userId, {

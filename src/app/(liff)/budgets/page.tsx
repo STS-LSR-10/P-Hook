@@ -640,8 +640,11 @@ export default function BudgetsPage() {
               </div>
               <div className="flex items-center justify-between px-1 text-[11px]">
                 <span className="text-muted">
-                  {tr("ทั้งหมด")} {all.length} {tr("หมวดหมู่")}
-                  {kind === "expense" ? tr("รายจ่าย") : tr("รายรับ")}
+                  {tr(
+                    "ทั้งหมด {0} หมวดหมู่{1}",
+                    all.length,
+                    kind === "expense" ? tr("รายจ่าย") : tr("รายรับ"),
+                  )}
                 </span>
                 <span className="font-medium text-primary">
                   {ordering ? tr("กดลูกศรเพื่อเลื่อนลำดับ") : tr("แตะหมวดหมู่เพื่อแก้ไขหรือตั้งงบ")}
@@ -841,8 +844,7 @@ function BudgetHero({
       <div className="relative space-y-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs font-medium text-[var(--hero-ink-soft)]">
-            {tr("งบประมาณประจำ")}
-            {per}
+            {tr("งบประมาณประจำ{0}", per)}
           </p>
           <div className="relative">
             <button
@@ -1413,8 +1415,7 @@ function CategorySheet({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label htmlFor="cat-budget" className="text-xs font-semibold">
-                {tr("งบประมาณประจำ")}
-                {cycle === "weekly" ? tr("สัปดาห์") : tr("เดือน")}
+                {tr("งบประมาณประจำ{0}", cycle === "weekly" ? tr("สัปดาห์") : tr("เดือน"))}
               </label>
             </div>
             <div className="relative">

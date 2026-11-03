@@ -5,7 +5,7 @@ import { setZoneSource } from "@/lib/thai-date";
 import { isZone } from "@/lib/zone";
 import { isHomeCurrency } from "@/lib/currency";
 import { setCurrencySource } from "@/lib/money";
-import { isLocale, loadedLocale, LOCALE_KEY, setLocaleSource, t } from "@/lib/i18n";
+import { currentLocale, isLocale, loadedLocale, LOCALE_KEY, setLocaleSource, t } from "@/lib/i18n";
 import {
   createContext,
   useCallback,
@@ -47,13 +47,17 @@ const RELOGIN_KEY = "jodtang-liff-login-at";
  * that keeps nothing is not reloaded (it would load in the old language again, for ever): its page
  * follows the sign-in instead, words made at load staying Thai.
  */
-export function switchLocale(locale: string): void {
+export function switchLocale(locale: string): boolean {
   try {
     window.localStorage.setItem(LOCALE_KEY, locale);
-    if (window.localStorage.getItem(LOCALE_KEY) === locale) window.location.reload();
+    if (window.localStorage.getItem(LOCALE_KEY) === locale) {
+      window.location.reload();
+      return true;
+    }
   } catch {
     /* kept nothing: no reload */
   }
+  return false;
 }
 const RELOGIN_WINDOW_MS = 30_000;
 
@@ -62,17 +66,20 @@ const RELOGIN_WINDOW_MS = 30_000;
  * produce a session (a server-side configuration problem, for example), looping through the login
  * redirect forever shows only a flickering page, so give up with a clear message instead.
  */
+/** Signing in again was just tried: give up instead of redirecting again (told apart by type, not words). */
+class ReloginBlocked extends Error {}
+
 function loginOnce(liff: { login: (o: { redirectUri: string }) => void }): Promise<string> {
   try {
     const last = Number(window.sessionStorage.getItem(RELOGIN_KEY) ?? 0);
     if (Date.now() - last < RELOGIN_WINDOW_MS) {
-      throw new Error(
+      throw new ReloginBlocked(
         t("เข้าสู่ระบบไม่สำเร็จ ลองปิดแล้วเปิดใหม่อีกครั้งนะ (ถ้ายังไม่ได้ แจ้งผู้ดูแล)"),
       );
     }
     window.sessionStorage.setItem(RELOGIN_KEY, String(Date.now()));
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith(t("เข้าสู่ระบบ"))) throw e;
+    if (e instanceof ReloginBlocked) throw e;
     // sessionStorage unavailable: fall through to a single normal redirect
   }
   liff.login({ redirectUri: window.location.href });
@@ -90,6 +97,11 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   const token = useRef<string | null>(null);
   const inflight = useRef<Promise<string> | null>(null);
   // Follow the device's light/dark preference (tokens define a `.dark` class).
+  // the page says which language it is in (screen readers pick their voice by it)
+  useEffect(() => {
+    document.documentElement.lang = currentLocale();
+  }, []);
+
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => document.documentElement.classList.toggle("dark", media.matches);

@@ -137,9 +137,9 @@ const EN_MONTHS = [
   "Dec",
 ];
 /** The short month name and the year as the person reads them (Buddhist year in Thai). */
-const monthName = (month: number) =>
+export const monthName = (month: number) =>
   (currentLocale() === "en" ? EN_MONTHS : MONTHS)[month - 1] ?? "";
-const yearOf = (year: number) => (currentLocale() === "en" ? year : year + 543);
+export const yearOf = (year: number) => (currentLocale() === "en" ? year : year + 543);
 
 const two = (n: number) => String(n).padStart(2, "0");
 

@@ -17,6 +17,7 @@ import {
   bangkokParts,
   formatThaiDayMonth,
   formatThaiMonthShort,
+  yearOf,
 } from "@/lib/thai-date";
 import { t } from "@/lib/i18n";
 
@@ -54,7 +55,7 @@ function rangeLabel(series: SeriesPoint[], view: View): string | null {
   if (!first || !last) return null;
   const a = new Date(first.start);
   const b = new Date(last.start);
-  const year = bangkokParts(b).year + 543;
+  const year = yearOf(bangkokParts(b).year);
   if (view === "month") return `${formatThaiMonthShort(a)} – ${formatThaiMonthShort(b)} ${year}`;
   const end = view === "week" ? addLocalDays(b, 6) : b;
   return `${formatThaiDayMonth(a)} – ${formatThaiDayMonth(end)} ${year}`;

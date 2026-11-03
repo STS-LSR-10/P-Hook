@@ -5,6 +5,7 @@ import { POINTS_PER_PLUS_DAY } from "@/lib/config";
 import { NotEnoughPointsError, redeemForPlus } from "@/lib/points";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export async function POST(request: Request): Promise<Response> {
     } catch (error) {
       if (error instanceof NotEnoughPointsError) {
         return apiError(
-          `เหรียญสะสมไม่พอ (ต้องใช้ ${parsed.data.days * POINTS_PER_PLUS_DAY} แต้ม)`,
+          t("เหรียญสะสมไม่พอ (ต้องใช้ {0} แต้ม)", parsed.data.days * POINTS_PER_PLUS_DAY),
           400,
         );
       }

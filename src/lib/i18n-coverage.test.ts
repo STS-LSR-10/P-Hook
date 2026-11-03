@@ -12,13 +12,21 @@ function sources(dir: string): string[] {
   });
 }
 
-/** The words given to t("…") / tr("…") in the code, as written. */
+/** The words given to t("…") / tr("…") / apiError("…") in the code, as written. */
 function keys(): { key: string; where: string }[] {
   const out: { key: string; where: string }[] = [];
   for (const file of sources(join(__dirname, ".."))) {
     const text = readFileSync(file, "utf8");
-    for (const m of text.matchAll(/\b(?:t|tr)\(\s*("(?:[^"\\]|\\.)*")/g)) {
-      out.push({ key: JSON.parse(m[1] ?? '""') as string, where: file.split("/src/")[1] ?? file });
+    const where = file.split("/src/")[1] ?? file;
+    // t("…") / t('…'), and the message of apiError("…") (it is put through t() when sent)
+    for (const m of text.matchAll(
+      /\b(?:t|tr|apiError)\(\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g,
+    )) {
+      const raw = m[1] ?? '""';
+      const key = raw.startsWith("'")
+        ? raw.slice(1, -1).replace(/\\'/g, "'").replace(/\\"/g, '"')
+        : (JSON.parse(raw) as string);
+      out.push({ key, where });
     }
   }
   return out;

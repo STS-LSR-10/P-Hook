@@ -15,6 +15,7 @@ import {
 } from "@/lib/date-range";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
+import { yearOf } from "@/lib/thai-date";
 
 export interface DayRange {
   start: Ymd;
@@ -102,7 +103,7 @@ export function RangeCalendar({
           </button>
           <div className="text-center">
             <h2 className="num text-sm font-bold">
-              {MONTHS_FULL[view.month - 1]} {view.year + 543}
+              {MONTHS_FULL[view.month - 1]} {yearOf(view.year)}
             </h2>
             <p className="text-[10px] text-muted">{t("เลือกช่วงวันที่ต้องการดูรายการ")}</p>
           </div>
@@ -130,7 +131,7 @@ export function RangeCalendar({
               <button
                 key={`${d.year}-${d.month}-${d.day}`}
                 type="button"
-                aria-label={`${d.day} ${MONTHS_FULL[d.month - 1]} ${d.year + 543}`}
+                aria-label={`${d.day} ${MONTHS_FULL[d.month - 1]} ${yearOf(d.year)}`}
                 aria-pressed={selected}
                 onClick={() => pick(d)}
                 className={cn(
