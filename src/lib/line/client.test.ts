@@ -17,3 +17,20 @@ describe("showLoading", () => {
     await expect(createLineClient("tok").showLoading("U1")).rejects.toThrow("400");
   });
 });
+
+describe("getGroupName", () => {
+  it("asks for the group's summary, and gives up on a slow LINE", async () => {
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ groupName: "บ้านเรา" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(createLineClient("tok").getGroupName("C1")).resolves.toBe("บ้านเรา");
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://api.line.me/v2/bot/group/C1/summary");
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+  it("is null when LINE does not say", async () => {
+    vi.stubGlobal("fetch", async () => new Response("no", { status: 404 }));
+    await expect(createLineClient("tok").getGroupName("C1")).resolves.toBeNull();
+  });
+});

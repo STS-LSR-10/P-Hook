@@ -58,6 +58,20 @@ export function createLineClient(accessToken: string) {
     },
 
     /**
+     * A group's name as its members see it, or null when LINE does not say (the bot left it). Gives up
+     * after 3 seconds, since a page waits on it.
+     */
+    async getGroupName(groupId: string): Promise<string | null> {
+      const res = await fetch(`${API}/group/${encodeURIComponent(groupId)}/summary`, {
+        headers,
+        signal: AbortSignal.timeout(3_000),
+      });
+      if (!res.ok) return null;
+      const body = (await res.json()) as { groupName?: string };
+      return body.groupName ?? null;
+    },
+
+    /**
      * Every member id of a group. LINE allows this only for verified / premium accounts: for any other
      * (or when the call fails) it returns null and the caller carries on with the members it knows.
      */

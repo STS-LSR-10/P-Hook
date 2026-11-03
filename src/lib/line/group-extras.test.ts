@@ -227,7 +227,7 @@ describe("files in a group", () => {
     expect(saved).toEqual([
       { owner: "app-owner", name: "สัญญาเช่า", group: { groupId: "g1", savedBy: "Uanna" } },
     ]);
-    expect(said(reply)).toContain("/group?id=g1");
+    expect(said(reply)).toContain("/vault?g=g1");
   });
 
   it("a picture with nobody waiting is still looked at as a slip, and is not kept", async () => {
@@ -289,6 +289,7 @@ describe("reminders in a group", () => {
     const out = said(reply);
     expect(out).toContain("ตั้งเตือนกลุ่มแล้ว");
     expect(out).toContain("a=grmx&id=r-new");
+    expect(out).toContain("/reminders?g=g1");
   });
 
   it("stays quiet for chat with no time in it", async () => {

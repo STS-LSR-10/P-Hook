@@ -18,9 +18,11 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { GroupFiles, type GroupUsage } from "@/components/liff/group-space";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { fieldClass } from "@/components/liff/settings/types";
 import { Sheet } from "@/components/liff/sheet";
+import { SpaceSwitch } from "@/components/liff/space-switch";
 import { ErrorState, LoadingBlock } from "@/components/liff/states";
 import { Logo } from "@/components/logo";
 import { formatBytes, isViewableImage, MAX_NAME_LENGTH, type FileDto } from "@/lib/file";
@@ -64,6 +66,8 @@ const EMPTY: Record<Tab, { title: string; hint: string }> = {
 };
 
 const isTab = (value: string | null): value is Tab => TABS.some((t) => t.key === value);
+/** A group keeps only files: no notes or links. */
+const GROUP_TABS = TABS.filter((t) => t.key === "all" || t.key === "image" || t.key === "file");
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 const CARD = "rounded-2xl border border-[#E7DFD2] bg-[#F6EFE6] text-left";
@@ -78,7 +82,10 @@ function query(params: Record<string, string | null | undefined>): string {
   return text ? `?${text}` : "";
 }
 
-/** Reads `?tab=`, `?q=` and `?open=` (the links from the chat), which needs Suspense. */
+/**
+ * Reads `?tab=`, `?q=`, `?open=` and `?g=` (a group's files, from the links in a group or the switch
+ * at the top), which needs Suspense.
+ */
 export default function VaultPage() {
   return (
     <Suspense fallback={<LoadingBlock rows={4} />}>
@@ -94,8 +101,16 @@ function Vault() {
   const requested = params.get("tab");
   const requestedOpen = params.get("open") ?? "";
   const toOpen = UUID_RE.test(requestedOpen) ? requestedOpen : null;
+  const requestedGroup = params.get("g") ?? "";
+  const groupId = UUID_RE.test(requestedGroup) ? requestedGroup : null;
+  const tabs = groupId ? GROUP_TABS : TABS;
 
-  const [tab, setTab] = useState<Tab>(isTab(requested) ? requested : "all");
+  const [tab, setTab] = useState<Tab>(
+    isTab(requested) && (!groupId || GROUP_TABS.some((t) => t.key === requested))
+      ? requested
+      : "all",
+  );
+  const [groupUsage, setGroupUsage] = useState<GroupUsage | "failed" | null>(null);
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [typed, setTyped] = useState(search);
   const [notice, setNotice] = useState<string | null>(null);
@@ -122,11 +137,21 @@ function Vault() {
 
   // the button on a card in the chat lands here; the address loses it, so a reload opens nothing
   useEffect(() => {
-    if (!toOpen || opened.current || status !== "ready") return;
+    if (groupId || !toOpen || opened.current || status !== "ready") return;
     opened.current = true;
     void download(toOpen);
     router.replace("/vault");
-  }, [toOpen, status, download, router]);
+  }, [groupId, toOpen, status, download, router]);
+  const groupOpened = useCallback(() => {
+    if (groupId) router.replace(`/vault?g=${groupId}`);
+  }, [groupId, router]);
+
+  function switchSpace(next: string | null) {
+    setNotice(null);
+    setGroupUsage(null);
+    if (next && !GROUP_TABS.some((t) => t.key === tab)) setTab("all");
+    router.replace(next ? `/vault?g=${next}` : "/vault");
+  }
 
   const done = useCallback((message: string) => {
     setAdding(false);
@@ -139,17 +164,40 @@ function Vault() {
     setSearch(typed.trim());
   }
 
-  const percent = shown
-    ? Math.min(100, Math.round((shown.usedBytes / shown.capacityBytes) * 100))
+  // in a group the space is still the owner's; a member sees only whether it is running out
+  const ownerSpace =
+    groupUsage && groupUsage !== "failed" && groupUsage.usedBytes !== null
+      ? {
+          usedBytes: groupUsage.usedBytes,
+          capacityBytes: groupUsage.capacityBytes ?? 0,
+          groupBytes: groupUsage.groupBytes ?? 0,
+        }
+      : null;
+  const bar = groupId ? ownerSpace : shown;
+  const percent = bar
+    ? Math.min(100, Math.round((bar.usedBytes / Math.max(1, bar.capacityBytes)) * 100))
     : 0;
+  const spaceText = groupId
+    ? groupUsage === null
+      ? ""
+      : groupUsage === "failed"
+        ? "โหลดไม่สำเร็จ"
+        : ownerSpace
+          ? `${formatBytes(ownerSpace.usedBytes)} / ${formatBytes(ownerSpace.capacityBytes)}`
+          : groupUsage.spaceLow
+            ? "ของเจ้าของสมุดใกล้เต็มแล้ว"
+            : "ใช้พื้นที่ของเจ้าของสมุด"
+    : usage === null
+      ? ""
+      : usage === "failed"
+        ? "โหลดไม่สำเร็จ"
+        : `${formatBytes(usage.usedBytes)} / ${formatBytes(usage.capacityBytes)}`;
 
   return (
     <main className="-mb-24 flex min-h-screen flex-col bg-[#FAF7F2] pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800">
       <header className="flex items-center justify-between gap-2 px-4 pb-3 pt-5">
         <h1 className="text-xl font-bold text-stone-900">คลัง | พี่ฮูก</h1>
-        <span className="rounded-full bg-[#E1F3DB] px-3 py-1 text-xs font-semibold text-[#2F672B]">
-          ส่วนตัว
-        </span>
+        <SpaceSwitch groupId={groupId} onChange={switchSpace} />
       </header>
 
       <div className="space-y-2 px-4">
@@ -195,7 +243,7 @@ function Vault() {
         aria-label="หมวดในคลัง"
         className="mt-1 flex justify-between border-b border-stone-200 px-4"
       >
-        {TABS.map(({ key, label }) => (
+        {tabs.map(({ key, label }) => (
           <button
             key={key}
             type="button"
@@ -220,16 +268,28 @@ function Vault() {
           </p>
         ) : null}
         {/* a new key starts clean: no old list, and an answer to an old request lands nowhere */}
-        <VaultList
-          key={`${tab}|${search}|${version}`}
-          tab={tab}
-          search={search}
-          onUsage={setUsage}
-          onCanAdd={setCanAdd}
-          onDone={done}
-          onDownload={download}
-          onOpenLink={openExternal}
-        />
+        {groupId ? (
+          <GroupFiles
+            key={`${groupId}|${tab}|${search}`}
+            groupId={groupId}
+            q={search}
+            kind={tab === "image" || tab === "file" ? tab : null}
+            toOpen={toOpen}
+            onOpened={groupOpened}
+            onUsage={setGroupUsage}
+          />
+        ) : (
+          <VaultList
+            key={`${tab}|${search}|${version}`}
+            tab={tab}
+            search={search}
+            onUsage={setUsage}
+            onCanAdd={setCanAdd}
+            onDone={done}
+            onDownload={download}
+            onOpenLink={openExternal}
+          />
+        )}
       </div>
 
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-stone-200 bg-[#FAF7F2] px-4 py-2.5">
@@ -237,32 +297,38 @@ function Vault() {
           <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-900">
             <Archive className="h-4 w-4" aria-hidden /> พื้นที่เก็บไฟล์
           </p>
-          <p className="num text-xs text-stone-700">
-            {usage === null
-              ? ""
-              : usage === "failed"
-                ? "โหลดไม่สำเร็จ"
-                : `${formatBytes(usage.usedBytes)} / ${formatBytes(usage.capacityBytes)}`}
-          </p>
-          <button
-            type="button"
-            aria-label="เพิ่มโน้ต"
-            onClick={() => setAdding(true)}
-            className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2D7347] text-white"
+          <p className="num text-xs text-stone-700">{spaceText}</p>
+          {groupId ? (
+            // a group's files are kept from the group's chat, so there is nothing to add here
+            <span className="ml-auto h-9" aria-hidden />
+          ) : (
+            <button
+              type="button"
+              aria-label="เพิ่มโน้ต"
+              onClick={() => setAdding(true)}
+              className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2D7347] text-white"
+            >
+              <Plus className="h-5 w-5" aria-hidden />
+            </button>
+          )}
+        </div>
+        {!groupId || ownerSpace ? (
+          <div
+            role="progressbar"
+            aria-label="พื้นที่ที่ใช้ไป"
+            aria-valuenow={percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#E8E2D6]"
           >
-            <Plus className="h-5 w-5" aria-hidden />
-          </button>
-        </div>
-        <div
-          role="progressbar"
-          aria-label="พื้นที่ที่ใช้ไป"
-          aria-valuenow={percent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#E8E2D6]"
-        >
-          <div className="h-full bg-[#2D7347]" style={{ width: `${percent}%` }} />
-        </div>
+            <div className="h-full bg-[#2D7347]" style={{ width: `${percent}%` }} />
+          </div>
+        ) : null}
+        {ownerSpace ? (
+          <p className="num mt-1 text-xs text-stone-600">
+            ไฟล์ในกลุ่มของคุณ {formatBytes(ownerSpace.groupBytes)} · ใช้พื้นที่เดียวกับไฟล์ส่วนตัว
+          </p>
+        ) : null}
       </div>
 
       {adding ? (
