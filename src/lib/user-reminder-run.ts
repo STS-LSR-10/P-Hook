@@ -4,6 +4,7 @@ import { addLateReminder, purgeLateReminders, reminderTargets } from "@/lib/grou
 import { getGroup } from "@/lib/group-repo";
 import { groupReminderMessage, refusedAsMalformed } from "@/lib/line/group-riders";
 import { groupReminderDirectText, reminderPushText } from "@/lib/line/messages";
+import { reminderActions } from "@/lib/line/reminder-flex";
 import { log } from "@/lib/log";
 import type { LineMessage } from "@/lib/types";
 import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
@@ -79,6 +80,7 @@ export async function runUserReminders(
         {
           type: "text",
           text: reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
+          quickReply: reminderActions(r.id),
         },
       ]);
       summary.sent += 1;

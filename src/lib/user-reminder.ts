@@ -421,3 +421,33 @@ export function moveReminderTime(when: string, current: Date, now: Date): Remind
 export function describeReminder(remindAt: Date, repeat: Repeat | null): string {
   return `${formatThaiDate(remindAt, true)}${repeat ? ` · ${REPEAT_LABEL[repeat]}` : ""}`;
 }
+
+/** The later times a reminder that was just sent can be moved to. */
+export type Snooze = "10" | "60" | "tm";
+export const isSnooze = (s: string | null): s is Snooze => s === "10" || s === "60" || s === "tm";
+
+/**
+ * When a snoozed reminder comes back: in 10 minutes or an hour (on the minute, as the cron runs), or
+ * at 09:00 tomorrow; in the small hours "tomorrow morning" is this morning.
+ */
+export function snoozeTime(snooze: Snooze, now: Date): Date {
+  if (snooze === "tm") {
+    const p = bangkokParts(now);
+    return fromBangkok(p.year, p.month, p.day + (p.hour < 5 ? 0 : 1), DEFAULT_HOUR);
+  }
+  const minute = Math.ceil(now.getTime() / 60_000) * 60_000;
+  return new Date(minute + Number(snooze) * 60_000);
+}
+
+/** "ตอน 10:40" today, "พรุ่งนี้ 09:00" tomorrow, the full date further on. */
+export function whenFromNow(at: Date, now: Date): string {
+  const p = bangkokParts(at);
+  const clock = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+  const today = bangkokParts(now);
+  const tomorrow = bangkokParts(fromBangkok(today.year, today.month, today.day + 1));
+  const same = (a: typeof p, b: typeof p) =>
+    a.year === b.year && a.month === b.month && a.day === b.day;
+  if (same(p, today)) return `ตอน ${clock}`;
+  if (same(p, tomorrow)) return `พรุ่งนี้ ${clock}`;
+  return formatThaiDate(at, true);
+}

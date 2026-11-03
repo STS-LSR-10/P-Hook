@@ -477,6 +477,12 @@ export const REMINDER_WHICH_MORE_TEXT =
   "มีหลายเตือนที่ตรง นี่คือ 4 อันแรก ถ้าไม่มีอันที่ต้องการ ลองพิมพ์ชื่อเตือนให้ชัดขึ้นนะ";
 export const REMINDER_CANCELLED_TEXT = "ยกเลิกเตือนแล้ว";
 export const REMINDER_GONE_TEXT = "ไม่พบเตือนนี้แล้ว (อาจส่งไปแล้วหรือถูกยกเลิก)";
+export const REMINDER_HANDLED_TEXT = "เตือนนี้จัดการไปแล้วนะ";
+/** "✅ ทำแล้ว": a repeating one says when it comes next. */
+export const reminderDoneText = (next: string | null) =>
+  next ? `เยี่ยมเลย ✅ รอบหน้าเตือนอีกที ${next}` : "เยี่ยมเลย ✅ ปิดเตือนนี้แล้ว";
+export const reminderSnoozedText = (when: string, morning: boolean) =>
+  `ได้เลย เดี๋ยวเตือนอีกที${when} นะ ${morning ? "🌅" : "⏰"}`;
 /** The push that arrives at the time. */
 export const reminderPushText = (body: string, repeatLabel: string | null, url?: string) =>
   [

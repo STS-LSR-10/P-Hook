@@ -86,6 +86,34 @@ describe("runUserReminders", () => {
     expect(sentText(push.mock.calls[0] ?? [])).toBe("⏰ เตือน: จ่ายค่าไฟ");
   });
 
+  it("comes with buttons to say it is done, or to be reminded again later", async () => {
+    due = [r()];
+    const push = vi.fn(async (...args: unknown[]) => void args.length);
+    await runUserReminders({} as SupabaseClient, { push } as never, NOW);
+    const msg = (push.mock.calls[0]?.[1] as Record<string, unknown>[])[0] as {
+      quickReply: { items: { action: { label: string; data: string; displayText: string } }[] };
+    };
+    expect(msg.quickReply.items.map((i) => [i.action.label, i.action.data])).toEqual([
+      ["✅ ทำแล้ว", "a=rmd&id=r1"],
+      ["⏰ อีก 10 นาที", "a=rms&id=r1&s=10"],
+      ["⏰ อีก 1 ชม.", "a=rms&id=r1&s=60"],
+      ["🌅 พรุ่งนี้เช้า", "a=rms&id=r1&s=tm"],
+    ]);
+    expect(msg.quickReply.items[0]?.action.displayText).toBe("✅ ทำแล้ว");
+  });
+
+  it("a group's reminder has no such buttons", async () => {
+    due = [r({ lineGroupId: "Cg", groupOpen: true })];
+    const push = vi.fn(async (...args: unknown[]) => void args.length);
+    await runUserReminders(
+      {} as SupabaseClient,
+      { push, groupMemberCount: async () => 4 } as never,
+      NOW,
+    );
+    const msgs = push.mock.calls.flatMap((c) => c[1] as Record<string, unknown>[]);
+    expect(msgs.some((m) => "quickReply" in m)).toBe(false);
+  });
+
   it("a repeating one says so, with where to cancel it", async () => {
     due = [r({ repeat: "daily" })];
     const push = vi.fn(async (...args: unknown[]) => void args.length);

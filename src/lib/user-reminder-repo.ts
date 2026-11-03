@@ -187,6 +187,30 @@ export async function rescheduleReminder(
   return data ? toDto(data as Row) : null;
 }
 
+/**
+ * "Remind me again" under a one-off that was just sent: it waits again, at the new time. Null when it
+ * is not theirs, has gone, or was already brought back (a second tap).
+ */
+export async function snoozeReminder(
+  db: SupabaseClient,
+  userId: string,
+  id: string,
+  at: Date,
+): Promise<ReminderDto | null> {
+  const { data, error } = await db
+    .from("user_reminders")
+    .update({ status: "active", remind_at: at.toISOString(), last_sent_at: null })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .is("group_id", null)
+    .eq("status", "done")
+    .is("repeat", null)
+    .select(COLUMNS)
+    .maybeSingle();
+  if (error) fail("snooze reminder", error);
+  return data ? toDto(data as Row) : null;
+}
+
 /** Rewrite a reminder. */
 export async function updateReminder(
   db: SupabaseClient,

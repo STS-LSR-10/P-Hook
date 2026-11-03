@@ -155,3 +155,19 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
     },
   };
 }
+
+/** The buttons that pop up under a reminder when it arrives: done, or remind me again later. */
+export function reminderActions(id: string) {
+  const picks: [label: string, data: string][] = [
+    ["✅ ทำแล้ว", `a=rmd&id=${id}`],
+    ["⏰ อีก 10 นาที", `a=rms&id=${id}&s=10`],
+    ["⏰ อีก 1 ชม.", `a=rms&id=${id}&s=60`],
+    ["🌅 พรุ่งนี้เช้า", `a=rms&id=${id}&s=tm`],
+  ];
+  return {
+    items: picks.map(([label, data]) => ({
+      type: "action",
+      action: { type: "postback", label, data, displayText: label },
+    })),
+  };
+}
