@@ -138,7 +138,15 @@ function EditFromChat({ id }: { id: string }) {
       return null;
     } catch (e) {
       const code = e instanceof Error ? ((e as Error & { code?: string }).code ?? e.message) : "";
-      return `${SEND_REFUSED}${code ? ` (${code})` : ""}`;
+      // where LINE thinks the page was opened from ("utou" is a 1:1 chat), to tell why it refused
+      let from = "";
+      try {
+        from = (await import("@line/liff")).default.getContext()?.type ?? "";
+      } catch {
+        /* leave it out */
+      }
+      const why = [code, from].filter(Boolean).join(" · ");
+      return `${SEND_REFUSED}${why ? ` (${why})` : ""}`;
     }
   }
 
