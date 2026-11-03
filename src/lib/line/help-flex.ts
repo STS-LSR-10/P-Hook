@@ -98,7 +98,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         need: "plus",
       },
       { icon: "👛", cmd: "กาแฟ 45 @KTC", desc: "จดลงกระเป๋าที่ต้องการ", need: "plus" },
-      { icon: "💴", cmd: "ราเมน 1500 JPY", desc: "เงินต่างสกุล แปลงเป็นบาทให้", need: "ultimate" },
+      { icon: "💴", cmd: "ราเมน 1500 JPY", desc: "เงินต่างสกุล แปลงเป็นสกุลของคุณให้", need: "ultimate" },
       {
         icon: "✨",
         cmd: "พิมพ์เป็นประโยคยาว ๆ",

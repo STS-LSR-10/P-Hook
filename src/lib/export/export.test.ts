@@ -5,7 +5,7 @@ import { collectAttachments, buildZip, safeName } from "./attachments";
 import { columnIndexes } from "./columns";
 import { csvCell, toCsv } from "./csv";
 import { buildPdf, MAX_PDF_ROWS } from "./pdf";
-import { exportDate, exportTime, HEADERS, rowCells, type ExportRow } from "./rows";
+import { exportDate, exportTime, headers, rowCells, type ExportRow } from "./rows";
 import { summarizeByCategory, summarizeByMonth } from "./summary";
 import { buildXlsx } from "./xlsx";
 
@@ -167,7 +167,7 @@ describe("the wallet column", () => {
     };
     expect(rowCells(base)[7]).toBe("");
     expect(rowCells({ ...base, walletName: "บัตรกสิกร" })[7]).toBe("บัตรกสิกร");
-    expect(rowCells(base)).toHaveLength(HEADERS.length);
+    expect(rowCells(base)).toHaveLength(headers().length);
   });
 });
 
@@ -191,14 +191,14 @@ describe("the foreign-currency columns", () => {
 
 describe("column groups", () => {
   it("keep the columns of the chosen groups, in the file's own order; none chosen means all", () => {
-    expect(columnIndexes()).toHaveLength(HEADERS.length);
-    expect(columnIndexes([])).toHaveLength(HEADERS.length);
-    expect(columnIndexes(["amount", "date"]).map((i) => HEADERS[i])).toEqual([
+    expect(columnIndexes()).toHaveLength(headers().length);
+    expect(columnIndexes([])).toHaveLength(headers().length);
+    expect(columnIndexes(["amount", "date"]).map((i) => headers()[i])).toEqual([
       "วันที่",
       "เวลา",
       "จำนวนเงิน (บาท)",
     ]);
-    expect(columnIndexes(["fx"]).map((i) => HEADERS[i])).toEqual([
+    expect(columnIndexes(["fx"]).map((i) => headers()[i])).toEqual([
       "สกุลเงินเดิม",
       "ยอดเดิม",
       "อัตราแลกเปลี่ยน",

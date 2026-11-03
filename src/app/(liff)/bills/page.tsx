@@ -16,7 +16,7 @@ import {
   type BillCadence,
   type BillDto,
 } from "@/lib/bill";
-import { money, satangToString } from "@/lib/money";
+import { currencyUnit, money, satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
@@ -318,7 +318,7 @@ function BillSheet({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder="ยอดโดยประมาณ (บาท ไม่บังคับ)"
+          placeholder={`ยอดโดยประมาณ (${currencyUnit()} ไม่บังคับ)`}
           aria-label="ยอดโดยประมาณ"
           className={cn(fieldClass, "num")}
         />
@@ -480,7 +480,7 @@ function PaySheet({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
-            placeholder="จำนวนเงิน (บาท)"
+            placeholder={`จำนวนเงิน (${currencyUnit()})`}
             aria-label="จำนวนเงินที่จ่าย"
             className={cn(fieldClass, "num")}
           />

@@ -1,4 +1,4 @@
-import { satangToString } from "@/lib/money";
+import { currencyUnit, satangToString } from "@/lib/money";
 import { bangkokParts } from "@/lib/thai-date";
 import type { TxType } from "@/lib/types";
 
@@ -45,21 +45,22 @@ export function exportTime(date: Date): string {
   return `${two(p.hour)}:${two(p.minute)}`;
 }
 
-export const HEADERS = [
+/** The column names, the amount in the person's currency (so built per file, not once). */
+export const headers = (): string[] => [
   "วันที่",
   "เวลา",
   "ประเภท",
   "ชื่อรายการ",
   "หมวด",
-  "จำนวนเงิน (บาท)",
+  `จำนวนเงิน (${currencyUnit()})`,
   "ที่มา",
   "กระเป๋า",
   "สกุลเงินเดิม",
   "ยอดเดิม",
   "อัตราแลกเปลี่ยน",
-] as const;
+];
 
-/** One row as display strings, in HEADERS order. */
+/** One row as display strings, in headers() order. */
 export function rowCells(row: ExportRow): string[] {
   return [
     exportDate(row.date),

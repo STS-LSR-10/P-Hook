@@ -65,3 +65,9 @@ export function money(satang: number): string {
   const sign = shown < 0 ? "-" : "";
   return `${sign}${symbolOf(code)}${formatBaht(Math.abs(shown))}`;
 }
+
+/** The word for the unit in a label: "บาท" for the baht, else the code ("USD"). */
+export const currencyUnit = (): string => {
+  const code = currentCurrency();
+  return code === DEFAULT_CURRENCY ? "บาท" : code;
+};

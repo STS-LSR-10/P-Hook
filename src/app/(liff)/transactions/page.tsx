@@ -37,7 +37,7 @@ import { WALLET_KIND_EMOJI, type WalletKind } from "@/lib/wallet";
 import { addDays, formatRange, rangeToFilter, ymdKey, ymdOf } from "@/lib/date-range";
 import type { TxDto } from "@/lib/dto";
 import { COLUMN_GROUPS, GROUP_LABEL, type ColumnGroup } from "@/lib/export/columns";
-import { currencySymbol, money } from "@/lib/money";
+import { currencySymbol, currencyUnit, money } from "@/lib/money";
 import { satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
@@ -1168,7 +1168,7 @@ function AddSheet({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder="จำนวนเงิน (บาท)"
+          placeholder={`จำนวนเงิน (${currencyUnit()})`}
           aria-label="จำนวนเงิน"
           className="num h-12 w-full rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary"
         />
@@ -1524,7 +1524,7 @@ function EditForm({
           className={field}
         />
       </Field>
-      <Field label="จำนวนเงิน (บาท)">
+      <Field label={`จำนวนเงิน (${currencyUnit()})`}>
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}

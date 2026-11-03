@@ -3,7 +3,7 @@ import { hasGroup, type ColumnGroup } from "./columns";
 import { NOTO_SANS_THAI_BOLD_BASE64, NOTO_SANS_THAI_REGULAR_BASE64 } from "./font-data";
 import { TYPE_LABEL, exportDate, exportTime, sourceLabel, type ExportRow } from "./rows";
 import { summarizeByCategory } from "./summary";
-import { currencySymbol } from "@/lib/money";
+import { currencySymbol, currencyUnit } from "@/lib/money";
 
 /** The most rows the table prints; the totals always cover every row. */
 export const MAX_PDF_ROWS = 2000;
@@ -111,7 +111,7 @@ function tableColumns(groups: readonly ColumnGroup[] | undefined): TableColumn[]
   }
   if (hasGroup(groups, "amount")) {
     cols.push({
-      header: "จำนวนเงิน (บาท)",
+      header: `จำนวนเงิน (${currencyUnit()})`,
       weight: 1.4,
       align: "right",
       cell: (r) => `${r.type === "income" ? "+" : "-"}${money(r.amountSatang)}`,
@@ -123,7 +123,7 @@ function tableColumns(groups: readonly ColumnGroup[] | undefined): TableColumn[]
     ? cols
     : [
         {
-          header: "จำนวนเงิน (บาท)",
+          header: `จำนวนเงิน (${currencyUnit()})`,
           weight: 1,
           align: "right",
           cell: (r) => `${r.type === "income" ? "+" : "-"}${money(r.amountSatang)}`,

@@ -8,7 +8,7 @@ import { cardClass, fieldClass, type Me } from "@/components/liff/settings/types
 import { Sheet } from "@/components/liff/sheet";
 import { EmptyState, ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
 import { MAX_DEBT_NOTE, MAX_PERSON, dueState, type DebtDirection, type DebtDto } from "@/lib/debt";
-import { money, satangToString } from "@/lib/money";
+import { currencyUnit, money, satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
@@ -421,7 +421,7 @@ function DebtSheet({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder="จำนวนเงิน (บาท)"
+          placeholder={`จำนวนเงิน (${currencyUnit()})`}
           aria-label="จำนวนเงิน"
           className={cn(fieldClass, "num")}
         />
@@ -542,7 +542,7 @@ function PaySheet({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               inputMode="decimal"
-              placeholder="จำนวนเงิน (บาท)"
+              placeholder={`จำนวนเงิน (${currencyUnit()})`}
               aria-label="จำนวนเงินที่ชำระ"
               className={cn(fieldClass, "num")}
             />

@@ -1,5 +1,5 @@
 import { columnIndexes, type ColumnGroup } from "./columns";
-import { HEADERS, rowCells, type ExportRow } from "./rows";
+import { headers, rowCells, type ExportRow } from "./rows";
 
 const BOM = "﻿"; // lets Excel open UTF-8 (Thai) correctly
 const FORMULA_START = /^[=+\-@\t\r]/;
@@ -18,7 +18,7 @@ export function csvCell(value: string): string {
 export function toCsv(rows: ExportRow[], groups?: readonly ColumnGroup[]): string {
   const keep = columnIndexes(groups);
   const pick = (cells: readonly string[]) => keep.map((i) => cells[i] ?? "");
-  const lines = [pick(HEADERS).map(csvCell).join(",")];
+  const lines = [pick(headers()).map(csvCell).join(",")];
   for (const row of rows) lines.push(pick(rowCells(row)).map(csvCell).join(","));
   return BOM + lines.join("\r\n") + "\r\n";
 }

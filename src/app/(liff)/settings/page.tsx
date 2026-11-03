@@ -47,7 +47,9 @@ import {
 } from "@/lib/personalize";
 import { PLAN_LABEL } from "@/lib/plan";
 import { cn } from "@/lib/utils";
+import { CurrencySheet } from "@/components/liff/settings/currency-sheet";
 import { ZoneSheet } from "@/components/liff/settings/zone-sheet";
+import { DEFAULT_CURRENCY, currencyLabel } from "@/lib/currency";
 import { DEFAULT_ZONE, ZONES } from "@/lib/zone";
 
 const zoneCity = (zone?: string) =>
@@ -134,7 +136,9 @@ export default function SettingsPage() {
   // shown in the section whose setting was changed, so it is never off-screen
   const [notice, setNotice] = useState<{ at: SectionId; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
-  const [sheet, setSheet] = useState<"recurring" | "memory" | "payments" | "zone" | null>(null);
+  const [sheet, setSheet] = useState<
+    "recurring" | "memory" | "payments" | "zone" | "currency" | null
+  >(null);
   const [opened, setOpened] = useState<Set<SectionId>>(new Set());
   // sections closed by hand while a search is on (it opens everything it finds)
   const [closedInSearch, setClosedInSearch] = useState<Set<SectionId>>(new Set());
@@ -210,7 +214,7 @@ export default function SettingsPage() {
       case "member":
         return `สมาชิก ${PLAN_LABEL[user.plan]}`;
       case "general":
-        return "ไทย • บาท (฿)";
+        return `ไทย • ${settings.data?.currency ?? DEFAULT_CURRENCY} • ${zoneCity(settings.data?.timezone)}`;
       case "privacy":
         return "ระวัง";
     }
@@ -392,11 +396,12 @@ export default function SettingsPage() {
         return (
           <MenuGroup label="ทั่วไป">
             <MenuInfo icon={<Languages className="h-[18px] w-[18px]" />} title="ภาษา" value="ไทย" />
-            <MenuInfo
+            <MenuButton
+              onClick={() => setSheet("currency")}
               icon={<Coins className="h-[18px] w-[18px]" />}
               title="สกุลเงิน"
-              sub="ตอนนี้ใช้เงินบาท ตัวเลือกสกุลอื่นกำลังจะมา"
-              value="บาท (฿)"
+              sub="ยอดเงินทั้งหมดแสดงเป็นสกุลนี้"
+              value={currencyLabel(settings.data?.currency ?? DEFAULT_CURRENCY)}
             />
             <MenuButton
               onClick={() => setSheet("zone")}
@@ -502,6 +507,9 @@ export default function SettingsPage() {
         <Sheet title="จัดหมวดด้วยความจำ" onClose={() => setSheet(null)}>
           <MemoryCard me={me.data} embedded />
         </Sheet>
+      ) : null}
+      {sheet === "currency" ? (
+        <CurrencySheet current={settings.data?.currency} onClose={() => setSheet(null)} />
       ) : null}
       {sheet === "zone" ? (
         <ZoneSheet current={settings.data?.timezone} onClose={() => setSheet(null)} />

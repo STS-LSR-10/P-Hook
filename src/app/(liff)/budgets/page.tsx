@@ -27,7 +27,7 @@ import { budgetState, percentUsed } from "@/lib/budget";
 import { MAX_START_DAY } from "@/lib/budget-cycle";
 import { EMOJI_CHOICES, isSingleEmoji } from "@/lib/category-emoji";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
-import { currencySymbol, formatBaht, money } from "@/lib/money";
+import { currencySymbol, currencyUnit, formatBaht, money } from "@/lib/money";
 import { formatThaiMonthShort } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 
@@ -246,7 +246,7 @@ function DailyBudgetCard({
           onChange={(e) => setText(e.target.value)}
           disabled={locked}
           inputMode="decimal"
-          placeholder="วันหนึ่งใช้ไม่เกิน (บาท)"
+          placeholder={`วันหนึ่งใช้ไม่เกิน (${currencyUnit()})`}
           aria-label="งบรายวัน"
           className="num h-11 min-w-0 flex-1 rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary disabled:opacity-60"
         />
