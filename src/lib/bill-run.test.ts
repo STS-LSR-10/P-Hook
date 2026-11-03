@@ -3,8 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { BillDto } from "./bill";
 import type { Wallet } from "./wallet";
 
-let users: { id: string; line_user_id: string; plan: string; plan_expires_at: string | null }[] =
-  [];
+let users: {
+  id: string;
+  line_user_id: string;
+  plan: string;
+  plan_expires_at: string | null;
+  timezone?: string;
+}[] = [];
 let bills: Record<string, BillDto[]> = {};
 let sent: Record<string, Set<string>> = {};
 let wallets: Wallet[] = [];
@@ -80,6 +85,17 @@ describe("runBillReminders", () => {
     expect(data).toContain("a=bp&id=b1&d=2026-10-19");
     expect(data).toContain("a=bz&id=b1");
     expect(data).toContain("a=bk&id=b1&d=2026-10-19");
+  });
+
+  it("reminds at the bill's hour in the person's own zone", async () => {
+    // 09:30 in Bangkok is 03:30 in Paris: not yet 09:00 there
+    users = [{ ...users[0]!, timezone: "Europe/Paris" }];
+    const push = vi.fn(async () => undefined);
+    expect(await runBillReminders(db, push, NOW)).toMatchObject({ sent: 0 });
+    // 09:30 in Paris (CEST, UTC+2) on the same day
+    expect(await runBillReminders(db, push, new Date("2026-10-18T07:30:00Z"))).toMatchObject({
+      sent: 1,
+    });
   });
 
   it("an hourly job running again does not send it twice", async () => {

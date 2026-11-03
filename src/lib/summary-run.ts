@@ -20,6 +20,7 @@ import { hasSomethingToSay } from "@/lib/insight";
 import { buildInsightCard } from "@/lib/line/insight-flex";
 import { loadInsightFacts, loadSummaryTransactions } from "@/lib/summary-load";
 import type { BudgetCycle, LineMessage } from "@/lib/types";
+import { runInZone } from "@/lib/zone-scope";
 
 export interface SummaryRunResult {
   candidates: number;
@@ -39,6 +40,8 @@ interface SettingRow {
   monthly_summary_enabled: boolean;
   last_weekly_summary_on: string | null;
   last_monthly_summary_on: string | null;
+  /** The person's zone (Monday 09:00 and the cycle's first day are theirs). */
+  users?: { timezone?: string | null } | null;
 }
 
 /**
@@ -54,12 +57,10 @@ export async function runSummaries(
   options: { insightWriter?: InsightWriter | null } = {},
 ): Promise<SummaryRunResult> {
   const result: SummaryRunResult = { candidates: 0, sent: 0, skippedEmpty: 0, errors: 0 };
-  const today = bangkokDay(now);
-
   const settings = await db
     .from("user_settings")
     .select(
-      "user_id,budget_cycle,cycle_start_day,weekly_summary_enabled,monthly_summary_enabled,last_weekly_summary_on,last_monthly_summary_on",
+      "user_id,budget_cycle,cycle_start_day,weekly_summary_enabled,monthly_summary_enabled,last_weekly_summary_on,last_monthly_summary_on,users(timezone)",
     )
     .or("weekly_summary_enabled.eq.true,monthly_summary_enabled.eq.true")
     .limit(BATCH);
@@ -68,16 +69,19 @@ export async function runSummaries(
 
   type Job = { row: SettingRow; kind: SummaryKind };
   const jobs: Job[] = [];
+  const zoneOf = (row: SettingRow) => row.users?.timezone ?? null;
   for (const row of rows) {
-    if (row.weekly_summary_enabled && isWeeklySummaryDue(now, row.last_weekly_summary_on)) {
-      jobs.push({ row, kind: "weekly" });
-    }
-    if (
-      row.monthly_summary_enabled &&
-      isMonthlySummaryDue(now, row.budget_cycle, row.cycle_start_day, row.last_monthly_summary_on)
-    ) {
-      jobs.push({ row, kind: "monthly" });
-    }
+    runInZone(zoneOf(row), () => {
+      if (row.weekly_summary_enabled && isWeeklySummaryDue(now, row.last_weekly_summary_on)) {
+        jobs.push({ row, kind: "weekly" });
+      }
+      if (
+        row.monthly_summary_enabled &&
+        isMonthlySummaryDue(now, row.budget_cycle, row.cycle_start_day, row.last_monthly_summary_on)
+      ) {
+        jobs.push({ row, kind: "monthly" });
+      }
+    });
   }
   result.candidates = jobs.length;
   if (jobs.length === 0) return result;
@@ -100,10 +104,14 @@ export async function runSummaries(
 
   const liffUrl = liffBaseUrl ? `${liffBaseUrl.replace(/\/$/, "")}/analytics` : undefined;
 
-  for (const { row, kind } of jobs) {
+  for (const job of jobs) await runInZone(zoneOf(job.row), () => sendOne(job));
+  return result;
+
+  async function sendOne({ row, kind }: Job): Promise<void> {
+    const today = bangkokDay(now);
     const user = byId.get(row.user_id);
     // a lapsed plan keeps its settings but stops getting summaries
-    if (!user || !can(effectivePlan(user.plan, user.plan_expires_at, now), "autoSummary")) continue;
+    if (!user || !can(effectivePlan(user.plan, user.plan_expires_at, now), "autoSummary")) return;
     try {
       const range: DateRange =
         kind === "weekly"
@@ -133,7 +141,7 @@ export async function runSummaries(
       );
       if (data.current.count === 0) {
         result.skippedEmpty += 1;
-        continue;
+        return;
       }
       const messages: LineMessage[] = [buildSummaryMessage({ kind, range, data, liffUrl })];
       // Elite gets the AI Insight on the end of the monthly summary; a failure here must
@@ -167,5 +175,4 @@ export async function runSummaries(
       log.error("summary_failed", error);
     }
   }
-  return result;
 }
