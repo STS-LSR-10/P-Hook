@@ -2,6 +2,7 @@ import { formatBaht, money } from "@/lib/money";
 import type { LineMessage, TxType } from "@/lib/types";
 import { bangkokParts } from "@/lib/thai-date";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 export interface PdfCardEntry {
   type: TxType;
@@ -70,26 +71,26 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
   }));
 
   const notes = [
-    ...(more > 0 ? [note(`…และอีก ${more} รายการ`)] : []),
+    ...(more > 0 ? [note(t("…และอีก {0} รายการ", more))] : []),
     ...(input.skippedDuplicates > 0
       ? [
           note(
-            `ข้าม ${input.skippedDuplicates} รายการที่ตรงกับรายการที่จดไว้แล้ว (วันที่ ยอด ประเภทเท่ากัน) ถ้าไม่ซ้ำจริง พิมพ์จดเองได้เลย`,
+            t("ข้าม {0} รายการที่ตรงกับรายการที่จดไว้แล้ว (วันที่ ยอด ประเภทเท่ากัน) ถ้าไม่ซ้ำจริง พิมพ์จดเองได้เลย", input.skippedDuplicates),
           ),
         ]
       : []),
     ...(input.undated > 0
-      ? [note(`${input.undated} รายการอ่านวันที่ไม่ได้ ใช้วันนี้แทน แก้ได้ที่หน้ารายการ`)]
+      ? [note(t("{0} รายการอ่านวันที่ไม่ได้ ใช้วันนี้แทน แก้ได้ที่หน้ารายการ", input.undated))]
       : []),
     ...(input.truncated
-      ? [note("ไฟล์มีมากกว่า 30 รายการ อ่านให้ 30 รายการ ที่เหลือส่งแยกเป็นไฟล์เล็กลงนะ")]
+      ? [note(t("ไฟล์มีมากกว่า 30 รายการ อ่านให้ 30 รายการ ที่เหลือส่งแยกเป็นไฟล์เล็กลงนะ"))]
       : []),
-    note("AI อาจอ่านผิด ตรวจก่อนจดนะ ยกเลิกได้ทั้งชุด หรือจดแล้วแก้ทีหลัง"),
+    note(t("AI อาจอ่านผิด ตรวจก่อนจดนะ ยกเลิกได้ทั้งชุด หรือจดแล้วแก้ทีหลัง")),
   ];
 
   return {
     type: "flex",
-    altText: `ตรวจรายการจากไฟล์ PDF: ${input.entries.length} รายการ`,
+    altText: t("ตรวจรายการจากไฟล์ PDF: {0} รายการ", input.entries.length),
     contents: {
       type: "bubble",
       size: "mega",
@@ -101,7 +102,7 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
         contents: [
           {
             type: "text",
-            text: "ตรวจรายการจากไฟล์ PDF — ยังไม่ได้จด",
+            text: t("ตรวจรายการจากไฟล์ PDF — ยังไม่ได้จด"),
             weight: "bold",
             color: COLOR.primary,
             wrap: true,
@@ -117,14 +118,14 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
         contents: [
           {
             type: "text",
-            text: `พบ ${input.entries.length} รายการ`,
+            text: t("พบ {0} รายการ", input.entries.length),
             weight: "bold",
             size: "md",
             color: COLOR.text,
           },
           {
             type: "text",
-            text: `รายจ่าย ${expenses} · รายรับ ${incomes}`,
+            text: t("รายจ่าย {0} · รายรับ {1}", expenses, incomes),
             size: "sm",
             color: COLOR.muted,
           },
@@ -137,7 +138,7 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
             contents: [
               {
                 type: "text",
-                text: `รายจ่ายรวม -${money(sum("expense"))}`,
+                text: t("รายจ่ายรวม -{0}", money(sum("expense"))),
                 size: "xs",
                 color: COLOR.expense,
                 flex: 1,
@@ -145,7 +146,7 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
               },
               {
                 type: "text",
-                text: `รายรับรวม +${money(sum("income"))}`,
+                text: t("รายรับรวม +{0}", money(sum("income"))),
                 size: "xs",
                 color: COLOR.income,
                 align: "end",
@@ -170,9 +171,9 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
             color: COLOR.primary,
             action: {
               type: "postback",
-              label: `จดทั้งหมด (${input.entries.length})`,
+              label: t("จดทั้งหมด ({0})", input.entries.length),
               data: `a=pdfok&i=${input.importId}`,
-              displayText: "จดทั้งหมด",
+              displayText: t("จดทั้งหมด"),
             },
           },
           {
@@ -181,9 +182,9 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
             height: "sm",
             action: {
               type: "postback",
-              label: "ยกเลิก",
+              label: t("ยกเลิก"),
               data: `a=pdfx&i=${input.importId}`,
-              displayText: "ยกเลิก",
+              displayText: t("ยกเลิก"),
             },
           },
         ],

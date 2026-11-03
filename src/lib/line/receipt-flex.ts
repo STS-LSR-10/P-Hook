@@ -3,6 +3,7 @@ import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage, TxType } from "@/lib/types";
 import { budgetBlock, chip, COLOR, noticeBoxes, paymentRow } from "./flex";
+import { t } from "@/lib/i18n";
 
 export interface ReceiptCardEntry {
   txId: string;
@@ -57,7 +58,7 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
   // groups in the order they first appear
   const groups: { key: string; type: TxType; label: string; rows: ReceiptCardEntry[] }[] = [];
   for (const e of shown) {
-    const name = e.categoryName ? categoryLabel(e.categoryName, e.categoryIcon) : "ไม่ระบุหมวด";
+    const name = e.categoryName ? categoryLabel(e.categoryName, e.categoryIcon) : t("ไม่ระบุหมวด");
     const key = `${e.type}|${name}`;
     let group = groups.find((g) => g.key === key);
     if (!group) {
@@ -151,9 +152,9 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
             COLOR.expense,
             {
               type: "postback",
-              label: "ลบ",
+              label: t("ลบ"),
               data: `a=rdx&id=${e.txId}`,
-              displayText: `ลบ ${e.title}`.slice(0, 40),
+              displayText: t("ลบ {0}", e.title).slice(0, 40),
             },
             "36px",
           ),
@@ -166,7 +167,7 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
   if (more > 0) {
     notes.push({
       type: "text",
-      text: `…และอีก ${more} รายการ (จดไว้แล้ว ดูและแก้ได้ที่หน้ารายการ)`,
+      text: t("…และอีก {0} รายการ (จดไว้แล้ว ดูและแก้ได้ที่หน้ารายการ)", more),
       size: "xs",
       color: COLOR.muted,
       wrap: true,
@@ -176,7 +177,7 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
   if (!input.dateKnown) {
     notes.push({
       type: "text",
-      text: "* ไม่เห็นวันที่บนสลิป ใช้เวลาที่ส่งแทน แก้ได้ด้วยปุ่ม ✏️",
+      text: t("* ไม่เห็นวันที่บนสลิป ใช้เวลาที่ส่งแทน แก้ได้ด้วยปุ่ม ✏️"),
       size: "xs",
       color: COLOR.muted,
       wrap: true,
@@ -193,7 +194,7 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
       contents: [
         {
           type: "text",
-          text: "จดสำเร็จ ✅",
+          text: t("จดสำเร็จ ✅"),
           weight: "bold",
           size: "lg",
           color: "#0B5D4F",
@@ -201,7 +202,7 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
         },
         {
           type: "text",
-          text: "อย่าลืมตรวจสอบรายการที่จดด้วยนะ",
+          text: t("อย่าลืมตรวจสอบรายการที่จดด้วยนะ"),
           size: "xs",
           color: "#3F6B63",
           wrap: true,
@@ -225,17 +226,17 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
             selected: c.selected,
             action: {
               type: "postback",
-              label: "จ่ายด้วย",
+              label: t("จ่ายด้วย"),
               data: `a=wms&s=${input.slipId}&w=${c.id}`,
-              displayText: `จ่ายด้วย ${c.label}`.slice(0, 40),
+              displayText: t("จ่ายด้วย {0}", c.label).slice(0, 40),
             },
           })),
           input.payment.more
             ? {
                 type: "postback",
-                label: "อื่น ๆ",
+                label: t("อื่น ๆ"),
                 data: `a=wls&s=${input.slipId}`,
-                displayText: "เลือกช่องทางอื่น",
+                displayText: t("เลือกช่องทางอื่น"),
               }
             : undefined,
           input.payment.addUrl?.startsWith("https://")
@@ -248,7 +249,7 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
   const total = input.entries.length;
   return {
     type: "flex",
-    altText: `จดสำเร็จ ${total} รายการ`,
+    altText: t("จดสำเร็จ {0} รายการ", total),
     contents: {
       type: "bubble",
       size: "mega",
@@ -280,9 +281,9 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
                   height: "sm",
                   action: {
                     type: "postback",
-                    label: "ยกเลิกทั้งใบ",
+                    label: t("ยกเลิกทั้งใบ"),
                     data: `a=rcx&s=${input.slipId}`,
-                    displayText: "ยกเลิกทั้งใบ",
+                    displayText: t("ยกเลิกทั้งใบ"),
                   },
                 },
               ],

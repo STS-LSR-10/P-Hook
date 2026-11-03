@@ -3,11 +3,12 @@ import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const CADENCE: Record<BillDto["cadence"], string> = {
-  monthly: "ทุกเดือน",
-  yearly: "ทุกปี",
-  once: "ครั้งเดียว",
+  monthly: t("ทุกเดือน"),
+  yearly: t("ทุกปี"),
+  once: t("ครั้งเดียว"),
 };
 
 /** "บิล": every bill with its next due date (red when late, amber within 3 days) and the amount. */
@@ -62,7 +63,7 @@ export function buildBillsCard(input: {
             },
             {
               type: "text",
-              text: b.amountSatang ? `${money(b.amountSatang)}` : "ไม่ระบุยอด",
+              text: b.amountSatang ? `${money(b.amountSatang)}` : t("ไม่ระบุยอด"),
               size: "xs",
               align: "end",
               color: COLOR.muted,
@@ -75,7 +76,7 @@ export function buildBillsCard(input: {
 
   return {
     type: "flex",
-    altText: `บิลที่ตั้งเตือน ${input.bills.length} รายการ`,
+    altText: t("บิลที่ตั้งเตือน {0} รายการ", input.bills.length),
     contents: {
       type: "bubble",
       size: "mega",
@@ -96,7 +97,7 @@ export function buildBillsCard(input: {
           ...rows,
           {
             type: "text",
-            text: 'จ่ายแล้วพิมพ์ "จ่ายบิล ค่าไฟ" หรือกดปุ่มในข้อความเตือน',
+            text: t("จ่ายแล้วพิมพ์ \"จ่ายบิล ค่าไฟ\" หรือกดปุ่มในข้อความเตือน"),
             size: "xs",
             color: COLOR.muted,
             wrap: true,

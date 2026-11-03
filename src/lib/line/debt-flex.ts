@@ -3,6 +3,7 @@ import { money } from "@/lib/money";
 import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const baht = (satang: number) => money(satang);
 
@@ -71,7 +72,7 @@ function section(title: string, color: string, people: PersonTotal[], total: num
       ? [
           {
             type: "text",
-            text: `และอีก ${people.length - 8} คน`,
+            text: t("และอีก {0} คน", people.length - 8),
             size: "xs",
             color: COLOR.muted,
             margin: "sm",
@@ -92,13 +93,13 @@ export function buildDebtsCard(input: {
   const sum = (list: PersonTotal[]) => list.reduce((s, p) => s + p.remainingSatang, 0);
   const body: unknown[] = [];
   if (lent.length > 0)
-    body.push(...section("คนที่ติดเรา", COLOR.income, lent, sum(lent), input.now));
+    body.push(...section(t("คนที่ติดเรา"), COLOR.income, lent, sum(lent), input.now));
   if (borrowed.length > 0) {
-    body.push(...section("เราติดใคร", COLOR.expense, borrowed, sum(borrowed), input.now));
+    body.push(...section(t("เราติดใคร"), COLOR.expense, borrowed, sum(borrowed), input.now));
   }
   body.push({
     type: "text",
-    text: 'พิมพ์ "สมชายคืน 200" เมื่อได้เงินคืน หรือ "คืนแม่ 1000" เมื่อเราคืนเงิน',
+    text: t("พิมพ์ \"สมชายคืน 200\" เมื่อได้เงินคืน หรือ \"คืนแม่ 1000\" เมื่อเราคืนเงิน"),
     size: "xs",
     color: COLOR.muted,
     wrap: true,
@@ -106,7 +107,7 @@ export function buildDebtsCard(input: {
   });
   return {
     type: "flex",
-    altText: `หนี้สิน: ติดเรา ${baht(sum(lent))} · เราติด ${baht(sum(borrowed))}`,
+    altText: t("หนี้สิน: ติดเรา {0} · เราติด {1}", baht(sum(lent)), baht(sum(borrowed))),
     contents: {
       type: "bubble",
       size: "mega",
@@ -150,9 +151,9 @@ export function buildDebtDone(input: { text: string; undoData: string }): LineMe
           type: "action",
           action: {
             type: "postback",
-            label: "↩ ยกเลิก",
+            label: t("↩ ยกเลิก"),
             data: input.undoData,
-            displayText: "ยกเลิก",
+            displayText: t("ยกเลิก"),
           },
         },
       ],

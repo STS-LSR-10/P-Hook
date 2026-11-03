@@ -4,6 +4,7 @@ import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { cardHeader, pillFooter, TINT } from "./card-style";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const DAY_MS = 86_400_000;
 const MAX_LISTED = 4;
@@ -74,8 +75,8 @@ function runOutText(date: Date, today: Date): string {
 function scenarioLine(label: string, s: Scenario): string {
   return `${label}: ใช้วันละ ${money(s.dailyRateSatang)} → ${
     s.runsOutOn
-      ? `เงินหมด ${formatThaiDayMonth(s.runsOutOn)}`
-      : `เหลือ ${money(s.endBalanceSatang)}`
+      ? t("เงินหมด {0}", formatThaiDayMonth(s.runsOutOn))
+      : t("เหลือ {0}", money(s.endBalanceSatang))
   }`;
 }
 
@@ -111,18 +112,18 @@ export function buildForecastCard(input: {
   ];
 
   if (f.alreadyNegative) {
-    body.push(statusPill("⚠️ ตอนนี้รายจ่ายมากกว่ารายรับของรอบนี้แล้ว", false));
+    body.push(statusPill(t("⚠️ ตอนนี้รายจ่ายมากกว่ารายรับของรอบนี้แล้ว"), false));
   } else if (f.runsOutOn) {
-    body.push(statusPill(`⚠️ เงินจะหมดประมาณ ${runOutText(f.runsOutOn, input.today)}`, false));
+    body.push(statusPill(t("⚠️ เงินจะหมดประมาณ {0}", runOutText(f.runsOutOn, input.today)), false));
   } else {
-    body.push(statusPill("✅ เงินพอใช้ไปถึงสิ้นรอบ 👍", true));
+    body.push(statusPill(t("✅ เงินพอใช้ไปถึงสิ้นรอบ 👍"), true));
   }
 
   body.push(
     { type: "separator", margin: "lg", color: "#EDEDF2" },
-    row("เหลือตอนนี้", money(f.netNowSatang), tone(f.netNowSatang)),
-    row("ใช้จ่ายทั่วไปต่อวัน", money(f.dailyRateSatang)),
-    row("เหลืออีก", `📆 ${f.remainingDays} วัน`),
+    row(t("เหลือตอนนี้"), money(f.netNowSatang), tone(f.netNowSatang)),
+    row(t("ใช้จ่ายทั่วไปต่อวัน"), money(f.dailyRateSatang)),
+    row(t("เหลืออีก"), t("📆 {0} วัน", f.remainingDays)),
   );
 
   if (f.upcomingIncomes.length > 0 || f.upcomingExpenses.length > 0) {
@@ -135,46 +136,46 @@ export function buildForecastCard(input: {
     const shown =
       Math.min(MAX_LISTED, f.upcomingIncomes.length) +
       Math.min(MAX_LISTED, f.upcomingExpenses.length);
-    if (hidden > shown) body.push(note(`และอีก ${hidden - shown} รายการ`));
+    if (hidden > shown) body.push(note(t("และอีก {0} รายการ", hidden - shown)));
   }
 
   if (f.trend) {
-    body.push(scenarioBox(scenarioLine("ถ้าใช้จ่ายเท่า 7 วันล่าสุด", f.trend)));
+    body.push(scenarioBox(scenarioLine(t("ถ้าใช้จ่ายเท่า 7 วันล่าสุด"), f.trend)));
   }
 
   if (f.budget) {
     const b = f.budget;
     const line = b.overNow
-      ? `งบรวม ${money(b.limitSatang)}: ใช้เกินงบแล้ว`
+      ? t("งบรวม {0}: ใช้เกินงบแล้ว", money(b.limitSatang))
       : b.exhaustedOn
-        ? `งบรวม ${money(b.limitSatang)}: คาดว่าจะใช้ ${b.percent}% และงบหมดประมาณ ${runOutText(b.exhaustedOn, input.today)}`
-        : `งบรวม ${money(b.limitSatang)}: คาดว่าจะใช้ ${b.percent}% ของงบ`;
+        ? t("งบรวม {0}: คาดว่าจะใช้ {1}% และงบหมดประมาณ {2}", money(b.limitSatang), b.percent, runOutText(b.exhaustedOn, input.today))
+        : t("งบรวม {0}: คาดว่าจะใช้ {1}% ของงบ", money(b.limitSatang), b.percent);
     body.push(note(line, b.overNow || b.percent >= 100 ? COLOR.expense : COLOR.muted));
   }
 
   if (f.lowData) {
     body.push(
-      note("ข้อมูลยังน้อย (ต่ำกว่า 5 วันหรือ 5 รายการ) ตัวเลขอาจคลาดเคลื่อนมาก", COLOR.expense),
+      note(t("ข้อมูลยังน้อย (ต่ำกว่า 5 วันหรือ 5 รายการ) ตัวเลขอาจคลาดเคลื่อนมาก"), COLOR.expense),
     );
   }
   body.push(
     note(
-      "เป็นการประมาณจากอัตราใช้จ่ายของรอบนี้ ไม่รวมรายรับที่ยังไม่เกิดและไม่ใช่รายการประจำ (เช่น โบนัส)",
+      t("เป็นการประมาณจากอัตราใช้จ่ายของรอบนี้ ไม่รวมรายรับที่ยังไม่เกิดและไม่ใช่รายการประจำ (เช่น โบนัส)"),
     ),
   );
 
   const bubble: Record<string, unknown> = {
     type: "bubble",
     size: "mega",
-    header: cardHeader("พยากรณ์เงินปลายรอบ", [input.subtitle], "🐷"),
+    header: cardHeader(t("พยากรณ์เงินปลายรอบ"), [input.subtitle], "🐷"),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
-  const foot = pillFooter("ดูสรุปในแอป 📈", input.moreUrl);
+  const foot = pillFooter(t("ดูสรุปในแอป 📈"), input.moreUrl);
   if (foot) bubble.footer = foot;
   return {
     type: "flex",
     altText: `พยากรณ์: สิ้นรอบจะเหลือ ${money(f.endBalanceSatang)}${
-      f.runsOutOn ? ` เงินหมดประมาณ ${formatThaiDayMonth(f.runsOutOn)}` : ""
+      f.runsOutOn ? t(" เงินหมดประมาณ {0}", formatThaiDayMonth(f.runsOutOn)) : ""
     }`,
     contents: bubble,
   };

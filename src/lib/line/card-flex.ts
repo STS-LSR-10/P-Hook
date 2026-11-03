@@ -4,6 +4,7 @@ import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { walletLabel, type Wallet } from "@/lib/wallet";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const row = (label: string, value: string, color: string = COLOR.text) => ({
   type: "box",
@@ -58,16 +59,16 @@ export function buildCardsCard(input: {
     });
     body.push(
       row(
-        "ยอดค้างชำระ",
+        t("ยอดค้างชำระ"),
         money(status.owedSatang),
         status.owedSatang > 0 ? COLOR.expense : COLOR.income,
       ),
     );
     if (status.limitSatang !== null && status.availableSatang !== null) {
-      body.push(row("วงเงิน", money(status.limitSatang)));
+      body.push(row(t("วงเงิน"), money(status.limitSatang)));
       body.push(
         row(
-          status.availableSatang < 0 ? "เกินวงเงิน" : "วงเงินคงเหลือ",
+          status.availableSatang < 0 ? t("เกินวงเงิน") : t("วงเงินคงเหลือ"),
           money(Math.abs(status.availableSatang)),
           status.availableSatang < 0 ? COLOR.expense : COLOR.income,
         ),
@@ -76,7 +77,7 @@ export function buildCardsCard(input: {
         body.push(bar(status.usedPercent));
         body.push({
           type: "text",
-          text: `ใช้วงเงินไป ${status.usedPercent}%`,
+          text: t("ใช้วงเงินไป {0}%", status.usedPercent),
           size: "xs",
           color: COLOR.muted,
           margin: "sm",
@@ -84,17 +85,17 @@ export function buildCardsCard(input: {
       }
     }
     if (status.cycle) {
-      body.push(row("ยอดใช้รอบนี้", money(status.cycleSpentSatang)));
-      body.push(row("ยอดใช้รอบที่แล้ว", money(status.previousCycleSpentSatang)));
+      body.push(row(t("ยอดใช้รอบนี้"), money(status.cycleSpentSatang)));
+      body.push(row(t("ยอดใช้รอบที่แล้ว"), money(status.previousCycleSpentSatang)));
     }
     if (status.nextStatement)
-      body.push(row("ตัดรอบบิลถัดไป", formatThaiDayMonth(status.nextStatement)));
-    if (status.nextDue) body.push(row("ครบกำหนดชำระ", formatThaiDayMonth(status.nextDue)));
+      body.push(row(t("ตัดรอบบิลถัดไป"), formatThaiDayMonth(status.nextStatement)));
+    if (status.nextDue) body.push(row(t("ครบกำหนดชำระ"), formatThaiDayMonth(status.nextDue)));
   });
 
   return {
     type: "flex",
-    altText: `บัตรเครดิต ${input.cards.length} ใบ`,
+    altText: t("บัตรเครดิต {0} ใบ", input.cards.length),
     contents: {
       type: "bubble",
       size: "mega",

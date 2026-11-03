@@ -46,14 +46,18 @@ export function currentLocale(): Locale {
   return isLocale(v) ? v : DEFAULT_LOCALE;
 }
 
-const fill = (text: string, values: readonly (string | number)[]) =>
-  values.length === 0 ? text : text.replace(/\{(\d+)\}/g, (m, i) => String(values[Number(i)] ?? m));
+type Value = string | number | null | undefined;
+// a value is written as a template literal would write it
+const fill = (text: string, values: readonly Value[]) =>
+  values.length === 0
+    ? text
+    : text.replace(/\{(\d+)\}/g, (m, i) => (Number(i) < values.length ? String(values[Number(i)]) : m));
 
 /**
  * The words in the person's language: `th` as written, or its English. "{0}", "{1}" in it are
  * replaced by `values`. A phrase with no English yet stays Thai (never blank).
  */
-export function t(th: string, ...values: (string | number)[]): string {
+export function t(th: string, ...values: Value[]): string {
   const text = currentLocale() === "en" ? (EN[th] ?? th) : th;
   return fill(text, values);
 }

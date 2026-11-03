@@ -2,6 +2,7 @@ import { categoryLabel } from "@/lib/category-emoji";
 import { money } from "@/lib/money";
 import { bangkokParts, formatThaiDate } from "@/lib/thai-date";
 import type { ConfirmStyle, LineMessage, TxType } from "@/lib/types";
+import { t as tr } from "@/lib/i18n";
 
 // Design tokens (see docs/design-tokens.md)
 export const COLOR = {
@@ -60,7 +61,7 @@ export interface ConfirmCardInput {
   logoUrl?: string;
 }
 
-const TYPE_LABEL: Record<TxType, string> = { expense: "รายจ่าย", income: "รายรับ" };
+const TYPE_LABEL: Record<TxType, string> = { expense: tr("รายจ่าย"), income: tr("รายรับ") };
 
 export function row(label: string, value: string) {
   return {
@@ -83,7 +84,7 @@ export function row(label: string, value: string) {
 
 export function shareText(input: ConfirmCardInput): string {
   const sign = input.type === "income" ? "+" : "-";
-  return `${input.title} ${sign}${money(input.amountSatang)} (${formatThaiDate(input.occurredAt)}) · จดด้วยพี่ฮูก`;
+  return tr("{0} {1}{2} ({3}) · จดด้วยพี่ฮูก", input.title, sign, money(input.amountSatang), formatThaiDate(input.occurredAt));
 }
 
 // colours below are the base palette's, so the chosen card theme still recolours them
@@ -181,16 +182,16 @@ export function paymentRow(
 ): unknown[] {
   const pills: unknown[] = [
     ...choices.map((c) => payPill(c.label, c.selected, c.selected ? undefined : c.action)),
-    ...(more ? [payPill("อื่น ๆ", false, more)] : []),
+    ...(more ? [payPill(tr("อื่น ๆ"), false, more)] : []),
   ].slice(0, PAY_ROW);
-  if (add && pills.length < PAY_ROW) pills.push(payPill("＋ เพิ่มช่องทาง", false, add));
+  if (add && pills.length < PAY_ROW) pills.push(payPill(tr("＋ เพิ่มช่องทาง"), false, add));
   // a short row keeps its pills a third wide: empty boxes take the rest
   while (pills.length < PAY_ROW)
     pills.push({ type: "box", layout: "vertical", flex: 1, contents: [] });
   return [
     {
       type: "text",
-      text: "จ่ายด้วย",
+      text: tr("จ่ายด้วย"),
       size: "xs",
       weight: "bold",
       color: TINT_STRONG,
@@ -214,14 +215,14 @@ function attachPhotoPill(txId: string) {
     borderColor: "#A7E8D8",
     action: {
       type: "postback",
-      label: "แนบรูป",
+      label: tr("แนบรูป"),
       // no displayText: the tap is silent, only the camera / album buttons come back
       data: `a=ph&id=${txId}`,
     },
     contents: [
       {
         type: "text",
-        text: "📎 แนบรูป",
+        text: tr("📎 แนบรูป"),
         size: "md",
         weight: "bold",
         color: "#0B5D4F",
@@ -261,7 +262,7 @@ export function budgetBlock(
         contents: [
           {
             type: "text",
-            text: budget.scopeName ? `งบหมวด${budget.scopeName}` : "งบรวม",
+            text: budget.scopeName ? tr("งบหมวด{0}", budget.scopeName) : tr("งบรวม"),
             weight: "bold",
             size: "md",
             color: "#14352E",
@@ -284,7 +285,7 @@ export function budgetBlock(
                   contents: [
                     {
                       type: "text",
-                      text: level === "over" ? "เกินงบ" : "ใกล้เต็มงบ",
+                      text: level === "over" ? tr("เกินงบ") : tr("ใกล้เต็มงบ"),
                       size: "xs",
                       weight: "bold",
                       color: LEVEL_COLOR[level],
@@ -351,7 +352,7 @@ export function budgetBlock(
 
 export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
   const amountText = `${money(input.amountSatang)}`;
-  const category = input.categoryName ?? "ไม่ระบุหมวด";
+  const category = input.categoryName ?? tr("ไม่ระบุหมวด");
   const tagsText = input.tags?.length ? ` ${input.tags.map((t) => `#${t}`).join(" ")}` : "";
 
   const walletText = input.walletName ? ` · ${input.walletName}` : "";
@@ -361,9 +362,9 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           type: "action",
           action: {
             type: "postback",
-            label: "💳 ย้ายกระเป๋า",
+            label: tr("💳 ย้ายกระเป๋า"),
             data: `a=wl&id=${input.txId}`,
-            displayText: "ย้ายกระเป๋า",
+            displayText: tr("ย้ายกระเป๋า"),
           },
         },
       ]
@@ -398,7 +399,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
         {
           type: "text",
           // the tick sits right after the words (it wraps along with them on a narrow phone)
-          text: input.edited ? "แก้ไขรายการสำเร็จ ✅" : "จดสำเร็จ ✅",
+          text: input.edited ? tr("แก้ไขรายการสำเร็จ ✅") : tr("จดสำเร็จ ✅"),
           weight: "bold",
           // the longer edit title is a notch smaller
           size: input.edited ? "md" : "lg",
@@ -408,10 +409,10 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
         {
           type: "text",
           text: input.edited
-            ? "อัปเดตรายการเรียบร้อยแล้ว"
+            ? tr("อัปเดตรายการเรียบร้อยแล้ว")
             : income
-              ? "เย้! มีเงินเข้ากระเป๋าเพิ่มแล้วนะ"
-              : "อย่าลืมตรวจสอบรายการที่จดด้วยนะ",
+              ? tr("เย้! มีเงินเข้ากระเป๋าเพิ่มแล้วนะ")
+              : tr("อย่าลืมตรวจสอบรายการที่จดด้วยนะ"),
           size: "xs",
           color: "#3F6B63",
           wrap: true,
@@ -466,12 +467,12 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           flex: 1,
         },
         chip(
-          "แชร์",
+          tr("แชร์"),
           accentSoft,
           accent,
           {
             type: "uri",
-            label: "แชร์",
+            label: tr("แชร์"),
             uri: `https://line.me/R/share?text=${encodeURIComponent(shareText(input))}`,
           },
           "48px",
@@ -543,9 +544,9 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
             ? { type: "uri", label: "แก้ไข", uri: input.editUrl }
             : {
                 type: "postback",
-                label: "แก้ไข",
+                label: tr("แก้ไข"),
                 data: `a=edit&id=${input.txId}`,
-                displayText: "แก้ไข",
+                displayText: tr("แก้ไข"),
               },
           "36px",
           "32px",
@@ -556,9 +557,9 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           COLOR.expense,
           {
             type: "postback",
-            label: "ลบ",
+            label: tr("ลบ"),
             data: `a=del&id=${input.txId}`,
-            displayText: "ลบรายการ",
+            displayText: tr("ลบรายการ"),
           },
           "36px",
           "32px",
@@ -627,7 +628,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
     if (input.cycleLabel) {
       body.push({
         type: "text",
-        text: `รอบงบ: ${input.cycleLabel}`,
+        text: tr("รอบงบ: {0}", input.cycleLabel),
         size: "xs",
         color: COLOR.muted,
         align: "end",
@@ -646,17 +647,17 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           selected: w.selected,
           action: {
             type: "postback",
-            label: "จ่ายด้วย",
+            label: tr("จ่ายด้วย"),
             data: `a=wm&id=${input.txId}&w=${w.id}`,
-            displayText: `จ่ายด้วย ${w.label}`.slice(0, 40),
+            displayText: tr("จ่ายด้วย {0}", w.label).slice(0, 40),
           },
         })),
         input.moreWallets
           ? {
               type: "postback",
-              label: "อื่น ๆ",
+              label: tr("อื่น ๆ"),
               data: `a=wl&id=${input.txId}`,
-              displayText: "เลือกช่องทางอื่น",
+              displayText: tr("เลือกช่องทางอื่น"),
             }
           : undefined,
         input.addWalletUrl?.startsWith("https://")
@@ -671,16 +672,16 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
       height: "sm",
       action: {
         type: "postback",
-        label: "💳 ย้ายกระเป๋า",
+        label: tr("💳 ย้ายกระเป๋า"),
         data: `a=wl&id=${input.txId}`,
-        displayText: "ย้ายกระเป๋า",
+        displayText: tr("ย้ายกระเป๋า"),
       },
     });
   }
 
   return {
     type: "flex",
-    altText: `จดแล้ว: ${input.title} ${amountText}`,
+    altText: tr("จดแล้ว: {0} {1}", input.title, amountText),
     contents: {
       type: "bubble",
       size: "mega",
@@ -733,9 +734,9 @@ export function buildTypeQuestion(input: {
   });
   return {
     type: "text",
-    text: `${input.title} ${money(input.amountSatang)} เป็นรายรับหรือรายจ่ายนะ?`,
+    text: tr("{0} {1} เป็นรายรับหรือรายจ่ายนะ?", input.title, money(input.amountSatang)),
     quickReply: {
-      items: [action("รายจ่าย", "expense"), action("รายรับ", "income"), action("ยกเลิก", "cancel")],
+      items: [action(tr("รายจ่าย"), "expense"), action(tr("รายรับ"), "income"), action(tr("ยกเลิก"), "cancel")],
     },
   };
 }
@@ -756,15 +757,15 @@ export function buildComposeCard(): LineMessage {
   });
   return {
     type: "flex",
-    altText: "พิมพ์บอกพี่ฮูกได้เลย เช่น กระเพราหมูกรอบ 65 · เงินเดือน 25000",
+    altText: tr("พิมพ์บอกพี่ฮูกได้เลย เช่น กระเพราหมูกรอบ 65 · เงินเดือน 25000"),
     // pick a category first, then only the amount is left to type (see buildCategoryKeyboardList);
     // or pick a past day first (see buildDatePicker)
     quickReply: {
       items: [
         ...(
           [
-            ["หมวดรายจ่าย", "expense"],
-            ["หมวดรายรับ", "income"],
+            [tr("หมวดรายจ่าย"), "expense"],
+            [tr("หมวดรายรับ"), "income"],
           ] as const
         ).map(([label, t]) => ({
           type: "action",
@@ -774,9 +775,9 @@ export function buildComposeCard(): LineMessage {
           type: "action",
           action: {
             type: "postback",
-            label: "📅 จดย้อนหลัง",
+            label: tr("📅 จดย้อนหลัง"),
             data: "a=bd",
-            displayText: "จดย้อนหลัง",
+            displayText: tr("จดย้อนหลัง"),
           },
         },
       ],
@@ -810,7 +811,7 @@ export function buildComposeCard(): LineMessage {
               },
               {
                 type: "text",
-                text: "พิมพ์บอกพี่ฮูกได้เลย เช่น",
+                text: tr("พิมพ์บอกพี่ฮูกได้เลย เช่น"),
                 weight: "bold",
                 size: "md",
                 color: "#334155",
@@ -830,7 +831,7 @@ export function buildComposeCard(): LineMessage {
           },
           {
             type: "text",
-            text: "ระบบจะช่วยจดและแยกหมวดหมู่อัตโนมัติทันทีครับ ✨",
+            text: tr("ระบบจะช่วยจดและแยกหมวดหมู่อัตโนมัติทันทีครับ ✨"),
             size: "sm",
             color: COLOR.primary,
             wrap: true,
@@ -842,7 +843,7 @@ export function buildComposeCard(): LineMessage {
             height: "sm",
             action: {
               type: "postback",
-              label: "จดเลย",
+              label: tr("จดเลย"),
               data: "a=compose-go",
               inputOption: "openKeyboard",
             },
@@ -864,7 +865,7 @@ export interface ComposeCategory {
 
 const MAX_COMPOSE_CATEGORIES = 13; // LINE allows 13 quick-reply buttons
 const MAX_COMPOSE_LABEL = 20; // LINE label limit
-const CATCH_ALL_NAME = "อื่นๆ"; // exists for both types, so a typed name could not tell them apart
+const CATCH_ALL_NAME = tr("อื่นๆ"); // exists for both types, so a typed name could not tell them apart
 
 /**
  * Quick Reply list of one type's categories. Tapping one opens the keyboard with the category
@@ -882,12 +883,12 @@ export function buildCategoryKeyboardList(
   if (shown.length === 0) {
     return {
       type: "text",
-      text: 'ยังไม่มีหมวดให้เลือก พิมพ์จดได้เลย เช่น "กาแฟ 30" นะ',
+      text: tr("ยังไม่มีหมวดให้เลือก พิมพ์จดได้เลย เช่น \"กาแฟ 30\" นะ"),
     };
   }
   return {
     type: "text",
-    text: "เลือกหมวด แล้วพิมพ์แค่ตัวเลขจำนวนเงินได้เลย เช่น 50",
+    text: tr("เลือกหมวด แล้วพิมพ์แค่ตัวเลขจำนวนเงินได้เลย เช่น 50"),
     quickReply: {
       items: shown.map((c) => ({
         type: "action",
@@ -933,14 +934,14 @@ export const BACKDATE_MAX_DAYS = 366;
 export function buildDatePicker(now: Date): LineMessage {
   return {
     type: "text",
-    text: "เลือกวันที่ที่ต้องการจดย้อนหลังได้เลย",
+    text: tr("เลือกวันที่ที่ต้องการจดย้อนหลังได้เลย"),
     quickReply: {
       items: [
         {
           type: "action",
           action: {
             type: "datetimepicker",
-            label: "เลือกวันที่",
+            label: tr("เลือกวันที่"),
             data: "a=bdp",
             mode: "date",
             initial: ymd(new Date(now.getTime() - DAY_MS)),
@@ -966,14 +967,14 @@ export function backdatePrefix(isoDate: string): string {
 export function buildBackdatePrompt(isoDate: string, thaiDate: string): LineMessage {
   return {
     type: "text",
-    text: `จดย้อนหลังวันที่ ${thaiDate} พิมพ์ชื่อรายการและจำนวนเงินต่อได้เลย เช่น กาแฟ 60`,
+    text: tr("จดย้อนหลังวันที่ {0} พิมพ์ชื่อรายการและจำนวนเงินต่อได้เลย เช่น กาแฟ 60", thaiDate),
     quickReply: {
       items: [
         {
           type: "action",
           action: {
             type: "postback",
-            label: "พิมพ์รายการ",
+            label: tr("พิมพ์รายการ"),
             data: "a=bdk",
             inputOption: "openKeyboard",
             fillInText: backdatePrefix(isoDate),
@@ -997,9 +998,9 @@ export function withSummaryShortcuts(message: LineMessage): LineMessage {
           type: "action",
           action: {
             type: "postback",
-            label: "📆 ช่วงวันเอง",
+            label: tr("📆 ช่วงวันเอง"),
             data: "a=sr",
-            displayText: "ช่วงวันเอง",
+            displayText: tr("ช่วงวันเอง"),
           },
         },
         { type: "action", action: { type: "message", label: "📊 ตามหมวด", text: "สรุปหมวด" } },
@@ -1019,14 +1020,14 @@ const RANGE_START_YEARS_BACK = 3;
 export function buildRangeStartPicker(now: Date): LineMessage {
   return {
     type: "text",
-    text: "เลือกวันเริ่มต้นของช่วงที่ต้องการสรุป",
+    text: tr("เลือกวันเริ่มต้นของช่วงที่ต้องการสรุป"),
     quickReply: {
       items: [
         {
           type: "action",
           action: {
             type: "datetimepicker",
-            label: "วันเริ่มต้น",
+            label: tr("วันเริ่มต้น"),
             data: "a=sr1",
             mode: "date",
             initial: ymd(new Date(now.getTime() - 30 * DAY_MS)),
@@ -1043,14 +1044,14 @@ export function buildRangeStartPicker(now: Date): LineMessage {
 export function buildRangeEndPicker(startIso: string, thaiStart: string, now: Date): LineMessage {
   return {
     type: "text",
-    text: `เริ่มวันที่ ${thaiStart} เลือกวันสิ้นสุดต่อได้เลย`,
+    text: tr("เริ่มวันที่ {0} เลือกวันสิ้นสุดต่อได้เลย", thaiStart),
     quickReply: {
       items: [
         {
           type: "action",
           action: {
             type: "datetimepicker",
-            label: "วันสิ้นสุด",
+            label: tr("วันสิ้นสุด"),
             data: `a=sr2&f=${startIso}`,
             mode: "date",
             initial: ymd(now),

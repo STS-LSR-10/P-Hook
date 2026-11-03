@@ -342,6 +342,7 @@ import { log, safeMessage } from "@/lib/log";
 import type { Transcriber } from "@/lib/voice/transcribe";
 import { handleVoiceMessage, type VoiceDeps } from "./voice";
 import { enterCurrency, enterLocale, enterZone } from "@/lib/zone-scope";
+import { t as tr } from "@/lib/i18n";
 
 export interface LineEvent {
   type: string;
@@ -809,7 +810,7 @@ async function handleText(
 async function balanceLine(deps: HandlerDeps, userId: string, walletId: string): Promise<string> {
   const wallets = await listWallets(deps.db, userId);
   const w = wallets.find((x) => x.id === walletId);
-  return w ? `${w.name} คงเหลือ ${money(balanceOf(w))}` : "";
+  return w ? tr("{0} คงเหลือ {1}", w.name, money(balanceOf(w))) : "";
 }
 
 /** Lend / borrow / repay by chat. null when it is not about a debt of theirs (then it is an ordinary message). */
@@ -863,11 +864,11 @@ async function runDebt(
         undoData: `a=dpx&id=${ids.join(",")}`,
         text: [
           command.direction === "lent"
-            ? `รับคืนจาก ${person} ${money(command.amountSatang)}`
-            : `คืนเงิน ${person} ${money(command.amountSatang)}`,
-          left > 0 ? `ยังเหลือ ${money(left)}` : "ปิดหนี้ครบแล้ว 🎉",
+            ? tr("รับคืนจาก {0} {1}", person, money(command.amountSatang))
+            : tr("คืนเงิน {0} {1}", person, money(command.amountSatang)),
+          left > 0 ? tr("ยังเหลือ {0}", money(left)) : tr("ปิดหนี้ครบแล้ว 🎉"),
           await balanceLine(deps, user.id, wallet.id),
-          "(ไม่นับเป็นรายรับ/รายจ่าย)",
+          tr("(ไม่นับเป็นรายรับ/รายจ่าย)"),
         ]
           .filter(Boolean)
           .join("\n"),
@@ -921,11 +922,11 @@ async function runDebt(
       undoData: `a=dx&id=${id}`,
       text: [
         command.direction === "lent"
-          ? `จดแล้ว: ให้ ${person} ยืม ${money(command.amountSatang)}`
-          : `จดแล้ว: ยืม ${person} ${money(command.amountSatang)}`,
-        dueAt ? `กำหนดคืน ${formatThaiDate(dueAt)}` : "",
+          ? tr("จดแล้ว: ให้ {0} ยืม {1}", person, money(command.amountSatang))
+          : tr("จดแล้ว: ยืม {0} {1}", person, money(command.amountSatang)),
+        dueAt ? tr("กำหนดคืน {0}", formatThaiDate(dueAt)) : "",
         await balanceLine(deps, user.id, wallet.id),
-        "(ไม่นับเป็นรายรับ/รายจ่าย)",
+        tr("(ไม่นับเป็นรายรับ/รายจ่าย)"),
       ]
         .filter(Boolean)
         .join("\n"),
@@ -1020,15 +1021,15 @@ async function runBill(
     if (id === "duplicate") return [text(BILL_EXISTS_TEXT)];
     const cadence =
       command.cadence === "monthly"
-        ? `ทุกเดือนวันที่ ${command.dayOfMonth}`
+        ? tr("ทุกเดือนวันที่ {0}", command.dayOfMonth)
         : command.cadence === "yearly"
-          ? `ทุกปี ${command.dayOfMonth}/${command.monthOfYear}`
-          : "ครั้งเดียว";
+          ? tr("ทุกปี {0}/{1}", command.dayOfMonth, command.monthOfYear)
+          : tr("ครั้งเดียว");
     return [
       text(
         [
           `ตั้งเตือนบิลแล้ว: ${command.name}${command.amountSatang ? ` ประมาณ ${money(command.amountSatang)}` : ""}`,
-          `${cadence} · ครบถัดไป ${billDate(nextDueOn)}`,
+          tr("{0} · ครบถัดไป {1}", cadence, billDate(nextDueOn)),
           `เตือน ${command.remindDays.map((d) => (d === 0 ? "ในวันนั้น" : `ก่อน ${d} วัน`)).join(" และ ")} เวลา ${String(command.remindHour).padStart(2, "0")}:00 น.`,
         ].join("\n"),
       ),
@@ -1056,7 +1057,7 @@ async function billPaid(
   const { nextDueOn } = await settleBill(deps.db, user.id, bill, deps.now());
   const lines = [
     paid ? `จ่าย${bill.name}แล้ว` : `ข้ามรอบนี้ของ${bill.name}แล้ว`,
-    nextDueOn ? `ครบกำหนดรอบถัดไป ${billDate(nextDueOn)}` : "บิลนี้ครั้งเดียว ปิดให้แล้ว",
+    nextDueOn ? tr("ครบกำหนดรอบถัดไป {0}", billDate(nextDueOn)) : tr("บิลนี้ครั้งเดียว ปิดให้แล้ว"),
   ];
   const message: LineMessage = { type: "text", text: lines.join("\n") };
   if (paid && bill.amountSatang) {
@@ -1066,9 +1067,9 @@ async function billPaid(
           type: "action",
           action: {
             type: "postback",
-            label: `📝 จดรายจ่าย ${money(bill.amountSatang)}`.slice(0, 20),
+            label: tr("📝 จดรายจ่าย {0}", money(bill.amountSatang)).slice(0, 20),
             data: `a=be&id=${bill.id}&d=${bill.nextDueOn}`,
-            displayText: "จดเป็นรายจ่าย",
+            displayText: tr("จดเป็นรายจ่าย"),
           },
         },
       ],
@@ -1104,9 +1105,9 @@ async function runGoal(
     return [
       text(
         [
-          `สร้างเป้าหมายแล้ว: ${command.name} ${money(command.targetSatang)}`,
+          tr("สร้างเป้าหมายแล้ว: {0} {1}", command.name, money(command.targetSatang)),
           dueOn ? `ภายใน ${dueOn.split("-").reverse().join("/")}` : "",
-          `หยอดกระปุกด้วย "ออม ${command.name} 1000" ได้เลย`,
+          tr("หยอดกระปุกด้วย \"ออม {0} 1000\" ได้เลย", command.name),
         ]
           .filter(Boolean)
           .join("\n"),
@@ -1144,10 +1145,10 @@ async function runGoal(
       undoData: `a=gx&id=${depositId}&g=${goal.id}`,
       text: [
         out
-          ? `ถอนแล้ว ${money(command.amountSatang)} จาก ${goal.name}`
-          : `หยอดแล้ว ${money(command.amountSatang)} → ${goal.name}`,
-        `สะสม ${money(saved)} จาก ${money(goal.targetSatang)} (${after.percent}%)`,
-        after.done ? "ครบเป้าแล้ว" : `เหลืออีก ${money(after.remainingSatang)}`,
+          ? tr("ถอนแล้ว {0} จาก {1}", money(command.amountSatang), goal.name)
+          : tr("หยอดแล้ว {0} → {1}", money(command.amountSatang), goal.name),
+        tr("สะสม {0} จาก {1} ({2}%)", money(saved), money(goal.targetSatang), after.percent),
+        after.done ? tr("ครบเป้าแล้ว") : tr("เหลืออีก {0}", money(after.remainingSatang)),
       ].join("\n"),
     }),
   ];
@@ -1282,10 +1283,10 @@ async function runTransfer(
     buildTransferDone({
       transferId: id,
       text: [
-        `โอนแล้ว ${money(command.amountSatang)}`,
+        tr("โอนแล้ว {0}", money(command.amountSatang)),
         `${walletLabel(from.wallet)} → ${walletLabel(to.wallet)}`,
-        `คงเหลือ: ${from.wallet.name} ${balance(from.wallet.id)} · ${to.wallet.name} ${balance(to.wallet.id)}`,
-        "(ไม่นับเป็นรายรับ/รายจ่าย)",
+        tr("คงเหลือ: {0} {1} · {2} {3}", from.wallet.name, balance(from.wallet.id), to.wallet.name, balance(to.wallet.id)),
+        tr("(ไม่นับเป็นรายรับ/รายจ่าย)"),
       ].join("\n"),
     }),
   ];
@@ -1322,7 +1323,7 @@ async function summaryForRange(
   deps: HandlerDeps,
   start: DaySpec,
   end: DaySpec | null,
-  title = "สรุปช่วงที่เลือก",
+  title = tr("สรุปช่วงที่เลือก"),
 ): Promise<LineMessage[]> {
   const result = resolveRange(start, end, deps.now());
   if (!result.ok) {
@@ -1336,16 +1337,16 @@ async function summaryForRange(
       ),
     ];
   }
-  const subtitle = `${formatThaiDate(result.range.from)} – ${formatThaiDate(result.lastDay)} (${result.days} วัน)`;
+  const subtitle = tr("{0} – {1} ({2} วัน)", formatThaiDate(result.range.from), formatThaiDate(result.lastDay), result.days);
   const data = await loadSummaryData(deps.db, user.id, result.range, result.previous);
-  if (data.current.count === 0) return [text(`${title}\n${subtitle}\nยังไม่มีรายการเลย`)];
+  if (data.current.count === 0) return [text(tr("{0}\n{1}\nยังไม่มีรายการเลย", title, subtitle))];
   const base = process.env.APP_BASE_URL?.replace(/\/$/, "");
   return [
     buildSummaryCard({
       title,
       range: result.range,
       data,
-      against: "ช่วงก่อนหน้า",
+      against: tr("ช่วงก่อนหน้า"),
       subtitle,
       liffUrl: base ? `${base}/summary` : undefined,
     }),
@@ -1427,8 +1428,8 @@ async function receiptCardExtras(
     ]);
     extras.cycleLabel =
       settings.budget_cycle === "weekly"
-        ? "รายสัปดาห์"
-        : `รายเดือน (วันที่ ${settings.cycle_start_day})`;
+        ? tr("รายสัปดาห์")
+        : tr("รายเดือน (วันที่ {0})", settings.cycle_start_day);
     // the budget an entry counts against: the overall one, or its category's
     const scopes = new Map<string, { categoryId: string | null; satang: number }>();
     for (const t of made) {
@@ -1628,7 +1629,7 @@ async function saveEntries(
         (c) =>
           `• ${c.entry.title} ${c.entry.type === "income" ? "+" : "-"}${money(c.entry.amountSatang)}`,
       );
-      messages.push(text([`จดแล้ว ${confirmed.length} รายการ`, ...lines].join("\n")));
+      messages.push(text([tr("จดแล้ว {0} รายการ", confirmed.length), ...lines].join("\n")));
     }
   }
 
@@ -1757,11 +1758,11 @@ async function pointsSummaryText(db: SupabaseClient, userId: string, now: Date):
   const streak = currentStreak(keys, now);
   const { days } = redeemable(points);
   return [
-    `เหรียญสะสมของคุณ: ${points} แต้ม`,
-    streak > 0 ? `จดต่อเนื่อง ${streak} วันแล้ว` : "วันนี้จดรายการแรกเพื่อเริ่มสะสมนะ",
+    tr("เหรียญสะสมของคุณ: {0} แต้ม", points),
+    streak > 0 ? tr("จดต่อเนื่อง {0} วันแล้ว", streak) : tr("วันนี้จดรายการแรกเพื่อเริ่มสะสมนะ"),
     days > 0
-      ? `แลกเป็นวันใช้ Pro ได้ ${days} วัน (แลกที่หน้าตั้งค่า)`
-      : "สะสมครบแล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่านะ",
+      ? tr("แลกเป็นวันใช้ Pro ได้ {0} วัน (แลกที่หน้าตั้งค่า)", days)
+      : tr("สะสมครบแล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่านะ"),
   ].join("\n");
 }
 
@@ -1955,8 +1956,8 @@ async function confirmCard(
     cycleTotalSatang: cycleTotal,
     cycleLabel:
       settings.budget_cycle === "weekly"
-        ? "รายสัปดาห์"
-        : `รายเดือน (วันที่ ${settings.cycle_start_day})`,
+        ? tr("รายสัปดาห์")
+        : tr("รายเดือน (วันที่ {0})", settings.cycle_start_day),
     logoUrl: process.env.APP_BASE_URL
       ? `${process.env.APP_BASE_URL.replace(/\/$/, "")}/success-logo.png?v=2`
       : undefined,
@@ -2011,13 +2012,13 @@ async function runCommand(
           range,
         );
         const subtitle = formatThaiDate(now);
-        if (data.current.count === 0) return [text(`สรุปวันนี้ (${subtitle})\nยังไม่มีรายการเลย`)];
+        if (data.current.count === 0) return [text(tr("สรุปวันนี้ ({0})\nยังไม่มีรายการเลย", subtitle))];
         // with a daily limit set (Pro and above) the card says how much of it is used
         const limit = await dailyLimitOf(user, deps);
         return [
           withSummaryShortcuts(
             buildSummaryCard({
-              title: "สรุปวันนี้",
+              title: tr("สรุปวันนี้"),
               range,
               data,
               subtitle,
@@ -2040,14 +2041,14 @@ async function runCommand(
       );
       const last = new Date(range.to.getTime() - 1);
       const subtitle = `${formatThaiDate(range.from)} – ${formatThaiDate(last)}`;
-      if (data.current.count === 0) return [text(`สรุปเดือนนี้ (${subtitle})\nยังไม่มีรายการเลย`)];
+      if (data.current.count === 0) return [text(tr("สรุปเดือนนี้ ({0})\nยังไม่มีรายการเลย", subtitle))];
       return [
         withSummaryShortcuts(
           buildSummaryCard({
-            title: "สรุปเดือนนี้",
+            title: tr("สรุปเดือนนี้"),
             range,
             data,
-            against: "เดือนก่อน",
+            against: tr("เดือนก่อน"),
             subtitle,
             liffUrl,
           }),
@@ -2092,7 +2093,7 @@ async function runCommand(
       const subtitle = `${formatThaiDate(range.from)} – ${formatThaiDate(new Date(range.to.getTime() - 1))}`;
       const slices = buildCategorySlices(await loadCategorySpend(db, user.id, range));
       if (slices.length === 0)
-        return [text(`ใช้จ่ายตามหมวด (${subtitle})\nยังไม่มีรายจ่ายในรอบนี้`)];
+        return [text(tr("ใช้จ่ายตามหมวด ({0})\nยังไม่มีรายจ่ายในรอบนี้", subtitle))];
       const totalSatang = slices.reduce((sum, s) => sum + s.amountSatang, 0);
       return [
         buildCategorySpendCard({
@@ -2270,14 +2271,14 @@ async function runCommand(
       const span = sameSpanRanges(cycle, now, startDayOf(settings));
       const facts = await loadInsightFacts(db, user.id, span.current, span.previous, {
         current: rangeLabel(span.current),
-        previous: "เดือนก่อน",
+        previous: tr("เดือนก่อน"),
       });
       if (!hasSomethingToSay(facts)) return [text(INSIGHT_EMPTY_TEXT)];
       const insight = await generateInsight(deps.insightWriter, facts);
       return [
         buildInsightCard({
           insight,
-          subtitle: `รอบนี้ ${rangeLabel(span.current)} เทียบ ${rangeLabel(span.previous)}`,
+          subtitle: tr("รอบนี้ {0} เทียบ {1}", rangeLabel(span.current), rangeLabel(span.previous)),
           moreUrl: can(effectivePlan(user.plan, user.plan_expires_at, now), "dashboard")
             ? pageUrl("/analytics")
             : undefined,
@@ -2346,9 +2347,9 @@ async function runCommand(
                 type: "action",
                 action: {
                   type: "postback",
-                  label: "↩️ ยกเลิกโน้ตนี้",
+                  label: tr("↩️ ยกเลิกโน้ตนี้"),
                   data: `a=ntx&id=${note.id}`,
-                  displayText: "ยกเลิกโน้ตนี้",
+                  displayText: tr("ยกเลิกโน้ตนี้"),
                 },
               },
             ],
@@ -2362,7 +2363,7 @@ async function runCommand(
       return [
         url
           ? buildOpenPageCard(command.page, url)
-          : text(`เปิดหน้า${PAGE_INFO[command.page].title} ได้จากเมนูด้านล่างของแอป`),
+          : text(tr("เปิดหน้า{0} ได้จากเมนูด้านล่างของแอป", PAGE_INFO[command.page].title)),
       ];
     }
 
@@ -2384,7 +2385,7 @@ async function runCommand(
       const url = pageUrl("/reminders");
       return [
         text(
-          ["เตือนที่รออยู่ ⏰", ...lines, ...(url ? [`ดู แก้ไข หรือลบ: ${url}`] : [])].join("\n"),
+          [tr("เตือนที่รออยู่ ⏰"), ...lines, ...(url ? [tr("ดู แก้ไข หรือลบ: {0}", url)] : [])].join("\n"),
         ),
       ];
     }
@@ -2438,7 +2439,7 @@ async function runCommand(
       const { items, hasMore } = await listNotes(db, user.id, { q: command.term, limit: 5 });
       if (items.length === 0) return [text(noteNotFoundText(command.term))];
       const url = pageUrl(`/notes?q=${encodeURIComponent(command.term)}`);
-      return [text(noteListText(`โน้ตที่มี "${command.term}"`, items, url, hasMore))];
+      return [text(noteListText(tr("โน้ตที่มี \"{0}\"", command.term), items, url, hasMore))];
     }
 
     case "search": {
@@ -2472,7 +2473,7 @@ async function runCommand(
       const latest = await getLatestConfirmed(db, user.id);
       if (!latest) return [text(NOTHING_TO_DELETE_TEXT)];
       await updateTransaction(db, user.id, latest.id, { status: "deleted" });
-      return [text(`ลบแล้ว: ${latest.title} ${money(txAmountSatang(latest))}`)];
+      return [text(tr("ลบแล้ว: {0} {1}", latest.title, money(txAmountSatang(latest))))];
     }
 
     case "edit-latest": {
@@ -2481,7 +2482,7 @@ async function runCommand(
       await updateTransaction(db, user.id, latest.id, { amountSatang: command.amountSatang });
       return [
         text(
-          `แก้แล้ว: ${latest.title} ${money(txAmountSatang(latest))} → ${money(command.amountSatang)}`,
+          tr("แก้แล้ว: {0} {1} → {2}", latest.title, money(txAmountSatang(latest)), money(command.amountSatang)),
         ),
       ];
     }
@@ -2635,7 +2636,7 @@ async function handlePostback(
     const tx = await getTransaction(deps.db, user.id, id);
     if (!tx || tx.status !== "confirmed" || !tx.slip_id) return [text(NOT_FOUND_TEXT)];
     await updateTransaction(deps.db, user.id, id, { status: "deleted" });
-    return [text(`ลบแล้ว: ${tx.title} ${money(txAmountSatang(tx))}`)];
+    return [text(tr("ลบแล้ว: {0} {1}", tx.title, money(txAmountSatang(tx))))];
   }
   // The "จ่ายด้วย" row of that card moves the whole slip to a wallet or card.
   if (action === "wls" || action === "wms") {
@@ -2668,7 +2669,7 @@ async function handlePostback(
     const slipId = params.get("s") ?? "";
     if (!UUID_RE.test(slipId)) return [text(NOT_FOUND_TEXT)];
     const dropped = await cancelSlipEntries(deps.db, user.id, slipId);
-    return [text(dropped > 0 ? `ยกเลิกทั้งใบแล้ว ลบ ${dropped} รายการ` : NOT_FOUND_TEXT)];
+    return [text(dropped > 0 ? tr("ยกเลิกทั้งใบแล้ว ลบ {0} รายการ", dropped) : NOT_FOUND_TEXT)];
   }
   // The check card of a PDF: record or drop every entry of that file at once.
   if (action === "pdfok" || action === "pdfx") {
@@ -2839,7 +2840,7 @@ async function handlePostback(
 
   if (action === "del") {
     await updateTransaction(db, user.id, id, { status: "deleted" });
-    return [text(`ลบแล้ว: ${tx.title} ${money(txAmountSatang(tx))}`)];
+    return [text(tr("ลบแล้ว: {0} {1}", tx.title, money(txAmountSatang(tx))))];
   }
 
   if (action === "edit") {
@@ -2959,7 +2960,7 @@ async function handlePostback(
         const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
         if (can(plan, "merchantMemory")) {
           await learnMerchant(db, { userId: user.id, payee: slip.payee, categoryId: picked.id });
-          learned = `จำไว้แล้ว: ${slip.payee} → ${picked.name}`;
+          learned = tr("จำไว้แล้ว: {0} → {1}", slip.payee, picked.name);
         } else {
           learned = MEMORY_PLUS_HINT_TEXT;
         }

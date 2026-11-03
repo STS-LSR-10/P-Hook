@@ -1,11 +1,12 @@
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 export const PAGE_INFO = {
-  summary: { title: "สรุป", hint: "ภาพรวมรายรับรายจ่ายและงบ" },
-  transactions: { title: "รายการ", hint: "ดู ค้นหา แก้ไข และส่งออกรายการทั้งหมด" },
-  budgets: { title: "หมวดและงบ", hint: "ตั้งงบ จัดการหมวดหมู่" },
-  analytics: { title: "วิเคราะห์", hint: "กราฟและเปรียบเทียบการใช้จ่าย" },
+  summary: { title: t("สรุป"), hint: t("ภาพรวมรายรับรายจ่ายและงบ") },
+  transactions: { title: t("รายการ"), hint: t("ดู ค้นหา แก้ไข และส่งออกรายการทั้งหมด") },
+  budgets: { title: t("หมวดและงบ"), hint: t("ตั้งงบ จัดการหมวดหมู่") },
+  analytics: { title: t("วิเคราะห์"), hint: t("กราฟและเปรียบเทียบการใช้จ่าย") },
 } as const;
 
 export type PageKey = keyof typeof PAGE_INFO;
@@ -15,7 +16,7 @@ export function buildOpenPageCard(page: PageKey, url: string): LineMessage {
   const info = PAGE_INFO[page];
   return {
     type: "flex",
-    altText: `เปิดหน้า${info.title}`,
+    altText: t("เปิดหน้า{0}", info.title),
     contents: {
       type: "bubble",
       size: "mega",

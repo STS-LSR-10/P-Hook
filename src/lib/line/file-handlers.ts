@@ -38,6 +38,7 @@ import {
   noteListText,
   text,
 } from "./messages";
+import { t } from "@/lib/i18n";
 
 export interface FileChatDeps extends SaveDeps {
   pageUrl: (path: string) => string | undefined;
@@ -46,8 +47,8 @@ export interface FileChatDeps extends SaveDeps {
 type Media = Omit<RecentMedia, "id">;
 
 const MAX_RESULTS = 5;
-const LABEL_KEEP = "เก็บไฟล์";
-const LABEL_READ = "อ่านเป็นรายการ";
+const LABEL_KEEP = t("เก็บไฟล์");
+const LABEL_READ = t("อ่านเป็นรายการ");
 
 /** Opens the keyboard with the command already typed: the person only adds the name. */
 const NAME_BUTTON = {
@@ -56,10 +57,10 @@ const NAME_BUTTON = {
       type: "action",
       action: {
         type: "postback",
-        label: "✏️ ตั้งชื่อใหม่",
+        label: t("✏️ ตั้งชื่อใหม่"),
         data: "a=compose-go",
         inputOption: "openKeyboard",
-        fillInText: "ชื่อไฟล์ ",
+        fillInText: t("ชื่อไฟล์ "),
       },
     },
   ],
@@ -212,7 +213,7 @@ export async function runFileSearch(
   const messages: LineMessage[] = [];
   if (notes.items.length > 0) {
     const url = deps.pageUrl(`/notes?q=${encodeURIComponent(term)}`);
-    messages.push(text(noteListText(`โน้ตที่มี "${term}"`, notes.items, url, notes.hasMore)));
+    messages.push(text(noteListText(t("โน้ตที่มี \"{0}\"", term), notes.items, url, notes.hasMore)));
   }
   if (files.items.length > 0) messages.push(buildFileResults(files.items, openUrlOf(deps)));
   return messages.length > 0 ? messages : [text(fileNotFoundText(term))];

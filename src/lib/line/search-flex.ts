@@ -4,6 +4,7 @@ import type { SearchTotals } from "@/lib/search";
 import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const row = (label: string, value: string, color: string) => ({
   type: "box",
@@ -29,16 +30,16 @@ export function buildSearchCard(input: {
   const net = totals.incomeSatang - totals.expenseSatang;
 
   const body: unknown[] = [
-    row("รายรับ", `+${money(totals.incomeSatang)}`, COLOR.income),
-    row("รายจ่าย", `-${money(totals.expenseSatang)}`, COLOR.expense),
+    row(t("รายรับ"), `+${money(totals.incomeSatang)}`, COLOR.income),
+    row(t("รายจ่าย"), `-${money(totals.expenseSatang)}`, COLOR.expense),
     row(
-      "สุทธิ",
+      t("สุทธิ"),
       `${net < 0 ? "-" : ""}${money(Math.abs(net))}`,
       net < 0 ? COLOR.expense : COLOR.income,
     ),
     {
       type: "text",
-      text: `พบ ${totals.count} รายการ`,
+      text: t("พบ {0} รายการ", totals.count),
       size: "xs",
       color: COLOR.muted,
       margin: "sm",
@@ -80,7 +81,7 @@ export function buildSearchCard(input: {
     if (totals.count > shown.length) {
       body.push({
         type: "text",
-        text: `และอีก ${totals.count - shown.length} รายการ`,
+        text: t("และอีก {0} รายการ", totals.count - shown.length),
         size: "xs",
         color: COLOR.muted,
         margin: "sm",
@@ -120,7 +121,7 @@ export function buildSearchCard(input: {
   }
   return {
     type: "flex",
-    altText: `ค้นหา ${term}: พบ ${totals.count} รายการ รายจ่าย ${money(totals.expenseSatang)}`,
+    altText: t("ค้นหา {0}: พบ {1} รายการ รายจ่าย {2}", term, totals.count, money(totals.expenseSatang)),
     contents: bubble,
   };
 }

@@ -2,6 +2,7 @@ import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage, TxType } from "@/lib/types";
 import { COLOR, row } from "./flex";
+import { t } from "@/lib/i18n";
 
 export interface VoiceCardInput {
   txId: string;
@@ -56,8 +57,8 @@ export function buildVoiceCard(input: VoiceCardInput): LineMessage {
           {
             type: "text",
             text: ai
-              ? "ตรวจรายการที่ AI อ่านให้ — ยังไม่ได้จด"
-              : "ตรวจรายการจากเสียง — ยังไม่ได้จด",
+              ? t("ตรวจรายการที่ AI อ่านให้ — ยังไม่ได้จด")
+              : t("ตรวจรายการจากเสียง — ยังไม่ได้จด"),
             weight: "bold",
             color: COLOR.primary,
           },
@@ -85,14 +86,14 @@ export function buildVoiceCard(input: VoiceCardInput): LineMessage {
             size: "lg",
             color: income ? COLOR.income : COLOR.expense,
           },
-          row("ประเภท", income ? "รายรับ" : "รายจ่าย"),
-          row("หมวด (เดา)", input.categoryName ?? "ไม่ระบุหมวด"),
-          row("วันเวลา", formatThaiDate(input.occurredAt, true)),
+          row(t("ประเภท"), income ? t("รายรับ") : t("รายจ่าย")),
+          row(t("หมวด (เดา)"), input.categoryName ?? t("ไม่ระบุหมวด")),
+          row(t("วันเวลา"), formatThaiDate(input.occurredAt, true)),
           {
             type: "text",
             text: ai
-              ? "AI อ่านผิด? กดยกเลิกแล้วพิมพ์ใหม่ให้สั้นลง หรือแก้หมวดได้เลย"
-              : "ฟังผิด? กดยกเลิกแล้วพูดใหม่ หรือพิมพ์จดเองได้เลย",
+              ? t("AI อ่านผิด? กดยกเลิกแล้วพิมพ์ใหม่ให้สั้นลง หรือแก้หมวดได้เลย")
+              : t("ฟังผิด? กดยกเลิกแล้วพูดใหม่ หรือพิมพ์จดเองได้เลย"),
             size: "xs",
             color: COLOR.muted,
             wrap: true,
@@ -105,14 +106,14 @@ export function buildVoiceCard(input: VoiceCardInput): LineMessage {
         backgroundColor: COLOR.surface,
         spacing: "sm",
         contents: [
-          button("จดเลย", "sc", "primary", COLOR.primary),
+          button(t("จดเลย"), "sc", "primary", COLOR.primary),
           {
             type: "box",
             layout: "horizontal",
             spacing: "sm",
             contents: [
-              button("เปลี่ยนหมวด", "se", "secondary"),
-              button("ยกเลิก", ai ? "ax" : "vx", "secondary"),
+              button(t("เปลี่ยนหมวด"), "se", "secondary"),
+              button(t("ยกเลิก"), ai ? "ax" : "vx", "secondary"),
             ],
           },
         ],
