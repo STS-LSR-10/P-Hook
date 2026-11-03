@@ -485,6 +485,16 @@ export const reminderPushText = (body: string, repeatLabel: string | null, url?:
   ].join("\n");
 
 /** A group's reminder: no link, which would open the owner's own page for everyone. */
+/** A group's reminder sent straight to someone it tags. */
+export const groupReminderDirectText = (
+  groupName: string | null,
+  body: string,
+  repeatLabel: string | null,
+) =>
+  [
+    `⏰ เตือนจากกลุ่ม${groupName ? ` “${groupName}”` : ""}: ${body}`,
+    ...(repeatLabel ? [`(${repeatLabel})`] : []),
+  ].join("\n");
 export const groupReminderPushText = (body: string, repeatLabel: string | null) =>
   [
     `⏰ เตือนกลุ่ม: ${body}`,

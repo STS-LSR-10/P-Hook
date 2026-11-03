@@ -11,9 +11,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Every 5 minutes: push the reminders people set with "เตือน …" that are due.
- * Triggered by GitHub Actions (.github/workflows/cron-reminders.yml);
- * GET + Authorization: Bearer CRON_SECRET.
+ * Every minute: push the reminders people set with "เตือน …" that are due.
+ * Triggered by the Cloudflare cron (cf-worker.mjs); GET + Authorization: Bearer CRON_SECRET.
  */
 export async function GET(request: Request): Promise<Response> {
   let env: ReturnType<typeof getServerEnv>;
@@ -30,7 +29,13 @@ export async function GET(request: Request): Promise<Response> {
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
     const summary = await runUserReminders(
       getAdminClient(),
-      line.push,
+      {
+        push: line.push,
+        // the profile of someone who has not added พี่ฮูก (or blocked it) is not given
+        isFriend: async (id) => (await line.getProfile(id)) !== null,
+        groupMemberCount: line.getGroupMemberCount,
+        groupName: line.getGroupName,
+      },
       new Date(),
       liffId ? `https://liff.line.me/${liffId}/reminders` : undefined,
     );

@@ -61,6 +61,8 @@ import {
 import { checkGroupSlip } from "./split-bill-slip";
 import { endGroupReminders } from "@/lib/user-reminder-repo";
 import { moveGroupNotes } from "@/lib/note-repo";
+import { readMentions, type Mention } from "@/lib/group-mention";
+import { withGroupRiders } from "./group-riders";
 import {
   addGroupNote,
   addGroupReminder,
@@ -179,45 +181,61 @@ export async function handleGroupEvent(event: LineEvent, deps: HandlerDeps): Pro
     case "postback":
       await handleGroupPostback(event, groupId, deps, reply);
       return;
-    case "message": {
-      // a file, picture or video right after "เก็บไฟล์" is kept for the group; any other picture
-      // may be a slip from someone who owes on a bill (anyone else's gets no answer)
-      const message = event.message;
-      if (
-        message?.id &&
-        (message.type === "image" || message.type === "video" || message.type === "file")
-      ) {
-        const kept = await keepGroupMedia(event, groupId, deps, {
-          messageId: message.id,
-          kind: message.type,
-          fileName: message.type === "file" ? (message.fileName ?? null) : null,
-          fileSize: message.type === "file" ? (message.fileSize ?? null) : null,
-        });
-        if (kept) {
-          await reply(kept);
-          return;
-        }
-        if (message.type === "image")
-          await handleGroupImage(event, groupId, message.id, deps, reply);
-        return;
-      }
-      if (event.message?.type !== "text" || event.message.text === undefined) return;
-      const command = parseGroupCommand(event.message.text);
-      if (!command) {
-        // ordinary chat: stay quiet, except for the once-a-day reminder of unpaid bills
-        await remindIfDue(groupId, deps, reply);
-        return;
-      }
-      if (deps.limit) {
-        const result = await deps.limit("group", groupId, LIMITS.chat);
-        if (!result.allowed) return;
-      }
-      await runGroupCommand(command, event, groupId, deps, reply);
+    case "message":
+      // a reminder due around now rides on whatever answers this message (or goes alone), for free
+      await withGroupRiders(deps.db, groupId, deps.now(), reply, (answer) =>
+        handleGroupMessage(event, groupId, deps, answer),
+      );
       return;
-    }
     default:
       return;
   }
+}
+
+/** A message in a group: a file to keep, a slip, a command, or ordinary chat. */
+async function handleGroupMessage(
+  event: LineEvent,
+  groupId: string,
+  deps: HandlerDeps,
+  reply: Reply,
+): Promise<void> {
+  // a file, picture or video right after "เก็บไฟล์" is kept for the group; any other picture
+  // may be a slip from someone who owes on a bill (anyone else's gets no answer)
+  const message = event.message;
+  if (
+    message?.id &&
+    (message.type === "image" || message.type === "video" || message.type === "file")
+  ) {
+    const kept = await keepGroupMedia(event, groupId, deps, {
+      messageId: message.id,
+      kind: message.type,
+      fileName: message.type === "file" ? (message.fileName ?? null) : null,
+      fileSize: message.type === "file" ? (message.fileSize ?? null) : null,
+    });
+    if (kept) {
+      await reply(kept);
+      return;
+    }
+    if (message.type === "image") await handleGroupImage(event, groupId, message.id, deps, reply);
+    return;
+  }
+  if (event.message?.type !== "text" || event.message.text === undefined) return;
+  // "@พี่ฮูก เตือน …" reads as "เตือน …"; whoever else it tags may be tagged by a reminder
+  const { text: said, mentions } = readMentions(
+    event.message.text,
+    event.message.mention?.mentionees,
+  );
+  const command = parseGroupCommand(said);
+  if (!command) {
+    // ordinary chat: stay quiet, except for the once-a-day reminder of unpaid bills
+    await remindIfDue(groupId, deps, reply);
+    return;
+  }
+  if (deps.limit) {
+    const result = await deps.limit("group", groupId, LIMITS.chat);
+    if (!result.allowed) return;
+  }
+  await runGroupCommand(command, event, groupId, deps, reply, mentions);
 }
 
 type Reply = (messages: LineMessage[]) => Promise<void>;
@@ -318,6 +336,7 @@ async function runGroupCommand(
   groupId: string,
   deps: HandlerDeps,
   reply: Reply,
+  mentions: Mention[] = [],
 ): Promise<void> {
   const { db } = deps;
   const userId = event.source?.userId;
@@ -460,6 +479,7 @@ async function runGroupCommand(
         userId,
         isOwner,
         pageUrl,
+        mentions,
       };
       if (command.kind === "file-keep") return reply(await startGroupKeep(ctx, command.name));
       if (command.kind === "file-list") return reply(await listGroupFiles(ctx, command.term));

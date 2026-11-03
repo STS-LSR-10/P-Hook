@@ -71,6 +71,17 @@ export function createLineClient(accessToken: string) {
       return body.groupName ?? null;
     },
 
+    /** How many members a group has (any account may ask), or null when LINE does not say. */
+    async getGroupMemberCount(groupId: string): Promise<number | null> {
+      const res = await fetch(`${API}/group/${encodeURIComponent(groupId)}/members/count`, {
+        headers,
+        signal: AbortSignal.timeout(3_000),
+      });
+      if (!res.ok) return null;
+      const body = (await res.json()) as { count?: number };
+      return typeof body.count === "number" ? body.count : null;
+    },
+
     /**
      * Every member id of a group. LINE allows this only for verified / premium accounts: for any other
      * (or when the call fails) it returns null and the caller carries on with the members it knows.

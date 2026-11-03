@@ -17,12 +17,26 @@ let groupFiles: { id: string; name: string }[] = [];
 let listCalls: { groupId?: string; q?: string }[] = [];
 let reminders: (GroupReminder & { groupId: string })[] = [];
 let activeCount = 0;
-let created: { userId: string; body: string; groupId?: string; createdBy?: string }[] = [];
+let created: {
+  userId: string;
+  body: string;
+  groupId?: string;
+  createdBy?: string;
+  mentions?: unknown;
+}[] = [];
 let owlTaken = 0;
 let owlRefunded = 0;
 let owlAllowed = true;
 let slipChecks = 0;
 const removed: string[] = [];
+let riders: {
+  body: string;
+  repeat: string | null;
+  mentions: unknown[];
+  dueAt: string;
+  late: boolean;
+}[] = [];
+let lateAdded: unknown[] = [];
 let noteCount = 0;
 let notes: { id: string; body: string; createdBy: string | null; userId: string }[] = [];
 let noteCalls: { userId?: string; body?: string; group?: unknown; q?: string }[] = [];
@@ -101,13 +115,21 @@ vi.mock("@/lib/user-reminder-repo", () => ({
   createReminder: async (
     _db: unknown,
     userId: string,
-    input: { body: string; remindAt: Date; repeat: null; groupId?: string; createdBy?: string },
+    input: {
+      body: string;
+      remindAt: Date;
+      repeat: null;
+      groupId?: string;
+      createdBy?: string;
+      mentions?: unknown[];
+    },
   ) => {
     created.push({
       userId,
       body: input.body,
       groupId: input.groupId,
       createdBy: input.createdBy,
+      ...(input.mentions?.length ? { mentions: input.mentions } : {}),
     });
     return {
       id: "r-new",
@@ -124,6 +146,16 @@ vi.mock("@/lib/user-reminder-repo", () => ({
     const before = reminders.length;
     reminders = reminders.filter((r) => !(r.id === id && r.groupId === groupId));
     return reminders.length < before;
+  },
+}));
+vi.mock("@/lib/group-reminder-repo", () => ({
+  takeGroupRiders: async () => {
+    const out = riders;
+    riders = [];
+    return out;
+  },
+  addLateReminder: async (_db: unknown, input: unknown) => {
+    lateAdded.push(input);
   },
 }));
 vi.mock("@/lib/note-repo", () => ({
@@ -190,6 +222,7 @@ function setup(withOwl = true) {
       store: {} as never,
     },
     slip: { fetchImage: async () => ({}) as never, ocr: {} as never },
+    calendarLink: async (id: string) => `https://app.test/api/calendar/${id}?t=tok`,
     ...(withOwl
       ? {
           owl: {
@@ -224,6 +257,8 @@ beforeEach(() => {
   owlAllowed = true;
   slipChecks = 0;
   removed.length = 0;
+  riders = [];
+  lateAdded = [];
   noteCount = 0;
   notes = [];
   noteCalls = [];
@@ -319,6 +354,43 @@ describe("reminders in a group", () => {
     expect(out).toContain("ตั้งเตือนกลุ่มแล้ว");
     expect(out).toContain("a=grmx&id=r-new");
     expect(out).toContain("/reminders?g=g1");
+    // a free way to be reminded: the phone's own calendar
+    expect(out).toContain(
+      "https://app.test/api/calendar/r-new?t=tok&to=google&openExternalBrowser=1",
+    );
+    expect(out).toContain("https://app.test/api/calendar/r-new?t=tok&to=ics&openExternalBrowser=1");
+  });
+
+  it("keeps who it tags, and reads a command that tags พี่ฮูก first", async () => {
+    const { deps } = setup();
+    const t = "@พี่ฮูก เตือน 10 โมง บอกให้ @bot1 กับ @ต้น ส่งงานด้วย";
+    await handleEvent(
+      message("Uanna", {
+        type: "text",
+        id: "1",
+        text: t,
+        mention: {
+          mentionees: [
+            { index: 0, length: 7, type: "user", userId: "Ubot", isSelf: true },
+            { index: t.indexOf("@bot1"), length: 5, type: "user", userId: "U1" },
+            { index: t.indexOf("@ต้น"), length: 4, type: "user", userId: "U2" },
+          ],
+        },
+      }),
+      deps,
+    );
+    expect(created).toEqual([
+      {
+        userId: "app-owner",
+        body: "บอกให้ @bot1 กับ @ต้น ส่งงานด้วย",
+        groupId: "g1",
+        createdBy: "Uanna",
+        mentions: [
+          { label: "@bot1", userId: "U1" },
+          { label: "@ต้น", userId: "U2" },
+        ],
+      },
+    ]);
   });
 
   it("stays quiet for chat with no time in it", async () => {
@@ -511,5 +583,74 @@ describe("notes in a group", () => {
     await handleEvent(tap("Uowner", "a=gntx&id=n1"), owner.deps);
     expect(said(owner.reply)).toContain("ยกเลิกโน้ตแล้ว");
     expect(notes).toHaveLength(0);
+  });
+});
+
+describe("a group's reminder riding on a message", () => {
+  const due = (over: Partial<(typeof riders)[number]> = {}) => ({
+    body: "บอกให้ @bot1 ส่งงานด้วย",
+    repeat: null,
+    mentions: [{ label: "@bot1", userId: "U1" }],
+    dueAt: "2026-10-18T03:00:00.000Z",
+    late: false,
+    ...over,
+  });
+
+  it("answers ordinary chat near its time, tagging who it tags, for free", async () => {
+    riders = [due()];
+    const { deps, reply } = setup();
+    await handleEvent(say("Ubob", "ใครว่างบ้าง"), deps);
+    expect(reply.mock.calls).toEqual([
+      [
+        "rt",
+        [
+          {
+            type: "textV2",
+            text: "⏰ เตือนกลุ่ม: บอกให้ {m0} ส่งงานด้วย",
+            substitution: { m0: { type: "mention", mentionee: { type: "user", userId: "U1" } } },
+          },
+        ],
+      ],
+    ]);
+  });
+
+  it("goes first in the answer to a command", async () => {
+    riders = [due({ mentions: [] })];
+    const { deps, reply } = setup();
+    await handleEvent(say("Ubob", "เตือนกลุ่ม"), deps);
+    const sent = reply.mock.calls[0]?.[1] as { text?: string }[];
+    expect(sent[0]?.text).toContain("⏰ เตือนกลุ่ม: บอกให้ @bot1 ส่งงานด้วย");
+    expect(sent[1]?.text).toContain("ยังไม่มีเตือน");
+  });
+
+  it("says when it was due, when it comes late, and rides on a sticker too", async () => {
+    riders = [due({ mentions: [], late: true })];
+    const { deps, reply } = setup();
+    await handleEvent(message("Ubob", { type: "sticker", id: "s1" }), deps);
+    expect(said(reply)).toContain("(เตือนตอน 10:00)");
+  });
+
+  it("is sent as plain text when the tagged form is refused, and kept for later when that fails too", async () => {
+    riders = [due()];
+    const plain = setup();
+    plain.reply.mockRejectedValueOnce(new Error("LINE reply failed: 400"));
+    await handleEvent(say("Ubob", "ok"), plain.deps);
+    expect(plain.reply).toHaveBeenCalledTimes(2);
+    expect(plain.reply.mock.calls[1]?.[1]).toEqual([
+      { type: "text", text: "⏰ เตือนกลุ่ม: บอกให้ @bot1 ส่งงานด้วย" },
+    ]);
+
+    riders = [due()];
+    const broken = setup();
+    broken.reply.mockRejectedValue(new Error("LINE reply failed: 500"));
+    await handleEvent(say("Ubob", "ok"), broken.deps);
+    expect(lateAdded).toHaveLength(1);
+    expect(lateAdded[0]).toMatchObject({ groupId: "g1", body: "บอกให้ @bot1 ส่งงานด้วย" });
+  });
+
+  it("leaves ordinary chat unanswered when nothing is due", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("Ubob", "ใครว่างบ้าง"), deps);
+    expect(reply).not.toHaveBeenCalled();
   });
 });
