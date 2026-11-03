@@ -199,3 +199,24 @@ export async function deleteGroupNote(
   if (error) fail("delete group note", error);
   return data !== null;
 }
+
+/** How many of this person's notes are kept in their groups (their own list does not show them). */
+export async function countGroupNotes(db: SupabaseClient, userId: string): Promise<number> {
+  const { count, error } = await db
+    .from("notes")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .not("group_id", "is", null);
+  if (error) fail("count group notes", error);
+  return count ?? 0;
+}
+
+/** A ledger that changed hands: its notes now count against the new owner's limit. */
+export async function moveGroupNotes(
+  db: SupabaseClient,
+  groupId: string,
+  ownerUserId: string,
+): Promise<void> {
+  const { error } = await db.from("notes").update({ user_id: ownerUserId }).eq("group_id", groupId);
+  if (error) fail("move group notes", error);
+}

@@ -26,6 +26,7 @@ vi.mock("@/lib/note-repo", () => ({
     return { items: [], hasMore: false };
   },
   countNotes: async () => count,
+  countGroupNotes: async () => 7,
   createNote: async (_db: unknown, _u: string, body: string) => {
     created.push(body);
     return { id: N, body, createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z" };
@@ -70,7 +71,8 @@ describe("GET /api/notes", () => {
       canAdd: true,
     });
     count = 30;
-    expect(await (await GET(req("GET"))).json()).toMatchObject({ canAdd: false });
+    // the limit covers the notes kept in the person's groups too, which their own list does not show
+    expect(await (await GET(req("GET"))).json()).toMatchObject({ canAdd: false, inGroups: 7 });
   });
 
   it("refuses a bad page cursor", async () => {

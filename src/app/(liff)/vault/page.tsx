@@ -37,7 +37,15 @@ interface NotesResponse {
   items: VaultNote[];
   hasMore: boolean;
   canAdd: boolean;
+  /** Their own only: the notes kept in their groups, which share the limit. */
+  inGroups?: number;
 }
+/** Whether a note may be written now, and (their own only) how many of the limit groups take. */
+interface Room {
+  canAdd: boolean;
+  inGroups: number;
+}
+const ROOM: Room = { canAdd: true, inGroups: 0 };
 interface FilesResponse {
   items: VaultFile[];
   hasMore: boolean;
@@ -145,7 +153,7 @@ function Vault() {
   const [notice, setNotice] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
-  const [canAdd, setCanAdd] = useState(true);
+  const [room, setRoom] = useState<Room>(ROOM);
   // bumped after a change, so the list below loads again
   const [version, setVersion] = useState(0);
   const opened = useRef(false);
@@ -176,7 +184,7 @@ function Vault() {
   function switchSpace(next: string | null) {
     setNotice(null);
     setUsage(null);
-    setCanAdd(true);
+    setRoom(ROOM);
     router.replace(next ? `/vault?g=${next}` : "/vault");
   }
 
@@ -295,7 +303,7 @@ function Vault() {
           tab={tab}
           search={search}
           onUsage={setUsage}
-          onCanAdd={setCanAdd}
+          onRoom={setRoom}
           onDone={done}
           onDownload={download}
           onOpenLink={openExternal}
@@ -339,7 +347,7 @@ function Vault() {
       {adding ? (
         <AddNoteSheet
           space={space}
-          canAdd={canAdd}
+          room={room}
           onClose={() => setAdding(false)}
           onSaved={() => done("จดแล้ว")}
         />
@@ -354,7 +362,7 @@ function VaultList({
   tab,
   search,
   onUsage,
-  onCanAdd,
+  onRoom,
   onDone,
   onDownload,
   onOpenLink,
@@ -363,7 +371,7 @@ function VaultList({
   tab: Tab;
   search: string;
   onUsage: (usage: Usage) => void;
-  onCanAdd: (canAdd: boolean) => void;
+  onRoom: (room: Room) => void;
   onDone: (message: string) => void;
   onDownload: (id: string) => Promise<void>;
   onOpenLink: (url: string) => Promise<void>;
@@ -394,8 +402,8 @@ function VaultList({
     else if (files.error) onUsage("failed");
   }, [files.data, files.error, onUsage]);
   useEffect(() => {
-    if (notes.data) onCanAdd(notes.data.canAdd);
-  }, [notes.data, onCanAdd]);
+    if (notes.data) onRoom({ canAdd: notes.data.canAdd, inGroups: notes.data.inGroups ?? 0 });
+  }, [notes.data, onRoom]);
 
   const noteItems = showsNotes ? [...(notes.data?.items ?? []), ...moreNotes] : [];
   const fileItems = showsFiles ? [...(files.data?.items ?? []), ...moreFiles] : [];
@@ -672,12 +680,12 @@ function Thumb({ file, token, className }: { file: FileDto; token: string; class
 
 function AddNoteSheet({
   space,
-  canAdd,
+  room,
   onClose,
   onSaved,
 }: {
   space: Space;
-  canAdd: boolean;
+  room: Room;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -718,11 +726,13 @@ function AddNoteSheet({
         {space.group ? (
           <p className="text-xs text-stone-600">ทุกคนในกลุ่มเห็นโน้ตนี้ ไม่ควรจดรหัสผ่านสำคัญไว้</p>
         ) : null}
-        {!canAdd ? (
+        {!room.canAdd ? (
           <p className="text-sm text-warn">
             {space.group
               ? "จดเพิ่มไม่ได้ตอนนี้ โน้ตของเจ้าของสมุดอาจเต็ม หรือสมุดกลุ่มปิดอยู่"
-              : "โน้ตเต็มแล้ว ลบอันเก่าหรืออัปเกรดแผนเพื่อเก็บเพิ่ม"}
+              : room.inGroups > 0
+                ? `โน้ตเต็มแล้ว (นับรวมโน้ตในกลุ่มของคุณ ${room.inGroups} รายการ) ลบอันเก่าในคลังส่วนตัวหรือของกลุ่ม หรืออัปเกรดแผนเพื่อเก็บเพิ่ม`
+                : "โน้ตเต็มแล้ว ลบอันเก่าหรืออัปเกรดแผนเพื่อเก็บเพิ่ม"}
           </p>
         ) : null}
         {error ? (
@@ -732,7 +742,7 @@ function AddNoteSheet({
         ) : null}
         <button
           type="submit"
-          disabled={busy || !canAdd || !body.trim()}
+          disabled={busy || !room.canAdd || !body.trim()}
           className="h-12 w-full rounded-2xl bg-primary font-semibold text-surface disabled:opacity-60"
         >
           {busy ? "กำลังจด…" : "จดโน้ต"}

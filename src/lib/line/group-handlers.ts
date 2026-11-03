@@ -60,6 +60,7 @@ import {
 } from "./split-bill-handlers";
 import { checkGroupSlip } from "./split-bill-slip";
 import { endGroupReminders } from "@/lib/user-reminder-repo";
+import { moveGroupNotes } from "@/lib/note-repo";
 import {
   addGroupNote,
   addGroupReminder,
@@ -344,15 +345,21 @@ async function runGroupCommand(
       return reply([text(GROUP_TOO_MANY_TEXT)]);
     }
     const opened = await openGroup(db, groupId, user.id);
-    // a ledger that changed hands: the old owner's reminders stop (they used the old owner's limits)
+    // a ledger that changed hands: the old owner's reminders stop (they used the old owner's limits),
+    // and the group's notes go with the ledger, onto the new owner's limit
     if (existing && existing.ownerUserId !== user.id) {
       await endGroupReminders(db, opened.id, user.id);
+      await moveGroupNotes(db, opened.id, user.id);
     }
     return reply([text(GROUP_OPENED_TEXT)]);
   }
 
   const group = await getGroup(db, groupId);
-  if (!group || !group.isActive) return reply([text(GROUP_NOT_OPEN_TEXT)]);
+  if (!group || !group.isActive) {
+    // "โน้ต …" may be talk to a friend named โน้ต: with no ledger open it gets no answer
+    if (command.kind === "note-add" || command.kind === "note-list") return;
+    return reply([text(GROUP_NOT_OPEN_TEXT)]);
+  }
   const { owner, writable } = await ownerState(db, group, now);
   const isOwner = owner !== null && userId !== undefined && owner.lineUserId === userId;
 

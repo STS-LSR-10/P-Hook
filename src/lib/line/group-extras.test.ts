@@ -466,6 +466,18 @@ describe("notes in a group", () => {
     expect(noteCalls.filter((c) => c.body)).toEqual([]);
   });
 
+  it("stay quiet in a group with no open ledger, where they may be chat with a friend named โน้ต", async () => {
+    group = null;
+    const none = setup();
+    await handleEvent(say("Uanna", "โน้ต ไปกินข้าวไหม"), none.deps);
+    expect(none.reply).not.toHaveBeenCalled();
+    group = { id: "g1", lineGroupId: GID, ownerUserId: "app-owner", isActive: false };
+    const closed = setup();
+    await handleEvent(say("Uanna", "โน้ตกลุ่ม"), closed.deps);
+    expect(closed.reply).not.toHaveBeenCalled();
+    expect(noteCalls).toEqual([]);
+  });
+
   it("are listed and searched for anyone in the group", async () => {
     notes = [
       { id: "n1", body: "รหัสห้องประชุม", createdBy: "Uanna", userId: "app-owner" },

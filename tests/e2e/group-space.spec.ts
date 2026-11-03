@@ -256,4 +256,17 @@ test.describe("switching the vault and reminders to a group (360px)", () => {
     await expect(page.getByText("แก้หรือลบได้เฉพาะคนที่จดโน้ตนี้")).toBeVisible();
     await expect(page.getByRole("button", { name: "ลบโน้ต" })).toHaveCount(0);
   });
+
+  test("an owner whose notes are full is told how many are kept in groups", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/groups": GROUPS,
+      "GET /api/files": OWN_FILES,
+      "GET /api/notes": { ...OWN_NOTES, canAdd: false, inGroups: 12 },
+    });
+    await page.goto("/vault");
+    await expect(page.getByText("บิลค่าไฟ.pdf")).toBeVisible();
+    await page.getByRole("button", { name: "เพิ่มโน้ต", exact: true }).click();
+    await expect(page.getByText(/นับรวมโน้ตในกลุ่มของคุณ 12 รายการ/)).toBeVisible();
+  });
 });

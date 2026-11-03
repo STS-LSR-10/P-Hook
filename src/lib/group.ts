@@ -112,7 +112,8 @@ function parseGroupExtra(text: string, one: string): GroupCommand | null {
   const remind = /^เตือน\s+([\s\S]+)$/.exec(text);
   if (remind?.[1]?.trim()) return { kind: "remind-add", text: remind[1].trim() };
 
-  if (["โน้ตกลุ่ม", "โน๊ตกลุ่ม", "โน้ต", "โน๊ต", "โน้ตทั้งหมด"].includes(one))
+  // never "โน้ต" alone: it is a common nickname, and calling a friend is not a command
+  if (["โน้ตกลุ่ม", "โน๊ตกลุ่ม", "โน้ตทั้งหมด"].includes(one))
     return { kind: "note-list", term: null };
   const noteFind = /^(?:ค้นหา\s*โน[้๊็]ต|หาโน[้๊็]ต|โน[้๊็]ต\s+ค้นหา)\s+([\s\S]+)$/.exec(text);
   if (noteFind?.[1]?.trim()) return { kind: "note-list", term: noteFind[1].trim() };

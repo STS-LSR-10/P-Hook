@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import {
+  countGroupNotes,
   createNote,
   deleteGroupNote,
   deleteNote,
@@ -8,6 +9,7 @@ import {
   getGroupNote,
   listGroupNotes,
   listNotes,
+  moveGroupNotes,
   updateGroupNote,
   updateNote,
 } from "./note-repo";
@@ -20,6 +22,7 @@ function fakeDb(rows: unknown[] = [], single: unknown = null) {
     "select",
     "eq",
     "is",
+    "not",
     "order",
     "limit",
     "ilike",
@@ -126,5 +129,21 @@ describe("a group's notes", () => {
     const gone = fakeDb([], null);
     expect(await deleteGroupNote(gone.db, "g1", "n1")).toBe(false);
     expect(gone.calls).toContainEqual({ op: "eq", args: ["group_id", "g1"] });
+  });
+});
+
+describe("a group's notes and their owner", () => {
+  it("are counted apart, for the owner's own page", async () => {
+    const { db, calls } = fakeDb([]);
+    await countGroupNotes(db, "u1");
+    expect(calls).toContainEqual({ op: "eq", args: ["user_id", "u1"] });
+    expect(calls).toContainEqual({ op: "not", args: ["group_id", "is", null] });
+  });
+
+  it("move with the ledger to its new owner", async () => {
+    const { db, calls } = fakeDb([]);
+    await moveGroupNotes(db, "g1", "u2");
+    expect(calls).toContainEqual({ op: "update", args: [{ user_id: "u2" }] });
+    expect(calls).toContainEqual({ op: "eq", args: ["group_id", "g1"] });
   });
 });
