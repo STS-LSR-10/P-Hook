@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toSatang } from "@/lib/money";
-import { bangkokParts, fromBangkok } from "@/lib/thai-date";
+import { bangkokParts, currentZone, fromBangkok } from "@/lib/thai-date";
 import type { YearResult } from "@/lib/year-summary";
 import type { DateRange } from "@/lib/budget-cycle";
 import type { ForecastInput, RuleLite } from "@/lib/forecast";
@@ -143,6 +143,7 @@ export async function loadYearData(
       p_from: year.range.from.toISOString(),
       p_to: year.range.to.toISOString(),
       p_bucket: "month",
+      p_tz: currentZone(),
     }),
   ]);
   if (series.error) throw new Error(`load monthly totals: ${series.error.message}`);

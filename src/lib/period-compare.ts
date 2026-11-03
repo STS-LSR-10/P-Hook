@@ -1,6 +1,6 @@
 import type { DateRange } from "@/lib/budget-cycle";
 import { previousRange } from "@/lib/summary-report";
-import { bangkokParts, fromBangkok } from "@/lib/thai-date";
+import { addLocalDays, bangkokParts, fromBangkok } from "@/lib/thai-date";
 
 const DAY_MS = 86_400_000;
 
@@ -24,7 +24,7 @@ export function sameSpanRanges(cycle: DateRange, now: Date, startDay?: number): 
   const days = Math.max(1, Math.round((end.getTime() - cycle.from.getTime()) / DAY_MS));
 
   const before = previousRange("monthly", cycle, startDay);
-  const spanEnd = Math.min(before.from.getTime() + days * DAY_MS, before.to.getTime());
+  const spanEnd = Math.min(addLocalDays(before.from, days).getTime(), before.to.getTime());
   return {
     current: { from: cycle.from, to: end },
     previous: { from: before.from, to: new Date(spanEnd) },

@@ -9,6 +9,7 @@ import { requireFeature } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { txFilterSchema } from "@/lib/tx-query";
+import { currentZone } from "@/lib/thai-date";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,7 +48,8 @@ export async function POST(request: Request): Promise<Response> {
     const { format, groups, attachments, ...filters } = parsed.data;
 
     const token = await signExportToken(
-      { userId: auth.userId, format, filters, groups, attachments },
+      // the file is made in the phone's browser, outside this request: it takes the zone along
+      { userId: auth.userId, format, filters, groups, attachments, tz: currentZone() },
       getServerEnv().SESSION_JWT_SECRET,
     );
     const url = new URL("/api/export/download", request.url);

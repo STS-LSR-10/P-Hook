@@ -7,6 +7,7 @@ import { requireFeature } from "@/lib/plan-server";
 import { getSettings, loadCategories } from "@/lib/repo";
 import { bucketStarts, fillSeries, type SeriesRow } from "@/lib/series";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { currentZone } from "@/lib/thai-date";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,6 +61,8 @@ export async function GET(request: Request): Promise<Response> {
         p_from: first.toISOString(),
         p_to: to.toISOString(),
         p_bucket: view,
+        // buckets in the zone this request counts in (the session's), so they line up
+        p_tz: currentZone(),
       }),
       db.rpc("spend_by_category", {
         p_user: auth.userId,

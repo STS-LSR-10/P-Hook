@@ -95,6 +95,12 @@ export function fromBangkok(
   return new Date(at);
 }
 
+/** The same wall-clock time `days` calendar days later in the person's zone (a day is not always 24h). */
+export function addLocalDays(date: Date, days: number, zone: string = currentZone()): Date {
+  const p = bangkokParts(date, zone);
+  return fromBangkok(p.year, p.month, p.day + days, p.hour, p.minute, zone);
+}
+
 export function isValidYmd(year: number, month: number, day: number): boolean {
   const t = new Date(Date.UTC(year, month - 1, day));
   return t.getUTCFullYear() === year && t.getUTCMonth() === month - 1 && t.getUTCDate() === day;

@@ -1,6 +1,6 @@
 import { clampStartDay, monthStart, type DateRange } from "@/lib/budget-cycle";
 import { formatBaht } from "@/lib/money";
-import { bangkokParts, formatThaiDayMonth, fromBangkok } from "@/lib/thai-date";
+import { addLocalDays, bangkokParts, formatThaiDayMonth, fromBangkok } from "@/lib/thai-date";
 import type { BudgetCycle, LineMessage } from "@/lib/types";
 import { bar, barColor, cardHeader, pillFooter, TINT } from "@/lib/line/card-style";
 
@@ -9,7 +9,6 @@ export const SUMMARY_HOUR = 9;
 
 export type SummaryKind = "weekly" | "monthly";
 
-const DAY_MS = 86_400_000;
 const two = (n: number) => String(n).padStart(2, "0");
 
 /** "2026-10-19" for the Bangkok day containing `now` (matches the `date` columns). */
@@ -71,8 +70,7 @@ export function lastMonthRange(now: Date, cycle: BudgetCycle, cycleStartDay: num
  * preceded by one from the chosen day (31 Jan); without it the range's own start day is used.
  */
 export function previousRange(kind: SummaryKind, range: DateRange, startDay?: number): DateRange {
-  if (kind === "weekly")
-    return { from: new Date(range.from.getTime() - 7 * DAY_MS), to: range.from };
+  if (kind === "weekly") return { from: addLocalDays(range.from, -7), to: range.from };
   const p = bangkokParts(range.from);
   return { from: monthStart(p.year, p.month - 1, startDay ?? p.day), to: range.from };
 }
@@ -146,7 +144,7 @@ export function expenseChangePercent(data: SummaryData): number | null {
 
 /** "13 – 19 ต.ค." style label for a range (the end day is the day before `to`). */
 export function rangeLabel(range: DateRange): string {
-  return `${formatThaiDayMonth(range.from)} – ${formatThaiDayMonth(new Date(range.to.getTime() - DAY_MS))}`;
+  return `${formatThaiDayMonth(range.from)} – ${formatThaiDayMonth(addLocalDays(range.to, -1))}`;
 }
 
 const COLOR = { text: "#0F172A", muted: "#64748B", income: "#047857", expense: "#E11D48" };

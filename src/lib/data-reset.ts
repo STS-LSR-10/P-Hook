@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SLIP_BUCKET } from "@/lib/slip-repo";
-import { fromBangkok } from "@/lib/thai-date";
+import { currentZone, fromBangkok } from "@/lib/thai-date";
 
 const PAGE = 100;
 
@@ -69,7 +69,7 @@ export async function previewErase(
 
 /** Months that have entries or transfers to delete, newest first. */
 export async function monthsWithData(db: SupabaseClient, userId: string): Promise<MonthWithData[]> {
-  const { data, error } = await db.rpc("months_with_data", { p_user: userId });
+  const { data, error } = await db.rpc("months_with_data", { p_user: userId, p_tz: currentZone() });
   if (error) throw new Error(`months with data: ${error.message}`);
   return (
     (data ?? []) as { month: string; entries: number | string; transfers: number | string }[]

@@ -17,6 +17,7 @@ import { DEFAULT_WALLET_NAME } from "@/lib/wallet";
 import { listWallets } from "@/lib/wallet-repo";
 import { listTransfers } from "@/lib/transfer-repo";
 import { log } from "@/lib/log";
+import { enterZone, withZoneScope } from "@/lib/zone-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,6 +32,11 @@ const TYPE_OF = {
 
 /** GET /api/export/download?t=<token> — the file itself. The signed token is the credential. */
 export async function GET(request: Request): Promise<Response> {
+  // the file's dates are in the zone of the person who asked for it (carried by the link)
+  return withZoneScope(() => download(request));
+}
+
+async function download(request: Request): Promise<Response> {
   const token = new URL(request.url).searchParams.get("t");
   if (!token) return new Response("ลิงก์ไม่ถูกต้อง", { status: 400 });
 
@@ -43,6 +49,7 @@ export async function GET(request: Request): Promise<Response> {
       });
     }
 
+    enterZone(claims.tz);
     const db = getAdminClient();
     const wallets = await listWallets(db, claims.userId);
     const defaultWallet = wallets.find((w) => w.isDefault);

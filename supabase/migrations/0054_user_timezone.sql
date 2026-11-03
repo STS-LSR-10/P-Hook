@@ -1,25 +1,16 @@
 -- A person's own time zone (users.timezone, Bangkok unless they chose another in settings) for what the
 -- database counts by the clock: the next round of a repeating reminder, the days/weeks/months of the
 -- analytics chart, and the months offered for erasing. A group's reminders stay in Bangkok for now.
--- Same signatures and columns as before, so each is replaced in place. Additive and idempotent.
+-- Additive and idempotent: the chart and the months get a version that takes the zone from the app
+-- (the zone that request counts in, so the buckets line up with the app's); the old ones stay for an
+-- app that has not been deployed yet. The reminder claim is replaced in place (same columns).
 
--- The zone to use for a person: theirs when it is a zone Postgres knows, else Bangkok.
-create or replace function user_zone(p_user uuid)
-returns text
-language sql stable security invoker as $$
-  select coalesce(
-    (select u.timezone from users u
-      where u.id = p_user and exists (select 1 from pg_timezone_names z where z.name = u.timezone)),
-    'Asia/Bangkok'
-  );
-$$;
-revoke execute on function user_zone(uuid) from public, anon, authenticated;
-
+-- p_tz: an IANA zone the app has checked (one it lists); empty or null is Bangkok.
 create or replace function analytics_series(
-  p_user uuid, p_from timestamptz, p_to timestamptz, p_bucket text
+  p_user uuid, p_from timestamptz, p_to timestamptz, p_bucket text, p_tz text
 ) returns table (bucket_start timestamptz, income numeric, expense numeric)
 language sql stable security invoker as $$
-  with z as (select user_zone(p_user) as tz)
+  with z as (select coalesce(nullif(p_tz, ''), 'Asia/Bangkok') as tz)
   select
     (date_trunc(p_bucket, t.occurred_at at time zone z.tz) at time zone z.tz),
     coalesce(sum(t.amount) filter (where t.type = 'income'), 0),
@@ -34,10 +25,10 @@ language sql stable security invoker as $$
   order by 1;
 $$;
 
-create or replace function months_with_data(p_user uuid)
+create or replace function months_with_data(p_user uuid, p_tz text)
 returns table (month text, entries bigint, transfers bigint)
 language sql stable security invoker as $$
-  with z as (select user_zone(p_user) as tz)
+  with z as (select coalesce(nullif(p_tz, ''), 'Asia/Bangkok') as tz)
   select m.month, coalesce(sum(m.e), 0)::bigint, coalesce(sum(m.t), 0)::bigint
   from (
     select to_char(t.occurred_at at time zone z.tz, 'YYYY-MM') as month, 1 as e, 0 as t
@@ -51,7 +42,8 @@ language sql stable security invoker as $$
   order by m.month desc;
 $$;
 
--- Same as 0053, with a personal reminder's next round counted in its owner's zone.
+-- Same as 0053, with a personal reminder's next round counted in its owner's zone (the app only ever
+-- saves a zone it lists, so the column is used as it is).
 create or replace function claim_due_reminders_with_groups(p_now timestamptz, p_limit int)
 returns table (
   r_id uuid, r_user uuid, r_line text, r_body text, r_repeat text, r_group text, r_group_open boolean
@@ -68,7 +60,8 @@ begin
     select ur.id as rid, ur.user_id as uid, ur.body as rbody, ur.remind_at as rat,
            ur.repeat as rrep, u.line_user_id as rline, g.line_group_id as gline,
            ur.group_id is not null as ingroup,
-           coalesce(g.is_active and g.owner_user_id = ur.user_id, false) as gopen
+           coalesce(g.is_active and g.owner_user_id = ur.user_id, false) as gopen,
+           coalesce(nullif(u.timezone, ''), 'Asia/Bangkok') as utz
     from user_reminders ur
     join users u on u.id = ur.user_id
     left join bot_groups g on g.id = ur.group_id
@@ -81,7 +74,7 @@ begin
     if r.rrep is null or (r.ingroup and not r.gopen) then
       update user_reminders set status = 'done', last_sent_at = p_now where id = r.rid;
     else
-      tz := case when r.ingroup then 'Asia/Bangkok' else user_zone(r.uid) end;
+      tz := case when r.ingroup then 'Asia/Bangkok' else r.utz end;
       step := case r.rrep when 'daily' then interval '1 day' when 'weekly' then interval '7 days' else interval '1 month' end;
       local_at := r.rat at time zone tz;
       guard := 0;

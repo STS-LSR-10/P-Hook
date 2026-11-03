@@ -1,5 +1,5 @@
 import type { DateRange } from "@/lib/budget-cycle";
-import { bangkokParts, fromBangkok, isValidYmd } from "@/lib/thai-date";
+import { addLocalDays, bangkokParts, fromBangkok, isValidYmd } from "@/lib/thai-date";
 
 /** A day as typed: the year is optional ("25/9" or "25/9/2026", Buddhist years allowed). */
 export interface DaySpec {
@@ -78,7 +78,7 @@ export function resolveRange(start: DaySpec, end: DaySpec | null, now: Date): Ra
   return {
     ok: true,
     range: { from: first, to },
-    previous: { from: new Date(first.getTime() - days * DAY_MS), to: first },
+    previous: { from: addLocalDays(first, -days), to: first },
     days,
     lastDay: last,
   };

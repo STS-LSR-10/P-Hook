@@ -17,6 +17,8 @@ export interface ExportClaims {
   groups?: ColumnGroup[];
   /** Pack the slip pictures and photos of the entries into a zip with the file. */
   attachments?: boolean;
+  /** The person's time zone: the file's dates and times are in it. */
+  tz?: string;
 }
 
 const keyOf = (secret: string) => new TextEncoder().encode(secret);
@@ -38,6 +40,7 @@ export async function signExportToken(
     f: claims.filters,
     g: claims.groups,
     att: claims.attachments === true ? 1 : undefined,
+    tz: claims.tz,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(claims.userId)
@@ -80,6 +83,7 @@ export async function verifyExportToken(
       filters: filters.data,
       groups,
       attachments: payload.att === 1 ? true : undefined,
+      tz: typeof payload.tz === "string" ? payload.tz : undefined,
     };
   } catch {
     return null;
