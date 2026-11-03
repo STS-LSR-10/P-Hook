@@ -30,9 +30,14 @@ export function runInZone<T>(
   zone: string | null | undefined,
   fn: () => T,
   currency?: string | null,
+  locale?: string | null,
 ): T {
   return scope.run(
-    { zone: isZone(zone) ? zone : null, currency: isHomeCurrency(currency) ? currency : null },
+    {
+      zone: isZone(zone) ? zone : null,
+      currency: isHomeCurrency(currency) ? currency : null,
+      locale: isLocale(locale) ? locale : null,
+    },
     fn,
   );
 }
