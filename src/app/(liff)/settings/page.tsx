@@ -47,6 +47,11 @@ import {
 } from "@/lib/personalize";
 import { PLAN_LABEL } from "@/lib/plan";
 import { cn } from "@/lib/utils";
+import { ZoneSheet } from "@/components/liff/settings/zone-sheet";
+import { DEFAULT_ZONE, ZONES } from "@/lib/zone";
+
+const zoneCity = (zone?: string) =>
+  ZONES.find((z) => z.id === (zone ?? DEFAULT_ZONE))?.city ?? zone ?? "Bangkok";
 
 const CONFIRM_OPTIONS: { value: Settings["confirm_style"]; label: string; hint: string }[] = [
   { value: "full", label: "เต็ม", hint: "การ์ดพร้อมปุ่มแก้ไข/ลบ" },
@@ -129,7 +134,7 @@ export default function SettingsPage() {
   // shown in the section whose setting was changed, so it is never off-screen
   const [notice, setNotice] = useState<{ at: SectionId; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
-  const [sheet, setSheet] = useState<"recurring" | "memory" | "payments" | null>(null);
+  const [sheet, setSheet] = useState<"recurring" | "memory" | "payments" | "zone" | null>(null);
   const [opened, setOpened] = useState<Set<SectionId>>(new Set());
   // sections closed by hand while a search is on (it opens everything it finds)
   const [closedInSearch, setClosedInSearch] = useState<Set<SectionId>>(new Set());
@@ -393,11 +398,12 @@ export default function SettingsPage() {
               sub="ตอนนี้ใช้เงินบาท ตัวเลือกสกุลอื่นกำลังจะมา"
               value="บาท (฿)"
             />
-            <MenuInfo
+            <MenuButton
+              onClick={() => setSheet("zone")}
               icon={<Clock className="h-[18px] w-[18px]" />}
               title="โซนเวลา"
-              sub="ตอนนี้ใช้เวลาไทย ตัวเลือกโซนอื่นกำลังจะมา"
-              value="Bangkok"
+              sub="เวลาเตือน การตัดวัน และรอบงบ คิดตามโซนนี้"
+              value={zoneCity(settings.data?.timezone)}
             />
           </MenuGroup>
         );
@@ -496,6 +502,9 @@ export default function SettingsPage() {
         <Sheet title="จัดหมวดด้วยความจำ" onClose={() => setSheet(null)}>
           <MemoryCard me={me.data} embedded />
         </Sheet>
+      ) : null}
+      {sheet === "zone" ? (
+        <ZoneSheet current={settings.data?.timezone} onClose={() => setSheet(null)} />
       ) : null}
       {sheet === "payments" && me.data ? (
         <PaymentHistorySheet items={me.data.payments.history} onClose={() => setSheet(null)} />

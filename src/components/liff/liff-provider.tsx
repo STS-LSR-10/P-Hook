@@ -1,6 +1,8 @@
 "use client";
 
 import { Splash } from "@/components/liff/splash";
+import { setZoneSource } from "@/lib/thai-date";
+import { isZone } from "@/lib/zone";
 import {
   createContext,
   useCallback,
@@ -101,13 +103,20 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
       });
-      const body = (await res.json().catch(() => ({}))) as { token?: string; error?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        token?: string;
+        error?: string;
+        tz?: string | null;
+      };
       if (!res.ok || !body.token) {
         // An expired ID token needs a fresh login rather than a retry.
         if (res.status === 401) return loginOnce(liff);
         throw new Error(body.error ?? "เข้าสู่ระบบไม่สำเร็จ");
       }
       token.current = body.token;
+      // dates on every page are shown and read in the person's zone
+      const zone = body.tz;
+      if (isZone(zone)) setZoneSource(() => zone);
       try {
         window.sessionStorage.removeItem(RELOGIN_KEY);
       } catch {

@@ -40,6 +40,7 @@ export async function POST(request: Request): Promise<Response> {
       { userId: user.id, lineUserId: claims.sub, tz: user.timezone },
       env.SESSION_JWT_SECRET,
     );
-    return json({ token, expiresIn: SESSION_TTL_SECONDS });
+    // the page shows and reads times in this zone
+    return json({ token, expiresIn: SESSION_TTL_SECONDS, tz: user.timezone ?? null });
   });
 }
