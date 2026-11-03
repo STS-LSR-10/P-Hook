@@ -7,6 +7,7 @@ import { useApi } from "@/components/liff/liff-provider";
 import { cardClass } from "@/components/liff/settings/types";
 import { ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
 import { cn } from "@/lib/utils";
+import { canSendToChat } from "@/lib/liff-chat";
 
 interface OpenCheck {
   /** null = LINE could not tell */
@@ -30,7 +31,7 @@ export default function GroupOpenPage() {
     setBusy(true);
     try {
       const liff = (await import("@line/liff")).default;
-      if (liff.isApiAvailable("sendMessages")) {
+      if (canSendToChat(liff)) {
         await liff.sendMessages([{ type: "text", text: "เปิดสมุดกลุ่ม" }]);
         setSent("yes");
         try {

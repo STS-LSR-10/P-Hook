@@ -8,6 +8,7 @@ import { cardClass } from "@/components/liff/settings/types";
 import { EmptyState, ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
 import { formatBaht } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { canSendToChat } from "@/lib/liff-chat";
 
 interface Person {
   lineUserId: string;
@@ -75,7 +76,7 @@ export default function SplitBillPage() {
       let sent = false;
       try {
         const liff = (await import("@line/liff")).default;
-        if (liff.isApiAvailable("sendMessages")) {
+        if (canSendToChat(liff)) {
           await liff.sendMessages([{ type: "text", text: res.message }]);
           sent = true;
         }
