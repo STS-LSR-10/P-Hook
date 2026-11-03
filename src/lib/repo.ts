@@ -15,6 +15,8 @@ export interface UserRow {
   display_name: string | null;
   plan: Plan;
   plan_expires_at: string | null;
+  /** The person's time zone (an IANA name; Bangkok unless they chose another). */
+  timezone?: string;
 }
 
 export interface SettingsRow {
@@ -75,7 +77,7 @@ export async function ensureUser(
   lineUserId: string,
   loadProfile: () => Promise<{ displayName?: string; pictureUrl?: string } | null>,
 ): Promise<UserRow> {
-  const select = "id,line_user_id,display_name,plan,plan_expires_at";
+  const select = "id,line_user_id,display_name,plan,plan_expires_at,timezone";
   const found = await db.from("users").select(select).eq("line_user_id", lineUserId).maybeSingle();
   if (found.error) fail("load user", found.error);
   if (found.data) return found.data as UserRow;
