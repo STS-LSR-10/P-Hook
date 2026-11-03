@@ -20,6 +20,7 @@ import { currencyUnit, money, satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface BillsResponse {
   items: BillDto[];
@@ -29,27 +30,27 @@ interface BillsResponse {
 
 const AMOUNT_PATTERN = /^\d{1,10}(\.\d{1,2})?$/;
 const CADENCE_LABEL: Record<BillCadence, string> = {
-  monthly: "ทุกเดือน",
-  yearly: "ทุกปี",
-  once: "ครั้งเดียว",
+  monthly: t("ทุกเดือน"),
+  yearly: t("ทุกปี"),
+  once: t("ครั้งเดียว"),
 };
 const MONTHS = [
-  "มกราคม",
-  "กุมภาพันธ์",
-  "มีนาคม",
-  "เมษายน",
-  "พฤษภาคม",
-  "มิถุนายน",
-  "กรกฎาคม",
-  "สิงหาคม",
-  "กันยายน",
-  "ตุลาคม",
-  "พฤศจิกายน",
-  "ธันวาคม",
+  t("มกราคม"),
+  t("กุมภาพันธ์"),
+  t("มีนาคม"),
+  t("เมษายน"),
+  t("พฤษภาคม"),
+  t("มิถุนายน"),
+  t("กรกฎาคม"),
+  t("สิงหาคม"),
+  t("กันยายน"),
+  t("ตุลาคม"),
+  t("พฤศจิกายน"),
+  t("ธันวาคม"),
 ];
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const hh = (h: number) => `${String(h).padStart(2, "0")}:00`;
-const remindLabel = (d: number) => (d === 0 ? "ในวันนั้น" : `ก่อน ${d} วัน`);
+const remindLabel = (d: number) => (d === 0 ? t("ในวันนั้น") : t("ก่อน {0} วัน", d));
 
 function dueLabel(key: string): string {
   const [y, m, d] = key.split("-").map(Number);
@@ -69,25 +70,25 @@ export default function BillsPage() {
   const today = todayKey(new Date());
 
   async function remove(b: BillDto) {
-    if (!window.confirm(`ลบบิล "${b.name}" ใช่ไหม? จะไม่เตือนอีก`)) return;
+    if (!window.confirm(t('ลบบิล "{0}" ใช่ไหม? จะไม่เตือนอีก', b.name))) return;
     setNotice(null);
     try {
       await api(`/api/bills/${b.id}`, { method: "DELETE" });
-      setNotice("ลบแล้ว");
+      setNotice(t("ลบแล้ว"));
       bills.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ลบไม่สำเร็จ"));
     }
   }
 
   return (
     <main>
       <PageHeader
-        title="บิลที่ต้องจ่าย"
+        title={t("บิลที่ต้องจ่าย")}
         right={
           <Link
             href="/settings"
-            aria-label="กลับไปตั้งค่า"
+            aria-label={t("กลับไปตั้งค่า")}
             className="flex h-11 w-11 items-center justify-center text-muted"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -98,26 +99,28 @@ export default function BillsPage() {
         {bills.loading || me.loading ? (
           <LoadingBlock rows={3} />
         ) : bills.error || !bills.data ? (
-          <ErrorState message={bills.error ?? "โหลดไม่สำเร็จ"} onRetry={bills.reload} />
+          <ErrorState message={bills.error ?? t("โหลดไม่สำเร็จ")} onRetry={bills.reload} />
         ) : (
           <>
             {locked ? (
               <div className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                <span className="font-semibold">สำหรับแผน Elite</span> ·
-                บอทเตือนล่วงหน้าก่อนวันครบกำหนดจ่ายบิล{" "}
+                <span className="font-semibold">{t("สำหรับแผน Elite")}</span> ·
+                {t("บอทเตือนล่วงหน้าก่อนวันครบกำหนดจ่ายบิล")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
-                  ดูแผนอัปเกรด
+                  {t("ดูแผนอัปเกรด")}
                 </Link>
               </div>
             ) : null}
 
             {items.length === 0 ? (
               <EmptyState
-                title="ยังไม่มีบิลที่ตั้งเตือน"
-                hint='เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15"'
+                title={t("ยังไม่มีบิลที่ตั้งเตือน")}
+                hint={t(
+                  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15"',
+                )}
               />
             ) : (
-              <ul className="space-y-3" aria-label="รายการบิล">
+              <ul className="space-y-3" aria-label={t("รายการบิล")}>
                 {items.map((b) => {
                   const state = dueState(b.nextDueOn, today);
                   return (
@@ -127,8 +130,12 @@ export default function BillsPage() {
                           <p className="truncate font-semibold">{b.name}</p>
                           <p className="text-xs text-muted">
                             {CADENCE_LABEL[b.cadence]}
-                            {b.fromCard ? " · จากวันชำระของบัตร" : ""}
-                            {` · เตือน ${b.remindDays.map(remindLabel).join(", ")} เวลา ${hh(b.remindHour)}`}
+                            {b.fromCard ? t(" · จากวันชำระของบัตร") : ""}
+                            {t(
+                              " · เตือน {0} เวลา {1}",
+                              b.remindDays.map(remindLabel).join(", "),
+                              hh(b.remindHour),
+                            )}
                           </p>
                         </div>
                         <div className="shrink-0 text-right">
@@ -142,20 +149,20 @@ export default function BillsPage() {
                                   : "",
                             )}
                           >
-                            {state === "overdue" ? "เลยกำหนด " : ""}
+                            {state === "overdue" ? t("เลยกำหนด ") : ""}
                             {dueLabel(b.nextDueOn)}
                           </p>
                           <p className="num text-xs text-muted">
-                            {b.amountSatang ? `${money(b.amountSatang)}` : "ไม่ระบุยอด"}
+                            {b.amountSatang ? `${money(b.amountSatang)}` : t("ไม่ระบุยอด")}
                           </p>
                         </div>
                       </div>
                       {b.note ? <p className="truncate text-xs text-muted">{b.note}</p> : null}
                       {b.fromCard ? (
                         <p className="text-xs text-muted">
-                          เปลี่ยนวันได้ที่{" "}
+                          {t("เปลี่ยนวันได้ที่")}{" "}
                           <Link href="/wallets" className="font-semibold text-primary underline">
-                            กระเป๋าเงิน
+                            {t("กระเป๋าเงิน")}
                           </Link>
                         </p>
                       ) : (
@@ -164,16 +171,16 @@ export default function BillsPage() {
                             type="button"
                             onClick={() => setPaying(b)}
                             disabled={locked}
-                            aria-label={`จ่ายแล้ว ${b.name}`}
+                            aria-label={t("จ่ายแล้ว {0}", b.name)}
                             className="flex h-11 flex-1 items-center justify-center gap-1 rounded-2xl border border-border text-sm font-semibold disabled:opacity-40"
                           >
-                            <CheckCircle2 className="h-4 w-4" aria-hidden /> จ่ายแล้ว
+                            <CheckCircle2 className="h-4 w-4" aria-hidden /> {t("จ่ายแล้ว")}
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditing(b)}
                             disabled={locked}
-                            aria-label={`แก้ไข ${b.name}`}
+                            aria-label={t("แก้ไข {0}", b.name)}
                             className="flex h-11 w-11 items-center justify-center text-muted disabled:opacity-40"
                           >
                             <Pencil className="h-4 w-4" aria-hidden />
@@ -181,7 +188,7 @@ export default function BillsPage() {
                           <button
                             type="button"
                             onClick={() => void remove(b)}
-                            aria-label={`ลบ ${b.name}`}
+                            aria-label={t("ลบ {0}", b.name)}
                             className="flex h-11 w-11 items-center justify-center text-muted"
                           >
                             <Trash2 className="h-4 w-4" aria-hidden />
@@ -210,11 +217,11 @@ export default function BillsPage() {
                   onClick={() => setEditing("new")}
                   className="flex h-12 w-full items-center justify-center gap-1 rounded-2xl bg-primary text-base font-semibold text-surface"
                 >
-                  <Plus className="h-5 w-5" aria-hidden /> เพิ่มบิล
+                  <Plus className="h-5 w-5" aria-hidden /> {t("เพิ่มบิล")}
                 </button>
               ) : (
                 <p className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                  มีบิลได้ {bills.data.limit} รายการแล้ว ลบอันที่ไม่ใช้ก่อนนะ
+                  {t("มีบิลได้")} {bills.data.limit} {t("รายการแล้ว ลบอันที่ไม่ใช้ก่อนนะ")}
                 </p>
               )
             ) : null}
@@ -276,11 +283,11 @@ function BillSheet({
   async function submit(e: FormEvent) {
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
-    if (!name.trim()) return setError("ตั้งชื่อบิลด้วยนะ");
+    if (!name.trim()) return setError(t("ตั้งชื่อบิลด้วยนะ"));
     if (normalized && !AMOUNT_PATTERN.test(normalized)) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 1250)");
+      return setError(t("จำนวนเงินไม่ถูกต้อง (เช่น 1250)"));
     }
-    if (remindDays.length === 0) return setError("เลือกวันที่จะให้เตือนอย่างน้อย 1 ข้อ");
+    if (remindDays.length === 0) return setError(t("เลือกวันที่จะให้เตือนอย่างน้อย 1 ข้อ"));
     setSaving(true);
     setError(null);
     try {
@@ -296,47 +303,47 @@ function BillSheet({
       });
       if (bill) await api(`/api/bills/${bill.id}`, { method: "PATCH", body });
       else await api("/api/bills", { method: "POST", body });
-      onSaved(bill ? "บันทึกแล้ว" : "เพิ่มบิลแล้ว");
+      onSaved(bill ? t("บันทึกแล้ว") : t("เพิ่มบิลแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   return (
-    <Sheet title={bill ? "แก้ไขบิล" : "เพิ่มบิล"} onClose={onClose}>
+    <Sheet title={bill ? t("แก้ไขบิล") : t("เพิ่มบิล")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={MAX_BILL_NAME}
-          placeholder="ชื่อบิล เช่น ค่าไฟ"
-          aria-label="ชื่อบิล"
+          placeholder={t("ชื่อบิล เช่น ค่าไฟ")}
+          aria-label={t("ชื่อบิล")}
           className={fieldClass}
         />
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder={`ยอดโดยประมาณ (${currencyUnit()} ไม่บังคับ)`}
-          aria-label="ยอดโดยประมาณ"
+          placeholder={t("ยอดโดยประมาณ ({0} ไม่บังคับ)", currencyUnit())}
+          aria-label={t("ยอดโดยประมาณ")}
           className={cn(fieldClass, "num")}
         />
         <select
           value={cadence}
           onChange={(e) => setCadence(e.target.value as BillCadence)}
-          aria-label="ความถี่"
+          aria-label={t("ความถี่")}
           className={fieldClass}
         >
-          <option value="monthly">ทุกเดือน</option>
-          <option value="yearly">ทุกปี</option>
-          <option value="once">ครั้งเดียว</option>
+          <option value="monthly">{t("ทุกเดือน")}</option>
+          <option value="yearly">{t("ทุกปี")}</option>
+          <option value="once">{t("ครั้งเดียว")}</option>
         </select>
         {cadence !== "monthly" ? (
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-            aria-label="เดือนที่ครบกำหนด"
+            aria-label={t("เดือนที่ครบกำหนด")}
             className={fieldClass}
           >
             {MONTHS.map((m, i) => (
@@ -349,23 +356,23 @@ function BillSheet({
         <select
           value={day}
           onChange={(e) => setDay(Number(e.target.value))}
-          aria-label="วันที่ครบกำหนด"
+          aria-label={t("วันที่ครบกำหนด")}
           className={cn(fieldClass, "num")}
         >
           {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
             <option key={d} value={d}>
-              วันที่ {d}
+              {t("วันที่")} {d}
             </option>
           ))}
         </select>
         {day > 28 ? (
           <p className="text-xs text-muted">
-            เดือนที่มีวันน้อยกว่านี้ จะเตือนตามวันสุดท้ายของเดือนนะ
+            {t("เดือนที่มีวันน้อยกว่านี้ จะเตือนตามวันสุดท้ายของเดือนนะ")}
           </p>
         ) : null}
 
         <fieldset>
-          <legend className="text-sm font-semibold">เตือนล่วงหน้า</legend>
+          <legend className="text-sm font-semibold">{t("เตือนล่วงหน้า")}</legend>
           <div className="mt-1 flex flex-wrap gap-2">
             {REMIND_DAY_CHOICES.map((d) => (
               <label
@@ -389,16 +396,16 @@ function BillSheet({
           </div>
         </fieldset>
         <label className="block text-sm text-muted">
-          เวลาที่ให้เตือน
+          {t("เวลาที่ให้เตือน")}
           <select
             value={hour}
             onChange={(e) => setHour(Number(e.target.value))}
-            aria-label="เวลาที่ให้เตือน"
+            aria-label={t("เวลาที่ให้เตือน")}
             className={cn(fieldClass, "num mt-1")}
           >
             {HOURS.map((h) => (
               <option key={h} value={h}>
-                {hh(h)} น.
+                {hh(h)} {t("น.")}
               </option>
             ))}
           </select>
@@ -407,8 +414,8 @@ function BillSheet({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={MAX_BILL_NOTE}
-          placeholder="โน้ต (ไม่บังคับ)"
-          aria-label="โน้ต"
+          placeholder={t("โน้ต (ไม่บังคับ)")}
+          aria-label={t("โน้ต")}
           className={fieldClass}
         />
         {error ? (
@@ -421,7 +428,7 @@ function BillSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก..." : "บันทึก"}
+          {saving ? t("กำลังบันทึก...") : t("บันทึก")}
         </button>
       </form>
     </Sheet>
@@ -446,7 +453,7 @@ function PaySheet({
   async function send(skip: boolean) {
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
     if (!skip && record && !AMOUNT_PATTERN.test(normalized)) {
-      return setError("ใส่จำนวนเงินที่จะจดให้ถูกต้อง (เช่น 1250)");
+      return setError(t("ใส่จำนวนเงินที่จะจดให้ถูกต้อง (เช่น 1250)"));
     }
     setBusy(true);
     setError(null);
@@ -455,17 +462,21 @@ function PaySheet({
         method: "POST",
         body: JSON.stringify(skip || !record ? {} : { record: true, amount: normalized }),
       });
-      onDone(skip ? "ข้ามรอบนี้แล้ว" : record ? "จ่ายแล้วและจดรายจ่ายให้แล้ว" : "จ่ายแล้ว");
+      onDone(
+        skip ? t("ข้ามรอบนี้แล้ว") : record ? t("จ่ายแล้วและจดรายจ่ายให้แล้ว") : t("จ่ายแล้ว"),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
       setBusy(false);
     }
   }
 
   return (
-    <Sheet title={`จ่าย ${bill.name}`} onClose={onClose}>
+    <Sheet title={t("จ่าย {0}", bill.name)} onClose={onClose}>
       <div className="space-y-3">
-        <p className="text-sm text-muted">ครบกำหนด {dueLabel(bill.nextDueOn)}</p>
+        <p className="text-sm text-muted">
+          {t("ครบกำหนด")} {dueLabel(bill.nextDueOn)}
+        </p>
         <label className="flex min-h-11 items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -473,15 +484,15 @@ function PaySheet({
             onChange={(e) => setRecord(e.target.checked)}
             className="h-4 w-4"
           />
-          จดเป็นรายจ่ายด้วย
+          {t("จดเป็นรายจ่ายด้วย")}
         </label>
         {record ? (
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
-            placeholder={`จำนวนเงิน (${currencyUnit()})`}
-            aria-label="จำนวนเงินที่จ่าย"
+            placeholder={t("จำนวนเงิน ({0})", currencyUnit())}
+            aria-label={t("จำนวนเงินที่จ่าย")}
             className={cn(fieldClass, "num")}
           />
         ) : null}
@@ -496,7 +507,7 @@ function PaySheet({
           onClick={() => void send(false)}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {busy ? "กำลังบันทึก..." : "จ่ายแล้ว"}
+          {busy ? t("กำลังบันทึก...") : t("จ่ายแล้ว")}
         </button>
         <button
           type="button"
@@ -504,7 +515,7 @@ function PaySheet({
           onClick={() => void send(true)}
           className="h-11 w-full rounded-2xl border border-border text-sm font-semibold disabled:opacity-60"
         >
-          ข้ามรอบนี้ (ไม่จด)
+          {t("ข้ามรอบนี้ (ไม่จด)")}
         </button>
       </div>
     </Sheet>

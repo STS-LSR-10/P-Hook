@@ -13,6 +13,7 @@ import { money } from "@/lib/money";
 import { PLAN_LABEL } from "@/lib/plan";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 // the charting library is only downloaded when a ring is drawn
 const MiniDonut = dynamic(() => import("@/components/liff/charts").then((m) => m.MiniDonut), {
@@ -58,10 +59,10 @@ interface GoalsResponse {
 const MAX_BACK = 24;
 
 const TIPS = [
-  'พิมพ์ "กาแฟ 60" ในแชท บอทจะจดและจัดหมวดให้ทันที',
-  'พิมพ์ "เมื่อวาน ข้าว 80" เพื่อจดย้อนหลัง (Pro ขึ้นไป)',
-  'พิมพ์ "สรุปเดือนนี้" ในแชท เพื่อดูภาพรวมได้ทุกเมื่อ',
-  "ส่งรูปสลิปโอนเงินในแชท บอทอ่านยอดให้โดยไม่ต้องพิมพ์",
+  t('พิมพ์ "กาแฟ 60" ในแชท บอทจะจดและจัดหมวดให้ทันที'),
+  t('พิมพ์ "เมื่อวาน ข้าว 80" เพื่อจดย้อนหลัง (Pro ขึ้นไป)'),
+  t('พิมพ์ "สรุปเดือนนี้" ในแชท เพื่อดูภาพรวมได้ทุกเมื่อ'),
+  t("ส่งรูปสลิปโอนเงินในแชท บอทอ่านยอดให้โดยไม่ต้องพิมพ์"),
 ];
 
 export default function SummaryPage() {
@@ -87,11 +88,11 @@ export default function SummaryPage() {
 
   return (
     <main>
-      <PageHeader title="สรุปภาพรวม" />
+      <PageHeader title={t("สรุปภาพรวม")} />
 
       <div className="space-y-4 px-4 pb-4">
         <section
-          aria-label="โปรไฟล์"
+          aria-label={t("โปรไฟล์")}
           className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 shadow-card"
         >
           {me.data?.pictureUrl ? (
@@ -122,12 +123,12 @@ export default function SummaryPage() {
         </section>
 
         <section
-          aria-label="ช่วงเวลา"
+          aria-label={t("ช่วงเวลา")}
           className="flex items-center justify-between rounded-2xl border border-border bg-surface p-1.5"
         >
           <button
             type="button"
-            aria-label="รอบก่อนหน้า"
+            aria-label={t("รอบก่อนหน้า")}
             disabled={offset <= -MAX_BACK}
             onClick={() => setOffset((o) => o - 1)}
             className="flex h-10 w-10 items-center justify-center rounded-xl text-muted disabled:opacity-30"
@@ -143,7 +144,7 @@ export default function SummaryPage() {
           )}
           <button
             type="button"
-            aria-label="รอบถัดไป"
+            aria-label={t("รอบถัดไป")}
             disabled={offset >= 0}
             onClick={() => setOffset((o) => o + 1)}
             className="flex h-10 w-10 items-center justify-center rounded-xl text-muted disabled:opacity-30"
@@ -167,18 +168,18 @@ export default function SummaryPage() {
             <IncomeExpense data={data} />
             <Spending data={data} open={open} onToggle={() => setOpen((v) => !v)} />
 
-            <section aria-label="รายการล่าสุด">
+            <section aria-label={t("รายการล่าสุด")}>
               <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-base font-semibold">รายการล่าสุด</h2>
+                <h2 className="text-base font-semibold">{t("รายการล่าสุด")}</h2>
                 <Link href="/transactions" className="text-sm font-medium text-primary">
-                  ดูทั้งหมด
+                  {t("ดูทั้งหมด")}
                 </Link>
               </div>
               {data.recent.length === 0 ? (
                 <div className="rounded-2xl border border-border bg-surface shadow-card">
                   <EmptyState
-                    title="ยังไม่มีรายการเลย"
-                    hint={'ลองพิมพ์ "กาแฟ 30" ในแชท หรือกดเพิ่มที่หน้ารายการได้เลย'}
+                    title={t("ยังไม่มีรายการเลย")}
+                    hint={t('ลองพิมพ์ "กาแฟ 30" ในแชท หรือกดเพิ่มที่หน้ารายการได้เลย')}
                   />
                 </div>
               ) : (
@@ -191,12 +192,12 @@ export default function SummaryPage() {
             </section>
 
             <section
-              aria-label="ทิป"
+              aria-label={t("ทิป")}
               className="flex items-start gap-3 rounded-2xl border border-border bg-primary-soft p-3.5"
             >
               <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
               <div className="text-sm">
-                <p className="font-semibold">ทิปน่ารู้</p>
+                <p className="font-semibold">{t("ทิปน่ารู้")}</p>
                 <p className="text-primary">{tip}</p>
               </div>
             </section>
@@ -221,7 +222,7 @@ function Hero({
   const value = accumulated ? data.accumulatedSatang : data.balanceSatang;
   return (
     <section
-      aria-label="ภาพรวม"
+      aria-label={t("ภาพรวม")}
       className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--hero-from)] to-[var(--hero-to)] p-5 text-[var(--hero-ink)] shadow-card"
     >
       <div
@@ -231,7 +232,7 @@ function Hero({
       <div className="relative">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-[var(--hero-ink-soft)]">
-            {accumulated ? "เหลือเก็บสะสม" : "เหลือเก็บรอบนี้"}
+            {accumulated ? t("เหลือเก็บสะสม") : t("เหลือเก็บรอบนี้")}
           </p>
           <button
             type="button"
@@ -240,7 +241,7 @@ function Hero({
             className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/70 bg-white/60 px-3 text-xs font-semibold text-[var(--hero-ink)]"
           >
             <Repeat className="h-3.5 w-3.5 text-[var(--hero-ink)]" aria-hidden />
-            {accumulated ? "รอบนี้" : "สะสม"}
+            {accumulated ? t("รอบนี้") : t("สะสม")}
           </button>
         </div>
         <p
@@ -253,14 +254,14 @@ function Hero({
         </p>
         <p className="text-xs text-[var(--hero-ink-soft)]">
           {accumulated
-            ? "รายรับ − รายจ่ายทั้งหมดตั้งแต่เริ่มจดจนถึงสิ้นรอบนี้"
-            : "รายรับ − รายจ่ายของรอบนี้"}
+            ? t("รายรับ − รายจ่ายทั้งหมดตั้งแต่เริ่มจดจนถึงสิ้นรอบนี้")
+            : t("รายรับ − รายจ่ายของรอบนี้")}
         </p>
         {goal ? (
           <div className="mt-4 border-t border-white/70 pt-3">
             <div className="mb-1.5 flex justify-between gap-2 text-xs">
               <span className="min-w-0 truncate text-[var(--hero-ink-soft)]">
-                เป้าหมาย {goal.emoji ?? "🎯"} {goal.name}
+                {t("เป้าหมาย")} {goal.emoji ?? "🎯"} {goal.name}
               </span>
               <span className="num shrink-0 font-semibold text-[var(--hero-ink)]">
                 {goal.percent}% ({money(goal.targetSatang)})
@@ -268,7 +269,7 @@ function Hero({
             </div>
             <div
               role="progressbar"
-              aria-label={`ความคืบหน้าเป้าหมาย ${goal.name}`}
+              aria-label={t("ความคืบหน้าเป้าหมาย {0}", goal.name)}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.min(100, goal.percent)}
@@ -292,23 +293,23 @@ function IncomeExpense({ data }: { data: SummaryResponse }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
-        <p className="text-xs text-muted">รายจ่าย</p>
+        <p className="text-xs text-muted">{t("รายจ่าย")}</p>
         <p className="num text-lg font-bold text-expense">{money(data.expenseSatang)}</p>
         <p className="mt-1 text-[11px] text-muted">
           {share === null ? (
-            "ยังไม่มีรายรับ"
+            t("ยังไม่มีรายรับ")
           ) : (
             <>
-              <span className="font-semibold text-expense">{share}%</span> ของรายรับ
+              <span className="font-semibold text-expense">{share}%</span> {t("ของรายรับ")}
             </>
           )}
         </p>
       </div>
       <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
-        <p className="text-xs text-muted">รายรับ</p>
+        <p className="text-xs text-muted">{t("รายรับ")}</p>
         <p className="num text-lg font-bold text-income">{money(data.incomeSatang)}</p>
         <p className="mt-1 text-[11px] text-muted">
-          <span className="num font-semibold">{data.count}</span> รายการในรอบนี้
+          <span className="num font-semibold">{data.count}</span> {t("รายการในรอบนี้")}
         </p>
       </div>
     </div>
@@ -336,10 +337,10 @@ function Spending({
     budget === null
       ? null
       : data.expenseSatang > budget
-        ? { text: "เกินงบ", cls: "bg-expense/10 text-expense" }
+        ? { text: t("เกินงบ"), cls: "bg-expense/10 text-expense" }
         : data.expenseSatang >= budget * 0.8
-          ? { text: "ใกล้เต็มงบ", cls: "bg-warn-soft text-warn" }
-          : { text: "อยู่ในงบ", cls: "bg-income/10 text-income" };
+          ? { text: t("ใกล้เต็มงบ"), cls: "bg-warn-soft text-warn" }
+          : { text: t("อยู่ในงบ"), cls: "bg-income/10 text-income" };
 
   const cats = data.categories;
   const total = (cats ?? []).reduce((s, c) => s + c.totalSatang, 0);
@@ -352,11 +353,11 @@ function Spending({
 
   return (
     <section
-      aria-label="สัดส่วนการใช้จ่ายและงบ"
+      aria-label={t("สัดส่วนการใช้จ่ายและงบ")}
       className="rounded-3xl border border-border bg-surface p-5 shadow-card"
     >
-      <h2 className="text-sm font-semibold">สัดส่วนการใช้จ่ายและงบ</h2>
-      <p className="mb-4 text-xs text-muted">แยกตามหมวดหมู่ของรอบนี้</p>
+      <h2 className="text-sm font-semibold">{t("สัดส่วนการใช้จ่ายและงบ")}</h2>
+      <p className="mb-4 text-xs text-muted">{t("แยกตามหมวดหมู่ของรอบนี้")}</p>
 
       <div className="grid grid-cols-12 items-center gap-3">
         <div className="col-span-5">
@@ -365,7 +366,7 @@ function Spending({
               <MiniDonut slices={slices} />
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-[10px] text-muted">
-                  {budget === null ? "ของรายรับ" : "ใช้ไปแล้ว"}
+                  {budget === null ? t("ของรายรับ") : t("ใช้ไปแล้ว")}
                 </span>
                 <span className="num text-sm font-bold">
                   {usedPct === null ? "–" : `${usedPct}%`}
@@ -375,7 +376,7 @@ function Spending({
           ) : (
             <div className="mx-auto flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-border text-center">
               <span className="text-[10px] text-muted">
-                {budget === null ? "ของรายรับ" : "ใช้ไปแล้ว"}
+                {budget === null ? t("ของรายรับ") : t("ใช้ไปแล้ว")}
               </span>
               <span className="num text-sm font-bold">
                 {usedPct === null ? "–" : `${usedPct}%`}
@@ -385,17 +386,20 @@ function Spending({
         </div>
 
         <dl className="col-span-7 space-y-2 border-l border-border pl-3 text-xs">
-          <Row label="จำนวนรายการ" value={`${data.count} รายการ`} />
-          <Row label="งบที่ตั้งไว้" value={budget === null ? "ยังไม่ตั้ง" : `${money(budget)}`} />
+          <Row label={t("จำนวนรายการ")} value={t("{0} รายการ", data.count)} />
+          <Row
+            label={t("งบที่ตั้งไว้")}
+            value={budget === null ? t("ยังไม่ตั้ง") : `${money(budget)}`}
+          />
           {remaining !== null ? (
             <Row
-              label="งบคงเหลือ"
+              label={t("งบคงเหลือ")}
               value={`${remaining < 0 ? "-" : "+"}${money(Math.abs(remaining))}`}
               tone={remaining < 0 ? "text-expense" : "text-income"}
             />
           ) : null}
           <div className="flex items-center justify-between gap-2">
-            <dt className="text-muted">สถานะงบ</dt>
+            <dt className="text-muted">{t("สถานะงบ")}</dt>
             <dd>
               {status ? (
                 <span className={cn("rounded px-1.5 py-0.5 text-[11px] font-medium", status.cls)}>
@@ -403,7 +407,7 @@ function Spending({
                 </span>
               ) : (
                 <Link href="/budgets" className="font-semibold text-primary">
-                  ตั้งงบ
+                  {t("ตั้งงบ")}
                 </Link>
               )}
             </dd>
@@ -418,13 +422,13 @@ function Spending({
         >
           <Lock className="h-5 w-5 shrink-0 text-muted" aria-hidden />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">กราฟสัดส่วนตามหมวด</span>
-            <span className="block text-xs text-muted">ใช้ได้ในแผน Pro ขึ้นไป</span>
+            <span className="block text-sm font-semibold">{t("กราฟสัดส่วนตามหมวด")}</span>
+            <span className="block text-xs text-muted">{t("ใช้ได้ในแผน Pro ขึ้นไป")}</span>
           </span>
-          <span className="text-sm font-semibold text-primary">ดูแผน</span>
+          <span className="text-sm font-semibold text-primary">{t("ดูแผน")}</span>
         </Link>
       ) : cats.length === 0 ? (
-        <p className="mt-4 text-center text-xs text-muted">ยังไม่มีรายจ่ายในรอบนี้</p>
+        <p className="mt-4 text-center text-xs text-muted">{t("ยังไม่มีรายจ่ายในรอบนี้")}</p>
       ) : (
         <div className="mt-4 border-t border-border pt-3">
           <button
@@ -433,7 +437,7 @@ function Spending({
             onClick={onToggle}
             className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-background text-xs font-medium text-muted"
           >
-            {open ? "ย่อลง" : "ดูรายละเอียดหมวดหมู่"}
+            {open ? t("ย่อลง") : t("ดูรายละเอียดหมวดหมู่")}
             <ChevronDown
               className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
               aria-hidden
@@ -483,7 +487,7 @@ function Row({ label, value, tone }: { label: string; value: string; tone?: stri
 function SummarySkeleton() {
   const card = "rounded-2xl border border-border bg-surface p-4 shadow-card";
   return (
-    <div role="status" aria-label="กำลังโหลด" className="space-y-4">
+    <div role="status" aria-label={t("กำลังโหลด")} className="space-y-4">
       <div className="rounded-3xl border border-border bg-primary-soft p-5 shadow-card">
         <div className="flex items-center justify-between">
           <Skeleton className="h-4 w-28 rounded-lg bg-primary/15" />

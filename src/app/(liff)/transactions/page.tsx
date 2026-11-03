@@ -44,6 +44,7 @@ import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/li
 import { MAX_BULK, MAX_NOTE, MAX_TITLE } from "@/lib/tx-edit";
 import { cn } from "@/lib/utils";
 import { canSendToChat } from "@/lib/liff-chat";
+import { t as tr } from "@/lib/i18n";
 
 type TypeFilter = "all" | "expense" | "income";
 
@@ -71,9 +72,9 @@ const PAGE_SIZE = 30;
 const AMOUNT_PATTERN = /^\d{1,9}(\.\d{1,2})?$/;
 
 const FILTERS: { value: TypeFilter; label: string }[] = [
-  { value: "all", label: "ทั้งหมด" },
-  { value: "expense", label: "รายจ่าย" },
-  { value: "income", label: "รายรับ" },
+  { value: "all", label: tr("ทั้งหมด") },
+  { value: "expense", label: tr("รายจ่าย") },
+  { value: "income", label: tr("รายรับ") },
 ];
 
 function useDebounced<T>(value: T, ms: number): T {
@@ -104,8 +105,8 @@ function TransactionsRoute() {
 
 /** How long "บันทึกรายการสำเร็จ" shows before the window closes back to the chat. */
 const CLOSE_AFTER_MS = 900;
-const SEND_NOT_FROM_CHAT = "ส่งการ์ดเข้าแชทได้เมื่อเปิดหน้านี้จากปุ่มในแชทของ LINE";
-const SEND_REFUSED = "LINE ไม่ให้ส่งข้อความเข้าแชท";
+const SEND_NOT_FROM_CHAT = tr("ส่งการ์ดเข้าแชทได้เมื่อเปิดหน้านี้จากปุ่มในแชทของ LINE");
+const SEND_REFUSED = tr("LINE ไม่ให้ส่งข้อความเข้าแชท");
 
 /**
  * Opened from the chat's "แก้" button: the editor of one entry. After a save it shows "บันทึกรายการสำเร็จ",
@@ -189,7 +190,7 @@ function EditFromChat({ id }: { id: string }) {
   if (tx.error || !tx.data) {
     return (
       <ErrorState
-        message={tx.error ?? "ไม่พบรายการนี้แล้ว (อาจถูกลบไปก่อนหน้า)"}
+        message={tx.error ?? tr("ไม่พบรายการนี้แล้ว (อาจถูกลบไปก่อนหน้า)")}
         onRetry={tx.reload}
       />
     );
@@ -198,7 +199,7 @@ function EditFromChat({ id }: { id: string }) {
     return (
       <div className="space-y-4 px-4 py-10 text-center">
         <p role="status" className="text-lg font-bold text-primary">
-          ✅ แก้ไขรายการสำเร็จ
+          {tr("✅ แก้ไขรายการสำเร็จ")}
         </p>
         {warning ? (
           <p role="alert" className="text-sm text-expense">
@@ -207,8 +208,11 @@ function EditFromChat({ id }: { id: string }) {
         ) : null}
         <p className="text-sm text-muted">
           {sent
-            ? "บอทส่งการ์ดสรุปรายการเข้าแชทให้แล้ว กลับไปที่แชทได้เลย"
-            : `${failure ?? SEND_NOT_FROM_CHAT} กด "ส่งการ์ดเข้าแชท" อีกครั้ง หรือพิมพ์ "แก้ไขเสร็จแล้ว" ในแชทก็ได้`}
+            ? tr("บอทส่งการ์ดสรุปรายการเข้าแชทให้แล้ว กลับไปที่แชทได้เลย")
+            : tr(
+                '{0} กด "ส่งการ์ดเข้าแชท" อีกครั้ง หรือพิมพ์ "แก้ไขเสร็จแล้ว" ในแชทก็ได้',
+                failure ?? SEND_NOT_FROM_CHAT,
+              )}
         </p>
         {sent ? null : (
           <button
@@ -216,14 +220,14 @@ function EditFromChat({ id }: { id: string }) {
             onClick={() => void retry()}
             className="h-11 rounded-2xl border border-border px-5 text-sm font-semibold"
           >
-            ส่งการ์ดเข้าแชท
+            {tr("ส่งการ์ดเข้าแชท")}
           </button>
         )}
         <Link
           href="/transactions"
           className="inline-flex h-11 items-center rounded-2xl bg-primary px-5 text-sm font-semibold text-surface"
         >
-          ดูรายการทั้งหมด
+          {tr("ดูรายการทั้งหมด")}
         </Link>
       </div>
     );
@@ -235,10 +239,10 @@ function EditFromChat({ id }: { id: string }) {
           role="status"
           className="fixed inset-x-4 top-4 z-50 flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary-soft px-4 py-3 text-sm font-semibold text-primary shadow-lg"
         >
-          <span aria-hidden>✓</span> บันทึกรายการสำเร็จ
+          <span aria-hidden>✓</span> {tr("บันทึกรายการสำเร็จ")}
         </p>
       ) : null}
-      <PageHeader title="แก้ไขรายการ" />
+      <PageHeader title={tr("แก้ไขรายการ")} />
       <div className="px-4 pb-8">
         <EditForm
           tx={tx.data}
@@ -344,7 +348,7 @@ function TransactionsView() {
       setExtra((prev) => [...prev, ...res.items]);
       setExtraMore(res.hasMore);
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "โหลดเพิ่มไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("โหลดเพิ่มไม่สำเร็จ"));
     } finally {
       setLoadingMore(false);
     }
@@ -367,23 +371,23 @@ function TransactionsView() {
 
   function bulkMessage(res: BulkResponse, done: string): string {
     return res.skipped > 0
-      ? `${done} ${res.updated} รายการ (ข้าม ${res.skipped})`
-      : `${done} ${res.updated} รายการ`;
+      ? tr("{0} {1} รายการ (ข้าม {2})", done, res.updated, res.skipped)
+      : tr("{0} {1} รายการ", done, res.updated);
   }
 
   async function bulkDelete() {
-    if (!window.confirm(`ลบ ${selected.size} รายการที่เลือกใช่ไหม?`)) return;
+    if (!window.confirm(tr("ลบ {0} รายการที่เลือกใช่ไหม?", selected.size))) return;
     setBulkBusy(true);
     try {
       const res = await api<BulkResponse>("/api/transactions/bulk", {
         method: "POST",
         body: JSON.stringify({ action: "delete", ids: [...selected] }),
       });
-      setNotice(bulkMessage(res, "ลบแล้ว"));
+      setNotice(bulkMessage(res, tr("ลบแล้ว")));
       stopSelecting();
       list.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("ลบไม่สำเร็จ"));
     } finally {
       setBulkBusy(false);
     }
@@ -396,11 +400,11 @@ function TransactionsView() {
         method: "POST",
         body: JSON.stringify({ action: "move", ids: [...selected], categoryId }),
       });
-      setNotice(bulkMessage(res, "ย้ายหมวดแล้ว"));
+      setNotice(bulkMessage(res, tr("ย้ายหมวดแล้ว")));
       stopSelecting();
       list.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ย้ายหมวดไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("ย้ายหมวดไม่สำเร็จ"));
       setMoveOpen(false);
     } finally {
       setBulkBusy(false);
@@ -408,20 +412,20 @@ function TransactionsView() {
   }
 
   async function remove(tx: TxDto) {
-    if (!window.confirm(`ลบ "${tx.title}" ใช่ไหม?`)) return;
+    if (!window.confirm(tr('ลบ "{0}" ใช่ไหม?', tx.title))) return;
     try {
       await api(`/api/transactions/${tx.id}`, { method: "DELETE" });
       setEditFor(null);
-      setNotice("ลบแล้ว");
+      setNotice(tr("ลบแล้ว"));
       list.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("ลบไม่สำเร็จ"));
     }
   }
 
   return (
     <main>
-      <PageHeader title="รายการบันทึก" />
+      <PageHeader title={tr("รายการบันทึก")} />
 
       <div className="space-y-3.5 px-4 pb-28">
         <button
@@ -434,26 +438,28 @@ function TransactionsView() {
               <CalendarDays className="h-4 w-4" aria-hidden />
             </span>
             <span>
-              <span className="block text-[10px] leading-tight text-muted">ช่วงเวลาที่เลือก</span>
+              <span className="block text-[10px] leading-tight text-muted">
+                {tr("ช่วงเวลาที่เลือก")}
+              </span>
               <span className="num block text-xs font-bold">
-                {range ? formatRange(range.start, range.end) : "ทุกช่วงเวลา"}
+                {range ? formatRange(range.start, range.end) : tr("ทุกช่วงเวลา")}
               </span>
             </span>
           </span>
           <span className="flex items-center text-primary">
-            <span className="text-[11px] font-semibold">เปลี่ยน</span>
+            <span className="text-[11px] font-semibold">{tr("เปลี่ยน")}</span>
             <ChevronRight className="h-4 w-4" aria-hidden />
           </span>
         </button>
 
         <section
-          aria-label="ตัวกรอง"
+          aria-label={tr("ตัวกรอง")}
           className="space-y-3 rounded-2xl border border-border bg-surface p-3.5 shadow-card"
         >
           <div className="flex items-center gap-3">
             <div
               role="tablist"
-              aria-label="ประเภท"
+              aria-label={tr("ประเภท")}
               className="flex flex-1 rounded-xl border border-border bg-background p-0.5"
             >
               {FILTERS.map((f) => (
@@ -487,11 +493,11 @@ function TransactionsView() {
             <button
               type="button"
               onClick={() => setExportOpen(true)}
-              aria-label="ส่งออกไฟล์"
+              aria-label={tr("ส่งออกไฟล์")}
               className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary-soft px-3 text-xs font-semibold text-primary"
             >
               <Download className="h-3.5 w-3.5" aria-hidden />
-              ส่งออก
+              {tr("ส่งออก")}
             </button>
           </div>
 
@@ -499,8 +505,8 @@ function TransactionsView() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหาชื่อรายการ หรือ #แท็ก"
-            aria-label="ค้นหาชื่อรายการหรือแท็ก"
+            placeholder={tr("ค้นหาชื่อรายการ หรือ #แท็ก")}
+            aria-label={tr("ค้นหาชื่อรายการหรือแท็ก")}
             className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:border-primary"
           />
 
@@ -508,10 +514,10 @@ function TransactionsView() {
             <select
               value={walletId}
               onChange={(e) => setWalletId(e.target.value)}
-              aria-label="กระเป๋า"
+              aria-label={tr("กระเป๋า")}
               className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
             >
-              <option value="">ทุกกระเป๋า</option>
+              <option value="">{tr("ทุกกระเป๋า")}</option>
               {wallets.data?.items.map((w) => (
                 <option key={w.id} value={w.id}>
                   {WALLET_KIND_EMOJI[w.kind]} {w.name}
@@ -522,12 +528,12 @@ function TransactionsView() {
 
           <div className="border-t border-border pt-2.5">
             <div className="mb-2 flex items-center justify-between text-[11px] text-muted">
-              <span>หมวดหมู่</span>
-              <span className="font-medium text-primary">{chosen?.name ?? "ทุกหมวดหมู่"}</span>
+              <span>{tr("หมวดหมู่")}</span>
+              <span className="font-medium text-primary">{chosen?.name ?? tr("ทุกหมวดหมู่")}</span>
             </div>
             <div
               role="group"
-              aria-label="เลือกหมวดหมู่"
+              aria-label={tr("เลือกหมวดหมู่")}
               className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               <button
@@ -541,7 +547,7 @@ function TransactionsView() {
                     : "bg-background text-muted",
                 )}
               >
-                ทั้งหมด
+                {tr("ทั้งหมด")}
               </button>
               {chips.map((c) => (
                 <button
@@ -567,11 +573,11 @@ function TransactionsView() {
         {selecting ? (
           <div
             role="region"
-            aria-label="จัดการรายการที่เลือก"
+            aria-label={tr("จัดการรายการที่เลือก")}
             className="flex items-center justify-between gap-2 rounded-2xl bg-gradient-to-r from-[var(--hero-from)] to-[var(--hero-to)] p-3 text-[var(--hero-ink)] shadow-card"
           >
             <p className="num text-xs font-semibold" aria-live="polite">
-              เลือกแล้ว {selected.size} รายการ
+              {tr("เลือกแล้ว")} {selected.size} {tr("รายการ")}
             </p>
             <div className="flex items-center gap-1.5">
               <button
@@ -580,7 +586,7 @@ function TransactionsView() {
                 onClick={() => setMoveOpen(true)}
                 className="flex h-9 items-center gap-1 rounded-lg bg-white/70 px-2.5 text-[11px] font-semibold disabled:opacity-50"
               >
-                <FolderInput className="h-3.5 w-3.5" aria-hidden /> ย้ายหมวด
+                <FolderInput className="h-3.5 w-3.5" aria-hidden /> {tr("ย้ายหมวด")}
               </button>
               <button
                 type="button"
@@ -588,14 +594,14 @@ function TransactionsView() {
                 onClick={bulkDelete}
                 className="flex h-9 items-center gap-1 rounded-lg bg-expense px-2.5 text-[11px] font-semibold text-white disabled:opacity-50"
               >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden /> ลบ
+                <Trash2 className="h-3.5 w-3.5" aria-hidden /> {tr("ลบ")}
               </button>
               <button
                 type="button"
                 onClick={stopSelecting}
                 className="h-9 rounded-lg bg-white/70 px-2.5 text-[11px] font-medium"
               >
-                ยกเลิก
+                {tr("ยกเลิก")}
               </button>
             </div>
           </div>
@@ -608,14 +614,14 @@ function TransactionsView() {
               className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface font-medium disabled:opacity-50"
             >
               <CheckSquare className="h-3.5 w-3.5 text-primary" aria-hidden />
-              เลือกหลายรายการ
+              {tr("เลือกหลายรายการ")}
             </button>
             <Link
               href="/settings#recurring"
               className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface font-medium"
             >
               <Repeat className="h-3.5 w-3.5 text-accent" aria-hidden />
-              ตั้งรายการจดประจำ
+              {tr("ตั้งรายการจดประจำ")}
             </Link>
           </section>
         )}
@@ -623,20 +629,22 @@ function TransactionsView() {
         {q && list.data?.totals ? (
           <div
             role="status"
-            aria-label="ยอดรวมของผลค้นหา"
+            aria-label={tr("ยอดรวมของผลค้นหา")}
             className="grid grid-cols-3 gap-2 rounded-2xl bg-primary-soft px-3 py-2 text-center text-xs"
           >
             <div>
-              <p className="text-muted">รายรับ</p>
+              <p className="text-muted">{tr("รายรับ")}</p>
               <p className="num font-bold text-income">+{money(list.data.totals.incomeSatang)}</p>
             </div>
             <div>
-              <p className="text-muted">รายจ่าย</p>
+              <p className="text-muted">{tr("รายจ่าย")}</p>
               <p className="num font-bold text-expense">-{money(list.data.totals.expenseSatang)}</p>
             </div>
             <div>
-              <p className="text-muted">พบ</p>
-              <p className="num font-bold">{list.data.totals.count} รายการ</p>
+              <p className="text-muted">{tr("พบ")}</p>
+              <p className="num font-bold">
+                {list.data.totals.count} {tr("รายการ")}
+              </p>
             </div>
           </div>
         ) : null}
@@ -657,11 +665,11 @@ function TransactionsView() {
         ) : items.length === 0 ? (
           <div className="rounded-2xl border border-border bg-surface shadow-card">
             <EmptyState
-              title={filtered ? "ไม่พบรายการที่ค้นหา" : "ยังไม่มีรายการ"}
+              title={filtered ? tr("ไม่พบรายการที่ค้นหา") : tr("ยังไม่มีรายการ")}
               hint={
                 filtered
-                  ? "ลองเปลี่ยนตัวกรองหรือคำค้นหาดูนะ"
-                  : 'พิมพ์ "กาแฟ 30" ในแชท หรือกดปุ่ม + เพื่อเพิ่มได้เลย'
+                  ? tr("ลองเปลี่ยนตัวกรองหรือคำค้นหาดูนะ")
+                  : tr('พิมพ์ "กาแฟ 30" ในแชท หรือกดปุ่ม + เพื่อเพิ่มได้เลย')
               }
             />
           </div>
@@ -675,7 +683,7 @@ function TransactionsView() {
                       <h2 className="text-xs font-bold">{formatThaiDate(g.date)}</h2>
                       {g.key === todayKey || g.key === yesterdayKey ? (
                         <span className="text-[10px] text-muted">
-                          {g.key === todayKey ? "วันนี้" : "เมื่อวาน"}
+                          {g.key === todayKey ? tr("วันนี้") : tr("เมื่อวาน")}
                         </span>
                       ) : null}
                     </div>
@@ -687,7 +695,7 @@ function TransactionsView() {
                           : "border-income/30 bg-income/10 text-income",
                       )}
                     >
-                      รวม: {g.netSatang < 0 ? "-" : "+"}
+                      {tr("รวม:")} {g.netSatang < 0 ? "-" : "+"}
                       {money(Math.abs(g.netSatang))}
                     </span>
                   </div>
@@ -710,7 +718,7 @@ function TransactionsView() {
                               type="checkbox"
                               checked={selected.has(tx.id)}
                               onChange={() => toggle(tx.id)}
-                              aria-label={`เลือก ${tx.title}`}
+                              aria-label={tr("เลือก {0}", tx.title)}
                               className="h-5 w-5 shrink-0 accent-[var(--primary)]"
                             />
                           ) : null
@@ -728,7 +736,7 @@ function TransactionsView() {
                 disabled={loadingMore}
                 className="h-11 w-full rounded-2xl border border-border bg-surface text-sm font-medium disabled:opacity-60"
               >
-                {loadingMore ? "กำลังโหลด..." : "โหลดเพิ่ม"}
+                {loadingMore ? tr("กำลังโหลด...") : tr("โหลดเพิ่ม")}
               </button>
             ) : null}
           </>
@@ -739,7 +747,7 @@ function TransactionsView() {
         <button
           type="button"
           onClick={() => setFormOpen(true)}
-          aria-label="เพิ่มรายการใหม่"
+          aria-label={tr("เพิ่มรายการใหม่")}
           className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-surface shadow-card"
         >
           <Plus className="h-6 w-6" aria-hidden />
@@ -773,7 +781,7 @@ function TransactionsView() {
           onClose={() => setEditFor(null)}
           onSaved={(warning) => {
             setEditFor(null);
-            setNotice(warning ? `บันทึกแล้ว ${warning}` : "บันทึกแล้ว");
+            setNotice(warning ? tr("บันทึกแล้ว {0}", warning) : tr("บันทึกแล้ว"));
             list.reload();
           }}
           onDelete={() => remove(editFor)}
@@ -793,9 +801,11 @@ function TransactionsView() {
       {exportOpen ? (
         <ExportSheet
           filters={filter}
-          rangeText={range ? formatRange(range.start, range.end) : "ทุกช่วงเวลา"}
-          typeText={type === "all" ? "ทั้งหมด" : type === "expense" ? "รายจ่าย" : "รายรับ"}
-          categoryText={chosen?.name ?? "ทุกหมวดหมู่"}
+          rangeText={range ? formatRange(range.start, range.end) : tr("ทุกช่วงเวลา")}
+          typeText={
+            type === "all" ? tr("ทั้งหมด") : type === "expense" ? tr("รายจ่าย") : tr("รายรับ")
+          }
+          categoryText={chosen?.name ?? tr("ทุกหมวดหมู่")}
           onClose={() => setExportOpen(false)}
         />
       ) : null}
@@ -805,7 +815,7 @@ function TransactionsView() {
           onClose={() => setFormOpen(false)}
           onSaved={(alerts) => {
             setFormOpen(false);
-            setNotice(["จดแล้ว", ...alerts].join("\n"));
+            setNotice([tr("จดแล้ว"), ...alerts].join("\n"));
             list.reload();
           }}
         />
@@ -817,7 +827,7 @@ function TransactionsView() {
 /** The cards while the entries load. */
 function TransactionsSkeleton() {
   return (
-    <div role="status" aria-label="กำลังโหลด" className="space-y-4">
+    <div role="status" aria-label={tr("กำลังโหลด")} className="space-y-4">
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
           <Skeleton className="h-4 w-24 rounded-lg" />
@@ -888,7 +898,7 @@ function ExportSheet({
       await openExternal(res.url);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "ส่งออกไม่สำเร็จ");
+      setError(e instanceof Error ? e.message : tr("ส่งออกไม่สำเร็จ"));
       setBusy(false);
     }
   }
@@ -896,34 +906,35 @@ function ExportSheet({
   const FORMATS = [
     { value: "xlsx", label: "Excel (.xlsx)", Icon: FileSpreadsheet },
     { value: "csv", label: "CSV", Icon: FileText },
-    { value: "pdf", label: "PDF สรุป", Icon: FileBarChart },
+    { value: "pdf", label: tr("PDF สรุป"), Icon: FileBarChart },
   ] as const;
 
   return (
-    <Sheet title="ส่งออกข้อมูลรายการ" onClose={onClose}>
+    <Sheet title={tr("ส่งออกข้อมูลรายการ")} onClose={onClose}>
       {me.loading ? (
         <LoadingBlock rows={2} />
       ) : me.error ? (
         <ErrorState message={me.error} onRetry={me.reload} />
       ) : !allowed ? (
         <div className="space-y-3 text-center">
-          <p className="text-base font-semibold">ส่งออก Excel / CSV / PDF สำหรับแผน Pro</p>
+          <p className="text-base font-semibold">{tr("ส่งออก Excel / CSV / PDF สำหรับแผน Pro")}</p>
           <p className="text-sm text-muted">
-            ดาวน์โหลดรายการไปทำบัญชีต่อในคอมพิวเตอร์หรือ Google Sheets ลองใช้ฟรี 7
-            วันได้ที่หน้าอัปเกรด
+            {tr(
+              "ดาวน์โหลดรายการไปทำบัญชีต่อในคอมพิวเตอร์หรือ Google Sheets ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด",
+            )}
           </p>
           <Link
             href="/upgrade"
             className="inline-flex h-11 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-semibold text-surface"
           >
-            ดูแผน Pro
+            {tr("ดูแผน Pro")}
           </Link>
         </div>
       ) : (
         <div className="space-y-4 text-xs">
           <div className="space-y-1.5">
-            <p className="font-semibold">รูปแบบไฟล์</p>
-            <div role="radiogroup" aria-label="รูปแบบไฟล์" className="grid grid-cols-3 gap-2">
+            <p className="font-semibold">{tr("รูปแบบไฟล์")}</p>
+            <div role="radiogroup" aria-label={tr("รูปแบบไฟล์")} className="grid grid-cols-3 gap-2">
               {FORMATS.map(({ value, label, Icon }) => (
                 <button
                   key={value}
@@ -946,18 +957,18 @@ function ExportSheet({
           </div>
 
           <div className="space-y-1">
-            <p className="font-semibold">ตัวกรองที่ใช้ส่งออก</p>
+            <p className="font-semibold">{tr("ตัวกรองที่ใช้ส่งออก")}</p>
             <dl className="space-y-1 rounded-xl border border-border bg-background p-3">
               <div className="flex justify-between gap-2">
-                <dt className="text-muted">ช่วงเวลา</dt>
+                <dt className="text-muted">{tr("ช่วงเวลา")}</dt>
                 <dd className="num font-medium">{rangeText}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-muted">ประเภท</dt>
+                <dt className="text-muted">{tr("ประเภท")}</dt>
                 <dd className="font-medium">{typeText}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-muted">หมวดหมู่</dt>
+                <dt className="text-muted">{tr("หมวดหมู่")}</dt>
                 <dd className="font-medium">{categoryText}</dd>
               </div>
             </dl>
@@ -965,13 +976,15 @@ function ExportSheet({
 
           <fieldset className="space-y-2">
             <legend className="flex w-full items-center justify-between">
-              <span className="font-semibold">คอลัมน์ข้อมูลที่ต้องการส่งออก</span>
+              <span className="font-semibold">{tr("คอลัมน์ข้อมูลที่ต้องการส่งออก")}</span>
               <button
                 type="button"
                 onClick={() => setGroups(new Set(all ? [COLUMN_GROUPS[0]] : COLUMN_GROUPS))}
                 className="text-[10px] font-medium text-primary"
               >
-                {all ? "เหลือคอลัมน์เดียว" : `เลือกทั้งหมด ${COLUMN_GROUPS.length} รายการ`}
+                {all
+                  ? tr("เหลือคอลัมน์เดียว")
+                  : tr("เลือกทั้งหมด {0} รายการ", COLUMN_GROUPS.length)}
               </button>
             </legend>
             <div className="grid grid-cols-2 gap-2">
@@ -995,20 +1008,20 @@ function ExportSheet({
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-warn/30 bg-warn-soft p-3">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 font-bold">
-                รวมไฟล์รูปสลิป / ใบเสร็จ
+                {tr("รวมไฟล์รูปสลิป / ใบเสร็จ")}
                 <span className="rounded-full border border-warn/30 px-1.5 text-[9px] font-bold text-warn">
                   ★ PRO
                 </span>
               </p>
               <p className="text-[10px] text-muted">
-                บีบอัดเป็นไฟล์ ZIP พร้อมรูปภาพหลักฐาน (สูงสุด 150 รูป)
+                {tr("บีบอัดเป็นไฟล์ ZIP พร้อมรูปภาพหลักฐาน (สูงสุด 150 รูป)")}
               </p>
             </div>
             <button
               type="button"
               role="switch"
               aria-checked={attachments}
-              aria-label="รวมไฟล์รูปสลิปและใบเสร็จ"
+              aria-label={tr("รวมไฟล์รูปสลิปและใบเสร็จ")}
               disabled={!zipAllowed}
               onClick={() => setAttachments((v) => !v)}
               className={cn(
@@ -1026,11 +1039,15 @@ function ExportSheet({
           </div>
 
           <p className="text-[11px] text-muted">
-            ส่งออกสูงสุด 5,000 แถว ไฟล์จะเปิดในเบราว์เซอร์ของเครื่องเพื่อดาวน์โหลด ลิงก์ใช้ได้ 2
-            นาที
-            {format === "xlsx" ? " · ไฟล์ Excel มีชีตสรุปตามหมวดและสรุปรายเดือนเพิ่มให้ด้วย" : ""}
+            {tr(
+              "ส่งออกสูงสุด 5,000 แถว ไฟล์จะเปิดในเบราว์เซอร์ของเครื่องเพื่อดาวน์โหลด ลิงก์ใช้ได้ 2",
+            )}
+            {tr("นาที")}
+            {format === "xlsx"
+              ? tr(" · ไฟล์ Excel มีชีตสรุปตามหมวดและสรุปรายเดือนเพิ่มให้ด้วย")
+              : ""}
             {format === "pdf"
-              ? " · PDF พิมพ์ตารางได้สูงสุด 2,000 รายการ (ยอดรวมนับครบทุกรายการ)"
+              ? tr(" · PDF พิมพ์ตารางได้สูงสุด 2,000 รายการ (ยอดรวมนับครบทุกรายการ)")
               : ""}
           </p>
           {error ? (
@@ -1045,7 +1062,7 @@ function ExportSheet({
             className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-surface disabled:opacity-60"
           >
             <FileDown className="h-4 w-4" aria-hidden />
-            {busy ? "กำลังเตรียมไฟล์..." : "สร้างไฟล์และส่งออก"}
+            {busy ? tr("กำลังเตรียมไฟล์...") : tr("สร้างไฟล์และส่งออก")}
           </button>
         </div>
       )}
@@ -1057,16 +1074,16 @@ function ExportSheet({
 function SlipSheet({ tx, onClose }: { tx: TxDto; onClose: () => void }) {
   const slip = useApi<{ url: string }>(`/api/transactions/${tx.id}/slip`);
   return (
-    <Sheet title={`สลิป: ${tx.title}`} onClose={onClose}>
+    <Sheet title={tr("สลิป: {0}", tx.title)} onClose={onClose}>
       {slip.loading ? (
         <LoadingBlock rows={2} />
       ) : slip.error || !slip.data ? (
-        <ErrorState message={slip.error ?? "เปิดสลิปไม่สำเร็จ"} onRetry={slip.reload} />
+        <ErrorState message={slip.error ?? tr("เปิดสลิปไม่สำเร็จ")} onRetry={slip.reload} />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={slip.data.url}
-          alt={`สลิปของรายการ ${tx.title}`}
+          alt={tr("สลิปของรายการ {0}", tx.title)}
           className="mx-auto max-h-[70vh] w-full rounded-2xl border border-border object-contain"
         />
       )}
@@ -1095,9 +1112,9 @@ function AddSheet({
   async function submit(e: FormEvent) {
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
-    if (!title.trim()) return setError("ใส่ชื่อรายการด้วยนะ");
+    if (!title.trim()) return setError(tr("ใส่ชื่อรายการด้วยนะ"));
     if (!AMOUNT_PATTERN.test(normalized) || Number(normalized) <= 0) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 50 หรือ 50.50)");
+      return setError(tr("จำนวนเงินไม่ถูกต้อง (เช่น 50 หรือ 50.50)"));
     }
     setSaving(true);
     setError(null);
@@ -1113,7 +1130,7 @@ function AddSheet({
       });
       onSaved(res.alerts ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
@@ -1125,13 +1142,13 @@ function AddSheet({
         className="mx-auto w-full max-w-md space-y-3 rounded-t-3xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">เพิ่มรายการ</h2>
-          <button type="button" onClick={onClose} aria-label="ปิด" className="h-11 w-11">
+          <h2 className="text-lg font-bold">{tr("เพิ่มรายการ")}</h2>
+          <button type="button" onClick={onClose} aria-label={tr("ปิด")} className="h-11 w-11">
             <X className="mx-auto h-5 w-5" aria-hidden />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="ประเภท">
+        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={tr("ประเภท")}>
           {(["expense", "income"] as const).map((t) => (
             <button
               key={t}
@@ -1151,7 +1168,7 @@ function AddSheet({
                   : "border-border text-muted",
               )}
             >
-              {t === "expense" ? "รายจ่าย" : "รายรับ"}
+              {t === "expense" ? tr("รายจ่าย") : tr("รายรับ")}
             </button>
           ))}
         </div>
@@ -1160,25 +1177,25 @@ function AddSheet({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={60}
-          placeholder="ชื่อรายการ เช่น กาแฟ"
-          aria-label="ชื่อรายการ"
+          placeholder={tr("ชื่อรายการ เช่น กาแฟ")}
+          aria-label={tr("ชื่อรายการ")}
           className="h-12 w-full rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary"
         />
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder={`จำนวนเงิน (${currencyUnit()})`}
-          aria-label="จำนวนเงิน"
+          placeholder={tr("จำนวนเงิน ({0})", currencyUnit())}
+          aria-label={tr("จำนวนเงิน")}
           className="num h-12 w-full rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary"
         />
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          aria-label="หมวดหมู่"
+          aria-label={tr("หมวดหมู่")}
           className="h-12 w-full rounded-2xl border border-border bg-background px-3 outline-none focus:border-primary"
         >
-          <option value="">เลือกให้อัตโนมัติ</option>
+          <option value="">{tr("เลือกให้อัตโนมัติ")}</option>
           {options.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -1197,7 +1214,7 @@ function AddSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก..." : "บันทึก"}
+          {saving ? tr("กำลังบันทึก...") : tr("บันทึก")}
         </button>
       </form>
     </div>
@@ -1223,7 +1240,7 @@ function MoveSheet({
   const income = items.filter((c) => c.type === "income");
 
   return (
-    <Sheet title={`ย้ายหมวด ${count} รายการ`} onClose={onClose}>
+    <Sheet title={tr("ย้ายหมวด {0} รายการ", count)} onClose={onClose}>
       {categories.loading ? (
         <LoadingBlock rows={2} />
       ) : categories.error ? (
@@ -1233,18 +1250,18 @@ function MoveSheet({
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            aria-label="หมวดปลายทาง"
+            aria-label={tr("หมวดปลายทาง")}
             className="h-12 w-full rounded-2xl border border-border bg-background px-3 outline-none focus:border-primary"
           >
-            <option value="">เลือกหมวดปลายทาง</option>
-            <optgroup label="รายจ่าย">
+            <option value="">{tr("เลือกหมวดปลายทาง")}</option>
+            <optgroup label={tr("รายจ่าย")}>
               {expense.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
             </optgroup>
-            <optgroup label="รายรับ">
+            <optgroup label={tr("รายรับ")}>
               {income.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -1253,7 +1270,7 @@ function MoveSheet({
             </optgroup>
           </select>
           <p className="text-xs text-muted">
-            ย้ายได้เฉพาะรายการที่เป็นประเภทเดียวกับหมวดที่เลือก รายการประเภทอื่นจะถูกข้าม
+            {tr("ย้ายได้เฉพาะรายการที่เป็นประเภทเดียวกับหมวดที่เลือก รายการประเภทอื่นจะถูกข้าม")}
           </p>
           <button
             type="button"
@@ -1261,7 +1278,7 @@ function MoveSheet({
             onClick={() => onPick(categoryId)}
             className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
           >
-            {busy ? "กำลังย้าย..." : "ย้ายหมวด"}
+            {busy ? tr("กำลังย้าย...") : tr("ย้ายหมวด")}
           </button>
         </div>
       )}
@@ -1277,13 +1294,13 @@ async function shrinkPhoto(file: File): Promise<File> {
   canvas.width = Math.max(1, Math.round(bitmap.width * scale));
   canvas.height = Math.max(1, Math.round(bitmap.height * scale));
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("อ่านรูปไม่สำเร็จ");
+  if (!ctx) throw new Error(tr("อ่านรูปไม่สำเร็จ"));
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, "image/jpeg", 0.82),
   );
-  if (!blob) throw new Error("อ่านรูปไม่สำเร็จ");
+  if (!blob) throw new Error(tr("อ่านรูปไม่สำเร็จ"));
   return new File([blob], "photo.jpg", { type: "image/jpeg" });
 }
 
@@ -1312,7 +1329,7 @@ function EditSheet({
   onViewSlip?: () => void;
 }) {
   return (
-    <Sheet title="แก้ไขรายการ" onClose={onClose}>
+    <Sheet title={tr("แก้ไขรายการ")} onClose={onClose}>
       <EditForm
         tx={tx}
         onCancel={onClose}
@@ -1325,7 +1342,7 @@ function EditSheet({
                 onClick={onViewSlip}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold text-primary"
               >
-                <Receipt className="h-4 w-4" aria-hidden /> ดูสลิป
+                <Receipt className="h-4 w-4" aria-hidden /> {tr("ดูสลิป")}
               </button>
             ) : null}
             <button
@@ -1333,7 +1350,7 @@ function EditSheet({
               onClick={onDelete}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-expense text-sm font-semibold text-expense"
             >
-              <Trash2 className="h-4 w-4" aria-hidden /> ลบรายการนี้
+              <Trash2 className="h-4 w-4" aria-hidden /> {tr("ลบรายการนี้")}
             </button>
           </>
         }
@@ -1412,12 +1429,12 @@ function EditForm({
   async function submit(e: FormEvent) {
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
-    if (!title.trim()) return setError("ใส่ชื่อรายการด้วยนะ");
+    if (!title.trim()) return setError(tr("ใส่ชื่อรายการด้วยนะ"));
     if (!AMOUNT_PATTERN.test(normalized) || Number(normalized) <= 0) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 50 หรือ 50.50)");
+      return setError(tr("จำนวนเงินไม่ถูกต้อง (เช่น 50 หรือ 50.50)"));
     }
     const at = fromBangkokInputValue(when);
-    if (!at) return setError("วันเวลาไม่ถูกต้อง");
+    if (!at) return setError(tr("วันเวลาไม่ถูกต้อง"));
 
     const body: Record<string, unknown> = {};
     if (title.trim() !== initial.title) body.title = title.trim();
@@ -1440,7 +1457,7 @@ function EditForm({
         await api(`/api/transactions/${tx.id}`, { method: "PATCH", body: JSON.stringify(body) });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
       setSaving(false);
       return;
     }
@@ -1455,7 +1472,10 @@ function EditForm({
         await api(`/api/transactions/${tx.id}/photo`, { method: "DELETE" });
       }
     } catch (err) {
-      warning = `แต่รูปแนบยังไม่ขึ้น: ${err instanceof Error ? err.message : "ลองใหม่อีกครั้งนะ"}`;
+      warning = tr(
+        "แต่รูปแนบยังไม่ขึ้น: {0}",
+        err instanceof Error ? err.message : tr("ลองใหม่อีกครั้งนะ"),
+      );
     }
     onSaved(warning);
   }
@@ -1474,7 +1494,7 @@ function EditForm({
       >
         <div className="min-w-0 flex-1">
           <p className={cn("truncate font-semibold", income ? "text-income" : "text-expense")}>
-            {title.trim() || "ไม่มีชื่อ"}
+            {title.trim() || tr("ไม่มีชื่อ")}
           </p>
           <p className="truncate text-xs text-muted">
             {[previewAt ? formatThaiDate(previewAt, true) : null, categoryName]
@@ -1489,8 +1509,8 @@ function EditForm({
         </p>
       </div>
 
-      <Field label="ประเภท">
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="ประเภท">
+      <Field label={tr("ประเภท")}>
+        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={tr("ประเภท")}>
           {(["expense", "income"] as const).map((t) => (
             <button
               key={t}
@@ -1510,37 +1530,37 @@ function EditForm({
                   : "border-border text-muted",
               )}
             >
-              {t === "expense" ? "รายจ่าย" : "รายรับ"}
+              {t === "expense" ? tr("รายจ่าย") : tr("รายรับ")}
             </button>
           ))}
         </div>
       </Field>
-      <Field label="ชื่อรายการ">
+      <Field label={tr("ชื่อรายการ")}>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={MAX_TITLE}
-          aria-label="ชื่อรายการ"
+          aria-label={tr("ชื่อรายการ")}
           className={field}
         />
       </Field>
-      <Field label={`จำนวนเงิน (${currencyUnit()})`}>
+      <Field label={tr("จำนวนเงิน ({0})", currencyUnit())}>
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          aria-label="จำนวนเงิน"
+          aria-label={tr("จำนวนเงิน")}
           className={cn(field, "num")}
         />
       </Field>
-      <Field label="หมวดหมู่">
+      <Field label={tr("หมวดหมู่")}>
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          aria-label="หมวดหมู่"
+          aria-label={tr("หมวดหมู่")}
           className={field}
         >
-          <option value="">{typeChanged ? "เลือกให้อัตโนมัติ" : "ไม่ระบุหมวด"}</option>
+          <option value="">{typeChanged ? tr("เลือกให้อัตโนมัติ") : tr("ไม่ระบุหมวด")}</option>
           {options.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -1548,21 +1568,21 @@ function EditForm({
           ))}
         </select>
       </Field>
-      <Field label="วันที่และเวลา">
+      <Field label={tr("วันที่และเวลา")}>
         <input
           type="datetime-local"
           value={when}
           onChange={(e) => setWhen(e.target.value)}
-          aria-label="วันและเวลา"
+          aria-label={tr("วันและเวลา")}
           className={field}
         />
       </Field>
       {walletItems.length > 1 ? (
-        <Field label="กระเป๋า">
+        <Field label={tr("กระเป๋า")}>
           <select
             value={walletValue}
             onChange={(e) => setPickedWallet(e.target.value)}
-            aria-label="กระเป๋า"
+            aria-label={tr("กระเป๋า")}
             className={field}
           >
             {walletItems.map((w) => (
@@ -1573,13 +1593,13 @@ function EditForm({
           </select>
         </Field>
       ) : null}
-      <Field label="โน้ต (ไม่บังคับ)">
+      <Field label={tr("โน้ต (ไม่บังคับ)")}>
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={MAX_NOTE}
-          placeholder="เช่น ซื้อที่ร้านหน้าปากซอย"
-          aria-label="โน้ต"
+          placeholder={tr("เช่น ซื้อที่ร้านหน้าปากซอย")}
+          aria-label={tr("โน้ต")}
           className={field}
         />
       </Field>
@@ -1587,7 +1607,7 @@ function EditForm({
       <Field
         label={
           <span className="inline-flex items-center gap-1.5">
-            รูปแนบ
+            {tr("รูปแนบ")}
             <span className="rounded-lg bg-primary-soft px-2 py-0.5 text-[11px] text-primary">
               Pro
             </span>
@@ -1599,7 +1619,7 @@ function EditForm({
             <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background">
               {shownPhoto ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={shownPhoto} alt="รูปแนบ" className="h-full w-full object-cover" />
+                <img src={shownPhoto} alt={tr("รูปแนบ")} className="h-full w-full object-cover" />
               ) : (
                 <ImageIcon className="h-6 w-6 text-muted" aria-hidden />
               )}
@@ -1607,11 +1627,11 @@ function EditForm({
             <div className="flex flex-col items-start gap-1.5">
               <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-2xl border border-border px-4 text-sm font-semibold">
                 <Camera className="h-4 w-4" aria-hidden />
-                {hasPhoto ? "เปลี่ยนรูป" : "ถ่ายหรือเลือกรูป"}
+                {hasPhoto ? tr("เปลี่ยนรูป") : tr("ถ่ายหรือเลือกรูป")}
                 <input
                   type="file"
                   accept="image/*"
-                  aria-label="เลือกรูปแนบ"
+                  aria-label={tr("เลือกรูปแนบ")}
                   className="sr-only"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
@@ -1632,7 +1652,7 @@ function EditForm({
                   }}
                   className="px-1 text-xs font-semibold text-expense"
                 >
-                  เอารูปออก
+                  {tr("เอารูปออก")}
                 </button>
               ) : null}
             </div>
@@ -1644,10 +1664,10 @@ function EditForm({
           >
             <Lock className="h-5 w-5 shrink-0 text-muted" aria-hidden />
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold">แนบรูปใบเสร็จหรือสินค้า</span>
-              <span className="block text-xs text-muted">ใช้ได้ในแผน Pro ขึ้นไป</span>
+              <span className="block text-sm font-semibold">{tr("แนบรูปใบเสร็จหรือสินค้า")}</span>
+              <span className="block text-xs text-muted">{tr("ใช้ได้ในแผน Pro ขึ้นไป")}</span>
             </span>
-            <span className="text-sm font-semibold text-primary">ดูแผน</span>
+            <span className="text-sm font-semibold text-primary">{tr("ดูแผน")}</span>
           </Link>
         )}
       </Field>
@@ -1663,7 +1683,7 @@ function EditForm({
         disabled={saving}
         className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
       >
-        {saving ? "กำลังบันทึก..." : "บันทึก"}
+        {saving ? tr("กำลังบันทึก...") : tr("บันทึก")}
       </button>
       {extra}
     </form>

@@ -11,6 +11,7 @@ import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 import { PlusLock } from "./plus-lock";
 import { cardClass, fieldClass, type Me } from "./types";
+import { t as tr } from "@/lib/i18n";
 
 interface Rule {
   id: string;
@@ -27,7 +28,15 @@ interface CategoriesResponse {
   items: { id: string; type: "expense" | "income"; name: string }[];
 }
 
-const WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+const WEEKDAYS = [
+  tr("อาทิตย์"),
+  tr("จันทร์"),
+  tr("อังคาร"),
+  tr("พุธ"),
+  tr("พฤหัสบดี"),
+  tr("ศุกร์"),
+  tr("เสาร์"),
+];
 const AMOUNT_PATTERN = /^\d{1,9}(\.\d{1,2})?$/;
 
 export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boolean }) {
@@ -45,19 +54,21 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
       setNotice(done);
       rules.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("ทำรายการไม่สำเร็จ"));
     }
   }
 
   return (
     <section
-      aria-label="รายการประจำ"
+      aria-label={tr("รายการประจำ")}
       className={embedded ? "space-y-3" : cn(cardClass, "scroll-mt-4")}
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          {embedded ? null : <h2 className="font-semibold">รายการประจำ</h2>}
-          <p className="text-xs text-muted">จดให้อัตโนมัติ เช่น ค่าเน็ต ค่าเช่า เงินเดือน</p>
+          {embedded ? null : <h2 className="font-semibold">{tr("รายการประจำ")}</h2>}
+          <p className="text-xs text-muted">
+            {tr("จดให้อัตโนมัติ เช่น ค่าเน็ต ค่าเช่า เงินเดือน")}
+          </p>
         </div>
         <button
           type="button"
@@ -65,16 +76,18 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
           disabled={locked}
           className="flex h-11 items-center gap-1 rounded-2xl bg-primary px-3 text-sm font-semibold text-surface disabled:opacity-40"
         >
-          <Plus className="h-4 w-4" aria-hidden /> เพิ่ม
+          <Plus className="h-4 w-4" aria-hidden /> {tr("เพิ่ม")}
         </button>
       </div>
 
-      {locked ? <PlusLock>ตั้งรายการที่จดซ้ำทุกวัน/สัปดาห์/เดือนให้อัตโนมัติ</PlusLock> : null}
+      {locked ? (
+        <PlusLock>{tr("ตั้งรายการที่จดซ้ำทุกวัน/สัปดาห์/เดือนให้อัตโนมัติ")}</PlusLock>
+      ) : null}
 
       {rules.loading ? (
         <LoadingBlock rows={1} />
       ) : items.length === 0 ? (
-        <p className="text-sm text-muted">ยังไม่มีรายการประจำ</p>
+        <p className="text-sm text-muted">{tr("ยังไม่มีรายการประจำ")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {items.map((r) => (
@@ -85,10 +98,10 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{r.title}</p>
                 <p className="truncate text-xs text-muted">
-                  {r.description} · {r.categoryName ?? "ไม่ระบุหมวด"}
+                  {r.description} · {r.categoryName ?? tr("ไม่ระบุหมวด")}
                   {r.isActive
-                    ? ` · ครั้งถัดไป ${formatThaiDate(new Date(r.nextRunAt))}`
-                    : " · หยุดอยู่"}
+                    ? tr(" · ครั้งถัดไป {0}", formatThaiDate(new Date(r.nextRunAt)))
+                    : tr(" · หยุดอยู่")}
                 </p>
               </div>
               <p
@@ -102,7 +115,7 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
               </p>
               <button
                 type="button"
-                aria-label={r.isActive ? `หยุด ${r.title}` : `เริ่มต่อ ${r.title}`}
+                aria-label={r.isActive ? tr("หยุด {0}", r.title) : tr("เริ่มต่อ {0}", r.title)}
                 disabled={!r.isActive && locked}
                 onClick={() =>
                   act(
@@ -111,7 +124,7 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
                         method: "PATCH",
                         body: JSON.stringify({ isActive: !r.isActive }),
                       }),
-                    r.isActive ? "หยุดแล้ว" : "เริ่มต่อแล้ว",
+                    r.isActive ? tr("หยุดแล้ว") : tr("เริ่มต่อแล้ว"),
                   )
                 }
                 className="flex h-11 w-9 shrink-0 items-center justify-center text-muted disabled:opacity-30"
@@ -124,12 +137,17 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
               </button>
               <button
                 type="button"
-                aria-label={`ลบ ${r.title}`}
+                aria-label={tr("ลบ {0}", r.title)}
                 onClick={() => {
                   if (
-                    window.confirm(`ลบรายการประจำ "${r.title}" ใช่ไหม? (รายการที่จดไปแล้วไม่หาย)`)
+                    window.confirm(
+                      tr('ลบรายการประจำ "{0}" ใช่ไหม? (รายการที่จดไปแล้วไม่หาย)', r.title),
+                    )
                   ) {
-                    void act(() => api(`/api/recurring/${r.id}`, { method: "DELETE" }), "ลบแล้ว");
+                    void act(
+                      () => api(`/api/recurring/${r.id}`, { method: "DELETE" }),
+                      tr("ลบแล้ว"),
+                    );
                   }
                 }}
                 className="flex h-11 w-9 shrink-0 items-center justify-center text-muted"
@@ -152,7 +170,7 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
           onClose={() => setAdding(false)}
           onSaved={() => {
             setAdding(false);
-            setNotice("เพิ่มรายการประจำแล้ว");
+            setNotice(tr("เพิ่มรายการประจำแล้ว"));
             rules.reload();
           }}
         />
@@ -179,9 +197,9 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   async function submit(e: FormEvent) {
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
-    if (!title.trim()) return setError("ใส่ชื่อรายการด้วยนะ");
+    if (!title.trim()) return setError(tr("ใส่ชื่อรายการด้วยนะ"));
     if (!AMOUNT_PATTERN.test(normalized) || Number(normalized) <= 0) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 350 หรือ 350.50)");
+      return setError(tr("จำนวนเงินไม่ถูกต้อง (เช่น 350 หรือ 350.50)"));
     }
     setSaving(true);
     setError(null);
@@ -199,15 +217,15 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
       });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   return (
-    <Sheet title="เพิ่มรายการประจำ" onClose={onClose}>
+    <Sheet title={tr("เพิ่มรายการประจำ")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="ประเภท">
+        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={tr("ประเภท")}>
           {(["expense", "income"] as const).map((t) => (
             <button
               key={t}
@@ -227,7 +245,7 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
                   : "border-border text-muted",
               )}
             >
-              {t === "expense" ? "รายจ่าย" : "รายรับ"}
+              {t === "expense" ? tr("รายจ่าย") : tr("รายรับ")}
             </button>
           ))}
         </div>
@@ -236,40 +254,41 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={60}
-          placeholder="ชื่อรายการ เช่น ค่าเน็ตบ้าน"
-          aria-label="ชื่อรายการ"
+          placeholder={tr("ชื่อรายการ เช่น ค่าเน็ตบ้าน")}
+          aria-label={tr("ชื่อรายการ")}
           className={fieldClass}
         />
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder={`จำนวนเงิน (${currencyUnit()})`}
-          aria-label="จำนวนเงิน"
+          placeholder={tr("จำนวนเงิน ({0})", currencyUnit())}
+          aria-label={tr("จำนวนเงิน")}
           className={cn(fieldClass, "num")}
         />
 
         <select
           value={cadence}
           onChange={(e) => setCadence(e.target.value as typeof cadence)}
-          aria-label="ความถี่"
+          aria-label={tr("ความถี่")}
           className={fieldClass}
         >
-          <option value="daily">ทุกวัน</option>
-          <option value="weekly">ทุกสัปดาห์</option>
-          <option value="monthly">ทุกเดือน</option>
+          <option value="daily">{tr("ทุกวัน")}</option>
+          <option value="weekly">{tr("ทุกสัปดาห์")}</option>
+          <option value="monthly">{tr("ทุกเดือน")}</option>
         </select>
 
         {cadence === "weekly" ? (
           <select
             value={weekday}
             onChange={(e) => setWeekday(Number(e.target.value))}
-            aria-label="วันในสัปดาห์"
+            aria-label={tr("วันในสัปดาห์")}
             className={fieldClass}
           >
             {WEEKDAYS.map((d, i) => (
               <option key={d} value={i}>
-                วัน{d}
+                {tr("วัน")}
+                {d}
               </option>
             ))}
           </select>
@@ -278,12 +297,12 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           <select
             value={monthDay}
             onChange={(e) => setMonthDay(Number(e.target.value))}
-            aria-label="วันที่ของเดือน"
+            aria-label={tr("วันที่ของเดือน")}
             className={cn(fieldClass, "num")}
           >
             {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
               <option key={d} value={d}>
-                วันที่ {d}
+                {tr("วันที่")} {d}
               </option>
             ))}
           </select>
@@ -292,10 +311,10 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          aria-label="หมวดหมู่"
+          aria-label={tr("หมวดหมู่")}
           className={fieldClass}
         >
-          <option value="">เลือกให้อัตโนมัติ</option>
+          <option value="">{tr("เลือกให้อัตโนมัติ")}</option>
           {options.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -303,7 +322,9 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           ))}
         </select>
         {cadence === "monthly" && monthDay > 28 ? (
-          <p className="text-xs text-muted">เดือนที่มีวันน้อยกว่านี้ จะจดในวันสุดท้ายของเดือนนะ</p>
+          <p className="text-xs text-muted">
+            {tr("เดือนที่มีวันน้อยกว่านี้ จะจดในวันสุดท้ายของเดือนนะ")}
+          </p>
         ) : null}
 
         {error ? (
@@ -316,7 +337,7 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก..." : "บันทึก"}
+          {saving ? tr("กำลังบันทึก...") : tr("บันทึก")}
         </button>
       </form>
     </Sheet>

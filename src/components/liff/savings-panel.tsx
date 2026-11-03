@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingBlock } from "@/components/liff/states";
 import { money } from "@/lib/money";
 import type { SeriesPoint } from "@/lib/series";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 type View = "month" | "week" | "day";
 
@@ -16,12 +17,12 @@ interface Response {
   categories: { name: string; totalSatang: number }[];
 }
 
-const SAVINGS_CATEGORY = "ออม/ลงทุน";
+const SAVINGS_CATEGORY = t("ออม/ลงทุน");
 
 const VIEWS: { value: View; label: string }[] = [
-  { value: "month", label: "6 เดือน" },
-  { value: "week", label: "รายสัปดาห์" },
-  { value: "day", label: "รายวัน" },
+  { value: "month", label: t("6 เดือน") },
+  { value: "week", label: t("รายสัปดาห์") },
+  { value: "day", label: t("รายวัน") },
 ];
 
 /**
@@ -47,7 +48,7 @@ export function SavingsPanel() {
 
   return (
     <div className="space-y-4">
-      <Segmented label="ช่วงเวลา" value={view} onChange={setView} options={VIEWS} />
+      <Segmented label={t("ช่วงเวลา")} value={view} onChange={setView} options={VIEWS} />
 
       {data.loading ? (
         <LoadingBlock rows={3} />
@@ -56,15 +57,15 @@ export function SavingsPanel() {
       ) : !hasData ? (
         <div className="rounded-2xl border border-border bg-surface shadow-card">
           <EmptyState
-            title="ยังไม่มีข้อมูลพอจะดูเงินออม"
-            hint="จดรายรับและรายจ่ายสักพัก แล้วกราฟเก็บออมจะขึ้นมานะ"
+            title={t("ยังไม่มีข้อมูลพอจะดูเงินออม")}
+            hint={t("จดรายรับและรายจ่ายสักพัก แล้วกราฟเก็บออมจะขึ้นมานะ")}
           />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
-              <p className="text-xs text-muted">เก็บได้ในช่วงนี้</p>
+              <p className="text-xs text-muted">{t("เก็บได้ในช่วงนี้")}</p>
               <p
                 className={cn(
                   "num text-lg font-bold",
@@ -75,23 +76,23 @@ export function SavingsPanel() {
               </p>
             </div>
             <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
-              <p className="text-xs text-muted">เก็บได้ % ของรายรับ</p>
+              <p className="text-xs text-muted">{t("เก็บได้ % ของรายรับ")}</p>
               <p className="num text-lg font-bold">{rate === null ? "-" : `${rate}%`}</p>
             </div>
           </div>
 
           <section
-            aria-label="กราฟเงินเก็บออม"
+            aria-label={t("กราฟเงินเก็บออม")}
             className="rounded-2xl border border-border bg-surface p-4 shadow-card"
           >
             <p className="mb-2 text-xs text-muted">
-              แท่ง = เก็บได้ในแต่ละช่วง (รายรับ − รายจ่าย) · เส้น = เก็บสะสม
+              {t("แท่ง = เก็บได้ในแต่ละช่วง (รายรับ − รายจ่าย) · เส้น = เก็บสะสม")}
             </p>
             <SavingsChart points={points} />
           </section>
 
           <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
-            <p className="text-xs text-muted">ใส่หมวด &quot;{SAVINGS_CATEGORY}&quot; ในรอบงบนี้</p>
+            <p className="text-xs text-muted">{t('ใส่หมวด "{0}" ในรอบงบนี้', SAVINGS_CATEGORY)}</p>
             <p className="num text-lg font-bold">{money(invested)}</p>
           </div>
         </>

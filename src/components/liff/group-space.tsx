@@ -6,6 +6,7 @@ import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/liff/states";
 import { describeReminder, type ReminderDto } from "@/lib/user-reminder";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 type GroupReminder = ReminderDto & { mine: boolean };
 interface RemindersResponse {
@@ -23,14 +24,14 @@ export function GroupReminders({ groupId }: { groupId: string }) {
   const [busy, setBusy] = useState<string | null>(null);
 
   async function cancel(r: GroupReminder) {
-    if (!window.confirm(`ยกเลิกเตือน "${r.body}" ของกลุ่มใช่ไหม?`)) return;
+    if (!window.confirm(t('ยกเลิกเตือน "{0}" ของกลุ่มใช่ไหม?', r.body))) return;
     setBusy(r.id);
     try {
       await api(`/api/groups/${groupId}/reminders/${r.id}`, { method: "DELETE" });
-      setNotice("ยกเลิกแล้ว");
+      setNotice(t("ยกเลิกแล้ว"));
       reminders.reload();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
+      setNotice(err instanceof Error ? err.message : t("ยกเลิกไม่สำเร็จ"));
     } finally {
       setBusy(null);
     }
@@ -39,7 +40,7 @@ export function GroupReminders({ groupId }: { groupId: string }) {
   if (reminders.loading && !reminders.data) return <LoadingBlock rows={3} />;
   if (reminders.error || !reminders.data) {
     return (
-      <ErrorState message={reminders.error ?? "โหลดเตือนไม่สำเร็จ"} onRetry={reminders.reload} />
+      <ErrorState message={reminders.error ?? t("โหลดเตือนไม่สำเร็จ")} onRetry={reminders.reload} />
     );
   }
   const { items } = reminders.data;
@@ -47,7 +48,7 @@ export function GroupReminders({ groupId }: { groupId: string }) {
   return (
     <div className="space-y-3">
       <p className="text-xs text-slate-600">
-        เตือนของกลุ่มส่งเข้ากลุ่มตามเวลา และนับรวมกับเตือนส่วนตัวของเจ้าของสมุด
+        {t("เตือนของกลุ่มส่งเข้ากลุ่มตามเวลา และนับรวมกับเตือนส่วนตัวของเจ้าของสมุด")}
       </p>
       {notice ? (
         <p role="status" className="text-sm text-slate-700">
@@ -56,8 +57,8 @@ export function GroupReminders({ groupId }: { groupId: string }) {
       ) : null}
       {items.length === 0 ? (
         <EmptyState
-          title="กลุ่มนี้ยังไม่มีเตือน"
-          hint='พิมพ์ในกลุ่ม เช่น "เตือน พรุ่งนี้ 9 โมง ประชุม"'
+          title={t("กลุ่มนี้ยังไม่มีเตือน")}
+          hint={t('พิมพ์ในกลุ่ม เช่น "เตือน พรุ่งนี้ 9 โมง ประชุม"')}
         />
       ) : (
         <ul className="space-y-2">
@@ -81,7 +82,7 @@ export function GroupReminders({ groupId }: { groupId: string }) {
                     type="button"
                     onClick={() => void cancel(r)}
                     disabled={busy === r.id}
-                    aria-label={`ยกเลิกเตือน ${r.body}`}
+                    aria-label={t("ยกเลิกเตือน {0}", r.body)}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-expense disabled:opacity-60"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />

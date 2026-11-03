@@ -37,6 +37,7 @@ import { PLAN_LABEL, type Plan } from "@/lib/plan";
 import type { QuotaIcon, QuotaItem, QuotaPeriod } from "@/lib/quota";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface QuotaResponse {
   plan: Plan;
@@ -69,18 +70,18 @@ const ICON: Record<QuotaIcon, { Icon: LucideIcon; tint: string; bar: string }> =
 
 /** When a quota starts over, said under its numbers. */
 const PERIOD_TEXT: Record<QuotaPeriod, string> = {
-  total: "นับทั้งหมดที่มีอยู่ตอนนี้ ลบออกแล้วได้ที่คืน",
-  day: "นับใหม่ทุกวัน",
-  week: "นับใหม่ทุกวันจันทร์",
-  month: "นับใหม่ทุกวันที่ 1",
-  once: "ใช้ได้ครั้งเดียวตลอดการใช้งาน",
+  total: t("นับทั้งหมดที่มีอยู่ตอนนี้ ลบออกแล้วได้ที่คืน"),
+  day: t("นับใหม่ทุกวัน"),
+  week: t("นับใหม่ทุกวันจันทร์"),
+  month: t("นับใหม่ทุกวันที่ 1"),
+  once: t("ใช้ได้ครั้งเดียวตลอดการใช้งาน"),
 };
 const PER: Record<QuotaPeriod, string> = {
   total: "",
-  day: "ต่อวัน",
-  week: "ต่อสัปดาห์",
-  month: "ต่อเดือน",
-  once: "ครั้งเดียว",
+  day: t("ต่อวัน"),
+  week: t("ต่อสัปดาห์"),
+  month: t("ต่อเดือน"),
+  once: t("ครั้งเดียว"),
 };
 
 const fmt = (item: QuotaItem, n: number) =>
@@ -92,9 +93,9 @@ type Level = "locked" | "unlimited" | "ok" | "near" | "critical" | "full";
 
 /** The word for a row's state, shown as a badge and read out with the row. */
 const LEVEL_WORD: Partial<Record<Level, string>> = {
-  near: "ใกล้เต็ม",
-  critical: "วิกฤต",
-  full: "เต็มแล้ว",
+  near: t("ใกล้เต็ม"),
+  critical: t("วิกฤต"),
+  full: t("เต็มแล้ว"),
 };
 
 function levelOf(item: QuotaItem): { level: Level; pct: number } {
@@ -110,13 +111,13 @@ function usageLine(item: QuotaItem): string {
   // after a downgrade some may still be there (groups kept from Elite): say how many
   if (item.limit === 0) {
     return item.used > 0
-      ? `มีอยู่ ${withWord(item, item.used)} · แผนนี้เพิ่มไม่ได้`
-      : "แผนนี้ยังใช้ไม่ได้";
+      ? t("มีอยู่ {0} · แผนนี้เพิ่มไม่ได้", withWord(item, item.used))
+      : t("แผนนี้ยังใช้ไม่ได้");
   }
-  if (item.limit === null) return `ใช้ไป ${withWord(item, item.used)} · ไม่จำกัด`;
+  if (item.limit === null) return t("ใช้ไป {0} · ไม่จำกัด", withWord(item, item.used));
   const left = Math.max(0, item.limit - item.used);
   const word = item.word ? ` ${item.word}` : "";
-  const rest = left > 0 ? `เหลือ ${fmt(item, left)}` : "เต็มแล้ว";
+  const rest = left > 0 ? t("เหลือ {0}", fmt(item, left)) : t("เต็มแล้ว");
   return `${fmt(item, item.used)} / ${fmt(item, item.limit)}${word} (${rest})`;
 }
 
@@ -162,11 +163,11 @@ function QuotaRow({ item, onOpen }: { item: QuotaItem; onOpen: () => void }) {
                 <p className="truncate text-xs font-bold">{item.label}</p>
                 {near ? (
                   <span className="shrink-0 rounded bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-800 dark:text-amber-300">
-                    ใกล้เต็ม
+                    {t("ใกล้เต็ม")}
                   </span>
                 ) : critical ? (
                   <span className="shrink-0 rounded bg-rose-600 px-1.5 text-[10px] font-bold text-white">
-                    {full ? "เต็มแล้ว" : "วิกฤต"}
+                    {full ? t("เต็มแล้ว") : t("วิกฤต")}
                   </span>
                 ) : null}
               </div>
@@ -186,11 +187,11 @@ function QuotaRow({ item, onOpen }: { item: QuotaItem; onOpen: () => void }) {
           </div>
           {level === "locked" ? (
             <span className="flex shrink-0 items-center gap-1 rounded-md bg-background px-2 py-0.5 text-[11px] font-bold text-muted">
-              <Lock className="h-3 w-3" aria-hidden /> ต้องอัปเกรด
+              <Lock className="h-3 w-3" aria-hidden /> {t("ต้องอัปเกรด")}
             </span>
           ) : level === "unlimited" ? (
             <span className="shrink-0 rounded-md bg-primary-soft px-2 py-0.5 text-[11px] font-bold text-primary">
-              ไม่จำกัด
+              {t("ไม่จำกัด")}
             </span>
           ) : (
             <span
@@ -214,7 +215,7 @@ function QuotaRow({ item, onOpen }: { item: QuotaItem; onOpen: () => void }) {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
-            aria-valuetext={`${fmt(item, item.used)} จาก ${fmt(item, item.limit ?? 0)}`}
+            aria-valuetext={t("{0} จาก {1}", fmt(item, item.used), fmt(item, item.limit ?? 0))}
             className="h-1.5 w-full rounded-full bg-border"
           >
             <div
@@ -249,15 +250,15 @@ function DetailSheet({
         <p className="text-xs text-muted">{PERIOD_TEXT[item.period]}</p>
       </div>
       <div>
-        <h3 className="mb-1.5 text-sm font-semibold">แต่ละแผนได้เท่าไร</h3>
+        <h3 className="mb-1.5 text-sm font-semibold">{t("แต่ละแผนได้เท่าไร")}</h3>
         <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
           {PLANS.map((p) => {
             const { limit, period } = item.plans[p];
             const value =
               limit === 0
-                ? "ใช้ไม่ได้"
+                ? t("ใช้ไม่ได้")
                 : limit === null
-                  ? "ไม่จำกัด"
+                  ? t("ไม่จำกัด")
                   : [withWord(item, limit), PER[period]].filter(Boolean).join(" ");
             return (
               <li
@@ -269,7 +270,7 @@ function DetailSheet({
               >
                 <span>
                   {PLAN_LABEL[p]}
-                  {p === plan ? " (แผนของคุณ)" : ""}
+                  {p === plan ? t(" (แผนของคุณ)") : ""}
                 </span>
                 <span className="num">{value}</span>
               </li>
@@ -282,7 +283,7 @@ function DetailSheet({
           href="/upgrade"
           className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-surface"
         >
-          <ArrowUpCircle className="h-4 w-4" aria-hidden /> อัปเกรดเพื่อเพิ่มโควตา
+          <ArrowUpCircle className="h-4 w-4" aria-hidden /> {t("อัปเกรดเพื่อเพิ่มโควตา")}
         </Link>
       ) : null}
     </Sheet>
@@ -356,18 +357,21 @@ export default function QuotaPage() {
         <div className="flex min-w-0 items-center gap-1.5">
           <Link
             href="/settings"
-            aria-label="กลับไปหน้าตั้งค่า"
+            aria-label={t("กลับไปหน้าตั้งค่า")}
             className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
           </Link>
           <div className="min-w-0">
-            <h1 className="text-base font-bold leading-tight">โควตาการใช้งาน</h1>
+            <h1 className="text-base font-bold leading-tight">{t("โควตาการใช้งาน")}</h1>
             <p className="flex items-center gap-1 text-[11px] text-muted">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {loadedAt
-                ? `อัปเดตล่าสุด ${loadedAt.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })} น.`
-                : "กำลังโหลด"}
+                ? t(
+                    "อัปเดตล่าสุด {0} น.",
+                    loadedAt.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
+                  )
+                : t("กำลังโหลด")}
             </p>
           </div>
         </div>
@@ -382,11 +386,11 @@ export default function QuotaPage() {
         {quota.loading && !data ? (
           <LoadingBlock rows={6} />
         ) : quota.error || !data ? (
-          <ErrorState message={quota.error ?? "โหลดไม่สำเร็จ"} onRetry={quota.reload} />
+          <ErrorState message={quota.error ?? t("โหลดไม่สำเร็จ")} onRetry={quota.reload} />
         ) : (
           <>
             <section
-              aria-label="ภาพรวมโควตา"
+              aria-label={t("ภาพรวมโควตา")}
               className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 p-4 text-white"
             >
               <div className="flex items-center justify-between gap-3">
@@ -394,28 +398,34 @@ export default function QuotaPage() {
                   <Ring pct={average} />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs font-semibold">แผน {PLAN_LABEL[data.plan]}</span>
+                      <span className="text-xs font-semibold">
+                        {t("แผน")} {PLAN_LABEL[data.plan]}
+                      </span>
                       {daysLeft !== null ? (
                         <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
-                          เหลือ {daysLeft} วัน
+                          {t("เหลือ")} {daysLeft} {t("วัน")}
                         </span>
                       ) : null}
                     </div>
                     <p className="text-[11px] text-slate-300">
-                      ใช้เฉลี่ย {average}% • ปกติ {count("ok")}
+                      {t("ใช้เฉลี่ย")} {average}
+                      {t("% • ปกติ")} {count("ok")}
                       {count("full") > 0 ? (
-                        <span className="font-medium text-rose-300"> • เต็ม {count("full")}</span>
+                        <span className="font-medium text-rose-300">
+                          {" "}
+                          {t("• เต็ม")} {count("full")}
+                        </span>
                       ) : null}
                       {count("near") > 0 ? (
                         <span className="font-medium text-amber-300">
                           {" "}
-                          • ใกล้เต็ม {count("near")}
+                          {t("• ใกล้เต็ม")} {count("near")}
                         </span>
                       ) : null}
                       {count("critical") > 0 ? (
                         <span className="font-medium text-rose-300">
                           {" "}
-                          • เกือบหมด {count("critical")}
+                          {t("• เกือบหมด")} {count("critical")}
                         </span>
                       ) : null}
                     </p>
@@ -426,7 +436,7 @@ export default function QuotaPage() {
                     href="/upgrade"
                     className="flex h-9 shrink-0 items-center gap-1 rounded-xl border border-emerald-400/20 bg-white/10 px-2.5 text-[11px] font-medium text-emerald-300"
                   >
-                    <Sparkles className="h-3 w-3" aria-hidden /> อัปเกรด
+                    <Sparkles className="h-3 w-3" aria-hidden /> {t("อัปเกรด")}
                   </Link>
                 ) : null}
               </div>
@@ -434,12 +444,12 @@ export default function QuotaPage() {
 
             <div className="flex items-center justify-between pt-1">
               <h2 className="flex items-center gap-1.5 text-xs font-bold">
-                <Layers className="h-4 w-4 text-primary" aria-hidden /> รายการโควตาหลัก (
-                {data.main.length} รายการ)
+                <Layers className="h-4 w-4 text-primary" aria-hidden /> {t("รายการโควตาหลัก (")}
+                {data.main.length} {t("รายการ)")}
               </h2>
-              <span className="text-[11px] text-muted">แตะเพื่อดูรายละเอียด</span>
+              <span className="text-[11px] text-muted">{t("แตะเพื่อดูรายละเอียด")}</span>
             </div>
-            <ul className="space-y-2" aria-label="รายการโควตาหลัก">
+            <ul className="space-y-2" aria-label={t("รายการโควตาหลัก")}>
               {data.main.map((item) => (
                 <QuotaRow key={item.key} item={item} onOpen={() => setOpen(item)} />
               ))}
@@ -453,7 +463,8 @@ export default function QuotaPage() {
                 onClick={() => setOthersOpen((o) => !o)}
                 className="flex h-11 w-full items-center justify-between rounded-2xl border border-border bg-surface px-3 text-xs font-bold"
               >
-                โควตาอื่น ๆ ({data.others.length} รายการ)
+                {t("โควตาอื่น ๆ (")}
+                {data.others.length} {t("รายการ)")}
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 text-muted transition-transform",
@@ -466,7 +477,7 @@ export default function QuotaPage() {
                 id="quota-others"
                 hidden={!othersOpen}
                 className="space-y-2"
-                aria-label="โควตาอื่น ๆ"
+                aria-label={t("โควตาอื่น ๆ")}
               >
                 {data.others.map((item) => (
                   <QuotaRow key={item.key} item={item} onOpen={() => setOpen(item)} />
@@ -475,13 +486,15 @@ export default function QuotaPage() {
             </section>
 
             <section className="space-y-2 rounded-2xl border border-border bg-surface p-4 text-center">
-              <p className="text-xs text-muted">มีข้อสงสัยเรื่องโควตา ถามพี่ฮูกในแชทได้เลย</p>
+              <p className="text-xs text-muted">
+                {t("มีข้อสงสัยเรื่องโควตา ถามพี่ฮูกในแชทได้เลย")}
+              </p>
               <button
                 type="button"
                 onClick={backToChat}
                 className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary-soft px-3.5 text-xs font-semibold text-primary"
               >
-                <MessageCircle className="h-4 w-4" aria-hidden /> กลับไปคุยกับพี่ฮูก
+                <MessageCircle className="h-4 w-4" aria-hidden /> {t("กลับไปคุยกับพี่ฮูก")}
               </button>
             </section>
           </>
@@ -491,11 +504,11 @@ export default function QuotaPage() {
       {data ? (
         <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 mx-auto flex max-w-md items-center justify-between gap-3 border-t border-border bg-surface px-4 py-2.5">
           <div className="min-w-0">
-            <p className="text-[10px] text-muted">แผนปัจจุบัน</p>
+            <p className="text-[10px] text-muted">{t("แผนปัจจุบัน")}</p>
             <p className="truncate text-xs font-bold">
               {PLAN_LABEL[data.plan]}
               {data.plan !== "free" && data.planExpiresAt
-                ? ` · ถึง ${formatThaiDate(new Date(data.planExpiresAt))}`
+                ? t(" · ถึง {0}", formatThaiDate(new Date(data.planExpiresAt)))
                 : ""}
             </p>
           </div>
@@ -503,7 +516,7 @@ export default function QuotaPage() {
             <button
               type="button"
               onClick={quota.reload}
-              aria-label="รีเฟรชโควตา"
+              aria-label={t("รีเฟรชโควตา")}
               className="flex h-10 w-10 items-center justify-center rounded-xl border border-border"
             >
               <RotateCw className={cn("h-4 w-4", quota.loading && "animate-spin")} aria-hidden />
@@ -513,7 +526,7 @@ export default function QuotaPage() {
                 href="/upgrade"
                 className="flex h-10 items-center gap-1.5 rounded-xl bg-[#047A36] px-3.5 text-xs font-semibold text-white"
               >
-                <ArrowUpCircle className="h-4 w-4" aria-hidden /> อัปเกรดแพ็กเกจ
+                <ArrowUpCircle className="h-4 w-4" aria-hidden /> {t("อัปเกรดแพ็กเกจ")}
               </Link>
             ) : null}
           </div>

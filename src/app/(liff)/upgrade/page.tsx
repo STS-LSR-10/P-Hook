@@ -64,6 +64,7 @@ import {
   type PricingNow,
 } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface MeLite {
   plan: Plan;
@@ -86,19 +87,19 @@ type Method = "card" | "promptpay";
 const METHODS: { value: Method; label: string; hint: string }[] = [
   {
     value: "card",
-    label: "บัตรเครดิต/เดบิต",
-    hint: "บัตรในประเทศและต่างประเทศ ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ",
+    label: t("บัตรเครดิต/เดบิต"),
+    hint: t("บัตรในประเทศและต่างประเทศ ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ"),
   },
   {
     value: "promptpay",
-    label: "พร้อมเพย์ (QR)",
-    hint: "จ่ายครั้งเดียวต่อรอบ สแกน QR ผ่านแอปธนาคาร ไม่ต่ออายุอัตโนมัติ",
+    label: t("พร้อมเพย์ (QR)"),
+    hint: t("จ่ายครั้งเดียวต่อรอบ สแกน QR ผ่านแอปธนาคาร ไม่ต่ออายุอัตโนมัติ"),
   },
 ];
 
 const PERIODS: { value: Period; label: string }[] = [
-  { value: "monthly", label: "รายเดือน" },
-  { value: "yearly", label: "รายปี" },
+  { value: "monthly", label: t("รายเดือน") },
+  { value: "yearly", label: t("รายปี") },
 ];
 
 // Only the badge differs per tier. The card itself is neutral until it is the chosen one, then it
@@ -151,10 +152,10 @@ export default function UpgradePage() {
     setNotice(null);
     try {
       await api("/api/plan/trial", { method: "POST", body: JSON.stringify({ plan: picked }) });
-      setNotice(`เริ่มทดลองใช้ ${PLAN_LABEL[picked]} ฟรี ${trialDays} วันแล้ว`);
+      setNotice(t("เริ่มทดลองใช้ {0} ฟรี {1} วันแล้ว", PLAN_LABEL[picked], trialDays));
       me.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "เริ่มทดลองใช้ไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("เริ่มทดลองใช้ไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
@@ -168,13 +169,13 @@ export default function UpgradePage() {
         body: JSON.stringify({ plan: picked, period }),
       });
       if (res.available) {
-        setNotice("เปลี่ยนแผนเรียบร้อย ตัดเฉพาะส่วนต่างจากบัตรที่ใช้สมัครไว้แล้ว");
+        setNotice(t("เปลี่ยนแผนเรียบร้อย ตัดเฉพาะส่วนต่างจากบัตรที่ใช้สมัครไว้แล้ว"));
         me.reload();
       } else {
-        setNotice(res.message ?? "เปลี่ยนแผนไม่สำเร็จ");
+        setNotice(res.message ?? t("เปลี่ยนแผนไม่สำเร็จ"));
       }
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ทำรายการไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
@@ -193,9 +194,9 @@ export default function UpgradePage() {
       // Stripe opens in the phone browser: PromptPay needs a banking app, and the LINE in-app
       // browser cannot always hand over to one.
       if (res.available && res.url) await openExternal(res.url);
-      else setNotice(res.message ?? "ยังไม่เปิดให้ชำระเงิน");
+      else setNotice(res.message ?? t("ยังไม่เปิดให้ชำระเงิน"));
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ทำรายการไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
@@ -210,9 +211,9 @@ export default function UpgradePage() {
         { method: "POST", body: "{}" },
       );
       if (res.available && res.url) await openExternal(res.url);
-      else setNotice(res.message ?? "เปิดหน้าจัดการไม่สำเร็จ");
+      else setNotice(res.message ?? t("เปิดหน้าจัดการไม่สำเร็จ"));
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ทำรายการไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
@@ -220,23 +221,23 @@ export default function UpgradePage() {
 
   return (
     <main>
-      <PageHeader title="อัปเกรด" />
+      <PageHeader title={t("อัปเกรด")} />
 
       <div className="space-y-4 px-4 pb-24">
         <section
-          aria-label="แนะนำแผน"
+          aria-label={t("แนะนำแผน")}
           className="flex items-center gap-3 rounded-3xl border border-border bg-gradient-to-br from-primary-soft via-surface to-accent/15 p-4"
         >
           <Logo size={64} />
           <div className="min-w-0">
-            <p className="text-base font-bold">พี่ฮูกได้เต็มที่ขึ้น</p>
+            <p className="text-base font-bold">{t("พี่ฮูกได้เต็มที่ขึ้น")}</p>
             <p className="text-sm text-muted">
-              แผนของคุณตอนนี้: <span className="font-semibold">{PLAN_LABEL[current]}</span>
+              {t("แผนของคุณตอนนี้:")} <span className="font-semibold">{PLAN_LABEL[current]}</span>
             </p>
           </div>
         </section>
 
-        <div role="radiogroup" aria-label="รอบชำระเงิน" className="grid grid-cols-2 gap-2">
+        <div role="radiogroup" aria-label={t("รอบชำระเงิน")} className="grid grid-cols-2 gap-2">
           {PERIODS.map((p) => (
             <button
               key={p.value}
@@ -254,14 +255,14 @@ export default function UpgradePage() {
               {p.label}
               {p.value === "yearly" ? (
                 <span className="ml-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-foreground">
-                  คุ้มสุด
+                  {t("คุ้มสุด")}
                 </span>
               ) : null}
             </button>
           ))}
         </div>
 
-        <div role="radiogroup" aria-label="เลือกแผน" className="space-y-3">
+        <div role="radiogroup" aria-label={t("เลือกแผน")} className="space-y-3">
           <PlanCard plan="free" current={current} pricing={pricing} />
           {PAID.map((plan) => (
             <PlanCard
@@ -277,7 +278,7 @@ export default function UpgradePage() {
         </div>
 
         {autoRenew || prepaidRunning ? null : (
-          <div role="radiogroup" aria-label="ช่องทางชำระเงิน" className="space-y-2">
+          <div role="radiogroup" aria-label={t("ช่องทางชำระเงิน")} className="space-y-2">
             {METHODS.map((m) => (
               <button
                 key={m.value}
@@ -306,10 +307,14 @@ export default function UpgradePage() {
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
           {busy
-            ? "กำลังดำเนินการ..."
+            ? t("กำลังดำเนินการ...")
             : action.kind === "change"
-              ? `อัปเกรดแผน · ${PLAN_LABEL[picked]} (${period === "yearly" ? "รายปี" : "รายเดือน"})`
-              : `${topUp ? "ต่ออายุ" : "ชำระเงิน"} · ${PLAN_LABEL[picked]}`}
+              ? t(
+                  "อัปเกรดแผน · {0} ({1})",
+                  PLAN_LABEL[picked],
+                  period === "yearly" ? t("รายปี") : t("รายเดือน"),
+                )
+              : `${topUp ? t("ต่ออายุ") : t("ชำระเงิน")} · ${PLAN_LABEL[picked]}`}
         </button>
         {quote ? (
           <button
@@ -318,14 +323,18 @@ export default function UpgradePage() {
             disabled={busy}
             className="h-12 w-full rounded-2xl border border-primary text-base font-semibold text-primary disabled:opacity-60"
           >
-            อัปเกรดส่วนที่เหลือ · จ่ายส่วนต่าง ฿{quote.amountBaht}
+            {t("อัปเกรดส่วนที่เหลือ · จ่ายส่วนต่าง ฿")}
+            {quote.amountBaht}
           </button>
         ) : null}
         {quote ? (
           <p className="rounded-2xl bg-primary-soft px-4 py-2 text-sm text-foreground">
-            ใช้ {PLAN_LABEL[picked]} ต่อจนถึงวันหมดอายุเดิม (อีก {quote.days} วัน)
-            โดยจ่ายเฉพาะส่วนต่างของราคา ถ้าอยากต่อเวลาเพิ่ม ให้กดปุ่มด้านบน (ซื้อรอบใหม่เต็มราคา
-            ต่อท้ายเวลาที่เหลือ)
+            {t("ใช้")} {PLAN_LABEL[picked]} {t("ต่อจนถึงวันหมดอายุเดิม (อีก")} {quote.days}{" "}
+            {t("วัน)")}
+            {t(
+              "โดยจ่ายเฉพาะส่วนต่างของราคา ถ้าอยากต่อเวลาเพิ่ม ให้กดปุ่มด้านบน (ซื้อรอบใหม่เต็มราคา",
+            )}
+            {t("ต่อท้ายเวลาที่เหลือ)")}
           </p>
         ) : null}
         {canTry ? (
@@ -335,18 +344,20 @@ export default function UpgradePage() {
             disabled={busy}
             className="h-12 w-full rounded-2xl border-2 border-accent bg-accent/15 text-base font-semibold text-foreground disabled:opacity-60"
           >
-            ทดลองใช้ {PLAN_LABEL[picked]} ฟรี {trialDays} วัน
+            {t("ทดลองใช้")} {PLAN_LABEL[picked]} {t("ฟรี")} {trialDays} {t("วัน")}
           </button>
         ) : null}
         {canTry ? (
           <p className="text-xs text-foreground/80">
-            ไม่ต้องใช้บัตร ครบ {trialDays} วันแผนจะกลับเป็น Free เอง (ทดลองได้ครั้งเดียวต่อแผน)
+            {t("ไม่ต้องใช้บัตร ครบ")} {trialDays}{" "}
+            {t("วันแผนจะกลับเป็น Free เอง (ทดลองได้ครั้งเดียวต่อแผน)")}
           </p>
         ) : null}
         {action.kind === "change" ? (
           <p className="rounded-2xl bg-primary-soft px-4 py-2 text-sm text-foreground">
-            จ่ายเฉพาะส่วนต่าง: Stripe หักเวลาที่ยังไม่ได้ใช้ของแผนเดิม แล้วคิดแผนใหม่
-            ตัดจากบัตรที่ใช้สมัครไว้ทันที
+            {t(
+              "จ่ายเฉพาะส่วนต่าง: Stripe หักเวลาที่ยังไม่ได้ใช้ของแผนเดิม แล้วคิดแผนใหม่ ตัดจากบัตรที่ใช้สมัครไว้ทันที",
+            )}
           </p>
         ) : null}
         {blockMessage ? (
@@ -361,7 +372,7 @@ export default function UpgradePage() {
             disabled={busy}
             className="h-11 w-full rounded-2xl border border-primary text-sm font-semibold text-primary disabled:opacity-60"
           >
-            จัดการการชำระเงิน (ยกเลิกต่ออายุ / เปลี่ยนบัตร)
+            {t("จัดการการชำระเงิน (ยกเลิกต่ออายุ / เปลี่ยนบัตร)")}
           </button>
         ) : null}
         {notice ? (
@@ -371,7 +382,7 @@ export default function UpgradePage() {
         ) : null}
         <p className="flex items-start gap-1 text-xs text-muted">
           <Sparkles className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
-          ยังไม่มีเงินสด? สะสมเหรียญจากการจดทุกวันแล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่า
+          {t("ยังไม่มีเงินสด? สะสมเหรียญจากการจดทุกวันแล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่า")}
         </p>
 
         <Comparison />
@@ -408,7 +419,7 @@ function PlanCard({
         </p>
         {isCurrent ? (
           <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", style.chip)}>
-            แผนของคุณ
+            {t("แผนของคุณ")}
           </span>
         ) : null}
       </div>
@@ -418,29 +429,35 @@ function PlanCard({
           {pricing.launch && listPrice ? (
             <p className="flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full bg-accent/20 px-2 py-0.5 font-semibold text-foreground">
-                ราคาเปิดตัว ถึง {pricing.endsText}
+                {t("ราคาเปิดตัว ถึง")} {pricing.endsText}
               </span>
               <span className="num text-foreground/80 line-through">
-                <span className="sr-only">ราคาปกติ </span>฿{listPrice[period]}
+                <span className="sr-only">{t("ราคาปกติ")} </span>
+                {t("฿")}
+                {listPrice[period]}
               </span>
             </p>
           ) : null}
           <p className="num text-2xl font-extrabold">
             ฿{price[period]}
             <span className="ml-1 text-sm font-medium text-foreground/80">
-              /{period === "monthly" ? "เดือน" : "ปี"}
+              /{period === "monthly" ? t("เดือน") : t("ปี")}
             </span>
           </p>
           {period === "yearly" ? (
             <p className="text-xs text-foreground/80">
-              ≈ ฿{yearlyPerDay(price)} ต่อวัน · ประหยัด {yearlySavingPercent(price)}%
+              {t("≈ ฿")}
+              {yearlyPerDay(price)} {t("ต่อวัน · ประหยัด")} {yearlySavingPercent(price)}%
             </p>
           ) : (
-            <p className="text-xs text-foreground/80">หรือรายปี ฿{price.yearly}</p>
+            <p className="text-xs text-foreground/80">
+              {t("หรือรายปี ฿")}
+              {price.yearly}
+            </p>
           )}
         </div>
       ) : (
-        <p className="num text-2xl font-extrabold">฿0</p>
+        <p className="num text-2xl font-extrabold">{t("฿0")}</p>
       )}
 
       <ul className="space-y-1 text-sm">
@@ -530,7 +547,7 @@ function CellView({ cell, tone }: { cell: Cell; tone: "pro" | "plain" }) {
     return (
       <>
         <Minus className="mx-auto h-4 w-4 text-muted" aria-hidden />
-        <span className="sr-only">ไม่มี</span>
+        <span className="sr-only">{t("ไม่มี")}</span>
       </>
     );
   }
@@ -540,7 +557,7 @@ function CellView({ cell, tone }: { cell: Cell; tone: "pro" | "plain" }) {
         className={cn("mx-auto h-5 w-5", tone === "pro" ? "text-primary" : "text-foreground")}
         aria-hidden
       />
-      <span className="sr-only">มี</span>
+      <span className="sr-only">{t("มี")}</span>
     </>
   );
 }
@@ -549,11 +566,13 @@ function CellView({ cell, tone }: { cell: Cell; tone: "pro" | "plain" }) {
 function Comparison() {
   return (
     <section
-      aria-label="เปรียบเทียบแผน"
+      aria-label={t("เปรียบเทียบแผน")}
       className="overflow-hidden rounded-3xl border border-border bg-surface"
     >
       <table className="w-full table-fixed border-collapse text-sm">
-        <caption className="px-4 pb-1 pt-4 text-left text-base font-bold">ทำอะไรได้บ้าง?</caption>
+        <caption className="px-4 pb-1 pt-4 text-left text-base font-bold">
+          {t("ทำอะไรได้บ้าง?")}
+        </caption>
         <colgroup>
           <col />
           <col className="w-[62px]" />
@@ -563,7 +582,7 @@ function Comparison() {
         <thead>
           <tr className="text-xs">
             <th scope="col" className="sr-only">
-              ฟีเจอร์
+              {t("ฟีเจอร์")}
             </th>
             <th scope="col" className="py-2 font-semibold">
               Free

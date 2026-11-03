@@ -6,6 +6,7 @@ import { useLiff } from "@/components/liff/liff-provider";
 import { Sheet } from "@/components/liff/sheet";
 import { DEFAULT_CURRENCY, HOME_CURRENCIES, currencyLabel } from "@/lib/currency";
 import type { Settings } from "./types";
+import { t } from "@/lib/i18n";
 
 /**
  * Pick the currency the books are kept in: a search, then the currencies, the chosen one ticked.
@@ -36,27 +37,28 @@ export function CurrencySheet({ current, onClose }: { current?: string; onClose:
       });
       window.location.reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ ลองใหม่อีกครั้งนะ");
+      setError(e instanceof Error ? e.message : t("บันทึกไม่สำเร็จ ลองใหม่อีกครั้งนะ"));
       setBusy(null);
     }
   }
 
   return (
-    <Sheet title="สกุลเงิน" onClose={onClose}>
+    <Sheet title={t("สกุลเงิน")} onClose={onClose}>
       <label className="flex h-11 items-center gap-2 border-b border-border px-1">
         <Search className="h-4 w-4 text-muted" aria-hidden />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="ค้นหาสกุลเงิน"
-          aria-label="ค้นหาสกุลเงิน"
+          placeholder={t("ค้นหาสกุลเงิน")}
+          aria-label={t("ค้นหาสกุลเงิน")}
           className="h-full w-full bg-transparent text-sm outline-none"
         />
       </label>
       <p className="text-xs text-muted">
-        เปลี่ยนแล้วตัวเลขของรายการเดิมจะเหมือนเดิม เปลี่ยนแค่สัญลักษณ์
-        ส่วนเงินสกุลอื่นที่จดหลังจากนี้จะแปลงเป็นสกุลนี้ให้
+        {t(
+          "เปลี่ยนแล้วตัวเลขของรายการเดิมจะเหมือนเดิม เปลี่ยนแค่สัญลักษณ์ ส่วนเงินสกุลอื่นที่จดหลังจากนี้จะแปลงเป็นสกุลนี้ให้",
+        )}
       </p>
       {error ? (
         <p role="alert" className="text-sm text-expense">
@@ -64,9 +66,9 @@ export function CurrencySheet({ current, onClose }: { current?: string; onClose:
         </p>
       ) : null}
       {shown.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted">ไม่พบสกุลเงินที่ค้นหา</p>
+        <p className="py-6 text-center text-sm text-muted">{t("ไม่พบสกุลเงินที่ค้นหา")}</p>
       ) : (
-        <ul className="space-y-1" aria-label="สกุลเงิน">
+        <ul className="space-y-1" aria-label={t("สกุลเงิน")}>
           {shown.map((c) => {
             const selected = c.code === chosen;
             return (
@@ -80,7 +82,7 @@ export function CurrencySheet({ current, onClose }: { current?: string; onClose:
                     selected ? "bg-primary-soft font-semibold text-primary" : ""
                   }`}
                 >
-                  <span>{busy === c.code ? "กำลังบันทึก…" : c.label}</span>
+                  <span>{busy === c.code ? t("กำลังบันทึก…") : c.label}</span>
                   {selected ? <Check className="h-4 w-4" aria-hidden /> : null}
                 </button>
               </li>

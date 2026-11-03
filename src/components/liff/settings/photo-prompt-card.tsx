@@ -5,6 +5,7 @@ import { useLiff } from "@/components/liff/liff-provider";
 import { PlusLock } from "./plus-lock";
 import { Switch } from "./switch";
 import { cardClass, type Me, type Settings } from "./types";
+import { t } from "@/lib/i18n";
 
 /** Show the small "แนบรูป" button on the card of a saved entry (a tap opens the camera / album step). */
 export function PhotoPromptCard({
@@ -31,32 +32,33 @@ export function PhotoPromptCard({
         body: JSON.stringify({ photo_prompt: !enabled }),
       });
       onSaved(saved);
-      setNotice("บันทึกแล้ว");
+      setNotice(t("บันทึกแล้ว"));
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("บันทึกไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section className={cardClass} aria-label="ปุ่มแนบรูปบนการ์ด">
+    <section className={cardClass} aria-label={t("ปุ่มแนบรูปบนการ์ด")}>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-semibold">ปุ่มแนบรูปบนการ์ด</h2>
+          <h2 className="font-semibold">{t("ปุ่มแนบรูปบนการ์ด")}</h2>
           <p className="text-xs text-muted">
-            การ์ดจดสำเร็จมีปุ่ม “แนบรูป” เล็ก ๆ มุมซ้ายล่าง
-            กดแล้วถ่ายรูปหรือเลือกจากอัลบั้มเพื่อแนบใบเสร็จหรือสินค้า
+            {t(
+              "การ์ดจดสำเร็จมีปุ่ม “แนบรูป” เล็ก ๆ มุมซ้ายล่าง กดแล้วถ่ายรูปหรือเลือกจากอัลบั้มเพื่อแนบใบเสร็จหรือสินค้า",
+            )}
           </p>
         </div>
         <Switch
           checked={enabled && !locked}
-          label="ปุ่มแนบรูปบนการ์ด"
+          label={t("ปุ่มแนบรูปบนการ์ด")}
           disabled={busy || locked}
           onChange={() => void toggle()}
         />
       </div>
-      {locked ? <PlusLock>แนบรูปใบเสร็จหรือสินค้ากับรายการ</PlusLock> : null}
+      {locked ? <PlusLock>{t("แนบรูปใบเสร็จหรือสินค้ากับรายการ")}</PlusLock> : null}
       {notice ? (
         <p role="status" className="text-sm text-muted">
           {notice}

@@ -14,7 +14,7 @@ describe("the person's language", () => {
   it("in English, words come from the dictionary, with the values put in", () => {
     setLocaleSource(() => "en");
     expect(t("บันทึก")).toBe("Save");
-    expect(t("ใช้ไป {0} จาก {1}", "฿5", "฿10")).toBe("Spent ฿5 of ฿10");
+    expect(t("{0} จาก {1}", "฿5", "฿10")).toBe("฿5 of ฿10");
   });
 
   it("words with no English yet stay Thai rather than go blank", () => {

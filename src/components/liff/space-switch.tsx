@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useApi } from "@/components/liff/liff-provider";
 import type { OwnedGroup } from "@/lib/owned-groups";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * The chip at the top of the vault and reminders pages: "ส่วนตัว", or a group. Someone who owns no
@@ -27,23 +28,26 @@ export function SpaceSwitch({
     className,
   );
 
-  if (!groupId && items.length === 0) return <span className={chip}>ส่วนตัว</span>;
+  if (!groupId && items.length === 0) return <span className={chip}>{t("ส่วนตัว")}</span>;
 
   const options = [
-    ...items.map((g) => ({ id: g.id, label: `กลุ่ม: ${g.name}${g.isActive ? "" : " (ปิดแล้ว)"}` })),
+    ...items.map((g) => ({
+      id: g.id,
+      label: t("กลุ่ม: {0}{1}", g.name, g.isActive ? "" : t(" (ปิดแล้ว)")),
+    })),
     ...(groupId && !items.some((g) => g.id === groupId)
-      ? [{ id: groupId, label: "กลุ่มนี้" }]
+      ? [{ id: groupId, label: t("กลุ่มนี้") }]
       : []),
   ];
   return (
     <label className={cn(chip, "relative flex min-w-0 max-w-[60%] items-center gap-1 pr-2")}>
-      <span className="sr-only">ดูของส่วนตัวหรือของกลุ่ม</span>
+      <span className="sr-only">{t("ดูของส่วนตัวหรือของกลุ่ม")}</span>
       <select
         value={groupId ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
         className="min-w-0 max-w-full appearance-none truncate bg-transparent pr-4 font-semibold outline-none"
       >
-        <option value="">ส่วนตัว</option>
+        <option value="">{t("ส่วนตัว")}</option>
         {options.map((o) => (
           <option key={o.id} value={o.id}>
             {o.label}

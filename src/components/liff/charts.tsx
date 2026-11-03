@@ -21,6 +21,7 @@ import {
 } from "recharts";
 import { money } from "@/lib/money";
 import { sliceColor } from "@/components/liff/slice-color";
+import { t } from "@/lib/i18n";
 
 // the page theme (tokens.css) decides the colours; graphical objects need 3:1, which they meet
 export const INCOME_FILL = "var(--income)";
@@ -53,7 +54,7 @@ export function FlowBarChart({ data }: { data: FlowPoint[] }) {
           <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
           <YAxis tickLine={false} axisLine={false} fontSize={11} tickFormatter={compact} />
           <Tooltip
-            formatter={(v, name) => [unitsMoney(v), name === "income" ? "รายรับ" : "รายจ่าย"]}
+            formatter={(v, name) => [unitsMoney(v), name === "income" ? t("รายรับ") : t("รายจ่าย")]}
           />
           <Bar dataKey="income" fill={INCOME_FILL} radius={[6, 6, 0, 0]} />
           <Bar dataKey="expense" fill={EXPENSE_FILL} radius={[6, 6, 0, 0]} />
@@ -122,7 +123,7 @@ export function MiniBarChart({ points }: { points: { label: string; value: numbe
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={points} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
         <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={10} />
-        <Tooltip formatter={(v) => [unitsMoney(v), "ใช้จ่าย"]} cursor={false} />
+        <Tooltip formatter={(v) => [unitsMoney(v), t("ใช้จ่าย")]} cursor={false} />
         <Bar
           dataKey="value"
           fill="var(--primary)"
@@ -149,7 +150,7 @@ export function SavingsChart({ points }: { points: SavingsPoint[] }) {
           <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
           <YAxis tickLine={false} axisLine={false} fontSize={11} tickFormatter={compact} />
           <Tooltip
-            formatter={(v, name) => [unitsMoney(v), name === "net" ? "เก็บได้" : "เก็บสะสม"]}
+            formatter={(v, name) => [unitsMoney(v), name === "net" ? t("เก็บได้") : t("เก็บสะสม")]}
           />
           <Bar dataKey="net" radius={[6, 6, 0, 0]}>
             {points.map((p, i) => (
@@ -171,7 +172,7 @@ export interface GoalPoint {
 /** Money saved over time towards a goal, with the target as a dashed line. */
 export function GoalChart({ points, target }: { points: GoalPoint[]; target: number }) {
   return (
-    <div className="h-48 w-full" role="img" aria-label="กราฟยอดออมสะสม">
+    <div className="h-48 w-full" role="img" aria-label={t("กราฟยอดออมสะสม")}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={points} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
           <CartesianGrid vertical={false} strokeOpacity={0.25} />
@@ -183,7 +184,7 @@ export function GoalChart({ points, target }: { points: GoalPoint[]; target: num
             tickFormatter={compact}
             domain={[0, Math.max(target, ...points.map((p) => p.total))]}
           />
-          <Tooltip formatter={(v) => [unitsMoney(v), "ออมสะสม"]} />
+          <Tooltip formatter={(v) => [unitsMoney(v), t("ออมสะสม")]} />
           <ReferenceLine y={target} stroke={EXPENSE_FILL} strokeDasharray="4 4" />
           <Line type="monotone" dataKey="total" stroke={LINE} strokeWidth={3} dot={{ r: 3 }} />
         </ComposedChart>

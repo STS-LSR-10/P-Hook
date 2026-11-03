@@ -5,7 +5,7 @@ import { setZoneSource } from "@/lib/thai-date";
 import { isZone } from "@/lib/zone";
 import { isHomeCurrency } from "@/lib/currency";
 import { setCurrencySource } from "@/lib/money";
-import { isLocale, setLocaleSource } from "@/lib/i18n";
+import { isLocale, setLocaleSource, t } from "@/lib/i18n";
 import {
   createContext,
   useCallback,
@@ -84,12 +84,12 @@ function loginOnce(liff: { login: (o: { redirectUri: string }) => void }): Promi
     const last = Number(window.sessionStorage.getItem(RELOGIN_KEY) ?? 0);
     if (Date.now() - last < RELOGIN_WINDOW_MS) {
       throw new Error(
-        "เข้าสู่ระบบไม่สำเร็จ ลองปิดแล้วเปิดใหม่อีกครั้งนะ (ถ้ายังไม่ได้ แจ้งผู้ดูแล)",
+        t("เข้าสู่ระบบไม่สำเร็จ ลองปิดแล้วเปิดใหม่อีกครั้งนะ (ถ้ายังไม่ได้ แจ้งผู้ดูแล)"),
       );
     }
     window.sessionStorage.setItem(RELOGIN_KEY, String(Date.now()));
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith("เข้าสู่ระบบ")) throw e;
+    if (e instanceof Error && e.message.startsWith(t("เข้าสู่ระบบ"))) throw e;
     // sessionStorage unavailable: fall through to a single normal redirect
   }
   liff.login({ redirectUri: window.location.href });
@@ -125,7 +125,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         token.current = "e2e-token";
         return token.current;
       }
-      if (!LIFF_ID) throw new Error("ยังไม่ได้ตั้งค่า LIFF");
+      if (!LIFF_ID) throw new Error(t("ยังไม่ได้ตั้งค่า LIFF"));
       const liff = (await import("@line/liff")).default;
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) return loginOnce(liff);
@@ -146,7 +146,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       if (!res.ok || !body.token) {
         // An expired ID token needs a fresh login rather than a retry.
         if (res.status === 401) return loginOnce(liff);
-        throw new Error(body.error ?? "เข้าสู่ระบบไม่สำเร็จ");
+        throw new Error(body.error ?? t("เข้าสู่ระบบไม่สำเร็จ"));
       }
       token.current = body.token;
       // dates on every page are shown and read in the person's zone
@@ -184,7 +184,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "เข้าสู่ระบบไม่สำเร็จ");
+        setError(e instanceof Error ? e.message : t("เข้าสู่ระบบไม่สำเร็จ"));
         setStatus("error");
       });
     return () => {
@@ -209,7 +209,8 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         res = await call(await authenticate());
       }
       const body = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new ApiError(body.error ?? "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ", res.status);
+      if (!res.ok)
+        throw new ApiError(body.error ?? t("เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ"), res.status);
       return body as T;
     },
     [authenticate],
@@ -267,7 +268,7 @@ export function useApi<T>(path: string | null): ApiState<T> {
 
   useEffect(() => {
     if (status === "error") {
-      setError(authError ?? "เข้าสู่ระบบไม่สำเร็จ");
+      setError(authError ?? t("เข้าสู่ระบบไม่สำเร็จ"));
       setLoading(false);
       return;
     }
@@ -284,7 +285,7 @@ export function useApi<T>(path: string | null): ApiState<T> {
     api<T>(path)
       .then((d) => !cancelled && setData(d))
       .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+        if (!cancelled) setError(e instanceof Error ? e.message : t("เกิดข้อผิดพลาด"));
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {

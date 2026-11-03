@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, LoadingBlock, PageHeader } from "@/components/l
 import { formatBaht } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { canSendToChat } from "@/lib/liff-chat";
+import { t } from "@/lib/i18n";
 
 interface Person {
   lineUserId: string;
@@ -30,7 +31,7 @@ interface ConfirmResponse {
   message: string;
 }
 
-const money = (satang: number) => `฿${formatBaht(satang)}`;
+const money = (satang: number) => t("฿{0}", formatBaht(satang));
 
 /** Where the payer of a bill ticks who shares it. Opened from the bill card in the LINE group. */
 export default function SplitBillPage() {
@@ -92,7 +93,7 @@ export default function SplitBillPage() {
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
+      setError(e instanceof Error ? e.message : t("บันทึกไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
@@ -100,31 +101,33 @@ export default function SplitBillPage() {
 
   return (
     <main>
-      <PageHeader title="เลือกคนหารบิล" />
+      <PageHeader title={t("เลือกคนหารบิล")} />
       <div className="space-y-4 px-4 pb-24">
         {setup.loading ? (
           <LoadingBlock rows={4} />
         ) : setup.error || !data ? (
-          <ErrorState message={setup.error ?? "โหลดไม่สำเร็จ"} onRetry={setup.reload} />
+          <ErrorState message={setup.error ?? t("โหลดไม่สำเร็จ")} onRetry={setup.reload} />
         ) : done ? (
           <section className={cn(cardClass, "space-y-2 text-center")} aria-live="polite">
             <Check className="mx-auto h-8 w-8 text-primary" aria-hidden />
-            <h2 className="text-lg font-bold">เลือกเสร็จแล้ว หาร {done.count} คน</h2>
+            <h2 className="text-lg font-bold">
+              {t("เลือกเสร็จแล้ว หาร")} {done.count} {t("คน")}
+            </h2>
             {done.sent ? (
               <p className="text-sm text-muted">
-                ส่งเข้ากลุ่มแล้ว บอทกำลังส่ง QR ให้ทุกคน กลับไปที่แชทได้เลย
+                {t("ส่งเข้ากลุ่มแล้ว บอทกำลังส่ง QR ให้ทุกคน กลับไปที่แชทได้เลย")}
               </p>
             ) : (
               <p className="text-sm text-muted">
-                กลับไปที่กลุ่ม แล้วกดปุ่ม <strong>“📣 ส่ง QR เข้ากลุ่ม”</strong> ที่การ์ดบิล
-                บอทจะส่ง QR ให้ทุกคน
+                {t("กลับไปที่กลุ่ม แล้วกดปุ่ม")} <strong>{t("“📣 ส่ง QR เข้ากลุ่ม”")}</strong>{" "}
+                {t("ที่การ์ดบิล บอทจะส่ง QR ให้ทุกคน")}
               </p>
             )}
           </section>
         ) : !data.open ? (
           <EmptyState
-            title="เลือกคนหารไปแล้ว"
-            hint="บิลนี้เลือกรายชื่อเรียบร้อยแล้ว ดู QR และสถานะได้ที่การ์ดบิลในกลุ่ม"
+            title={t("เลือกคนหารไปแล้ว")}
+            hint={t("บิลนี้เลือกรายชื่อเรียบร้อยแล้ว ดู QR และสถานะได้ที่การ์ดบิลในกลุ่ม")}
           />
         ) : (
           <>
@@ -132,7 +135,7 @@ export default function SplitBillPage() {
               <h2 className="text-base font-bold">{data.bill.title}</h2>
               <p className="num text-2xl font-extrabold">{money(data.bill.amountSatang)}</p>
               <p className="text-xs text-muted">
-                เลือกคนที่หารบิลนี้ บอทหารเท่ากันให้ (รวมคุณด้วย)
+                {t("เลือกคนที่หารบิลนี้ บอทหารเท่ากันให้ (รวมคุณด้วย)")}
               </p>
             </section>
 
@@ -142,18 +145,18 @@ export default function SplitBillPage() {
                 onClick={selectAll}
                 className="min-h-11 flex-1 rounded-2xl border border-border bg-surface px-3 text-sm font-semibold"
               >
-                เลือกทั้งหมด
+                {t("เลือกทั้งหมด")}
               </button>
               <button
                 type="button"
                 onClick={clearAll}
                 className="min-h-11 flex-1 rounded-2xl border border-border bg-surface px-3 text-sm font-semibold"
               >
-                ล้างที่เลือก
+                {t("ล้างที่เลือก")}
               </button>
             </div>
 
-            <ul className="space-y-2" aria-label="รายชื่อในกลุ่ม">
+            <ul className="space-y-2" aria-label={t("รายชื่อในกลุ่ม")}>
               {people.map((p) => {
                 const on = chosen.has(p.lineUserId);
                 return (
@@ -175,7 +178,7 @@ export default function SplitBillPage() {
                       <span className="flex-1">{p.name}</span>
                       {p.isPayer ? (
                         <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-semibold text-primary">
-                          คนจ่าย
+                          {t("คนจ่าย")}
                         </span>
                       ) : null}
                     </label>
@@ -186,15 +189,17 @@ export default function SplitBillPage() {
 
             {others.length === 0 ? (
               <p className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                บอทยังไม่รู้จักเพื่อนในกลุ่มนี้ ให้เพื่อนพิมพ์อะไรสักอย่างในกลุ่มก่อน
-                แล้วกลับมาเปิดหน้านี้ใหม่
+                {t(
+                  "บอทยังไม่รู้จักเพื่อนในกลุ่มนี้ ให้เพื่อนพิมพ์อะไรสักอย่างในกลุ่มก่อน แล้วกลับมาเปิดหน้านี้ใหม่",
+                )}
               </p>
             ) : !data.complete ? (
               <p className="flex items-start gap-2 rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
                 <Users className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <span>
-                  แสดงเฉพาะคนที่บอทเคยเห็นในกลุ่ม ถ้าไม่เห็นเพื่อนบางคน
-                  ให้เขาพิมพ์อะไรสักอย่างในกลุ่มก่อน แล้วเปิดหน้านี้ใหม่
+                  {t(
+                    "แสดงเฉพาะคนที่บอทเคยเห็นในกลุ่ม ถ้าไม่เห็นเพื่อนบางคน ให้เขาพิมพ์อะไรสักอย่างในกลุ่มก่อน แล้วเปิดหน้านี้ใหม่",
+                  )}
                 </span>
               </p>
             ) : null}
@@ -207,11 +212,11 @@ export default function SplitBillPage() {
 
             <section className={cn(cardClass, "space-y-3")}>
               <p className="text-center text-sm" aria-live="polite">
-                เลือก <span className="num font-bold">{count}</span> คน
+                {t("เลือก")} <span className="num font-bold">{count}</span> {t("คน")}
                 {count > 1 ? (
                   <>
                     {" "}
-                    · คนละ ≈ <span className="num font-bold">{money(share)}</span>
+                    {t("· คนละ ≈")} <span className="num font-bold">{money(share)}</span>
                   </>
                 ) : null}
               </p>
@@ -221,7 +226,7 @@ export default function SplitBillPage() {
                 disabled={busy || count < 2}
                 className="h-12 w-full rounded-2xl bg-primary font-semibold text-white disabled:opacity-50"
               >
-                {busy ? "กำลังบันทึก…" : "ยืนยัน และส่ง QR เข้ากลุ่ม"}
+                {busy ? t("กำลังบันทึก…") : t("ยืนยัน และส่ง QR เข้ากลุ่ม")}
               </button>
             </section>
           </>

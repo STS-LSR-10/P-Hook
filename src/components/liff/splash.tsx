@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * How far the opening video got, kept while the app moves from one page to the next (the module stays
@@ -42,7 +43,7 @@ export function Splash() {
   return (
     <div
       role="status"
-      aria-label="กำลังเปิดแอป"
+      aria-label={t("กำลังเปิดแอป")}
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ backgroundColor: SPLASH_BG }}
     >
