@@ -639,7 +639,7 @@ describe("foreign currency by chat (Elite)", () => {
     const { deps, reply } = setup();
     await handleEvent(text("ลูกอม 1 KRW"), deps);
     expect(inserted).toHaveLength(0);
-    expect(sent(reply)).toContain("น้อยกว่า 1 สตางค์");
+    expect(sent(reply)).toContain("น้อยกว่า 0.01");
   });
 
   it.each(["free", "plus"])("%s is told it is an Elite feature and nothing is saved", async (p) => {
