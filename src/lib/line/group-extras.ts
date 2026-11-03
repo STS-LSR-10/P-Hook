@@ -88,7 +88,9 @@ function ownerOf(ctx: GroupExtraContext): (FileOwner & { plan: Plan }) | null {
 const ownerPlan = (ctx: GroupExtraContext, owner: FileOwner) =>
   effectivePlan(owner.plan, owner.plan_expires_at, ctx.deps.now());
 
-const groupFilesPath = (ctx: GroupExtraContext) => `/group?id=${ctx.group.id}`;
+// the vault and reminders pages, switched to this group
+const groupFilesPath = (ctx: GroupExtraContext) => `/vault?g=${ctx.group.id}`;
+const groupRemindersPath = (ctx: GroupExtraContext) => `/reminders?g=${ctx.group.id}`;
 const openUrlOf = (ctx: GroupExtraContext) => (id: string) =>
   ctx.pageUrl(`${groupFilesPath(ctx)}&open=${id}`);
 
@@ -235,7 +237,7 @@ export async function addGroupReminder(
       rolledToTomorrow: parsed.rolledToTomorrow,
       title: "ตั้งเตือนกลุ่มแล้ว ⏰",
       cancelData: `a=grmx&id=${made.id}`,
-      listUrl: ctx.pageUrl(`${groupFilesPath(ctx)}&tab=reminders`),
+      listUrl: ctx.pageUrl(groupRemindersPath(ctx)),
     }),
   ];
 }

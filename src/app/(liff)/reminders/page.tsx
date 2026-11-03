@@ -10,10 +10,21 @@ import {
   Repeat as RepeatIcon,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import { GroupReminders } from "@/components/liff/group-space";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { fieldClass } from "@/components/liff/settings/types";
 import { Sheet } from "@/components/liff/sheet";
+import { SpaceSwitch } from "@/components/liff/space-switch";
 import { ErrorState, LoadingBlock } from "@/components/liff/states";
 import { Logo } from "@/components/logo";
 import {
@@ -97,7 +108,49 @@ function nextHour(): string {
   return hour > 23 ? "23:59" : `${String(hour).padStart(2, "0")}:00`;
 }
 
+const UUID_RE = /^[0-9a-f-]{36}$/i;
+
+/** Reads `?g=` (a group's reminders, from the links in a group or the switch), which needs Suspense. */
 export default function RemindersPage() {
+  return (
+    <Suspense fallback={<LoadingBlock rows={4} />}>
+      <Reminders />
+    </Suspense>
+  );
+}
+
+function Reminders() {
+  const router = useRouter();
+  const requested = useSearchParams().get("g") ?? "";
+  const groupId = UUID_RE.test(requested) ? requested : null;
+  const switcher = (
+    <SpaceSwitch
+      groupId={groupId}
+      onChange={(next) => router.replace(next ? `/reminders?g=${next}` : "/reminders")}
+      className="bg-white/80"
+    />
+  );
+  if (!groupId) return <PersonalReminders switcher={switcher} />;
+  return (
+    <main className="-mb-24 min-h-screen bg-[#FAF8F3] pb-44 text-slate-800">
+      <RemindersHeader switcher={switcher} />
+      <div className="px-4 pt-3">
+        <GroupReminders key={groupId} groupId={groupId} />
+      </div>
+    </main>
+  );
+}
+
+function RemindersHeader({ switcher }: { switcher: ReactNode }) {
+  return (
+    <header className="flex items-center justify-between gap-2 bg-[#82C392] px-4 py-3">
+      <h1 className="text-lg font-bold text-slate-900">เตือน | พี่ฮูก</h1>
+      {switcher}
+    </header>
+  );
+}
+
+function PersonalReminders({ switcher }: { switcher: ReactNode }) {
   const { api } = useLiff();
   const reminders = useApi<RemindersResponse>("/api/reminders");
   const data = reminders.data;
@@ -212,12 +265,7 @@ export default function RemindersPage() {
 
   return (
     <main className="-mb-24 min-h-screen bg-[#FAF8F3] pb-44 text-slate-800">
-      <header className="flex items-center justify-between gap-2 bg-[#82C392] px-4 py-3">
-        <h1 className="text-lg font-bold text-slate-900">เตือน | พี่ฮูก</h1>
-        <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-[#2F5A38]">
-          ส่วนตัว
-        </span>
-      </header>
+      <RemindersHeader switcher={switcher} />
 
       <div className="px-4 pb-1 pt-3">
         <div className="flex rounded-2xl bg-[#EBE7DC] p-1">
