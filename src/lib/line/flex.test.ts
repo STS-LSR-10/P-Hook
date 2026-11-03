@@ -56,6 +56,19 @@ describe("flex", () => {
     expect(short).toContain("แก้ไขรายการสำเร็จ: ");
   });
 
+  it("is compact: smaller words and room, with the wallet on the date's line", () => {
+    const msg = buildConfirmMessage({ ...base, style: "full", walletName: "💵 เงินสด" }) as unknown as {
+      contents: { header: { paddingAll: string }; body: { paddingAll: string } };
+    };
+    expect(msg.contents.header.paddingAll).toBe("12px");
+    expect(msg.contents.body.paddingAll).toBe("12px");
+    const json = JSON.stringify(msg);
+    expect(json).toContain('"text":"จดสำเร็จ ✅","weight":"bold","size":"lg"');
+    expect(json).toContain('"text":"กาแฟ","weight":"bold","size":"md"');
+    expect(json).toContain('"text":"15 ต.ค. 2569 15:00 · 💵 เงินสด"');
+    expect(json.match(/💵 เงินสด/g)).toHaveLength(1);
+  });
+
   it("income card is green with a plus sign and its own message", () => {
     const json = JSON.stringify(
       buildConfirmMessage({
@@ -531,10 +544,12 @@ describe("the look of the saved-entry card", () => {
   const json = (over: Record<string, unknown> = {}) => JSON.stringify(full(over));
 
   it("has a compact green header with the tick after the title, on a white body", () => {
-    const card = full() as unknown as { contents: { header: unknown; body: { backgroundColor: string } } };
+    const card = full() as unknown as {
+      contents: { header: unknown; body: { backgroundColor: string } };
+    };
     const header = JSON.stringify(card.contents.header);
     expect(header).toContain('"text":"จดสำเร็จ ✅"');
-    expect(header).toContain('"size":"xl"');
+    expect(header).toContain('"size":"lg"');
     expect(header).not.toContain('"size":"xxl"');
     expect(card.contents.body.backgroundColor).toBe("#FFFFFF");
     expect(json()).not.toContain("#FAF8F2");
@@ -567,7 +582,7 @@ describe("the look of the saved-entry card", () => {
       if (!node || typeof node !== "object") return;
       const box = node as { layout?: string; contents?: unknown[] };
       const pills = (Array.isArray(box.contents) ? box.contents : []).filter(
-        (c) => (c as { height?: string }).height === "38px",
+        (c) => (c as { height?: string }).height === "34px",
       );
       if (box.layout === "horizontal" && pills.length > 0) {
         rows.push(pills.map((c) => JSON.stringify(c).match(/"text":"([^"]*)"/)?.[1] ?? ""));
