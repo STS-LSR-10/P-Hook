@@ -442,8 +442,10 @@ test.describe("transactions page (360px)", () => {
     await expect.poll(() => bodies.length).toBe(1);
     expect(bodies[0]).toEqual({ title: "กาแฟเย็น" });
     await expect(page.getByText("✅ แก้ไขรายการสำเร็จ")).toBeVisible();
-    // outside LINE nothing can be sent, so the page offers the button (never a server push)
+    // outside LINE nothing can be sent: the page says why and offers the button (never a server push)
+    await expect(page.getByText("ส่งการ์ดเข้าแชทได้เมื่อเปิดหน้านี้จากปุ่มในแชทของ LINE")).toBeVisible();
     await expect(page.getByRole("button", { name: "ส่งการ์ดเข้าแชท" })).toBeVisible();
+    await expectNoHorizontalScroll(page);
   });
 
   test("Pro can attach a photo in the editor (shrunk, sent after the entry); Free sees a locked row", async ({

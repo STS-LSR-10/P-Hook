@@ -101,22 +101,30 @@ function TransactionsRoute() {
   return editId ? <EditFromChat id={editId} /> : <TransactionsView />;
 }
 
+/** How long "บันทึกรายการสำเร็จ" shows before the window closes back to the chat. */
+const CLOSE_AFTER_MS = 900;
+const SEND_NOT_FROM_CHAT = "ส่งการ์ดเข้าแชทได้เมื่อเปิดหน้านี้จากปุ่มในแชทของ LINE";
+const SEND_REFUSED = "LINE ไม่ให้ส่งข้อความเข้าแชท";
+
 /**
- * Opened from the chat's "แก้" button: the editor of one entry. After a save it sends
- * "แก้ไขเสร็จแล้ว" into the chat as the person's own message (the bot answers it with a free reply,
- * so nothing counts against the push quota) and closes the window. When LINE does not let the page
- * send it (outside LINE, or the permission was not given), the page offers a button to try again.
+ * Opened from the chat's "แก้" button: the editor of one entry. After a save it shows "บันทึกรายการสำเร็จ",
+ * sends "แก้ไขเสร็จแล้ว" into the chat as the person's own message (the bot answers it with the edited
+ * card, a free reply, so nothing counts against the push quota) and closes, back to the chat. When LINE
+ * does not let the page send it, the page says why and offers a button to try again.
  */
 function EditFromChat({ id }: { id: string }) {
   const tx = useApi<TxDto>(`/api/transactions/${encodeURIComponent(id)}`);
   const [done, setDone] = useState(false);
+  const [toast, setToast] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
 
-  async function sendToChat(close = true) {
+  /** Null when it was sent, else why not. */
+  async function sendToChat(): Promise<string | null> {
     try {
       const liff = (await import("@line/liff")).default;
-      if (!liff.isApiAvailable("sendMessages")) return;
+      if (!liff.isInClient() || !liff.isApiAvailable("sendMessages")) return SEND_NOT_FROM_CHAT;
       // a person who signed in before the permission existed has to agree once more
       try {
         if ((await liff.permission.query("chat_message.write")).state === "prompt") {
@@ -127,17 +135,40 @@ function EditFromChat({ id }: { id: string }) {
       }
       await liff.sendMessages([{ type: "text", text: "แก้ไขเสร็จแล้ว" }]);
       setSent(true);
-      // a photo warning stays on screen instead of being closed away
-      if (close) liff.closeWindow();
-    } catch {
-      /* the page already says it was saved, and offers the button */
+      return null;
+    } catch (e) {
+      const code = e instanceof Error ? ((e as Error & { code?: string }).code ?? e.message) : "";
+      return `${SEND_REFUSED}${code ? ` (${code})` : ""}`;
     }
+  }
+
+  async function closeToChat() {
+    try {
+      (await import("@line/liff")).default.closeWindow();
+    } catch {
+      /* the page stays open, and says it was saved */
+    }
+  }
+
+  async function retry() {
+    const why = await sendToChat();
+    setFailure(why);
+    if (!why) await closeToChat();
   }
 
   async function saved(photoWarning?: string) {
     setWarning(photoWarning ?? null);
+    setToast(true);
+    const why = await sendToChat();
+    setFailure(why);
+    // a photo warning stays on screen instead of being closed away
+    if (!why && !photoWarning) {
+      await new Promise((r) => setTimeout(r, CLOSE_AFTER_MS));
+      await closeToChat();
+      return;
+    }
+    setToast(false);
     setDone(true);
-    await sendToChat(!photoWarning);
   }
 
   if (tx.loading) return <LoadingBlock rows={4} />;
@@ -163,12 +194,12 @@ function EditFromChat({ id }: { id: string }) {
         <p className="text-sm text-muted">
           {sent
             ? "บอทส่งการ์ดสรุปรายการเข้าแชทให้แล้ว กลับไปที่แชทได้เลย"
-            : 'ถ้าบอทยังไม่ส่งการ์ดสรุปเข้าแชท กด "ส่งการ์ดเข้าแชท" หรือพิมพ์ "แก้ไขเสร็จแล้ว" ในแชทได้เลย'}
+            : `${failure ?? SEND_NOT_FROM_CHAT} กด "ส่งการ์ดเข้าแชท" อีกครั้ง หรือพิมพ์ "แก้ไขเสร็จแล้ว" ในแชทก็ได้`}
         </p>
         {sent ? null : (
           <button
             type="button"
-            onClick={() => void sendToChat()}
+            onClick={() => void retry()}
             className="h-11 rounded-2xl border border-border px-5 text-sm font-semibold"
           >
             ส่งการ์ดเข้าแชท
@@ -185,6 +216,14 @@ function EditFromChat({ id }: { id: string }) {
   }
   return (
     <div>
+      {toast ? (
+        <p
+          role="status"
+          className="fixed inset-x-4 top-4 z-50 flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary-soft px-4 py-3 text-sm font-semibold text-primary shadow-lg"
+        >
+          <span aria-hidden>✓</span> บันทึกรายการสำเร็จ
+        </p>
+      ) : null}
       <PageHeader title="แก้ไขรายการ" />
       <div className="px-4 pb-8">
         <EditForm
