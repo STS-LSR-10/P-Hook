@@ -341,7 +341,7 @@ import {
 import { log, safeMessage } from "@/lib/log";
 import type { Transcriber } from "@/lib/voice/transcribe";
 import { handleVoiceMessage, type VoiceDeps } from "./voice";
-import { enterZone } from "@/lib/zone-scope";
+import { enterCurrency, enterZone } from "@/lib/zone-scope";
 
 export interface LineEvent {
   type: string;
@@ -458,8 +458,9 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
   }
 
   const user = await ensureUser(deps.db, lineUserId, () => deps.getProfile(lineUserId));
-  // times are read and written in their zone from here on (a group's stay in Bangkok for now)
+  // times are in their zone and amounts in their currency from here on (a group's stay Bangkok/baht)
   enterZone(user.timezone);
+  enterCurrency(user.currency);
   const reply = async (messages: LineMessage[]) => {
     if (event.replyToken && messages.length > 0) {
       const { theme } = await prefsOf(deps, user);

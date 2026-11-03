@@ -1,3 +1,5 @@
+import { DEFAULT_CURRENCY, hasCents, isHomeCurrency, symbolOf } from "@/lib/currency";
+
 /**
  * Money is handled as integer satang (1 baht = 100 satang). Never use float math on amounts.
  * DB columns are numeric(14,2); convert at the boundary with toSatang / satangToString.
@@ -30,4 +32,36 @@ export function formatBaht(satang: number): string {
   const whole = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const cents = abs % 100;
   return cents === 0 ? `${sign}${whole}` : `${sign}${whole}.${String(cents).padStart(2, "0")}`;
+}
+
+let currencySource: (() => string | null | undefined) | null = null;
+
+/**
+ * Where the person's currency comes from: the request on the server, the signed-in person in the
+ * page. Amounts are kept in hundredths of it (the "satang" names are older than currencies).
+ */
+export function setCurrencySource(source: (() => string | null | undefined) | null): void {
+  currencySource = source;
+}
+
+/** The currency amounts are shown in now (the baht unless set). */
+export function currentCurrency(): string {
+  let code: string | null | undefined;
+  try {
+    code = currencySource?.();
+  } catch {
+    code = null;
+  }
+  return isHomeCurrency(code) ? code : DEFAULT_CURRENCY;
+}
+
+/** The sign of the current currency ("฿", "$"). */
+export const currencySymbol = (): string => symbolOf(currentCurrency()).trim();
+
+/** An amount with the person's currency sign: "฿1,250", "$12.50", "¥1,501", "-$3". */
+export function money(satang: number): string {
+  const code = currentCurrency();
+  const shown = hasCents(code) ? satang : Math.round(satang / 100) * 100;
+  const sign = shown < 0 ? "-" : "";
+  return `${sign}${symbolOf(code)}${formatBaht(Math.abs(shown))}`;
 }

@@ -86,3 +86,36 @@ describe("a request to the API", () => {
     expect((await verifySession(token, SECRET))?.tz).toBeUndefined();
   });
 });
+
+describe("the currency of the work in hand", () => {
+  it("is the baht outside a scope, and the person's once known; two at once do not mix", async () => {
+    const { money } = await import("./money");
+    const { enterCurrency } = await import("./zone-scope");
+    expect(money(100)).toBe("฿1");
+    const seen = await Promise.all([
+      runInZone("Asia/Tokyo", async () => (await tick(), money(100)), "JPY"),
+      withZoneScope(async () => {
+        enterCurrency("USD");
+        await tick();
+        return money(100);
+      }),
+    ]);
+    expect(seen).toEqual(["¥1", "$1"]);
+  });
+
+  it("a session carries it, and a request runs in it", async () => {
+    const { money } = await import("./money");
+    const token = await signSession({ userId: "u1", lineUserId: "U1", cur: "EUR" }, SECRET);
+    expect((await verifySession(token, SECRET))?.cur).toBe("EUR");
+    let shown = "";
+    await guard(async () => {
+      await requireUser(
+        new Request("https://x.test/api", { headers: { authorization: `Bearer ${token}` } }),
+      );
+      await tick();
+      shown = money(250);
+      return new Response("ok");
+    });
+    expect(shown).toBe("€2.50");
+  });
+});
