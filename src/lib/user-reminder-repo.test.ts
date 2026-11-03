@@ -22,6 +22,10 @@ function fakeDb(row: unknown, rows: unknown[] = []) {
       filters.push([k, v]);
       return chain;
     },
+    is(k: string, v: unknown) {
+      filters.push([k, v]);
+      return chain;
+    },
     select: () => chain,
     order: () => chain,
     limit: async () => ({ data: rows, error: null }),
@@ -46,6 +50,7 @@ describe("rescheduleReminder", () => {
     expect(filters).toEqual([
       ["id", "r1"],
       ["user_id", "u1"],
+      ["group_id", null],
       ["status", "active"],
     ]);
     expect(sets[0]).toEqual({
@@ -94,6 +99,7 @@ describe("skipping a round", () => {
     expect(filters).toEqual([
       ["id", "r1"],
       ["user_id", "u1"],
+      ["group_id", null],
       ["status", "active"],
       ["remind_at", seen],
     ]);
@@ -120,6 +126,7 @@ describe("changing a reminder", () => {
     expect(filters).toEqual([
       ["id", "r1"],
       ["user_id", "u1"],
+      ["group_id", null],
     ]);
     expect(sets[0]).toEqual({
       body: "b",

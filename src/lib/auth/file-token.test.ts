@@ -3,6 +3,8 @@ import { signExportToken } from "./export-token";
 import {
   FILE_LINK_TTL_SECONDS,
   signFileToken,
+  readViewToken,
+  signGroupViewToken,
   signViewToken,
   verifyFileToken,
   verifyViewToken,
@@ -59,5 +61,19 @@ describe("view token", () => {
     const file = await signFileToken(claims, SECRET, NOW);
     await expect(verifyFileToken(view, SECRET, NOW)).resolves.toBeNull();
     await expect(verifyViewToken(file, SECRET, NOW)).resolves.toBeNull();
+  });
+
+  it("a group's token shows only that group, and is no token for the owner's own", async () => {
+    const t = await signGroupViewToken("owner", "g1", SECRET, NOW);
+    await expect(readViewToken(t, SECRET, NOW)).resolves.toEqual({
+      userId: "owner",
+      groupId: "g1",
+    });
+    await expect(verifyViewToken(t, SECRET, NOW)).resolves.toBeNull();
+    const own = await signViewToken("owner", SECRET, NOW);
+    await expect(readViewToken(own, SECRET, NOW)).resolves.toEqual({
+      userId: "owner",
+      groupId: null,
+    });
   });
 });

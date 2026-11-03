@@ -31,6 +31,17 @@ export async function getGroup(db: SupabaseClient, lineGroupId: string): Promise
   return data ? toGroup(data as GroupDb) : null;
 }
 
+/** A ledger by its own id (the one a page link carries). */
+export async function getGroupById(db: SupabaseClient, id: string): Promise<GroupRow | null> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .select("id,line_group_id,owner_user_id,is_active")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) fail("get group by id", error);
+  return data ? toGroup(data as GroupDb) : null;
+}
+
 /** How many open ledgers this person owns. */
 export async function countOwnedGroups(db: SupabaseClient, ownerUserId: string): Promise<number> {
   const { count, error } = await db
@@ -67,6 +78,21 @@ export async function closeGroup(db: SupabaseClient, lineGroupId: string): Promi
     .update({ is_active: false, closed_at: new Date().toISOString() })
     .eq("line_group_id", lineGroupId);
   if (error) fail("close group", error);
+}
+
+/** Members who left the LINE group: they no longer see its files and reminders. */
+export async function removeMembers(
+  db: SupabaseClient,
+  groupId: string,
+  lineUserIds: string[],
+): Promise<void> {
+  if (lineUserIds.length === 0) return;
+  const { error } = await db
+    .from("group_members")
+    .delete()
+    .eq("group_id", groupId)
+    .in("line_user_id", lineUserIds);
+  if (error) fail("remove members", error);
 }
 
 export async function upsertMember(

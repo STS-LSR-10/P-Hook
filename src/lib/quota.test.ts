@@ -3,6 +3,7 @@ import { buildQuota, type QuotaUsage } from "./quota";
 
 const USED: QuotaUsage = {
   storageBytes: 1024,
+  groupStorageBytes: 0,
   wallets: 2,
   goals: 1,
   notes: 12,
@@ -26,6 +27,17 @@ const byKey = (plan: Parameters<typeof buildQuota>[0]) => {
 };
 
 describe("buildQuota", () => {
+  it("splits the space into the person's own and their groups' when groups keep files", () => {
+    const storage = (groupStorageBytes: number) =>
+      [
+        ...buildQuota("ultimate", { ...USED, storageBytes: 3 * 1024 * 1024, groupStorageBytes })
+          .main,
+      ].find((i) => i.key === "storage");
+    expect(storage(1024 * 1024)?.hint).toContain("ส่วนตัว 2 MB · กลุ่ม 1 MB");
+    expect(storage(1024 * 1024)?.used).toBe(3 * 1024 * 1024);
+    expect(storage(0)?.hint).not.toContain("ส่วนตัว");
+  });
+
   it("leads with the seven of the design, in its order", () => {
     expect(buildQuota("plus", USED).main.map((i) => i.key)).toEqual([
       "slips",

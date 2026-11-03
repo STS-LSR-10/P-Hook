@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { log } from "@/lib/log";
-import { reminderPushText } from "@/lib/line/messages";
+import { groupReminderPushText, reminderPushText } from "@/lib/line/messages";
 import type { LineMessage } from "@/lib/types";
 import { claimDueReminders } from "@/lib/user-reminder-repo";
 import { REPEAT_LABEL } from "@/lib/user-reminder";
@@ -14,7 +14,8 @@ export interface UserReminderRunSummary {
 /**
  * Every few minutes: push the reminders that are due. Each is taken first (a one-off is marked done, a
  * repeating one moves to its next time), then pushed, so a failing push (the person blocked the bot)
- * is not retried every run, and two overlapping runs never send the same reminder twice.
+ * is not retried every run, and two overlapping runs never send the same reminder twice. One set in a
+ * group is pushed to the group.
  */
 export async function runUserReminders(
   db: SupabaseClient,
@@ -26,11 +27,15 @@ export async function runUserReminders(
   const due = await claimDueReminders(db, now);
   summary.claimed = due.length;
   for (const r of due) {
+    // a group's reminder goes to the group, and not at all once the bot has left it
+    if (r.lineGroupId && !r.groupOpen) continue;
     try {
-      await push(r.lineUserId, [
+      await push(r.lineGroupId ?? r.lineUserId, [
         {
           type: "text",
-          text: reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
+          text: r.lineGroupId
+            ? groupReminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null)
+            : reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
         },
       ]);
       summary.sent += 1;

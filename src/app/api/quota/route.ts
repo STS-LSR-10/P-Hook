@@ -1,6 +1,6 @@
 import { guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
-import { fileUsage } from "@/lib/file-repo";
+import { fileUsage, groupFileUsage } from "@/lib/file-repo";
 import { listGoals } from "@/lib/goal-repo";
 import { countOwnedGroups } from "@/lib/group-repo";
 import { countNotes } from "@/lib/note-repo";
@@ -32,6 +32,7 @@ export async function GET(request: Request): Promise<Response> {
 
     const [
       storageBytes,
+      groupStorageBytes,
       wallets,
       goals,
       notes,
@@ -44,6 +45,7 @@ export async function GET(request: Request): Promise<Response> {
       counters,
     ] = await Promise.all([
       fileUsage(db, auth.userId),
+      groupFileUsage(db, auth.userId),
       listWallets(db, auth.userId),
       listGoals(db, auth.userId, now),
       countNotes(db, auth.userId),
@@ -69,6 +71,7 @@ export async function GET(request: Request): Promise<Response> {
       planExpiresAt: expiresAt,
       ...buildQuota(plan, {
         storageBytes,
+        groupStorageBytes,
         // counted as the wallets page counts them: the person's own, not ones they were invited to
         wallets: ownedWallets(wallets, auth.userId).length,
         goals: goals.filter((g) => !g.archived).length,

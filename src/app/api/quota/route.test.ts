@@ -18,7 +18,10 @@ vi.mock("@/lib/slip-repo", () => ({
   countSlipsThisWeek: async () => 1,
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
-vi.mock("@/lib/file-repo", () => ({ fileUsage: async () => 2048 }));
+vi.mock("@/lib/file-repo", () => ({
+  fileUsage: async () => 2048,
+  groupFileUsage: async () => 1024,
+}));
 vi.mock("@/lib/note-repo", () => ({
   countNotes: async () => {
     if (failNotes) throw new Error("db down");

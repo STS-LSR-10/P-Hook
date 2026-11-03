@@ -23,7 +23,8 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
     if (!claims) return apiError("ลิงก์หมดอายุ เปิดไฟล์จากคลังอีกครั้งนะ", 401);
     if (claims.fileId !== id) return apiError("ลิงก์นี้ไม่ถูกต้อง", 403);
 
-    const file = await getReadyFile(getAdminClient(), claims.userId, id);
+    // the link was signed for this one file, kept by the person or in one of their groups
+    const file = await getReadyFile(getAdminClient(), claims.userId, id, "any");
     const object = file ? await (await getFileStore())?.get(file.r2Key) : null;
     if (!file || !object) return apiError("ไม่พบไฟล์นี้", 404);
 

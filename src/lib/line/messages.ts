@@ -378,6 +378,31 @@ export function noteListText(
   return [`${title} 📝`, ...lines, ...tail].join("\n");
 }
 
+// ── files, reminders and พี่ฮูก in a group (they take the owner's space and limits) ──
+export const GROUP_FILE_SEND_NOW_TEXT =
+  "ส่งไฟล์หรือรูปมาในกลุ่มได้เลย พี่ฮูกรอ 5 นาที แล้วจะเก็บไว้ในคลังไฟล์ของกลุ่มนะ";
+export const GROUP_FILE_EMPTY_TEXT =
+  'กลุ่มนี้ยังไม่มีไฟล์ที่เก็บไว้ พิมพ์ "เก็บไฟล์" แล้วส่งไฟล์หรือรูปมาได้เลย';
+export const groupFileNotFoundText = (term: string) => `ไม่พบไฟล์ของกลุ่มที่มีคำว่า "${term}"`;
+export const groupFileFullText = (capacity: string) =>
+  `พื้นที่เก็บไฟล์ของเจ้าของสมุดเต็มแล้ว (${capacity} ใช้ร่วมกับไฟล์ส่วนตัว) ลบไฟล์เก่าก่อนนะ`;
+export const groupFileDayLimitText = (limit: number) =>
+  `วันนี้เก็บไฟล์ครบ ${limit} ไฟล์แล้ว (นับรวมกับของเจ้าของสมุด) พรุ่งนี้ส่งใหม่ได้เลยนะ`;
+export const groupFileListText = (url?: string) =>
+  `ไฟล์ล่าสุดของกลุ่ม${url ? `\nดูไฟล์ทั้งหมด: ${url}` : ""}`;
+export const GROUP_REMIND_EMPTY_TEXT =
+  'กลุ่มนี้ยังไม่มีเตือนที่รออยู่ ตั้งได้ เช่น "เตือน พรุ่งนี้ 9 โมง ประชุม"';
+export const GROUP_REMIND_GONE_TEXT =
+  'ไม่พบเตือนนี้แล้ว พิมพ์ "เตือนกลุ่ม" เพื่อดูรายการอีกครั้งนะ';
+export const GROUP_REMIND_DENIED_TEXT = "ยกเลิกได้เฉพาะคนที่ตั้งเตือนนี้ หรือเจ้าของสมุดนะ";
+export const groupRemindCancelledText = (body: string) => `ยกเลิกเตือนกลุ่มแล้ว: ${body}`;
+export const groupReminderFullText = (limit: number, repeat: boolean) =>
+  `${repeat ? "เตือนประจำ" : "เตือนครั้งเดียว"}ของเจ้าของสมุดครบ ${limit} รายการแล้ว (ใช้ร่วมกับเตือนส่วนตัว) ยกเลิกอันที่ไม่ใช้ก่อนนะ`;
+export const GROUP_OWL_USAGE_TEXT =
+  '🦉 ถามพี่ฮูกในกลุ่ม พิมพ์ "ฮูก" ตามด้วยคำถาม เช่น "ฮูก เดือนนี้กลุ่มใช้ไปเท่าไร"\nพี่ฮูกเห็นแค่สมุดของกลุ่มนี้ ไม่เห็นข้อมูลส่วนตัวของใคร';
+export const groupOwlQuotaText = (limit: number) =>
+  `สิทธิ์ถามพี่ฮูกของเจ้าของสมุดเดือนนี้ครบ ${limit} ครั้งแล้ว เดือนหน้าถามใหม่ได้นะ`;
+
 // ── kept files ──
 export const FILE_ASK_KEEP_TEXT = "จะให้พี่ฮูกเก็บไฟล์นี้ไว้ไหม?";
 export const FILE_ASK_PDF_TEXT = "ไฟล์ PDF นี้ จะให้พี่ฮูกทำอะไร?";
@@ -446,6 +471,13 @@ export const reminderPushText = (body: string, repeatLabel: string | null, url?:
   [
     `⏰ เตือน: ${body}`,
     ...(repeatLabel ? [`(${repeatLabel}${url ? ` · ยกเลิกได้ที่ ${url}` : ""})`] : []),
+  ].join("\n");
+
+/** A group's reminder: no link, which would open the owner's own page for everyone. */
+export const groupReminderPushText = (body: string, repeatLabel: string | null) =>
+  [
+    `⏰ เตือนกลุ่ม: ${body}`,
+    ...(repeatLabel ? [`(${repeatLabel} · พิมพ์ "เตือนกลุ่ม" เพื่อดูหรือยกเลิก)`] : []),
   ].join("\n");
 
 // ── พี่ฮูก (AI assistant) ──

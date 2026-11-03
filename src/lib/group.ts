@@ -48,6 +48,12 @@ export type GroupCommand =
   | { kind: "recent" }
   | { kind: "delete-last" }
   | { kind: "help" }
+  | { kind: "file-keep"; name: string | null }
+  | { kind: "file-list"; term: string | null }
+  | { kind: "remind-add"; text: string }
+  | { kind: "remind-list" }
+  | { kind: "remind-cancel"; index: number }
+  | { kind: "owl"; question: string }
   | TripCommand
   | BillCommand;
 
@@ -69,6 +75,9 @@ export function parseGroupCommand(input: string): GroupCommand | null {
   if (one === "ลบล่าสุด") return { kind: "delete-last" };
   if (["ช่วยเหลือ", "วิธีใช้", "วิธีใช้งาน", "เมนู", "help"].includes(one)) return { kind: "help" };
 
+  const extra = parseGroupExtra(text, one);
+  if (extra) return extra;
+
   const trip = parseTripCommand(text);
   if (trip) return trip;
   const bill = parseBillCommand(text);
@@ -76,6 +85,34 @@ export function parseGroupCommand(input: string): GroupCommand | null {
 
   const body = recordBody(text);
   if (body) return { kind: "record", body };
+  return null;
+}
+
+/**
+ * Files, reminders and พี่ฮูก in a group. Each needs its own words in front ("เก็บไฟล์", "เตือน " with a
+ * space, "ฮูก " ...), so a chat that merely starts the same way ("เตือนแล้วนะ", "ฮูกกี้") is not one.
+ */
+function parseGroupExtra(text: string, one: string): GroupCommand | null {
+  if (["เก็บไฟล์", "เก็บรูป"].includes(one)) return { kind: "file-keep", name: null };
+  const keep = /^เก็บ(?:ไฟล์|รูป)\s+([\s\S]+)$/.exec(text);
+  if (keep?.[1]?.trim()) return { kind: "file-keep", name: keep[1].trim() };
+  if (["ไฟล์กลุ่ม", "ไฟล์ทั้งหมด", "คลังไฟล์"].includes(one))
+    return { kind: "file-list", term: null };
+  const find = /^หาไฟล์\s+([\s\S]+)$/.exec(text);
+  if (find?.[1]?.trim()) return { kind: "file-list", term: find[1].trim() };
+
+  if (["เตือนกลุ่ม", "รายการเตือน", "เตือนทั้งหมด"].includes(one)) return { kind: "remind-list" };
+  const cancel = /^ยกเลิกเตือน\s*([0-9๐-๙]+)$/.exec(one);
+  if (cancel?.[1]) {
+    const digits = cancel[1].replace(/[๐-๙]/g, (d) => String(d.charCodeAt(0) - 0x0e50));
+    return { kind: "remind-cancel", index: Number(digits) };
+  }
+  const remind = /^เตือน\s+([\s\S]+)$/.exec(text);
+  if (remind?.[1]?.trim()) return { kind: "remind-add", text: remind[1].trim() };
+
+  if (["ถามพี่ฮูก", "ถามฮูก", "พี่ฮูก", "ฮูก"].includes(one)) return { kind: "owl", question: "" };
+  const ask = /^(?:ถาม)?(?:พี่)?ฮูก\s+([\s\S]+)$/.exec(text);
+  if (ask?.[1]?.trim()) return { kind: "owl", question: ask[1].trim() };
   return null;
 }
 

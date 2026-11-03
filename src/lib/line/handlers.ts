@@ -332,6 +332,8 @@ export interface LineEvent {
   webhookEventId?: string;
   replyToken?: string;
   source?: { type: string; userId?: string; groupId?: string };
+  /** "memberLeft": who left the group. */
+  left?: { members?: { type: string; userId?: string }[] };
   message?: {
     type: string;
     id?: string;

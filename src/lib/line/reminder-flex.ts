@@ -13,6 +13,10 @@ export interface ReminderCardInput {
   rolledToTomorrow?: boolean;
   /** The LIFF reminders page (the "ดูเตือนทั้งหมด" button is left out without it). */
   listUrl?: string;
+  /** What the cancel button sends (a group's reminder has its own). */
+  cancelData?: string;
+  /** The card's title (a group's reminder says so). */
+  title?: string;
 }
 
 /** "Reminder set" card: what, when, and a button to cancel it. */
@@ -29,7 +33,13 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
         backgroundColor: COLOR.primarySoft,
         paddingAll: "14px",
         contents: [
-          { type: "text", text: "ตั้งเตือนแล้ว ⏰", weight: "bold", size: "lg", color: "#0B5D4F" },
+          {
+            type: "text",
+            text: input.title ?? "ตั้งเตือนแล้ว ⏰",
+            weight: "bold",
+            size: "lg",
+            color: "#0B5D4F",
+          },
         ],
       },
       body: {
@@ -103,7 +113,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
             action: {
               type: "postback",
               label: "ยกเลิกเตือนนี้",
-              data: `a=rmx&id=${input.id}`,
+              data: input.cancelData ?? `a=rmx&id=${input.id}`,
               displayText: "ยกเลิกเตือนนี้",
             },
           },

@@ -1,4 +1,4 @@
-import { fileCapacity, fileDayLimit } from "@/lib/file";
+import { fileCapacity, fileDayLimit, formatBytes } from "@/lib/file";
 import { MAX_GROUPS_PER_OWNER } from "@/lib/group";
 import { noteCapacity } from "@/lib/note";
 import {
@@ -62,13 +62,16 @@ export type QuotaIcon =
 
 /** What the person has used, each in the period its quota counts. */
 export interface QuotaUsage {
+  /** Everything kept, the person's own and in the groups they own (one space). */
   storageBytes: number;
+  /** The part of it kept in their groups. */
+  groupStorageBytes: number;
   wallets: number;
   goals: number;
   notes: number;
-  /** One-off reminders waiting. */
+  /** One-off reminders waiting (those set in their groups too). */
   reminders: number;
-  /** Repeating reminders waiting (their own limit). */
+  /** Repeating reminders waiting (their own limit; those set in their groups too). */
   repeatReminders: number;
   recurring: number;
   /** Group ledgers the person owns. */
@@ -164,7 +167,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
     {
       key: "reminders",
       label: "เตือนครั้งเดียว",
-      hint: "เตือนที่ตั้งไว้และยังไม่ถึงเวลา",
+      hint: "เตือนที่ตั้งไว้และยังไม่ถึงเวลา (รวมเตือนในกลุ่มที่คุณเป็นเจ้าของ)",
       word: "รายการ",
       icon: "bell",
       used: used.reminders,
@@ -173,7 +176,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
     {
       key: "repeatReminders",
       label: "เตือนประจำ",
-      hint: "เตือนที่ซ้ำทุกวัน ทุกสัปดาห์ หรือทุกเดือน",
+      hint: "เตือนที่ซ้ำทุกวัน ทุกสัปดาห์ หรือทุกเดือน (รวมเตือนในกลุ่มที่คุณเป็นเจ้าของ)",
       word: "รายการ",
       icon: "repeat",
       used: used.repeatReminders,
@@ -191,7 +194,10 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
     {
       key: "storage",
       label: "พื้นที่จัดเก็บ",
-      hint: "ไฟล์และรูปที่ฝากไว้ในคลัง",
+      hint:
+        used.groupStorageBytes > 0
+          ? `ไฟล์และรูปที่ฝากไว้ · ส่วนตัว ${formatBytes(Math.max(0, used.storageBytes - used.groupStorageBytes))} · กลุ่ม ${formatBytes(used.groupStorageBytes)}`
+          : "ไฟล์และรูปที่ฝากไว้ในคลัง (ไฟล์ในกลุ่มที่คุณเป็นเจ้าของก็ใช้พื้นที่นี้)",
       word: "",
       icon: "storage",
       unit: "bytes",
@@ -204,7 +210,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
     {
       key: "owl",
       label: "ถามพี่ฮูก",
-      hint: "คำถามที่ให้พี่ฮูกตอบ",
+      hint: "คำถามที่ให้พี่ฮูกตอบ (รวมคำถามในกลุ่มที่คุณเป็นเจ้าของ)",
       word: "ครั้ง",
       icon: "owl",
       used: used.owl,

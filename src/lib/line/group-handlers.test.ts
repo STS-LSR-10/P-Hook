@@ -140,6 +140,13 @@ vi.mock("@/lib/group-repo", () => ({
   tripEntries: async (_db: unknown, tripId: string) =>
     entries.filter((e) => !e.deleted && e.tripId === tripId),
 }));
+const ended: { groupId: string; exceptOwner?: string }[] = [];
+vi.mock("@/lib/user-reminder-repo", async (original) => ({
+  ...(await original<typeof import("@/lib/user-reminder-repo")>()),
+  endGroupReminders: async (_db: unknown, groupId: string, exceptOwner?: string) => {
+    ended.push({ groupId, exceptOwner });
+  },
+}));
 vi.mock("@/lib/fx-repo", () => ({
   getRate: async () => fxAnswer,
 }));
@@ -195,6 +202,7 @@ beforeEach(() => {
   opened.length = 0;
   closed.length = 0;
   upserts.length = 0;
+  ended.length = 0;
 });
 
 describe("the bot joining and leaving", () => {
@@ -268,6 +276,8 @@ describe("เปิดสมุดกลุ่ม", () => {
     const { deps } = setup();
     await handleEvent(inGroup("Uother", "เปิดสมุดกลุ่ม"), deps);
     expect(opened).toEqual([{ lineGroupId: GID, owner: "app-Uother" }]);
+    // the old owner's group reminders stop; the new owner's own stay
+    expect(ended).toEqual([{ groupId: "g1", exceptOwner: "app-Uother" }]);
   });
 
   it("an owner of five ledgers cannot open a sixth", async () => {
@@ -532,6 +542,7 @@ describe("ปิดสมุดกลุ่ม / ช่วยเหลือ", (
     ({ deps, reply } = setup());
     await handleEvent(inGroup("Uowner", "ปิดสมุดกลุ่ม"), deps);
     expect(closed).toEqual([GID]);
+    expect(ended).toEqual([{ groupId: "g1", exceptOwner: undefined }]);
   });
 
   it("help lists the commands", async () => {

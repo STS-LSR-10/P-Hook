@@ -18,6 +18,36 @@ describe("parseGroupCommand", () => {
     expect(parseGroupCommand(input)).toEqual(expected);
   });
 
+  it.each([
+    ["เก็บไฟล์", { kind: "file-keep", name: null }],
+    ["เก็บรูป", { kind: "file-keep", name: null }],
+    ["เก็บไฟล์ สัญญาเช่า", { kind: "file-keep", name: "สัญญาเช่า" }],
+    ["ไฟล์กลุ่ม", { kind: "file-list", term: null }],
+    ["ไฟล์ทั้งหมด", { kind: "file-list", term: null }],
+    ["หาไฟล์ สัญญา", { kind: "file-list", term: "สัญญา" }],
+    ["เตือนกลุ่ม", { kind: "remind-list" }],
+    ["รายการเตือน", { kind: "remind-list" }],
+    ["เตือน พรุ่งนี้ 9 โมง ประชุม", { kind: "remind-add", text: "พรุ่งนี้ 9 โมง ประชุม" }],
+    [
+      "เตือน ทุกวันศุกร์ 5 โมงเย็น จ่ายค่าห้อง",
+      { kind: "remind-add", text: "ทุกวันศุกร์ 5 โมงเย็น จ่ายค่าห้อง" },
+    ],
+    ["ยกเลิกเตือน 2", { kind: "remind-cancel", index: 2 }],
+    ["ฮูก ทริปนี้ใช้ไปเท่าไร", { kind: "owl", question: "ทริปนี้ใช้ไปเท่าไร" }],
+    ["ถามพี่ฮูก แปลว่าอะไร", { kind: "owl", question: "แปลว่าอะไร" }],
+    ["พี่ฮูก ช่วยคิดหน่อย", { kind: "owl", question: "ช่วยคิดหน่อย" }],
+    ["ถามพี่ฮูก", { kind: "owl", question: "" }],
+  ])("group extras: %s", (input, expected) => {
+    expect(parseGroupCommand(input)).toEqual(expected);
+  });
+
+  it("ordinary chat that only starts like an extra stays quiet", () => {
+    expect(parseGroupCommand("เก็บไว้ก่อนนะ")).toBeNull();
+    expect(parseGroupCommand("ฮูกกี้ น่ารัก")).toBeNull();
+    expect(parseGroupCommand("เตือนแล้วนะ")).toBeNull();
+    expect(parseGroupCommand("ไฟล์อยู่ไหน")).toBeNull();
+  });
+
   it("the word จด can stand anywhere in the entry", () => {
     const body = (input: string) => parseGroupCommand(input);
     expect(body("จด ข้าว 300")).toEqual({ kind: "record", body: "ข้าว 300" });
