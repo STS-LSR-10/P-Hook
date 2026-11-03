@@ -68,3 +68,18 @@ describe("what the bot sends, in the person's language", () => {
     ]);
   });
 });
+
+describe("the AI answers in the person's language", () => {
+  it("is told to answer in English, but not in a group", async () => {
+    const { owlUserPrompt } = await import("@/lib/ai/owl");
+    setLocaleSource(() => "en");
+    expect(owlUserPrompt({ question: "ใช้ไปเท่าไร", data: null } as never)).toContain(
+      "Answer in English.",
+    );
+    expect(
+      owlUserPrompt({ question: "ใช้ไปเท่าไร", data: null, group: true } as never),
+    ).not.toContain("Answer in English.");
+    setLocaleSource(null);
+    expect(owlUserPrompt({ question: "x", data: null } as never)).not.toContain("English");
+  });
+});

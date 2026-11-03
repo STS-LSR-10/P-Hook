@@ -1,5 +1,6 @@
 import { postJson, type AiProviderName } from "@/lib/ocr/provider";
 import { STRUCTURER_DEFAULT_MODELS, type StructurerEnv } from "./text-structurer";
+import { currentLocale } from "@/lib/i18n";
 
 /** The assistant: answers one question, from general knowledge and from the person's own records. */
 export interface Owl {
@@ -86,7 +87,9 @@ export function owlUserPrompt(input: OwlInput): string {
     : input.data
       ? `DATA (the person's own, read-only):\n${input.data}`
       : "DATA: none (this question does not use the person's records).";
-  return [data, "", `QUESTION: ${JSON.stringify(input.question)}`].join("\n");
+  // the person chose English: answer in it, whatever language the question is in (a group's is Thai)
+  const language = !input.group && currentLocale() === "en" ? ["", "Answer in English."] : [];
+  return [data, "", `QUESTION: ${JSON.stringify(input.question)}`, ...language].join("\n");
 }
 
 export interface OwlConfig {
