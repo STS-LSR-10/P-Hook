@@ -1,9 +1,7 @@
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { balanceOf, totalBalance, walletLabel, type Wallet } from "@/lib/wallet";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
-
-const money = (satang: number) => `${satang < 0 ? "-" : ""}฿${formatBaht(Math.abs(satang))}`;
 
 /** "กระเป๋า": every wallet with its balance, the total, and a button to the web page. */
 export function buildWalletsCard(input: {

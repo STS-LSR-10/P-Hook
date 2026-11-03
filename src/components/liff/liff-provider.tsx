@@ -3,6 +3,8 @@
 import { Splash } from "@/components/liff/splash";
 import { setZoneSource } from "@/lib/thai-date";
 import { isZone } from "@/lib/zone";
+import { isHomeCurrency } from "@/lib/currency";
+import { setCurrencySource } from "@/lib/money";
 import {
   createContext,
   useCallback,
@@ -107,6 +109,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         token?: string;
         error?: string;
         tz?: string | null;
+        cur?: string | null;
       };
       if (!res.ok || !body.token) {
         // An expired ID token needs a fresh login rather than a retry.
@@ -117,6 +120,9 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       // dates on every page are shown and read in the person's zone
       const zone = body.tz;
       if (isZone(zone)) setZoneSource(() => zone);
+      // and amounts in their currency
+      const cur = body.cur;
+      if (isHomeCurrency(cur)) setCurrencySource(() => cur);
       try {
         window.sessionStorage.removeItem(RELOGIN_KEY);
       } catch {

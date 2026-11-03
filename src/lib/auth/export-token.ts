@@ -19,6 +19,8 @@ export interface ExportClaims {
   attachments?: boolean;
   /** The person's time zone: the file's dates and times are in it. */
   tz?: string;
+  /** The person's currency: the file's amounts are labelled in it. */
+  cur?: string;
 }
 
 const keyOf = (secret: string) => new TextEncoder().encode(secret);
@@ -41,6 +43,7 @@ export async function signExportToken(
     g: claims.groups,
     att: claims.attachments === true ? 1 : undefined,
     tz: claims.tz,
+    cur: claims.cur,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(claims.userId)
@@ -84,6 +87,7 @@ export async function verifyExportToken(
       groups,
       attachments: payload.att === 1 ? true : undefined,
       tz: typeof payload.tz === "string" ? payload.tz : undefined,
+      cur: typeof payload.cur === "string" ? payload.cur : undefined,
     };
   } catch {
     return null;

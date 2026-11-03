@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const userUpdates: Record<string, unknown>[] = [];
 const settingsUpserts: Record<string, unknown>[] = [];
 let storedZone = "Asia/Bangkok";
+let storedCurrency = "THB";
 
 vi.mock("@/lib/auth/require-user", () => ({
   requireUser: async () => ({ userId: "u1", lineUserId: "U1" }),
@@ -16,10 +17,14 @@ vi.mock("@/lib/supabase/admin", () => ({
       const chain = {
         select: () => chain,
         eq: () => chain,
-        single: async () => ({ data: { timezone: storedZone }, error: null }),
+        single: async () => ({
+          data: { timezone: storedZone, currency: storedCurrency },
+          error: null,
+        }),
         update: (v: Record<string, unknown>) => {
           userUpdates.push(v);
-          storedZone = String(v.timezone);
+          if (v.timezone) storedZone = String(v.timezone);
+          if (v.currency) storedCurrency = String(v.currency);
           return chain;
         },
         upsert: async (v: Record<string, unknown>) => {
@@ -44,12 +49,17 @@ beforeEach(() => {
   userUpdates.length = 0;
   settingsUpserts.length = 0;
   storedZone = "Asia/Bangkok";
+  storedCurrency = "THB";
 });
 
 describe("the time zone in settings", () => {
   it("is read with the settings", async () => {
     const body = await (await GET(new Request("https://x.test/api/settings"))).json();
-    expect(body).toMatchObject({ confirm_style: "full", timezone: "Asia/Bangkok" });
+    expect(body).toMatchObject({
+      confirm_style: "full",
+      timezone: "Asia/Bangkok",
+      currency: "THB",
+    });
   });
 
   it("is saved on the person, alone", async () => {
@@ -62,6 +72,21 @@ describe("the time zone in settings", () => {
 
   it("only one of the zones we list", async () => {
     expect((await patch({ timezone: "Mars/Olympus" })).status).toBe(400);
+    expect(userUpdates).toEqual([]);
+  });
+});
+
+describe("the currency in settings", () => {
+  it("is saved on the person, alone", async () => {
+    const res = await patch({ currency: "USD" });
+    expect(res.status).toBe(200);
+    expect(userUpdates).toEqual([{ currency: "USD" }]);
+    expect(settingsUpserts).toEqual([]);
+    expect(await res.json()).toMatchObject({ currency: "USD" });
+  });
+
+  it("only one of the currencies we offer", async () => {
+    expect((await patch({ currency: "VND" })).status).toBe(400);
     expect(userUpdates).toEqual([]);
   });
 });

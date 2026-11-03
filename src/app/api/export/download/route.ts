@@ -17,7 +17,7 @@ import { DEFAULT_WALLET_NAME } from "@/lib/wallet";
 import { listWallets } from "@/lib/wallet-repo";
 import { listTransfers } from "@/lib/transfer-repo";
 import { log } from "@/lib/log";
-import { enterZone, withZoneScope } from "@/lib/zone-scope";
+import { enterCurrency, enterZone, withZoneScope } from "@/lib/zone-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +50,7 @@ async function download(request: Request): Promise<Response> {
     }
 
     enterZone(claims.tz);
+    enterCurrency(claims.cur);
     const db = getAdminClient();
     const wallets = await listWallets(db, claims.userId);
     const defaultWallet = wallets.find((w) => w.isDefault);

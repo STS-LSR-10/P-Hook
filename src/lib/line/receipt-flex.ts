@@ -1,5 +1,5 @@
 import { categoryLabel } from "@/lib/category-emoji";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage, TxType } from "@/lib/types";
 import { budgetBlock, chip, COLOR, noticeBoxes, paymentRow } from "./flex";
@@ -134,7 +134,7 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
           },
           {
             type: "text",
-            text: `${e.type === "income" ? "+" : ""}฿${formatBaht(e.amountSatang)}`,
+            text: `${e.type === "income" ? "+" : ""}${money(e.amountSatang)}`,
             size: "md",
             weight: "bold",
             align: "end",

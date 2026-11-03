@@ -8,7 +8,7 @@ import { Sheet } from "@/components/liff/sheet";
 import { PlusLock } from "@/components/liff/settings/plus-lock";
 import { cardClass, fieldClass, type Me } from "@/components/liff/settings/types";
 import { ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
-import { formatBaht } from "@/lib/money";
+import { currencyUnit, money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import { MAX_TRANSFER_NOTE, type TransferDto } from "@/lib/transfer";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
@@ -59,7 +59,6 @@ interface WalletsResponse {
   viewerId?: string;
 }
 
-const money = (satang: number) => `${satang < 0 ? "-" : ""}฿${formatBaht(Math.abs(satang))}`;
 const BALANCE_PATTERN = /^-?\d{1,10}(\.\d{1,2})?$/;
 
 export default function WalletsPage() {
@@ -268,9 +267,7 @@ export default function WalletsPage() {
                             {t.note ? ` · ${t.note}` : ""}
                           </p>
                         </div>
-                        <p className="num shrink-0 text-sm font-bold">
-                          ฿{formatBaht(t.amountSatang)}
-                        </p>
+                        <p className="num shrink-0 text-sm font-bold">{money(t.amountSatang)}</p>
                         <button
                           type="button"
                           aria-label={`ยกเลิกการโอน ${t.fromName} ไป ${t.toName}`}
@@ -568,7 +565,7 @@ function WalletSheet({
           value={opening}
           onChange={(e) => setOpening(e.target.value)}
           inputMode="decimal"
-          placeholder="ยอดตั้งต้น (บาท) เว้นว่าง = 0"
+          placeholder={`ยอดตั้งต้น (${currencyUnit()}) เว้นว่าง = 0`}
           aria-label="ยอดตั้งต้น"
           className={cn(fieldClass, "num")}
         />
@@ -604,7 +601,7 @@ function WalletSheet({
                 value={limit}
                 onChange={(e) => setLimit(e.target.value)}
                 inputMode="decimal"
-                placeholder="วงเงิน (บาท) เช่น 50000"
+                placeholder={`วงเงิน (${currencyUnit()}) เช่น 50000`}
                 aria-label="วงเงิน"
                 className={cn(fieldClass, "num")}
               />
@@ -723,7 +720,7 @@ function TransferSheet({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder="จำนวนเงิน (บาท)"
+          placeholder={`จำนวนเงิน (${currencyUnit()})`}
           aria-label="จำนวนเงินที่โอน"
           className={cn(fieldClass, "num")}
         />

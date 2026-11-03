@@ -3,6 +3,7 @@ import { hasGroup, type ColumnGroup } from "./columns";
 import { NOTO_SANS_THAI_BOLD_BASE64, NOTO_SANS_THAI_REGULAR_BASE64 } from "./font-data";
 import { TYPE_LABEL, exportDate, exportTime, sourceLabel, type ExportRow } from "./rows";
 import { summarizeByCategory } from "./summary";
+import { currencySymbol, currencyUnit } from "@/lib/money";
 
 /** The most rows the table prints; the totals always cover every row. */
 export const MAX_PDF_ROWS = 2000;
@@ -110,7 +111,7 @@ function tableColumns(groups: readonly ColumnGroup[] | undefined): TableColumn[]
   }
   if (hasGroup(groups, "amount")) {
     cols.push({
-      header: "จำนวนเงิน (บาท)",
+      header: `จำนวนเงิน (${currencyUnit()})`,
       weight: 1.4,
       align: "right",
       cell: (r) => `${r.type === "income" ? "+" : "-"}${money(r.amountSatang)}`,
@@ -122,7 +123,7 @@ function tableColumns(groups: readonly ColumnGroup[] | undefined): TableColumn[]
     ? cols
     : [
         {
-          header: "จำนวนเงิน (บาท)",
+          header: `จำนวนเงิน (${currencyUnit()})`,
           weight: 1,
           align: "right",
           cell: (r) => `${r.type === "income" ? "+" : "-"}${money(r.amountSatang)}`,
@@ -188,9 +189,13 @@ export async function buildPdf(rows: ExportRow[], options: PdfOptions): Promise<
   const net = income - expense;
   const boxW = (width - 20) / 3;
   const boxes: [string, string, string][] = [
-    ["รายรับ", `฿${money(income)}`, INCOME],
-    ["รายจ่าย", `฿${money(expense)}`, EXPENSE],
-    ["คงเหลือ", `${net < 0 ? "-" : ""}฿${money(Math.abs(net))}`, net < 0 ? EXPENSE : OLIVE],
+    ["รายรับ", `${currencySymbol()}${money(income)}`, INCOME],
+    ["รายจ่าย", `${currencySymbol()}${money(expense)}`, EXPENSE],
+    [
+      "คงเหลือ",
+      `${net < 0 ? "-" : ""}${currencySymbol()}${money(Math.abs(net))}`,
+      net < 0 ? EXPENSE : OLIVE,
+    ],
   ];
   boxes.forEach(([label, value, color], i) => {
     const x = left + i * (boxW + 10);
@@ -234,7 +239,7 @@ export async function buildPdf(rows: ExportRow[], options: PdfOptions): Promise<
         .roundedRect(left + 160, y + 3, Math.max(4, (190 * c.totalSatang) / top), 7, 3.5)
         .fill(OLIVE);
       doc.fillColor(INK);
-      put(doc, `฿${money(c.totalSatang)}`, left + 360, y, 90, "right");
+      put(doc, `${currencySymbol()}${money(c.totalSatang)}`, left + 360, y, 90, "right");
       doc.fillColor(MUTED);
       put(doc, `${pct}%`, left + 455, y, width - 455, "right");
       y += 17;

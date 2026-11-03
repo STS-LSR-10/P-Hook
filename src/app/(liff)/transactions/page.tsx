@@ -37,7 +37,7 @@ import { WALLET_KIND_EMOJI, type WalletKind } from "@/lib/wallet";
 import { addDays, formatRange, rangeToFilter, ymdKey, ymdOf } from "@/lib/date-range";
 import type { TxDto } from "@/lib/dto";
 import { COLUMN_GROUPS, GROUP_LABEL, type ColumnGroup } from "@/lib/export/columns";
-import { formatBaht } from "@/lib/money";
+import { currencySymbol, currencyUnit, money } from "@/lib/money";
 import { satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
@@ -628,15 +628,11 @@ function TransactionsView() {
           >
             <div>
               <p className="text-muted">รายรับ</p>
-              <p className="num font-bold text-income">
-                +฿{formatBaht(list.data.totals.incomeSatang)}
-              </p>
+              <p className="num font-bold text-income">+{money(list.data.totals.incomeSatang)}</p>
             </div>
             <div>
               <p className="text-muted">รายจ่าย</p>
-              <p className="num font-bold text-expense">
-                -฿{formatBaht(list.data.totals.expenseSatang)}
-              </p>
+              <p className="num font-bold text-expense">-{money(list.data.totals.expenseSatang)}</p>
             </div>
             <div>
               <p className="text-muted">พบ</p>
@@ -691,7 +687,8 @@ function TransactionsView() {
                           : "border-income/30 bg-income/10 text-income",
                       )}
                     >
-                      รวม: {g.netSatang < 0 ? "-" : "+"}฿{formatBaht(Math.abs(g.netSatang))}
+                      รวม: {g.netSatang < 0 ? "-" : "+"}
+                      {money(Math.abs(g.netSatang))}
                     </span>
                   </div>
                   <ul className="space-y-2">
@@ -1171,7 +1168,7 @@ function AddSheet({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder="จำนวนเงิน (บาท)"
+          placeholder={`จำนวนเงิน (${currencyUnit()})`}
           aria-label="จำนวนเงิน"
           className="num h-12 w-full rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary"
         />
@@ -1486,7 +1483,8 @@ function EditForm({
           </p>
         </div>
         <p className={cn("num shrink-0 font-bold", income ? "text-income" : "text-expense")}>
-          {income ? "+" : "-"}฿
+          {income ? "+" : "-"}
+          {currencySymbol()}
           {Number.isFinite(previewAmount) ? previewAmount.toLocaleString("th-TH") : "0"}
         </p>
       </div>
@@ -1526,7 +1524,7 @@ function EditForm({
           className={field}
         />
       </Field>
-      <Field label="จำนวนเงิน (บาท)">
+      <Field label={`จำนวนเงิน (${currencyUnit()})`}>
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}

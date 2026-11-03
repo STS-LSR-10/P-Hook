@@ -10,7 +10,7 @@ import { sliceColor } from "@/components/liff/slice-color";
 import { EmptyState, ErrorState, PageHeader, Skeleton } from "@/components/liff/states";
 import { useApi } from "@/components/liff/liff-provider";
 import { emojiOf } from "@/lib/category-emoji";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import type { SeriesPoint } from "@/lib/series";
 import {
   addLocalDays,
@@ -187,14 +187,12 @@ export default function AnalyticsPage() {
                     <span className="flex items-center gap-1.5">
                       <span className="h-2.5 w-2.5 rounded-full bg-income" aria-hidden />
                       <span className="text-muted">รายรับ:</span>
-                      <span className="num font-bold text-income">฿{formatBaht(totalIncome)}</span>
+                      <span className="num font-bold text-income">{money(totalIncome)}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="h-2.5 w-2.5 rounded-full bg-expense" aria-hidden />
                       <span className="text-muted">รายจ่าย:</span>
-                      <span className="num font-bold text-expense">
-                        ฿{formatBaht(totalExpense)}
-                      </span>
+                      <span className="num font-bold text-expense">{money(totalExpense)}</span>
                     </span>
                   </div>
 
@@ -218,17 +216,13 @@ export default function AnalyticsPage() {
                       <p className="text-[11px] font-medium text-muted">
                         รายรับเฉลี่ย / {PER[view]}
                       </p>
-                      <p className="num text-base font-bold text-income">
-                        ฿{formatBaht(avgIncome)}
-                      </p>
+                      <p className="num text-base font-bold text-income">{money(avgIncome)}</p>
                     </div>
                     <div className="rounded-2xl border border-expense/30 bg-expense/10 p-3">
                       <p className="text-[11px] font-medium text-muted">
                         รายจ่ายเฉลี่ย / {PER[view]}
                       </p>
-                      <p className="num text-base font-bold text-expense">
-                        ฿{formatBaht(avgExpense)}
-                      </p>
+                      <p className="num text-base font-bold text-expense">{money(avgExpense)}</p>
                     </div>
                   </div>
                 </section>
@@ -260,9 +254,7 @@ export default function AnalyticsPage() {
                         <CategoryDonutChart slices={slices} />
                         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
                           <span className="text-[11px] font-medium text-muted">รวมรายจ่าย</span>
-                          <span className="num mt-0.5 text-lg font-bold">
-                            ฿{formatBaht(catTotal)}
-                          </span>
+                          <span className="num mt-0.5 text-lg font-bold">{money(catTotal)}</span>
                           <span className="mt-0.5 rounded-full border border-primary/20 bg-primary-soft px-2 py-0.5 text-[10px] font-medium text-primary">
                             {cats.length} หมวดหมู่
                           </span>
@@ -293,9 +285,7 @@ export default function AnalyticsPage() {
                                   <span className="truncate font-medium">{c.name}</span>
                                 </span>
                                 <span className="shrink-0 text-right">
-                                  <span className="num font-bold">
-                                    ฿{formatBaht(c.totalSatang)}
-                                  </span>
+                                  <span className="num font-bold">{money(c.totalSatang)}</span>
                                   <span className="num ml-1 text-[10px] text-muted">({pct}%)</span>
                                 </span>
                               </div>

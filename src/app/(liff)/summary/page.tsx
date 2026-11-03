@@ -9,7 +9,7 @@ import { TxCard } from "@/components/liff/tx-card";
 import { useApi } from "@/components/liff/liff-provider";
 import { sliceColor } from "@/components/liff/slice-color";
 import type { TxDto } from "@/lib/dto";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { PLAN_LABEL } from "@/lib/plan";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
@@ -249,7 +249,7 @@ function Hero({
             value < 0 ? "text-expense" : "text-[var(--hero-ink)]",
           )}
         >
-          ฿{formatBaht(value)}
+          {money(value)}
         </p>
         <p className="text-xs text-[var(--hero-ink-soft)]">
           {accumulated
@@ -263,7 +263,7 @@ function Hero({
                 เป้าหมาย {goal.emoji ?? "🎯"} {goal.name}
               </span>
               <span className="num shrink-0 font-semibold text-[var(--hero-ink)]">
-                {goal.percent}% (฿{formatBaht(goal.targetSatang)})
+                {goal.percent}% ({money(goal.targetSatang)})
               </span>
             </div>
             <div
@@ -293,7 +293,7 @@ function IncomeExpense({ data }: { data: SummaryResponse }) {
     <div className="grid grid-cols-2 gap-3">
       <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
         <p className="text-xs text-muted">รายจ่าย</p>
-        <p className="num text-lg font-bold text-expense">฿{formatBaht(data.expenseSatang)}</p>
+        <p className="num text-lg font-bold text-expense">{money(data.expenseSatang)}</p>
         <p className="mt-1 text-[11px] text-muted">
           {share === null ? (
             "ยังไม่มีรายรับ"
@@ -306,7 +306,7 @@ function IncomeExpense({ data }: { data: SummaryResponse }) {
       </div>
       <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
         <p className="text-xs text-muted">รายรับ</p>
-        <p className="num text-lg font-bold text-income">฿{formatBaht(data.incomeSatang)}</p>
+        <p className="num text-lg font-bold text-income">{money(data.incomeSatang)}</p>
         <p className="mt-1 text-[11px] text-muted">
           <span className="num font-semibold">{data.count}</span> รายการในรอบนี้
         </p>
@@ -386,14 +386,11 @@ function Spending({
 
         <dl className="col-span-7 space-y-2 border-l border-border pl-3 text-xs">
           <Row label="จำนวนรายการ" value={`${data.count} รายการ`} />
-          <Row
-            label="งบที่ตั้งไว้"
-            value={budget === null ? "ยังไม่ตั้ง" : `฿${formatBaht(budget)}`}
-          />
+          <Row label="งบที่ตั้งไว้" value={budget === null ? "ยังไม่ตั้ง" : `${money(budget)}`} />
           {remaining !== null ? (
             <Row
               label="งบคงเหลือ"
-              value={`${remaining < 0 ? "-" : "+"}฿${formatBaht(Math.abs(remaining))}`}
+              value={`${remaining < 0 ? "-" : "+"}${money(Math.abs(remaining))}`}
               tone={remaining < 0 ? "text-expense" : "text-income"}
             />
           ) : null}
@@ -461,7 +458,7 @@ function Spending({
                     <span className="num text-muted">
                       {total > 0 ? Math.round((c.totalSatang / total) * 1000) / 10 : 0}%
                     </span>
-                    <span className="num font-semibold">฿{formatBaht(c.totalSatang)}</span>
+                    <span className="num font-semibold">{money(c.totalSatang)}</span>
                   </span>
                 </li>
               ))}

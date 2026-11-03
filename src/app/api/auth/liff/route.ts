@@ -37,10 +37,15 @@ export async function POST(request: Request): Promise<Response> {
     await touchProfile(db, user.id, profile);
 
     const token = await signSession(
-      { userId: user.id, lineUserId: claims.sub, tz: user.timezone },
+      { userId: user.id, lineUserId: claims.sub, tz: user.timezone, cur: user.currency },
       env.SESSION_JWT_SECRET,
     );
     // the page shows and reads times in this zone
-    return json({ token, expiresIn: SESSION_TTL_SECONDS, tz: user.timezone ?? null });
+    return json({
+      token,
+      expiresIn: SESSION_TTL_SECONDS,
+      tz: user.timezone ?? null,
+      cur: user.currency ?? null,
+    });
   });
 }

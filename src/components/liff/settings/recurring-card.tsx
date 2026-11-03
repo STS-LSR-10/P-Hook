@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { Sheet } from "@/components/liff/sheet";
 import { LoadingBlock } from "@/components/liff/states";
-import { formatBaht } from "@/lib/money";
+import { currencyUnit, money } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
@@ -97,7 +97,8 @@ export function RecurringCard({ me, embedded = false }: { me: Me; embedded?: boo
                   r.type === "income" ? "text-income" : "text-expense",
                 )}
               >
-                {r.type === "income" ? "+" : "-"}฿{formatBaht(r.amountSatang)}
+                {r.type === "income" ? "+" : "-"}
+                {money(r.amountSatang)}
               </p>
               <button
                 type="button"
@@ -243,7 +244,7 @@ function AddRuleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder="จำนวนเงิน (บาท)"
+          placeholder={`จำนวนเงิน (${currencyUnit()})`}
           aria-label="จำนวนเงิน"
           className={cn(fieldClass, "num")}
         />

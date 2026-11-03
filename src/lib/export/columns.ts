@@ -1,4 +1,4 @@
-import { HEADERS } from "./rows";
+import { headers } from "./rows";
 
 /** What a person ticks in the export sheet; each group is one or more columns of the file. */
 export const COLUMN_GROUPS = [
@@ -39,10 +39,12 @@ const GROUP_OF_COLUMN: readonly ColumnGroup[] = [
   "fx", // อัตราแลกเปลี่ยน
 ];
 
-/** Indexes into HEADERS / rowCells of the columns the chosen groups keep, in the file's own order. */
+/** Indexes into headers() / rowCells of the columns the chosen groups keep, in the file's own order. */
 export function columnIndexes(groups?: readonly ColumnGroup[]): number[] {
   const wanted = new Set<ColumnGroup>(groups && groups.length > 0 ? groups : COLUMN_GROUPS);
-  return HEADERS.map((_, i) => i).filter((i) => wanted.has(GROUP_OF_COLUMN[i] as ColumnGroup));
+  return headers()
+    .map((_, i) => i)
+    .filter((i) => wanted.has(GROUP_OF_COLUMN[i] as ColumnGroup));
 }
 
 export const hasGroup = (groups: readonly ColumnGroup[] | undefined, g: ColumnGroup): boolean =>

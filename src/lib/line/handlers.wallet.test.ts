@@ -5,6 +5,7 @@ import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 
 let wallets: Wallet[] = [];
 let plan = "plus";
+let bookCurrency = "THB";
 let fxAnswer: { rate: number; sourceDay: string; stale: boolean } | null = null;
 const fxAsked: string[] = [];
 let debtList: import("@/lib/debt").DebtDto[] = [];
@@ -77,7 +78,8 @@ vi.mock("@/lib/debt-repo", async () => {
   };
 });
 vi.mock("@/lib/fx-repo", () => ({
-  getRate: async (_db: unknown, currency: string, day: string) => {
+  // the price in the person's currency (the baht here)
+  getHomeRate: async (_db: unknown, currency: string, day: string) => {
     fxAsked.push(`${currency}:${day}`);
     return fxAnswer;
   },
@@ -108,6 +110,7 @@ vi.mock("@/lib/repo", async (original) => ({
     display_name: null,
     plan,
     plan_expires_at: null,
+    currency: bookCurrency,
   }),
   getSettings: async () => ({
     confirm_style: "short",
@@ -638,7 +641,7 @@ describe("foreign currency by chat (Elite)", () => {
     const { deps, reply } = setup();
     await handleEvent(text("ลูกอม 1 KRW"), deps);
     expect(inserted).toHaveLength(0);
-    expect(sent(reply)).toContain("น้อยกว่า 1 สตางค์");
+    expect(sent(reply)).toContain("น้อยกว่า 0.01");
   });
 
   it.each(["free", "plus"])("%s is told it is an Elite feature and nothing is saved", async (p) => {
@@ -648,6 +651,18 @@ describe("foreign currency by chat (Elite)", () => {
     expect(inserted).toHaveLength(0);
     expect(fxAsked).toHaveLength(0);
     expect(sent(reply)).toContain("Elite");
+  });
+
+  it("in a dollar book, dollars are not foreign: any plan records them as they are", async () => {
+    plan = "free";
+    bookCurrency = "USD";
+    const { withZoneScope } = await import("@/lib/zone-scope");
+    const { deps } = setup();
+    await withZoneScope(() => handleEvent(text("กาแฟ 4 USD"), deps));
+    bookCurrency = "THB";
+    expect(fxAsked).toHaveLength(0);
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0]).toMatchObject({ amountSatang: 400, foreign: null });
   });
 
   it("baht entries never touch the rate source", async () => {

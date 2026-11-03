@@ -1,8 +1,9 @@
 import ExcelJS from "exceljs";
 import { columnIndexes, type ColumnGroup } from "./columns";
-import { HEADERS, TYPE_LABEL, exportDate, exportTime, sourceLabel, type ExportRow } from "./rows";
+import { headers, TYPE_LABEL, exportDate, exportTime, sourceLabel, type ExportRow } from "./rows";
 import type { TransferDto } from "@/lib/transfer";
 import { summarizeByCategory, summarizeByMonth } from "./summary";
+import { currencyUnit } from "@/lib/money";
 
 const HEADER_FILL = "FFCCFBF1"; // brand primary-soft
 const MONEY_FORMAT = "#,##0.00";
@@ -31,6 +32,7 @@ export async function buildXlsx(
   wb.created = new Date();
 
   const list = wb.addWorksheet("รายการ");
+  const HEADERS = headers();
   // every column the sheet can have; the chosen groups decide which of them are kept
   const all = [
     { header: HEADERS[0], key: "date", width: 12 },
@@ -69,7 +71,12 @@ export async function buildXlsx(
       { header: "ประเภท", key: "type", width: 10 },
       { header: "หมวด", key: "category", width: 24 },
       { header: "จำนวนรายการ", key: "count", width: 14 },
-      { header: "รวม (บาท)", key: "total", width: 16, style: { numFmt: MONEY_FORMAT } },
+      {
+        header: `รวม (${currencyUnit()})`,
+        key: "total",
+        width: 16,
+        style: { numFmt: MONEY_FORMAT },
+      },
     ];
     for (const c of summarizeByCategory(rows)) {
       byCategory.addRow({
@@ -84,9 +91,24 @@ export async function buildXlsx(
     const byMonth = wb.addWorksheet("สรุปรายเดือน");
     byMonth.columns = [
       { header: "เดือน", key: "month", width: 10 },
-      { header: "รายรับ (บาท)", key: "income", width: 16, style: { numFmt: MONEY_FORMAT } },
-      { header: "รายจ่าย (บาท)", key: "expense", width: 16, style: { numFmt: MONEY_FORMAT } },
-      { header: "คงเหลือ (บาท)", key: "net", width: 16, style: { numFmt: MONEY_FORMAT } },
+      {
+        header: `รายรับ (${currencyUnit()})`,
+        key: "income",
+        width: 16,
+        style: { numFmt: MONEY_FORMAT },
+      },
+      {
+        header: `รายจ่าย (${currencyUnit()})`,
+        key: "expense",
+        width: 16,
+        style: { numFmt: MONEY_FORMAT },
+      },
+      {
+        header: `คงเหลือ (${currencyUnit()})`,
+        key: "net",
+        width: 16,
+        style: { numFmt: MONEY_FORMAT },
+      },
     ];
     for (const m of summarizeByMonth(rows)) {
       byMonth.addRow({
@@ -107,7 +129,12 @@ export async function buildXlsx(
       { header: "เวลา", key: "time", width: 8 },
       { header: "จากกระเป๋า", key: "from", width: 18 },
       { header: "ไปกระเป๋า", key: "to", width: 18 },
-      { header: "จำนวนเงิน (บาท)", key: "amount", width: 16, style: { numFmt: MONEY_FORMAT } },
+      {
+        header: `จำนวนเงิน (${currencyUnit()})`,
+        key: "amount",
+        width: 16,
+        style: { numFmt: MONEY_FORMAT },
+      },
       { header: "โน้ต", key: "note", width: 24 },
     ];
     for (const t of options.transfers) {

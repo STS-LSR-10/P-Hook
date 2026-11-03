@@ -2,6 +2,7 @@ import { noteTitle } from "@/lib/note";
 import { formatThaiDate } from "@/lib/thai-date";
 import { REFERRAL_BONUS_REFEREE, REFERRAL_WINDOW_DAYS } from "@/lib/config";
 import type { LineMessage } from "@/lib/types";
+import { currencySymbol } from "@/lib/money";
 
 export function text(message: string): LineMessage {
   return { type: "text", text: message };
@@ -145,8 +146,8 @@ export const SPLIT_UNAVAILABLE_TEXT =
   'ใบนี้แยกรายการไม่ได้ (อ่านรายการได้ไม่พอ หรือยอดรายการเกินยอดรวม) กด "ยืนยัน" เพื่อจดเป็นยอดรวมใบเดียวนะ';
 export const splitDoneText = (lines: { title: string; amountBaht: string }[], totalBaht: string) =>
   [
-    `แยกเป็น ${lines.length} รายการแล้ว (รวม ฿${totalBaht})`,
-    ...lines.slice(0, 12).map((l) => `• ${l.title} ฿${l.amountBaht}`),
+    `แยกเป็น ${lines.length} รายการแล้ว (รวม ${currencySymbol()}${totalBaht})`,
+    ...lines.slice(0, 12).map((l) => `• ${l.title} ${currencySymbol()}${l.amountBaht}`),
     ...(lines.length > 12 ? [`และอีก ${lines.length - 12} รายการ`] : []),
   ].join("\n");
 
@@ -215,15 +216,15 @@ export const DEBT_BAD_DUE_TEXT =
   "วันครบกำหนดไม่ถูกต้อง ลองใช้รูปแบบ 25/10 หรือ พรุ่งนี้ หรือ ภายใน 7 วัน นะ";
 export const DEBT_CANCELLED_TEXT = "ยกเลิกแล้ว ยอดกระเป๋ากลับเป็นเหมือนเดิม";
 export const debtOverpayText = (person: string, leftBaht: string) =>
-  `ชำระเกินยอดที่เหลือไม่ได้ ${person} เหลือ ฿${leftBaht} ลองพิมพ์ยอดที่ไม่เกินนี้นะ`;
+  `ชำระเกินยอดที่เหลือไม่ได้ ${person} เหลือ ${currencySymbol()}${leftBaht} ลองพิมพ์ยอดที่ไม่เกินนี้นะ`;
 export const FX_LOCKED_TEXT =
-  'การจดเงินต่างสกุล (เช่น 1500 JPY) แปลงเป็นบาทให้อัตโนมัติ เป็นฟีเจอร์ของแผน Elite ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ยอดเป็นบาทได้เลย';
+  'การจดเงินต่างสกุล (เช่น 1500 JPY) แปลงเป็นสกุลเงินของคุณให้อัตโนมัติ เป็นฟีเจอร์ของแผน Elite ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ยอดเป็นสกุลเงินของคุณได้เลย';
 export const fxUnsupportedText = (code: string) =>
-  `ยังไม่รองรับสกุล ${code} (แหล่งอัตราแลกเปลี่ยนไม่มี) ลองพิมพ์ยอดเป็นบาทแทนนะ`;
+  `ยังไม่รองรับสกุล ${code} (แหล่งอัตราแลกเปลี่ยนไม่มี) ลองพิมพ์ยอดเป็นสกุลเงินของคุณแทนนะ`;
 export const FX_FAILED_TEXT =
-  "ดึงอัตราแลกเปลี่ยนไม่ได้ในตอนนี้ เลยยังไม่ได้จดรายการนี้ ลองใหม่อีกครั้งในสักครู่ หรือพิมพ์ยอดเป็นบาทได้เลยนะ";
+  "ดึงอัตราแลกเปลี่ยนไม่ได้ในตอนนี้ เลยยังไม่ได้จดรายการนี้ ลองใหม่อีกครั้งในสักครู่ หรือพิมพ์ยอดเป็นสกุลเงินของคุณได้เลยนะ";
 export const FX_TOO_SMALL_TEXT =
-  "ยอดนี้แปลงเป็นบาทแล้วน้อยกว่า 1 สตางค์ ลองตรวจจำนวนเงินอีกครั้งนะ";
+  "ยอดนี้แปลงแล้วน้อยกว่า 0.01 ลองตรวจจำนวนเงินอีกครั้งนะ";
 export const DAILY_BUDGET_LOCKED_TEXT =
   'งบรายวัน (บอทเตือนทันทีเมื่อวันนี้ใช้เกิน) เป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ';
 export const DAILY_BUDGET_USAGE_TEXT =
@@ -232,7 +233,7 @@ export const DAILY_BUDGET_NONE_TEXT =
   'ยังไม่ได้ตั้งงบรายวัน พิมพ์ เช่น "งบวัน 500" เพื่อตั้งวงเงินที่วันหนึ่งไม่ควรใช้เกินนะ';
 export const DAILY_BUDGET_CLEARED_TEXT = "ปิดงบรายวันแล้ว";
 export const dailyBudgetSetText = (baht: string) =>
-  `ตั้งงบรายวัน ฿${baht} แล้ว ถ้าวันไหนใช้เกิน บอทจะเตือนทันทีนะ`;
+  `ตั้งงบรายวัน ${currencySymbol()}${baht} แล้ว ถ้าวันไหนใช้เกิน บอทจะเตือนทันทีนะ`;
 export const GOAL_LOCKED_TEXT =
   'เป้าหมายการออม (กระปุก) เป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ';
 export const GOAL_EMPTY_TEXT =
@@ -244,7 +245,7 @@ export const GOAL_BAD_DUE_TEXT = "วันที่ไม่ถูกต้อ�
 export const goalAmbiguousText = (name: string, names: string[]) =>
   `"${name}" ตรงกับหลายเป้าหมาย (${names.join(" · ")}) พิมพ์ชื่อให้ชัดขึ้นอีกนิดนะ`;
 export const goalOverdrawText = (name: string, savedBaht: string) =>
-  `ถอนเกินยอดที่ออมไว้ไม่ได้ ${name} มี ฿${savedBaht} ลองพิมพ์ยอดที่ไม่เกินนี้นะ`;
+  `ถอนเกินยอดที่ออมไว้ไม่ได้ ${name} มี ${currencySymbol()}${savedBaht} ลองพิมพ์ยอดที่ไม่เกินนี้นะ`;
 export const GOAL_UNDONE_TEXT = "ยกเลิกรายการหยอดกระปุกแล้ว";
 export const GOAL_UNDO_BLOCKED_TEXT = "ยกเลิกรายการนี้ไม่ได้ เพราะมีการถอนที่ตามมา";
 export const BILL_LOCKED_TEXT =

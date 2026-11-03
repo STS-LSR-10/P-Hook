@@ -1,11 +1,9 @@
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import type { CardStatus } from "@/lib/card";
 import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { walletLabel, type Wallet } from "@/lib/wallet";
 import { COLOR } from "./flex";
-
-const money = (satang: number) => `${satang < 0 ? "-" : ""}฿${formatBaht(Math.abs(satang))}`;
 
 const row = (label: string, value: string, color: string = COLOR.text) => ({
   type: "box",

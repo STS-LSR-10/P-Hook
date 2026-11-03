@@ -91,3 +91,20 @@ describe("parseMessage with currencies", () => {
     expect(entries.map((e) => e.foreign?.currency ?? null)).toEqual(["JPY", null]);
   });
 });
+
+describe("baht written in a book kept in another currency", () => {
+  it("is a foreign amount there, and nothing special in a baht book", async () => {
+    const { runInZone } = await import("@/lib/zone-scope");
+    const { extractForeign: find } = await import("./currency");
+    const inDollars = (line: string) => runInZone(null, () => find(line), "USD");
+    expect(inDollars("กาแฟ 60 บาท")?.foreign).toEqual({
+      currency: "THB",
+      minor: 6000,
+      supported: true,
+    });
+    expect(inDollars("กาแฟ ฿60")?.foreign.currency).toBe("THB");
+    expect(inDollars("taxi 120 baht")?.text).toBe("taxi");
+    expect(inDollars("กาแฟ 60")).toBeNull();
+    expect(find("กาแฟ 60 บาท")).toBeNull();
+  });
+});

@@ -64,7 +64,7 @@ export async function runBillReminders(
 
   const users = await db
     .from("users")
-    .select("id,line_user_id,plan,plan_expires_at,timezone")
+    .select("id,line_user_id,plan,plan_expires_at,timezone,currency")
     .in("plan", ["ultimate"])
     .limit(BATCH);
   if (users.error) throw new Error(`load bill users: ${users.error.message}`);
@@ -75,6 +75,7 @@ export async function runBillReminders(
       plan: Plan;
       plan_expires_at: string | null;
       timezone?: string | null;
+      currency?: string | null;
     }[]
   ).filter((u) => can(effectivePlan(u.plan, u.plan_expires_at, now), "billReminder"));
   summary.users = ultimate.length;
@@ -88,7 +89,7 @@ export async function runBillReminders(
   ]);
 
   // each person's bills fall due, and are reminded at their hour, in their own zone
-  for (const user of ultimate) await runInZone(user.timezone, () => remindOne(user));
+  for (const user of ultimate) await runInZone(user.timezone, () => remindOne(user), user.currency);
   await pruneReminders(db, new Date(now.getTime() - 120 * 86_400_000)).catch((error: unknown) =>
     log.error("bill_prune_failed", error),
   );

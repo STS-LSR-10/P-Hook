@@ -1,4 +1,4 @@
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage, TxType } from "@/lib/types";
 import { COLOR, row } from "./flex";
@@ -21,7 +21,7 @@ export interface VoiceCardInput {
 export function buildVoiceCard(input: VoiceCardInput): LineMessage {
   const ai = input.variant === "ai";
   const income = input.type === "income";
-  const amountText = `${income ? "+" : "-"}฿${formatBaht(input.amountSatang)}`;
+  const amountText = `${income ? "+" : "-"}${money(input.amountSatang)}`;
 
   const button = (
     label: string,

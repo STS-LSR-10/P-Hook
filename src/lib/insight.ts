@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { formatBaht } from "@/lib/money";
+import { formatBaht, money } from "@/lib/money";
 import type { CompareRow } from "@/lib/period-compare";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 
@@ -95,7 +95,7 @@ export function hasSomethingToSay(f: InsightFacts): boolean {
   return f.expenseSatang > 0;
 }
 
-const baht = (satang: number) => `฿${formatBaht(satang)}`;
+const baht = (satang: number) => money(satang);
 
 export interface Insight {
   lines: string[];

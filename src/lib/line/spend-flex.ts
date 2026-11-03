@@ -2,7 +2,7 @@ import { categoryLabel } from "@/lib/category-emoji";
 import type { CategorySlice } from "@/lib/category-spend";
 import { type ChangeKind, type CompareRow } from "@/lib/period-compare";
 import type { TxDto } from "@/lib/dto";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDate, formatThaiMonthShort } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { badge, bar, barColor, cardHeader, pillFooter, TINT } from "./card-style";
@@ -67,7 +67,7 @@ export function buildCategorySpendCard(input: {
             },
             {
               type: "text",
-              text: `฿${formatBaht(s.amountSatang)} · ${s.percent}%`,
+              text: `${money(s.amountSatang)} · ${s.percent}%`,
               size: "md",
               color: TINT.strong,
               align: "end",
@@ -97,7 +97,7 @@ export function buildCategorySpendCard(input: {
         },
         {
           type: "text",
-          text: `฿${formatBaht(input.totalSatang)}`,
+          text: `${money(input.totalSatang)}`,
           size: "lg",
           weight: "bold",
           color: TINT.bad,
@@ -117,7 +117,7 @@ export function buildCategorySpendCard(input: {
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: `ใช้จ่ายตามหมวด ${input.subtitle}: รวม ฿${formatBaht(input.totalSatang)}`,
+    altText: `ใช้จ่ายตามหมวด ${input.subtitle}: รวม ${money(input.totalSatang)}`,
     contents: bubble,
   };
 }
@@ -149,7 +149,7 @@ export function buildRecentCard(input: { items: TxDto[]; moreUrl?: string }): Li
         },
         {
           type: "text",
-          text: `${income ? "+" : "-"}฿${formatBaht(tx.amountSatang)}`,
+          text: `${income ? "+" : "-"}${money(tx.amountSatang)}`,
           size: "sm",
           weight: "bold",
           color: income ? COLOR.income : COLOR.expense,
@@ -245,7 +245,7 @@ export function buildCompareCard(input: {
           },
           {
             type: "text",
-            text: `ก่อนหน้า ฿${formatBaht(previousSatang)}`,
+            text: `ก่อนหน้า ${money(previousSatang)}`,
             size: "xs",
             color: COLOR.muted,
           },
@@ -260,7 +260,7 @@ export function buildCompareCard(input: {
         contents: [
           {
             type: "text",
-            text: `฿${formatBaht(currentSatang)}`,
+            text: `${money(currentSatang)}`,
             size: "md",
             weight: strong ? "bold" : "regular",
             color: strong ? TINT.bad : TINT.strong,
@@ -322,7 +322,7 @@ export function buildCompareCard(input: {
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: `เทียบรายจ่ายรายหมวด: ฿${formatBaht(input.currentSatang)} (${total.text}) จาก ฿${formatBaht(input.previousSatang)}`,
+    altText: `เทียบรายจ่ายรายหมวด: ${money(input.currentSatang)} (${total.text}) จาก ${money(input.previousSatang)}`,
     contents: bubble,
   };
 }
@@ -349,11 +349,11 @@ export function buildYearCard(input: {
     ],
   });
   const body: unknown[] = [
-    sumRow("รายรับ", `+฿${formatBaht(input.income)}`, COLOR.income),
-    sumRow("รายจ่าย", `-฿${formatBaht(input.expense)}`, COLOR.expense),
+    sumRow("รายรับ", `+${money(input.income)}`, COLOR.income),
+    sumRow("รายจ่าย", `-${money(input.expense)}`, COLOR.expense),
     sumRow(
       "เหลือ",
-      `${net < 0 ? "-" : ""}฿${formatBaht(Math.abs(net))}`,
+      `${net < 0 ? "-" : ""}${money(Math.abs(net))}`,
       net < 0 ? COLOR.expense : COLOR.income,
     ),
   ];
@@ -385,7 +385,7 @@ export function buildYearCard(input: {
           { type: "text", text: c.name, size: "sm", color: COLOR.text, flex: 4, wrap: true },
           {
             type: "text",
-            text: `฿${formatBaht(c.amountSatang)} · ${c.percent}%`,
+            text: `${money(c.amountSatang)} · ${c.percent}%`,
             size: "sm",
             color: COLOR.muted,
             align: "end",
@@ -440,7 +440,7 @@ export function buildYearCard(input: {
         },
         {
           type: "text",
-          text: `฿${formatBaht(m.expenseSatang)}`,
+          text: `${money(m.expenseSatang)}`,
           size: "xs",
           color: COLOR.text,
           align: "end",
@@ -459,7 +459,7 @@ export function buildYearCard(input: {
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: `สรุปรายปี ${input.yearBE}: รายรับ ฿${formatBaht(input.income)} รายจ่าย ฿${formatBaht(input.expense)}`,
+    altText: `สรุปรายปี ${input.yearBE}: รายรับ ${money(input.income)} รายจ่าย ${money(input.expense)}`,
     contents: bubble,
   };
 }

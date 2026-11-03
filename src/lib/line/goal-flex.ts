@@ -1,10 +1,10 @@
 import type { GoalDto } from "@/lib/goal";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
 
-const baht = (satang: number) => `฿${formatBaht(satang)}`;
+const baht = (satang: number) => money(satang);
 const label = (g: Pick<GoalDto, "emoji" | "name">) => (g.emoji ? `${g.emoji} ${g.name}` : g.name);
 
 function bar(percent: number, done: boolean) {

@@ -1,10 +1,10 @@
 import { dueState, type PersonTotal } from "@/lib/debt";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
 
-const baht = (satang: number) => `฿${formatBaht(satang)}`;
+const baht = (satang: number) => money(satang);
 
 function section(title: string, color: string, people: PersonTotal[], total: number, now: Date) {
   const rows = people.slice(0, 8).map((p) => {

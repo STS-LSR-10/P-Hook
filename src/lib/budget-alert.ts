@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { alertText, budgetState, crossedThreshold } from "@/lib/budget";
 import { cycleRange, dayRange } from "@/lib/budget-cycle";
 import { dailyBudgetAlert } from "@/lib/daily-budget";
-import { formatBaht, toSatang } from "@/lib/money";
+import { money, toSatang } from "@/lib/money";
 import { bangkokDateKey } from "@/lib/points";
 import { can } from "@/lib/plan";
 import { budgetAlertLine, effectivePrefs } from "@/lib/personalize";
@@ -101,7 +101,7 @@ export async function budgetReadingFor(
   const custom = budgetAlertLine(persona, {
     level,
     scope: scopeName ? `หมวด${scopeName}` : "รวม",
-    figures: `฿${formatBaht(after)} จาก ฿${formatBaht(limit)}`,
+    figures: `${money(after)} จาก ${money(limit)}`,
   });
   return {
     status,

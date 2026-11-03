@@ -298,7 +298,7 @@ test.describe("settings page (360px)", () => {
     // general: only what the app really supports, shown as information
     const general = page.getByRole("list", { name: "ทั่วไป" });
     await expect(general.getByText("ไทย", { exact: true })).toBeVisible();
-    await expect(general.getByText("บาท (฿)")).toBeVisible();
+    await expect(general.getByText("Thai Baht (฿)")).toBeVisible();
     await expect(general.getByText("Bangkok")).toBeVisible();
     await page.getByRole("button", { name: "ประวัติการชำระเงิน" }).last().click();
     const dialog = page.getByRole("dialog", { name: "ประวัติการชำระเงิน" });
@@ -336,6 +336,38 @@ test.describe("time zone (360px)", () => {
     await expectNoHorizontalScroll(page);
     await dialog.getByRole("button", { name: "Tokyo (UTC+09:00)" }).click();
     await expect.poll(() => saved).toEqual([{ timezone: "Asia/Tokyo" }]);
+  });
+});
+
+test.describe("currency (360px)", () => {
+  test("the currency opens a searchable list, says amounts keep their numbers, and saves a pick", async ({
+    page,
+  }) => {
+    const saved: unknown[] = [];
+    await mockApi(page, {
+      ...COMMON,
+      "GET /api/me": ME_PLUS,
+      "GET /api/memory": { items: [] },
+      "PATCH /api/settings": (route: Route) => {
+        saved.push(route.request().postDataJSON());
+        return { ...SETTINGS, currency: "USD" };
+      },
+    });
+    await openSettings(page);
+    await page.getByRole("button", { name: "สกุลเงิน" }).click();
+    const dialog = page.getByRole("dialog", { name: "สกุลเงิน" });
+    await expect(dialog.getByRole("button", { name: "Thai Baht (฿)" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(
+      dialog.getByText("ตัวเลขของรายการเดิมจะเหมือนเดิม", { exact: false }),
+    ).toBeVisible();
+    await dialog.getByLabel("ค้นหาสกุลเงิน").fill("dollar");
+    await expect(dialog.getByRole("button", { name: /Thai Baht/ })).toHaveCount(0);
+    await expectNoHorizontalScroll(page);
+    await dialog.getByRole("button", { name: "US Dollar ($)" }).click();
+    await expect.poll(() => saved).toEqual([{ currency: "USD" }]);
   });
 });
 

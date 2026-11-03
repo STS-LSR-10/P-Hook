@@ -27,7 +27,7 @@ import { budgetState, percentUsed } from "@/lib/budget";
 import { MAX_START_DAY } from "@/lib/budget-cycle";
 import { EMOJI_CHOICES, isSingleEmoji } from "@/lib/category-emoji";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
-import { formatBaht } from "@/lib/money";
+import { currencySymbol, currencyUnit, formatBaht, money } from "@/lib/money";
 import { formatThaiMonthShort } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 
@@ -126,7 +126,8 @@ function QuickAmounts({ onAdd }: { onAdd: (amount: number) => void }) {
           onClick={() => onAdd(n)}
           className="num h-9 flex-1 rounded-lg bg-background text-[11px] font-medium"
         >
-          +฿{n.toLocaleString("th-TH")}
+          +{currencySymbol()}
+          {n.toLocaleString("th-TH")}
         </button>
       ))}
     </div>
@@ -245,7 +246,7 @@ function DailyBudgetCard({
           onChange={(e) => setText(e.target.value)}
           disabled={locked}
           inputMode="decimal"
-          placeholder="วันหนึ่งใช้ไม่เกิน (บาท)"
+          placeholder={`วันหนึ่งใช้ไม่เกิน (${currencyUnit()})`}
           aria-label="งบรายวัน"
           className="num h-11 min-w-0 flex-1 rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary disabled:opacity-60"
         />
@@ -274,7 +275,7 @@ function DailyBudgetCard({
         </>
       ) : (
         <p className="text-xs text-muted">
-          ยังไม่ได้ตั้งงบรายวัน วันนี้ใช้ไปแล้ว ฿{formatBaht(daily.spentSatang)}
+          ยังไม่ได้ตั้งงบรายวัน วันนี้ใช้ไปแล้ว {money(daily.spentSatang)}
         </p>
       )}
       {locked ? (
@@ -872,7 +873,7 @@ function BudgetHero({
           <div className="min-w-0">
             <p className="text-xs text-[var(--hero-ink-soft)]">ยอดงบที่ตั้งไว้ทั้งหมด</p>
             <p className="num mt-0.5 truncate text-2xl font-bold">
-              {total ? `฿${formatBaht(total)}` : "ยังไม่ตั้ง"}
+              {total ? `${money(total)}` : "ยังไม่ตั้ง"}
               {total ? (
                 <span className="ml-1.5 text-xs font-normal text-[var(--hero-ink-soft)]">
                   / {per}
@@ -895,12 +896,12 @@ function BudgetHero({
           <div className="space-y-1.5">
             <div className="flex justify-between gap-2 text-[11px] text-[var(--hero-ink-soft)]">
               <span className="num">
-                ใช้ไปแล้ว ฿{formatBaht(spent)} ({pct}%)
+                ใช้ไปแล้ว {money(spent)} ({pct}%)
               </span>
               <span className="num font-semibold text-[var(--hero-ink)]">
                 {remaining !== null && remaining < 0
-                  ? `เกินงบ ฿${formatBaht(-remaining)}`
-                  : `เหลือ ฿${formatBaht(remaining ?? 0)}`}
+                  ? `เกินงบ ${money(-remaining)}`
+                  : `เหลือ ${money(remaining ?? 0)}`}
               </span>
             </div>
             <div
@@ -925,7 +926,7 @@ function BudgetHero({
         ) : (
           <p className="text-xs text-[var(--hero-ink-soft)]">
             {data.mode === "overall"
-              ? `ยังไม่ได้ตั้งงบ ใช้ไปแล้ว ฿${formatBaht(spent)} ในรอบนี้`
+              ? `ยังไม่ได้ตั้งงบ ใช้ไปแล้ว ${money(spent)} ในรอบนี้`
               : "ตั้งงบของแต่ละหมวดได้ที่การ์ดด้านล่าง เว้นว่างไว้ถ้าไม่ต้องการจำกัด"}
           </p>
         )}
@@ -984,7 +985,7 @@ function CategoryAmount({
   if (kind === "income") {
     return received > 0 ? (
       <span className="shrink-0 text-right">
-        <span className="num block text-xs font-bold text-income">+฿{formatBaht(received)}</span>
+        <span className="num block text-xs font-bold text-income">+{money(received)}</span>
         <span className="block text-[10px] text-muted">รอบนี้</span>
       </span>
     ) : (
@@ -997,18 +998,18 @@ function CategoryAmount({
     const state = budgetState(spent, limit);
     const chip =
       left < 0
-        ? { text: `เกินงบ ฿${formatBaht(-left)}`, cls: "bg-expense/10 text-expense" }
+        ? { text: `เกินงบ ${money(-left)}`, cls: "bg-expense/10 text-expense" }
         : left === 0
           ? { text: "เต็มงบแล้ว", cls: "bg-expense/10 text-expense" }
           : {
-              text: `เหลือ ฿${formatBaht(left)}`,
+              text: `เหลือ ${money(left)}`,
               cls: state === "warn" ? "bg-warn-soft text-warn" : "bg-primary-soft text-primary",
             };
     return (
       <span className="shrink-0 space-y-0.5 text-right">
         <span className="num block text-xs font-bold">
-          ฿{formatBaht(spent)}{" "}
-          <span className="text-[10px] font-normal text-muted">/ ฿{formatBaht(limit)}</span>
+          {money(spent)}{" "}
+          <span className="text-[10px] font-normal text-muted">/ {money(limit)}</span>
         </span>
         <span
           className={cn("inline-block rounded px-1.5 py-0.5 text-[10px] font-medium", chip.cls)}
@@ -1020,7 +1021,7 @@ function CategoryAmount({
   }
   return (
     <span className="shrink-0 text-right">
-      <span className="num block text-xs font-semibold">฿{formatBaht(spent)}</span>
+      <span className="num block text-xs font-semibold">{money(spent)}</span>
       <span className="block text-[10px] text-muted">{showBudget ? "ไม่ได้ตั้งงบ" : "รอบนี้"}</span>
     </span>
   );
@@ -1114,7 +1115,7 @@ function TotalBudgetSheet({
             aria-hidden
             className="num absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted"
           >
-            ฿
+            {currencySymbol()}
           </span>
           <input
             value={text}
@@ -1390,7 +1391,7 @@ function CategorySheet({
                 aria-hidden
                 className="num absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted"
               >
-                ฿
+                {currencySymbol()}
               </span>
               <input
                 id="cat-budget"
@@ -1422,7 +1423,7 @@ function CategorySheet({
               <span className="font-medium">ประวัติใช้จ่ายย้อนหลัง 6 เดือน</span>
               {history.data ? (
                 <span className="num text-[11px] font-semibold text-primary">
-                  เฉลี่ย ฿{formatBaht(history.data.averageSatang)}/ด.
+                  เฉลี่ย {money(history.data.averageSatang)}/ด.
                 </span>
               ) : null}
             </div>

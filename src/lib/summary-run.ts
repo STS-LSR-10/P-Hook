@@ -41,7 +41,7 @@ interface SettingRow {
   last_weekly_summary_on: string | null;
   last_monthly_summary_on: string | null;
   /** The person's zone (Monday 09:00 and the cycle's first day are theirs). */
-  users?: { timezone?: string | null } | null;
+  users?: { timezone?: string | null; currency?: string | null } | null;
 }
 
 /**
@@ -60,7 +60,7 @@ export async function runSummaries(
   const settings = await db
     .from("user_settings")
     .select(
-      "user_id,budget_cycle,cycle_start_day,weekly_summary_enabled,monthly_summary_enabled,last_weekly_summary_on,last_monthly_summary_on,users(timezone)",
+      "user_id,budget_cycle,cycle_start_day,weekly_summary_enabled,monthly_summary_enabled,last_weekly_summary_on,last_monthly_summary_on,users(timezone,currency)",
     )
     .or("weekly_summary_enabled.eq.true,monthly_summary_enabled.eq.true")
     .limit(BATCH);
@@ -104,7 +104,8 @@ export async function runSummaries(
 
   const liffUrl = liffBaseUrl ? `${liffBaseUrl.replace(/\/$/, "")}/analytics` : undefined;
 
-  for (const job of jobs) await runInZone(zoneOf(job.row), () => sendOne(job));
+  for (const job of jobs)
+    await runInZone(zoneOf(job.row), () => sendOne(job), job.row.users?.currency);
   return result;
 
   async function sendOne({ row, kind }: Job): Promise<void> {

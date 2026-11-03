@@ -30,6 +30,8 @@ export interface Me {
 export interface Settings {
   /** The person's time zone (an IANA name such as "Asia/Bangkok"). */
   timezone?: string;
+  /** The currency the books are kept in ("THB", "USD", …). */
+  currency?: string;
   confirm_style: "full" | "short" | "off";
   budget_cycle: "monthly" | "weekly";
   cycle_start_day: number;

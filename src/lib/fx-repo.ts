@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchRate, type FxRate } from "@/lib/fx";
+import { DEFAULT_CURRENCY } from "@/lib/currency";
 import { log } from "@/lib/log";
+import { currentCurrency } from "@/lib/money";
 
 export interface ResolvedRate extends FxRate {
   /** True when the source did not answer and an older cached rate was used. */
@@ -58,4 +60,32 @@ export async function getRate(
     .maybeSingle();
   const row = older.data as { rate: number | string; source_day: string } | null;
   return row ? { rate: Number(row.rate), sourceDay: row.source_day, stale: true } : null;
+}
+
+/**
+ * The price of one unit of `currency` in the person's own currency (`home`) for `day`. The rates are
+ * kept in baht, so another home currency crosses through the baht: JPY in USD = (JPY in THB) /
+ * (USD in THB). Their own currency is 1. Null when either side has no rate.
+ */
+export async function getHomeRate(
+  db: SupabaseClient,
+  currency: string,
+  day: string,
+  today: string,
+  home: string = currentCurrency(),
+  fetchFn: typeof fetch = fetch,
+): Promise<ResolvedRate | null> {
+  if (currency === home) return { rate: 1, sourceDay: day, stale: false };
+  if (home === DEFAULT_CURRENCY) return getRate(db, currency, day, today, fetchFn);
+  const inBaht = async (code: string): Promise<ResolvedRate | null> =>
+    code === DEFAULT_CURRENCY
+      ? { rate: 1, sourceDay: day, stale: false }
+      : getRate(db, code, day, today, fetchFn);
+  const [from, to] = [await inBaht(currency), await inBaht(home)];
+  if (!from || !to) return null;
+  return {
+    rate: from.rate / to.rate,
+    sourceDay: from.sourceDay < to.sourceDay ? from.sourceDay : to.sourceDay,
+    stale: from.stale || to.stale,
+  };
 }

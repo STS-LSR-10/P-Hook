@@ -1,5 +1,5 @@
 import { clampStartDay, monthStart, type DateRange } from "@/lib/budget-cycle";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { addLocalDays, bangkokParts, formatThaiDayMonth, fromBangkok } from "@/lib/thai-date";
 import type { BudgetCycle, LineMessage } from "@/lib/types";
 import { bar, barColor, cardHeader, pillFooter, TINT } from "@/lib/line/card-style";
@@ -206,8 +206,8 @@ export function buildSummaryCard(input: {
   });
 
   const body: unknown[] = [
-    stat("💰", "รายรับ", `+฿${formatBaht(data.current.income)}`, TINT.good, "↑ "),
-    stat("🧾", "รายจ่าย", `-฿${formatBaht(data.current.expense)}`, TINT.bad, "↓ "),
+    stat("💰", "รายรับ", `+${money(data.current.income)}`, TINT.good, "↑ "),
+    stat("🧾", "รายจ่าย", `-${money(data.current.expense)}`, TINT.bad, "↓ "),
     {
       type: "box",
       layout: "horizontal",
@@ -217,7 +217,7 @@ export function buildSummaryCard(input: {
         { type: "text", text: "เหลือ", size: "md", weight: "bold", color: TINT.strong, flex: 3 },
         {
           type: "text",
-          text: `💵 ${net < 0 ? "-" : ""}฿${formatBaht(Math.abs(net))}`,
+          text: `💵 ${net < 0 ? "-" : ""}${money(Math.abs(net))}`,
           size: "lg",
           weight: "bold",
           color: net < 0 ? TINT.bad : TINT.strong,
@@ -234,8 +234,8 @@ export function buildSummaryCard(input: {
       type: "text",
       text:
         data.current.expense > input.dailyLimitSatang
-          ? `เกินงบวันนี้ ฿${formatBaht(data.current.expense - input.dailyLimitSatang)} (งบ ฿${formatBaht(input.dailyLimitSatang)})`
-          : `ใช้ไป ${used}% ของงบวันนี้ ฿${formatBaht(input.dailyLimitSatang)}`,
+          ? `เกินงบวันนี้ ${money(data.current.expense - input.dailyLimitSatang)} (งบ ${money(input.dailyLimitSatang)})`
+          : `ใช้ไป ${used}% ของงบวันนี้ ${money(input.dailyLimitSatang)}`,
       size: "xs",
       color:
         data.current.expense > input.dailyLimitSatang
@@ -272,7 +272,7 @@ export function buildSummaryCard(input: {
           { ...bar(c.percent, barColor(i)), flex: 3 },
           {
             type: "text",
-            text: `฿${formatBaht(c.amountSatang)} · ${c.percent}%`,
+            text: `${money(c.amountSatang)} · ${c.percent}%`,
             size: "sm",
             color: TINT.strong,
             align: "end",
@@ -315,7 +315,7 @@ export function buildSummaryCard(input: {
   if (foot) bubble.footer = foot;
   return {
     type: "flex",
-    altText: `${title} ${subtitle}: รายรับ ฿${formatBaht(data.current.income)} รายจ่าย ฿${formatBaht(data.current.expense)}`,
+    altText: `${title} ${subtitle}: รายรับ ${money(data.current.income)} รายจ่าย ${money(data.current.expense)}`,
     contents: bubble,
   };
 }

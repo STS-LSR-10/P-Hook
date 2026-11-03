@@ -10,6 +10,8 @@ export interface SessionClaims {
   lineUserId: string;
   /** The person's time zone (older sessions have none: Bangkok). */
   tz?: string;
+  /** The person's currency (older sessions have none: the baht). */
+  cur?: string;
 }
 
 const keyOf = (secret: string) => new TextEncoder().encode(secret);
@@ -21,7 +23,11 @@ export async function signSession(
   now: Date = new Date(),
 ): Promise<string> {
   const iat = Math.floor(now.getTime() / 1000);
-  return new SignJWT({ lu: claims.lineUserId, ...(claims.tz ? { tz: claims.tz } : {}) })
+  return new SignJWT({
+    lu: claims.lineUserId,
+    ...(claims.tz ? { tz: claims.tz } : {}),
+    ...(claims.cur ? { cur: claims.cur } : {}),
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(claims.userId)
     .setIssuer(ISSUER)
@@ -49,6 +55,7 @@ export async function verifySession(
       userId: payload.sub,
       lineUserId: payload.lu,
       ...(typeof payload.tz === "string" ? { tz: payload.tz } : {}),
+      ...(typeof payload.cur === "string" ? { cur: payload.cur } : {}),
     };
   } catch {
     return null;
