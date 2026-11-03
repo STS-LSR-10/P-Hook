@@ -27,6 +27,21 @@ export interface CategorizeResult {
 const FALLBACK_NAME = "อื่นๆ";
 const MIN_KEYWORD_LENGTH = 2;
 
+/**
+ * Whether the title has the keyword. A keyword in English letters must start a word ("room" is not in
+ * "mushroom", "fund" not in "refund"); it may still run on ("grab" in "grabfood"). Thai has no spaces
+ * between words, so a Thai keyword is found anywhere, as before.
+ */
+export function containsKeyword(title: string, key: string): boolean {
+  if (!/^[a-z]/.test(key)) return title.includes(key);
+  let at = title.indexOf(key);
+  while (at !== -1) {
+    if (at === 0 || !/[a-z]/.test(title[at - 1] ?? "")) return true;
+    at = title.indexOf(key, at + 1);
+  }
+  return false;
+}
+
 export function normalizeText(text: string): string {
   return normalizeThaiDigits(text).toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -61,7 +76,7 @@ export function categorizeByRules(input: {
     for (const c of usable) {
       for (const raw of [...c.keywords, c.name]) {
         const key = normalizeText(raw);
-        if (key.length < MIN_KEYWORD_LENGTH || !title.includes(key)) continue;
+        if (key.length < MIN_KEYWORD_LENGTH || !containsKeyword(title, key)) continue;
         const own = c.user_id !== null;
         if (!best || key.length > best.length || (key.length === best.length && own && !best.own)) {
           best = { id: c.id, length: key.length, own };

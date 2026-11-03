@@ -151,3 +151,29 @@ describe("matchLeadingCategory", () => {
     expect(id("ค่า น้ำ", "expense", list)).toBe("b");
   });
 });
+
+describe("English keywords match whole words from their start", () => {
+  const english: CategoryLite[] = [
+    cat({ id: "home", name: "ที่พัก", keywords: ["room", "rent"] }),
+    cat({ id: "save", name: "ออม/ลงทุน", keywords: ["fund"] }),
+    cat({ id: "go", name: "เดินทาง", keywords: ["grab"] }),
+    cat({ id: "food", name: "อาหาร", keywords: ["tea", "กาแฟ"] }),
+    cat({ id: "other", name: "อื่นๆ" }),
+  ];
+  const of = (title: string) =>
+    categorizeByRules({ title, type: "expense", categories: english, memory: [] }).categoryId;
+
+  it("not inside another word", () => {
+    expect(of("mushroom soup 80")).toBe("other");
+    expect(of("gift for parent 500")).toBe("other");
+    expect(of("refund fee 30")).toBe("other");
+    expect(of("steak 300")).toBe("other");
+  });
+
+  it("a word that starts with one still counts, as before (grabfood)", () => {
+    expect(of("grabfood 120")).toBe("go");
+    expect(of("room service 200")).toBe("home");
+    expect(of("ice tea 40")).toBe("food");
+    expect(of("ชากาแฟ 40")).toBe("food");
+  });
+});

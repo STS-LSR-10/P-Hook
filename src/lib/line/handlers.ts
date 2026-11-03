@@ -343,7 +343,7 @@ import type { Transcriber } from "@/lib/voice/transcribe";
 import { handleVoiceMessage, type VoiceDeps } from "./voice";
 import { enterCurrency, enterLocale, enterZone } from "@/lib/zone-scope";
 import { currentLocale, t as tr } from "@/lib/i18n";
-import { englishToThai } from "@/lib/parse/english";
+import { englishMessage } from "@/lib/parse/english";
 
 export interface LineEvent {
   type: string;
@@ -478,9 +478,12 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
     case "message":
       if (event.message?.type === "text" && event.message.text !== undefined) {
         // someone who chose English may type English: read as the Thai the bot understands
-        const typed =
-          currentLocale() === "en" ? englishToThai(event.message.text) : event.message.text;
-        await reply(await handleText(typed, user, deps));
+        const read = currentLocale() === "en" ? englishMessage(event.message.text) : null;
+        await reply(
+          read
+            ? await handleText(read.command ?? read.entry, user, deps, { entry: read.entry })
+            : await handleText(event.message.text, user, deps),
+        );
       } else if (event.message?.type === "image") {
         const { slip } = deps;
         const files = fileChatDeps(deps);
@@ -683,7 +686,7 @@ async function handleText(
   input: string,
   user: UserRow,
   deps: HandlerDeps,
-  options: { routed?: boolean; showCard?: boolean } = {},
+  options: { routed?: boolean; showCard?: boolean; entry?: string } = {},
 ): Promise<LineMessage[]> {
   const command = parseCommand(input);
   if (command?.kind === "transfer") {
@@ -722,7 +725,9 @@ async function handleText(
     return runCommand(command, user, deps);
   }
 
-  const parsed = parseMessage(input, deps.now(), { currencies: true });
+  // read as an entry: the person's own words (an English command's Thai is for the command only)
+  const typed = options.entry ?? input;
+  const parsed = parseMessage(typed, deps.now(), { currencies: true });
 
   // In พี่ฮูก mode (a few minutes after "ถามพี่ฮูก") the AI sorts everything typed: an action is done
   // here, and the rest is a question. A button already said what the message is, so that answer
@@ -730,8 +735,8 @@ async function handleText(
   if (!options.routed && (await inOwlMode(owlDeps(deps), user))) {
     const owlIntents = intentDeps(user, deps, true);
     const replies =
-      (await routeText(input, parsed, user, owlIntents, true)) ??
-      (await owlIntents.recordMoney(input));
+      (await routeText(typed, parsed, user, owlIntents, true)) ??
+      (await owlIntents.recordMoney(typed));
     return keepOwlOpen(owlDeps(deps), user, replies);
   }
 
@@ -743,9 +748,9 @@ async function handleText(
     !options.routed &&
     deps.router &&
     !entries.some((e) => e.foreign) &&
-    needsRouter(input, parsed)
+    needsRouter(typed, parsed)
   ) {
-    const routed = await routeText(input, parsed, user, intentDeps(user, deps));
+    const routed = await routeText(typed, parsed, user, intentDeps(user, deps));
     if (routed) return routed;
   }
 
@@ -753,11 +758,11 @@ async function handleText(
   if (
     deps.structurer &&
     can(plan, "smartParse") &&
-    !looksSecret(input) &&
+    !looksSecret(typed) &&
     !entries.some((e) => e.foreign) &&
-    needsSmartParse(input, parsed)
+    needsSmartParse(typed, parsed)
   ) {
-    const smart = await readWithAi(input, user, deps);
+    const smart = await readWithAi(typed, user, deps);
     if (smart) return smart;
   }
 
@@ -776,7 +781,7 @@ async function handleText(
   }
   if (entries.some((e) => e.backdated) && !can(plan, "backdate")) {
     // Nothing is saved; the card offers the upgrade, or recording it as today instead.
-    return upsellReply(deps.db, user.id, deps.now(), "backdate", BACKDATE_LOCKED_TEXT, input);
+    return upsellReply(deps.db, user.id, deps.now(), "backdate", BACKDATE_LOCKED_TEXT, typed);
   }
   if (entries.length > 1 && !can(plan, "multiEntry")) return [text(MULTI_ENTRY_LOCKED_TEXT)];
   if (entries.some((e) => e.tags.length > 0) && !can(plan, "tags")) {

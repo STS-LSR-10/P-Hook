@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { englishToThai } from "./english";
+import { englishMessage, englishToThai } from "./english";
 
 const cases: [string, string][] = [
   // commands on their own
@@ -33,7 +33,8 @@ const cases: [string, string][] = [
   ["daily budget 500", "งบวัน 500"],
   ["use code ABCD1234", "ใช้รหัส ABCD1234"],
   ["join wallet 482913", "ร่วมกระเป๋า 482913"],
-  ["note buy milk, wifi 1234", "โน้ต buy milk, wifi 1234"],
+  ["note buy milk and eggs", "โน้ต buy milk and eggs"],
+  ["note: buy milk, wifi 1234", "โน้ต buy milk, wifi 1234"],
   ["search notes wifi", "ค้นหาโน้ต wifi"],
   ["find file lease", "หาไฟล์ lease"],
   ["search coffee", "ค้นหา coffee"],
@@ -59,6 +60,13 @@ const cases: [string, string][] = [
   ["remind me every month on the 1st pay rent", "เตือน ทุกวันที่ 1 pay rent"],
   ["remind me today 6pm call mom", "เตือน วันนี้ 18:00 call mom"],
   ["remind me 12am sleep", "เตือน 0:00 sleep"],
+  ["remind me at 9 pay rent", "เตือน 9:00 pay rent"],
+  ["remind me 9.30am stretch", "เตือน 9:30 stretch"],
+  ["remind me at midnight sleep", "เตือน เที่ยงคืน sleep"],
+  ["find file lease 2025", "หาไฟล์ lease 2025"],
+  ["I paid back mom 500", "คืนmom 500"],
+  ["John Smith paid back 200", "John Smithคืน 200"],
+  ["note: wifi 1234", "โน้ต wifi 1234"],
   // entries
   ["yesterday coffee 60", "เมื่อวาน coffee 60"],
   ["salary 25000", "+25000 salary"],
@@ -74,5 +82,30 @@ describe("English typed to the bot, read as the Thai it already understands", ()
   it("leaves words inside an entry alone (only a command at the start is read)", () => {
     expect(englishToThai("help desk fee 200")).toBe("help desk fee 200");
     expect(englishToThai("today special 80")).toBe("today special 80");
+  });
+});
+
+describe("an English entry is never swallowed by a command, nor turned into income by mistake", () => {
+  it.each([
+    "find my biggest expense",
+    "note pad 50",
+    "income tax 5000",
+    "tip 50",
+    "salary advance repay 500",
+    "salary 25000 lunch 80",
+  ])("%s stays as typed", (text) => {
+    expect(englishToThai(text)).toBe(text);
+  });
+
+  it("an entry the command could not use is read as typed, not as the Thai", () => {
+    // "ออม …" with no such goal falls back to an entry: it must keep the English words
+    expect(englishMessage("save the date dinner 500")).toEqual({
+      command: "ออม the date dinner 500",
+      entry: "save the date dinner 500",
+    });
+    expect(englishMessage("yesterday coffee 60")).toEqual({
+      command: null,
+      entry: "เมื่อวาน coffee 60",
+    });
   });
 });
