@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { log } from "@/lib/log";
 import { withZoneScope } from "@/lib/zone-scope";
 
@@ -7,7 +8,8 @@ export function json(data: unknown, status = 200): Response {
 
 /** Error body shape: { error: string } with a polite Thai message. */
 export function apiError(message: string, status: number): Response {
-  return json({ error: message }, status);
+  // the message is written in Thai; the person reads it in their own language
+  return json({ error: t(message) }, status);
 }
 
 export const SERVER_ERROR_TEXT = "ขออภัย ระบบสะดุดชั่วคราว ลองใหม่อีกครั้งนะ";

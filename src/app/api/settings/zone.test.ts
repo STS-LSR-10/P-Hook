@@ -4,6 +4,7 @@ const userUpdates: Record<string, unknown>[] = [];
 const settingsUpserts: Record<string, unknown>[] = [];
 let storedZone = "Asia/Bangkok";
 let storedCurrency = "THB";
+let storedLocale = "th";
 
 vi.mock("@/lib/auth/require-user", () => ({
   requireUser: async () => ({ userId: "u1", lineUserId: "U1" }),
@@ -18,13 +19,14 @@ vi.mock("@/lib/supabase/admin", () => ({
         select: () => chain,
         eq: () => chain,
         single: async () => ({
-          data: { timezone: storedZone, currency: storedCurrency },
+          data: { timezone: storedZone, currency: storedCurrency, locale: storedLocale },
           error: null,
         }),
         update: (v: Record<string, unknown>) => {
           userUpdates.push(v);
           if (v.timezone) storedZone = String(v.timezone);
           if (v.currency) storedCurrency = String(v.currency);
+          if (v.locale) storedLocale = String(v.locale);
           return chain;
         },
         upsert: async (v: Record<string, unknown>) => {
@@ -50,6 +52,7 @@ beforeEach(() => {
   settingsUpserts.length = 0;
   storedZone = "Asia/Bangkok";
   storedCurrency = "THB";
+  storedLocale = "th";
 });
 
 describe("the time zone in settings", () => {
@@ -88,5 +91,16 @@ describe("the currency in settings", () => {
   it("only one of the currencies we offer", async () => {
     expect((await patch({ currency: "VND" })).status).toBe(400);
     expect(userUpdates).toEqual([]);
+  });
+});
+
+describe("the language in settings", () => {
+  it("is read and saved on the person: Thai or English only", async () => {
+    const body = await (await GET(new Request("https://x.test/api/settings"))).json();
+    expect(body).toMatchObject({ locale: "th" });
+    const res = await patch({ locale: "en" });
+    expect(userUpdates).toEqual([{ locale: "en" }]);
+    expect(await res.json()).toMatchObject({ locale: "en" });
+    expect((await patch({ locale: "fr" })).status).toBe(400);
   });
 });

@@ -32,6 +32,8 @@ export interface Settings {
   timezone?: string;
   /** The currency the books are kept in ("THB", "USD", …). */
   currency?: string;
+  /** The app's language: "th" or "en". */
+  locale?: string;
   confirm_style: "full" | "short" | "off";
   budget_cycle: "monthly" | "weekly";
   cycle_start_day: number;

@@ -23,7 +23,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { DeleteCard } from "@/components/liff/settings/delete-card";
 import { MemoryCard } from "@/components/liff/settings/memory-card";
-import { MenuButton, MenuGroup, MenuInfo, MenuLink } from "@/components/liff/settings/menu";
+import { MenuButton, MenuGroup, MenuLink } from "@/components/liff/settings/menu";
 import { NotificationsCard } from "@/components/liff/settings/notifications-card";
 import { PaymentHistorySheet } from "@/components/liff/settings/payment-history-sheet";
 import { PersonalizeCard } from "@/components/liff/settings/personalize-card";
@@ -48,6 +48,7 @@ import {
 import { PLAN_LABEL } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { CurrencySheet } from "@/components/liff/settings/currency-sheet";
+import { LanguageSheet } from "@/components/liff/settings/language-sheet";
 import { ZoneSheet } from "@/components/liff/settings/zone-sheet";
 import { DEFAULT_CURRENCY, currencyLabel } from "@/lib/currency";
 import { DEFAULT_ZONE, ZONES } from "@/lib/zone";
@@ -137,7 +138,7 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState<{ at: SectionId; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [sheet, setSheet] = useState<
-    "recurring" | "memory" | "payments" | "zone" | "currency" | null
+    "recurring" | "memory" | "payments" | "zone" | "currency" | "language" | null
   >(null);
   const [opened, setOpened] = useState<Set<SectionId>>(new Set());
   // sections closed by hand while a search is on (it opens everything it finds)
@@ -214,7 +215,7 @@ export default function SettingsPage() {
       case "member":
         return `สมาชิก ${PLAN_LABEL[user.plan]}`;
       case "general":
-        return `ไทย • ${settings.data?.currency ?? DEFAULT_CURRENCY} • ${zoneCity(settings.data?.timezone)}`;
+        return `${settings.data?.locale === "en" ? "English" : "ไทย"} • ${settings.data?.currency ?? DEFAULT_CURRENCY} • ${zoneCity(settings.data?.timezone)}`;
       case "privacy":
         return "ระวัง";
     }
@@ -395,7 +396,12 @@ export default function SettingsPage() {
       case "general":
         return (
           <MenuGroup label="ทั่วไป">
-            <MenuInfo icon={<Languages className="h-[18px] w-[18px]" />} title="ภาษา" value="ไทย" />
+            <MenuButton
+              onClick={() => setSheet("language")}
+              icon={<Languages className="h-[18px] w-[18px]" />}
+              title="ภาษา"
+              value={settings.data?.locale === "en" ? "English" : "ไทย"}
+            />
             <MenuButton
               onClick={() => setSheet("currency")}
               icon={<Coins className="h-[18px] w-[18px]" />}
@@ -507,6 +513,9 @@ export default function SettingsPage() {
         <Sheet title="จัดหมวดด้วยความจำ" onClose={() => setSheet(null)}>
           <MemoryCard me={me.data} embedded />
         </Sheet>
+      ) : null}
+      {sheet === "language" ? (
+        <LanguageSheet current={settings.data?.locale} onClose={() => setSheet(null)} />
       ) : null}
       {sheet === "currency" ? (
         <CurrencySheet current={settings.data?.currency} onClose={() => setSheet(null)} />

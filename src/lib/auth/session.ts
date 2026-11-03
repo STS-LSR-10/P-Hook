@@ -12,6 +12,8 @@ export interface SessionClaims {
   tz?: string;
   /** The person's currency (older sessions have none: the baht). */
   cur?: string;
+  /** The person's language ("th" or "en"; older sessions have none: Thai). */
+  loc?: string;
 }
 
 const keyOf = (secret: string) => new TextEncoder().encode(secret);
@@ -27,6 +29,7 @@ export async function signSession(
     lu: claims.lineUserId,
     ...(claims.tz ? { tz: claims.tz } : {}),
     ...(claims.cur ? { cur: claims.cur } : {}),
+    ...(claims.loc ? { loc: claims.loc } : {}),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(claims.userId)
@@ -56,6 +59,7 @@ export async function verifySession(
       lineUserId: payload.lu,
       ...(typeof payload.tz === "string" ? { tz: payload.tz } : {}),
       ...(typeof payload.cur === "string" ? { cur: payload.cur } : {}),
+      ...(typeof payload.loc === "string" ? { loc: payload.loc } : {}),
     };
   } catch {
     return null;
