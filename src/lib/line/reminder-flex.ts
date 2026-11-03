@@ -1,5 +1,6 @@
 import type { LineMessage } from "@/lib/types";
-import { describeReminder, type Repeat } from "@/lib/user-reminder";
+import { REPEAT_LABEL, type Repeat } from "@/lib/user-reminder";
+import { bangkokParts, formatThaiDate, fromBangkok } from "@/lib/thai-date";
 import { COLOR } from "./flex";
 import { t } from "@/lib/i18n";
 
@@ -12,7 +13,7 @@ export interface ReminderCardInput {
   timeDefaulted: boolean;
   /** A time alone had already gone by today, so it was set for tomorrow. */
   rolledToTomorrow?: boolean;
-  /** The LIFF reminders page (the "ดูเตือนทั้งหมด" button is left out without it). */
+  /** The LIFF reminders page, where the time is changed (the "เปลี่ยนเวลา" button is left out without it). */
   listUrl?: string;
   /** What the cancel button sends (a group's reminder has its own). */
   cancelData?: string;
@@ -20,10 +21,26 @@ export interface ReminderCardInput {
   title?: string;
   /** "Add to calendar" links (a group's reminder): Google Calendar, and an .ics for the phone. */
   calendar?: { google: string; ics: string };
+  /** Now, to say "วันนี้" / "พรุ่งนี้" beside the time. */
+  now?: Date;
 }
 
-/** "Reminder set" card: what, when, and a button to cancel it. */
+const INK = "#0B5D4F";
+const LINE = "#CBD5E1";
+
+/** "Reminder set" card: what, the time large with its day, and buttons to change the time or cancel. */
 export function buildReminderCard(input: ReminderCardInput): LineMessage {
+  const now = input.now ?? new Date();
+  const p = bangkokParts(input.remindAt);
+  const clock = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+  const notes = [
+    ...(input.rolledToTomorrow
+      ? [t("เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)")]
+      : []),
+    ...(input.timeDefaulted
+      ? [t("ไม่ได้ระบุเวลา เลยใช้ 09:00 (อยากเปลี่ยน ยกเลิกแล้วตั้งใหม่พร้อมเวลา)")]
+      : []),
+  ];
   return {
     type: "flex",
     altText: t("ตั้งเตือนแล้ว: {0}", input.body),
@@ -32,16 +49,26 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
       size: "mega",
       header: {
         type: "box",
-        layout: "vertical",
+        layout: "horizontal",
         backgroundColor: COLOR.primarySoft,
         paddingAll: "12px",
         contents: [
           {
             type: "text",
-            text: input.title ?? t("ตั้งเตือนแล้ว ⏰"),
+            text: input.title ?? t("ตั้งเตือนแล้ว"),
             weight: "bold",
-            size: "lg",
-            color: "#0B5D4F",
+            size: "md",
+            color: INK,
+            flex: 1,
+          },
+          {
+            type: "text",
+            text: input.repeat ? REPEAT_LABEL[input.repeat] : t("ครั้งเดียว"),
+            size: "sm",
+            color: INK,
+            align: "end",
+            gravity: "center",
+            flex: 0,
           },
         ],
       },
@@ -57,58 +84,48 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
             text: input.body,
             weight: "bold",
             size: "md",
-            wrap: true,
             color: COLOR.text,
+            wrap: true,
           },
           {
-            type: "text",
-            text: describeReminder(input.remindAt, input.repeat),
-            size: "md",
-            color: COLOR.primary,
-            weight: "bold",
-            wrap: true,
+            type: "box",
+            layout: "baseline",
+            spacing: "sm",
+            contents: [
+              {
+                type: "text",
+                text: clock,
+                size: "lg",
+                weight: "bold",
+                color: COLOR.primary,
+                flex: 0,
+              },
+              {
+                type: "text",
+                text: dayLabel(input.remindAt, input.repeat, now),
+                size: "sm",
+                color: COLOR.muted,
+                flex: 0,
+              },
+            ],
           },
-          ...(input.rolledToTomorrow
-            ? [
-                {
-                  type: "text",
-                  text: t("เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)"),
-                  size: "xs",
-                  color: COLOR.muted,
-                  wrap: true,
-                },
-              ]
-            : []),
-          ...(input.timeDefaulted
-            ? [
-                {
-                  type: "text",
-                  text: t("ไม่ได้ระบุเวลา เลยใช้ 09:00 (อยากเปลี่ยน ยกเลิกแล้วตั้งใหม่พร้อมเวลา)"),
-                  size: "xs",
-                  color: COLOR.muted,
-                  wrap: true,
-                },
-              ]
-            : []),
+          ...notes.map((text) => ({
+            type: "text",
+            text,
+            size: "xs",
+            color: COLOR.muted,
+            wrap: true,
+          })),
         ],
       },
       footer: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.surface,
+        paddingAll: "12px",
+        paddingTop: "0px",
         spacing: "sm",
         contents: [
-          ...(input.listUrl
-            ? [
-                {
-                  type: "button",
-                  style: "primary",
-                  height: "sm",
-                  color: COLOR.primary,
-                  action: { type: "uri", label: "ดูเตือนทั้งหมด", uri: input.listUrl },
-                },
-              ]
-            : []),
           ...(input.calendar
             ? [
                 {
@@ -116,18 +133,12 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
                   layout: "horizontal",
                   spacing: "sm",
                   contents: [
-                    {
-                      type: "button",
-                      style: "secondary",
-                      height: "sm",
-                      action: { type: "uri", label: "📅 Google", uri: input.calendar.google },
-                    },
-                    {
-                      type: "button",
-                      style: "secondary",
-                      height: "sm",
-                      action: { type: "uri", label: "📅 iPhone", uri: input.calendar.ics },
-                    },
+                    pill("📅 Google", {
+                      type: "uri",
+                      label: "📅 Google",
+                      uri: input.calendar.google,
+                    }),
+                    pill("📅 iPhone", { type: "uri", label: "📅 iPhone", uri: input.calendar.ics }),
                   ],
                 },
                 {
@@ -141,20 +152,68 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
               ]
             : []),
           {
-            type: "button",
-            style: "secondary",
-            height: "sm",
-            action: {
-              type: "postback",
-              label: t("ยกเลิกเตือนนี้"),
-              data: input.cancelData ?? `a=rmx&id=${input.id}`,
-              displayText: t("ยกเลิกเตือนนี้"),
-            },
+            type: "box",
+            layout: "horizontal",
+            spacing: "sm",
+            contents: [
+              ...(input.listUrl
+                ? [
+                    pill(t("เปลี่ยนเวลา"), {
+                      type: "uri",
+                      label: t("เปลี่ยนเวลา"),
+                      uri: input.listUrl,
+                    }),
+                  ]
+                : []),
+              pill(
+                t("ยกเลิก"),
+                {
+                  type: "postback",
+                  label: t("ยกเลิกเตือนนี้"),
+                  data: input.cancelData ?? `a=rmx&id=${input.id}`,
+                  displayText: t("ยกเลิกเตือนนี้"),
+                },
+                COLOR.muted,
+              ),
+            ],
           },
         ],
       },
     },
   };
+}
+
+/** An outlined, rounded button. */
+function pill(label: string, action: Record<string, unknown>, color = "#334155") {
+  return {
+    type: "box",
+    layout: "vertical",
+    flex: 1,
+    cornerRadius: "20px",
+    borderWidth: "1px",
+    borderColor: LINE,
+    paddingAll: "8px",
+    action,
+    contents: [{ type: "text", text: label, align: "center", size: "sm", weight: "bold", color }],
+  };
+}
+
+const WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+
+/** Beside the time: "วันนี้", "พรุ่งนี้" or the date; for a repeating one, which days. */
+function dayLabel(at: Date, repeat: Repeat | null, now: Date): string {
+  const p = bangkokParts(at);
+  if (repeat === "daily") return t("ทุกวัน");
+  if (repeat === "weekly") return t("ทุกวัน{0}", t(WEEKDAYS[p.weekday] ?? ""));
+  if (repeat === "monthly") return t("ทุกวันที่ {0}", p.day);
+  const today = bangkokParts(now);
+  const same = (a: typeof p, b: typeof p) =>
+    a.year === b.year && a.month === b.month && a.day === b.day;
+  if (same(p, today)) return t("วันนี้");
+  if (same(p, bangkokParts(fromBangkok(today.year, today.month, today.day + 1)))) {
+    return t("พรุ่งนี้");
+  }
+  return formatThaiDate(at);
 }
 
 /** The buttons that pop up under a reminder when it arrives: done, or remind me again later. */

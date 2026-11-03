@@ -116,7 +116,8 @@ describe("setting a reminder from the chat", () => {
     expect(created[0]).toMatchObject({ body: "จ่ายค่าไฟ", repeat: null });
     expect((created[0]?.remindAt as Date).toISOString()).toBe("2026-10-29T02:00:00.000Z");
     expect(sent(reply)[0]?.type).toBe("flex");
-    expect(said(reply)).toContain("29 ต.ค. 2569 09:00");
+    expect(said(reply)).toContain('"text":"09:00"');
+    expect(said(reply)).toContain('"text":"พรุ่งนี้"');
     expect(said(reply)).toContain(`a=rmx&id=${ID}`);
     expect(said(reply)).toContain("https://liff.line.me/1234-abcd/reminders");
   });

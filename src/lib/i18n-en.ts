@@ -2449,4 +2449,10 @@ export const EN: Record<string, string> = {
   "กระเป๋าเงิน รวม {0}": "Wallets, total {0}",
   "↩ ยกเลิกการโอน": "↩ Undo the transfer",
   ยกเลิกการโอน: "Undo the transfer",
+  ตั้งเตือนแล้ว: "Reminder set",
+  เปลี่ยนเวลา: "Change time",
+  "ทุกวัน{0}": "Every {0}",
+  "ทุกวันที่ {0}": "Monthly on the {0}",
+  พรุ่งนี้: "Tomorrow",
+  ตั้งเตือนกลุ่มแล้ว: "Group reminder set",
 };

@@ -1,41 +1,63 @@
 import { describe, expect, it } from "vitest";
 import { buildReminderCard } from "./reminder-flex";
 
+// Wednesday 28 Oct 2026, 10:00 in Bangkok; the reminder is 09:00 on Thursday the 29th
+const NOW = new Date("2026-10-28T03:00:00Z");
 const base = {
   id: "11111111-1111-1111-1111-111111111111",
   body: "จ่ายค่าไฟ",
   remindAt: new Date("2026-10-29T02:00:00Z"),
   repeat: null,
   timeDefaulted: false,
+  now: NOW,
 };
+const card = (over: Partial<Parameters<typeof buildReminderCard>[0]> = {}) =>
+  buildReminderCard({ ...base, ...over }) as unknown as {
+    contents: {
+      header: { contents: { text: string }[] };
+      body: { contents: Record<string, unknown>[] };
+      footer: { contents: Record<string, unknown>[] };
+    };
+  };
 const json = (over: Partial<Parameters<typeof buildReminderCard>[0]> = {}) =>
-  JSON.stringify(buildReminderCard({ ...base, ...over }));
+  JSON.stringify(card(over));
 
 describe("reminder card", () => {
-  it("shows what and when, with a button that cancels this reminder", () => {
+  it("says it is set and how often in the header, in the app's green", () => {
+    const head = card().contents.header.contents.map((c) => c.text);
+    expect(head).toEqual(["ตั้งเตือนแล้ว", "ครั้งเดียว"]);
+    expect(json()).toContain("#CCFBF1");
+    expect(card({ repeat: "daily" }).contents.header.contents[1]?.text).toBe("ทุกวัน");
+  });
+
+  it("shows what, then the time large with its day beside it", () => {
     const out = json();
-    expect(out).toContain("ตั้งเตือนแล้ว");
-    expect(out).toContain("จ่ายค่าไฟ");
-    expect(out).toContain("29 ต.ค. 2569 09:00");
+    expect(out).toContain('"text":"จ่ายค่าไฟ"');
+    expect(out).toContain('"text":"09:00"');
+    expect(out).toContain('"text":"พรุ่งนี้"');
+    expect(json({ remindAt: new Date("2026-10-28T11:00:00Z") })).toContain('"text":"วันนี้"');
+    expect(json({ remindAt: new Date("2026-11-05T02:00:00Z") })).toContain('"text":"5 พ.ย. 2569"');
+  });
+
+  it("a repeating one says its day of the week or month", () => {
+    // the 29th is a Thursday
+    expect(json({ repeat: "weekly" })).toContain('"text":"ทุกวันพฤหัสบดี"');
+    expect(json({ repeat: "monthly" })).toContain('"text":"ทุกวันที่ 29"');
+    expect(json({ repeat: "daily" })).toContain('"text":"ทุกวัน"');
+  });
+
+  it("two outlined buttons: change the time (the reminders page) and cancel", () => {
+    const out = json({ listUrl: "https://liff.line.me/x/reminders" });
+    expect(out).toContain('"label":"เปลี่ยนเวลา","uri":"https://liff.line.me/x/reminders"');
     expect(out).toContain(`"data":"a=rmx&id=${base.id}"`);
+    // no page known: only cancel
+    expect(json()).not.toContain("เปลี่ยนเวลา");
   });
 
-  it("says how often, and when the time was not given", () => {
-    expect(json({ repeat: "daily" })).toContain("· ทุกวัน");
+  it("still says when the time was not given, or had passed", () => {
     expect(json({ timeDefaulted: true })).toContain("ใช้ 09:00");
-    expect(json()).not.toContain("ใช้ 09:00");
-  });
-
-  it("says when the time had passed, so it was set for tomorrow", () => {
     expect(json({ rolledToTomorrow: true })).toContain("เลยตั้งเป็นพรุ่งนี้");
-    expect(json()).not.toContain("เลยตั้งเป็นพรุ่งนี้");
-  });
-
-  it("links to the reminders page only when it is known", () => {
-    expect(json()).not.toContain('"type":"uri"');
-    expect(json({ listUrl: "https://liff.line.me/x/reminders" })).toContain(
-      "https://liff.line.me/x/reminders",
-    );
+    expect(json()).not.toContain("ใช้ 09:00");
   });
 
   it("keeps the postback data short", () => {
