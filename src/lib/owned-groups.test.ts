@@ -22,11 +22,16 @@ function fakeDb(groups: Row[], files: Record<string, number>) {
           chain
         ),
         order: () => chain,
-        limit: (n: number) => (calls.push([table, "limit", n]), chain),
+        limit: (n: number) => ((filters.limit = n), calls.push([table, "limit", n]), chain),
         then: (ok: (v: unknown) => unknown) =>
           Promise.resolve(
             table === "bot_groups"
-              ? { data: groups, error: null }
+              ? {
+                  data: groups
+                    .filter((g) => !("is_active" in filters) || g.is_active === filters.is_active)
+                    .slice(0, (filters.limit as number | undefined) ?? Infinity),
+                  error: null,
+                }
               : { count: files[filters.group_id as string] ?? 0, error: null },
           ).then(ok),
       };
@@ -59,6 +64,17 @@ describe("the groups an owner can switch to", () => {
       return null;
     });
     expect(items.map((g) => g.name)).toEqual(["กลุ่ม 1", "กลุ่ม 2"]);
+  });
+
+  it("reach a closed ledger with files behind many empty ones", async () => {
+    const empties = Array.from({ length: 25 }, (_, i) => ({
+      id: `e${i}`,
+      line_group_id: `CE${i}`,
+      is_active: false,
+    }));
+    const { db } = fakeDb([open, ...empties, closedWithFiles], { g2: 1 });
+    const items = await listOwnedGroups(db, "u1", async () => "x");
+    expect(items.map((g) => g.id)).toEqual(["g1", "g2"]);
   });
 
   it("are none for someone who owns no ledger, without asking LINE", async () => {

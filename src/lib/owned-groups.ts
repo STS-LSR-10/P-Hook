@@ -11,8 +11,10 @@ export interface OwnedGroup {
 /** The name of a LINE group, or null when LINE does not say (the bot left it, say). */
 export type GroupNameLookup = (lineGroupId: string) => Promise<string | null>;
 
-/** Enough for anyone; more than this many ledgers and the oldest are left out. */
+/** Enough for anyone: every open ledger first, then the most recently closed ones that keep files. */
 const MAX_GROUPS = 20;
+/** Closed ledgers asked about at once, for whether they keep files. */
+const CLOSED_BATCH = 10;
 
 /**
  * The ledgers this person owns that have something to show: every open one, and a closed one that
@@ -24,28 +26,36 @@ export async function listOwnedGroups(
   userId: string,
   nameOf: GroupNameLookup,
 ): Promise<OwnedGroup[]> {
-  const { data, error } = await db
-    .from("bot_groups")
-    .select("id,line_group_id,is_active")
-    .eq("owner_user_id", userId)
-    .order("is_active", { ascending: false })
-    .order("created_at", { ascending: true })
-    .limit(MAX_GROUPS);
-  if (error) throw new Error(`list owned groups: ${error.message}`);
-  const rows = (data ?? []) as { id: string; line_group_id: string; is_active: boolean }[];
+  type Row = { id: string; line_group_id: string; is_active: boolean };
+  const rowsOf = async (active: boolean): Promise<Row[]> => {
+    const { data, error } = await db
+      .from("bot_groups")
+      .select("id,line_group_id,is_active")
+      .eq("owner_user_id", userId)
+      .eq("is_active", active)
+      .order(active ? "created_at" : "closed_at", { ascending: active });
+    if (error) throw new Error(`list owned groups: ${error.message}`);
+    return (data ?? []) as Row[];
+  };
+  const [open, closed] = await Promise.all([rowsOf(true), rowsOf(false)]);
 
-  const kept = await Promise.all(
-    rows.map(async (row) => {
-      if (row.is_active) return true;
-      const { count, error: countError } = await db
-        .from("stored_files")
-        .select("id", { count: "exact", head: true })
-        .eq("group_id", row.id);
-      if (countError) throw new Error(`count group files: ${countError.message}`);
-      return (count ?? 0) > 0;
-    }),
-  );
-  const shown = rows.filter((_, i) => kept[i]);
+  // a closed ledger counts only while it keeps files; asked a few at a time, newest closed first,
+  // so a ledger with files is found however many empty ones were closed after it
+  const shown = open.slice(0, MAX_GROUPS);
+  for (let i = 0; i < closed.length && shown.length < MAX_GROUPS; i += CLOSED_BATCH) {
+    const batch = closed.slice(i, i + CLOSED_BATCH);
+    const kept = await Promise.all(
+      batch.map(async (row) => {
+        const { count, error } = await db
+          .from("stored_files")
+          .select("id", { count: "exact", head: true })
+          .eq("group_id", row.id);
+        if (error) throw new Error(`count group files: ${error.message}`);
+        return (count ?? 0) > 0;
+      }),
+    );
+    shown.push(...batch.filter((_, j) => kept[j]).slice(0, MAX_GROUPS - shown.length));
+  }
 
   const names = await Promise.all(
     shown.map((row) =>

@@ -146,6 +146,34 @@ test.describe("switching the vault and reminders to a group (360px)", () => {
     await expect(page.getByText("กลุ่มนี้ยังไม่มีเตือน")).toBeVisible();
   });
 
+  test("switching the reminders page keeps the switch, without asking for the groups again", async ({
+    page,
+  }) => {
+    const { seen } = await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/groups": GROUPS,
+      "GET /api/reminders": {
+        items: [],
+        active: 0,
+        limit: 3,
+        repeating: 0,
+        repeatLimit: 1,
+        canAdd: true,
+        canAddOnce: true,
+        canAddRepeat: true,
+      },
+      [`GET /api/groups/${G}/reminders`]: { items: [reminder], isOwner: true },
+    });
+    await page.goto("/reminders");
+    const pick = page.getByLabel("ดูของส่วนตัวหรือของกลุ่ม");
+    await pick.selectOption({ label: "กลุ่ม: บ้านเรา" });
+    await expect(page.getByText("ประชุมทีม")).toBeVisible();
+    await pick.selectOption({ label: "ส่วนตัว" });
+    await expect(page).toHaveURL(/\/reminders$/);
+    await expect(pick).toHaveValue("");
+    expect(seen.filter((s) => s === "GET /api/groups")).toHaveLength(1);
+  });
+
   test("the old group links lead to the switched pages", async ({ page }) => {
     await mockApi(page, {
       "GET /api/me": ME_FREE,
