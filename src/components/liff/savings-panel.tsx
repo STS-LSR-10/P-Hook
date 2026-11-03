@@ -5,7 +5,7 @@ import { SavingsChart } from "@/components/liff/lazy-charts";
 import { useApi } from "@/components/liff/liff-provider";
 import { Segmented } from "@/components/liff/segmented";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/liff/states";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import type { SeriesPoint } from "@/lib/series";
 import { cn } from "@/lib/utils";
 
@@ -71,7 +71,7 @@ export function SavingsPanel() {
                   totalNet < 0 ? "text-expense" : "text-income",
                 )}
               >
-                ฿{formatBaht(totalNet)}
+                {money(totalNet)}
               </p>
             </div>
             <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
@@ -92,7 +92,7 @@ export function SavingsPanel() {
 
           <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
             <p className="text-xs text-muted">ใส่หมวด &quot;{SAVINGS_CATEGORY}&quot; ในรอบงบนี้</p>
-            <p className="num text-lg font-bold">฿{formatBaht(invested)}</p>
+            <p className="num text-lg font-bold">{money(invested)}</p>
           </div>
         </>
       )}

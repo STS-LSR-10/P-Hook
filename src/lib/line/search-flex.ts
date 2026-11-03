@@ -1,5 +1,5 @@
 import type { TxDto } from "@/lib/dto";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import type { SearchTotals } from "@/lib/search";
 import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
@@ -29,11 +29,11 @@ export function buildSearchCard(input: {
   const net = totals.incomeSatang - totals.expenseSatang;
 
   const body: unknown[] = [
-    row("รายรับ", `+฿${formatBaht(totals.incomeSatang)}`, COLOR.income),
-    row("รายจ่าย", `-฿${formatBaht(totals.expenseSatang)}`, COLOR.expense),
+    row("รายรับ", `+${money(totals.incomeSatang)}`, COLOR.income),
+    row("รายจ่าย", `-${money(totals.expenseSatang)}`, COLOR.expense),
     row(
       "สุทธิ",
-      `${net < 0 ? "-" : ""}฿${formatBaht(Math.abs(net))}`,
+      `${net < 0 ? "-" : ""}${money(Math.abs(net))}`,
       net < 0 ? COLOR.expense : COLOR.income,
     ),
     {
@@ -68,7 +68,7 @@ export function buildSearchCard(input: {
           },
           {
             type: "text",
-            text: `${income ? "+" : "-"}฿${formatBaht(tx.amountSatang)}`,
+            text: `${income ? "+" : "-"}${money(tx.amountSatang)}`,
             size: "sm",
             color: income ? COLOR.income : COLOR.expense,
             align: "end",
@@ -120,7 +120,7 @@ export function buildSearchCard(input: {
   }
   return {
     type: "flex",
-    altText: `ค้นหา ${term}: พบ ${totals.count} รายการ รายจ่าย ฿${formatBaht(totals.expenseSatang)}`,
+    altText: `ค้นหา ${term}: พบ ${totals.count} รายการ รายจ่าย ${money(totals.expenseSatang)}`,
     contents: bubble,
   };
 }

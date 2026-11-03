@@ -1,4 +1,4 @@
-import { formatBaht } from "@/lib/money";
+import { formatBaht, money } from "@/lib/money";
 import type { LineMessage, TxType } from "@/lib/types";
 import { bangkokParts } from "@/lib/thai-date";
 import { COLOR } from "./flex";
@@ -137,7 +137,7 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
             contents: [
               {
                 type: "text",
-                text: `รายจ่ายรวม -฿${formatBaht(sum("expense"))}`,
+                text: `รายจ่ายรวม -${money(sum("expense"))}`,
                 size: "xs",
                 color: COLOR.expense,
                 flex: 1,
@@ -145,7 +145,7 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
               },
               {
                 type: "text",
-                text: `รายรับรวม +฿${formatBaht(sum("income"))}`,
+                text: `รายรับรวม +${money(sum("income"))}`,
                 size: "xs",
                 color: COLOR.income,
                 align: "end",

@@ -1,5 +1,5 @@
 import { categoryLabel } from "@/lib/category-emoji";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { bangkokParts, formatThaiDate } from "@/lib/thai-date";
 import type { ConfirmStyle, LineMessage, TxType } from "@/lib/types";
 
@@ -83,7 +83,7 @@ export function row(label: string, value: string) {
 
 export function shareText(input: ConfirmCardInput): string {
   const sign = input.type === "income" ? "+" : "-";
-  return `${input.title} ${sign}฿${formatBaht(input.amountSatang)} (${formatThaiDate(input.occurredAt)}) · จดด้วยพี่ฮูก`;
+  return `${input.title} ${sign}${money(input.amountSatang)} (${formatThaiDate(input.occurredAt)}) · จดด้วยพี่ฮูก`;
 }
 
 // colours below are the base palette's, so the chosen card theme still recolours them
@@ -300,12 +300,12 @@ export function budgetBlock(
         contents: [
           {
             type: "span",
-            text: `฿${formatBaht(spent)}`,
+            text: `${money(spent)}`,
             size: "lg",
             weight: "bold",
             color: LEVEL_COLOR[level],
           },
-          { type: "span", text: ` / ฿${formatBaht(limit)}`, size: "md", color: COLOR.muted },
+          { type: "span", text: ` / ${money(limit)}`, size: "md", color: COLOR.muted },
         ],
       },
       {
@@ -333,7 +333,7 @@ export function budgetBlock(
           { type: "text", text: `ใช้ไป ${pct}%`, size: "xs", color: COLOR.muted, flex: 1 },
           {
             type: "text",
-            text: rest >= 0 ? `เหลือ ฿${formatBaht(rest)}` : `เกินงบ ฿${formatBaht(-rest)}`,
+            text: rest >= 0 ? `เหลือ ${money(rest)}` : `เกินงบ ${money(-rest)}`,
             size: "xs",
             weight: "bold",
             color: rest >= 0 ? COLOR.muted : COLOR.expense,
@@ -350,7 +350,7 @@ export function budgetBlock(
 }
 
 export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
-  const amountText = `฿${formatBaht(input.amountSatang)}`;
+  const amountText = `${money(input.amountSatang)}`;
   const category = input.categoryName ?? "ไม่ระบุหมวด";
   const tagsText = input.tags?.length ? ` ${input.tags.map((t) => `#${t}`).join(" ")}` : "";
 
@@ -596,7 +596,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
             contents: [
               {
                 type: "text",
-                text: `฿${formatBaht(total)}`,
+                text: `${money(total)}`,
                 weight: "bold",
                 size: "md",
                 color: accent,
@@ -733,7 +733,7 @@ export function buildTypeQuestion(input: {
   });
   return {
     type: "text",
-    text: `${input.title} ฿${formatBaht(input.amountSatang)} เป็นรายรับหรือรายจ่ายนะ?`,
+    text: `${input.title} ${money(input.amountSatang)} เป็นรายรับหรือรายจ่ายนะ?`,
     quickReply: {
       items: [action("รายจ่าย", "expense"), action("รายรับ", "income"), action("ยกเลิก", "cancel")],
     },

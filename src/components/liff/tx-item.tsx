@@ -1,7 +1,7 @@
 import { formatForeign, formatRate } from "@/lib/fx";
 import type { ReactNode } from "react";
 import type { TxDto } from "@/lib/dto";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import { categoryLabel } from "@/lib/category-emoji";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,8 @@ export function TxItem({
         ) : null}
       </div>
       <p className={cn("num shrink-0 text-sm font-bold", income ? "text-income" : "text-expense")}>
-        {income ? "+" : "-"}฿{formatBaht(tx.amountSatang)}
+        {income ? "+" : "-"}
+        {money(tx.amountSatang)}
       </p>
     </>
   );

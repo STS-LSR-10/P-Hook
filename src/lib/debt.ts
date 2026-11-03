@@ -1,6 +1,7 @@
 import { parseAmountToSatang } from "@/lib/parse/thai-number";
 import { extractWalletHint } from "@/lib/parse/text-parser";
 import { bangkokParts, fromBangkok, isValidYmd } from "@/lib/thai-date";
+import { currencySymbol } from "@/lib/money";
 
 export type DebtDirection = "lent" | "borrowed";
 
@@ -233,7 +234,9 @@ export function dueDebtsText(debts: DebtDto[], now: Date): string | null {
       d.direction === "lent"
         ? `${cleanPerson(d.person)} ติดเรา`
         : `เราติด ${cleanPerson(d.person)}`;
-    lines.push(`• ${who} ฿${baht} (${state === "overdue" ? "เลยกำหนดแล้ว" : "ใกล้ครบกำหนด"})`);
+    lines.push(
+      `• ${who} ${currencySymbol()}${baht} (${state === "overdue" ? "เลยกำหนดแล้ว" : "ใกล้ครบกำหนด"})`,
+    );
   }
   return lines.length === 0 ? null : ["เตือนหนี้ที่ใกล้ครบกำหนด", ...lines.slice(0, 5)].join("\n");
 }

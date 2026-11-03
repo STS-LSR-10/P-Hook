@@ -4,7 +4,7 @@ import { sliceColor } from "@/components/liff/slice-color";
 import { emojiOf } from "@/lib/category-emoji";
 import type { TxDto } from "@/lib/dto";
 import { formatForeign, formatRate } from "@/lib/fx";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { bangkokParts, formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 
@@ -101,7 +101,8 @@ export function TxCard({
       <span
         className={cn("num shrink-0 text-xs font-bold", income ? "text-income" : "text-expense")}
       >
-        {income ? "+" : "-"}฿{formatBaht(tx.amountSatang)}
+        {income ? "+" : "-"}
+        {money(tx.amountSatang)}
       </span>
       {onOpen ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden /> : null}
     </>

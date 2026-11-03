@@ -2,6 +2,7 @@ import type { Insight } from "@/lib/insight";
 import type { LineMessage } from "@/lib/types";
 import { cardHeader, pillFooter, TINT } from "./card-style";
 import { COLOR } from "./flex";
+import { HOME_CURRENCIES, symbolOf } from "@/lib/currency";
 
 /** The soft tints the observations take in turn (lavender, peach, sky). */
 const LINE_TINTS = [
@@ -10,9 +11,14 @@ const LINE_TINTS = [
   { bg: TINT.cool, accent: "#1D4ED8" },
 ] as const;
 
-const AMOUNT = /(฿\s?[\d,]+(?:\.\d+)?)/g;
+/** An amount after a currency sign (฿, $, €, RM, kr …): the signs of every currency we offer. */
+const SIGNS = [...new Set(HOME_CURRENCIES.map((c) => symbolOf(c).trim()))]
+  .sort((a, b) => b.length - a.length)
+  .map((sign) => sign.replace(/[$.*+?^{}()|[\]\\]/g, "\\$&"));
+const AMOUNT = new RegExp(`((?:${SIGNS.join("|")})\\s?[\\d,]+(?:\\.\\d+)?)`, "g");
+const IS_AMOUNT = new RegExp(`^(?:${SIGNS.join("|")})\\s?\\d`);
 
-/** A sentence as text spans, with each amount (฿1,234) picked out in the tint's accent colour. */
+/** A sentence as text spans, with each amount (฿1,234, $12) picked out in the tint's accent colour. */
 function highlighted(line: string, accent: string) {
   const parts = line.split(AMOUNT).filter((p) => p !== "");
   return {
@@ -21,7 +27,7 @@ function highlighted(line: string, accent: string) {
     size: "sm",
     color: TINT.strong,
     contents: parts.map((part) =>
-      /^฿/.test(part)
+      IS_AMOUNT.test(part)
         ? { type: "span", text: part, weight: "bold", color: accent }
         : { type: "span", text: part },
     ),

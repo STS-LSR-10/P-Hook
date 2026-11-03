@@ -1,4 +1,4 @@
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 
 export type AlertLevel = 80 | 100;
 
@@ -40,7 +40,7 @@ export function alertText(input: {
   limitSatang: number;
 }): string {
   const scope = input.scopeName ? `หมวด${input.scopeName}` : "รวม";
-  const figures = `฿${formatBaht(input.spentSatang)} จาก ฿${formatBaht(input.limitSatang)}`;
+  const figures = `${money(input.spentSatang)} จาก ${money(input.limitSatang)}`;
   return input.level === 100
     ? `เกินงบ${scope}แล้ว (${figures})`
     : `งบ${scope}ใช้ไปแล้ว 80% (${figures})`;

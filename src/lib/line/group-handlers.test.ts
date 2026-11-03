@@ -155,7 +155,7 @@ vi.mock("@/lib/note-repo", async (original) => ({
   },
 }));
 vi.mock("@/lib/fx-repo", () => ({
-  getRate: async () => fxAnswer,
+  getHomeRate: async () => fxAnswer,
 }));
 
 const inGroup = (userId: string | undefined, t: string): LineEvent => ({

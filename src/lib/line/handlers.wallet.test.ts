@@ -77,7 +77,8 @@ vi.mock("@/lib/debt-repo", async () => {
   };
 });
 vi.mock("@/lib/fx-repo", () => ({
-  getRate: async (_db: unknown, currency: string, day: string) => {
+  // the price in the person's currency (the baht here)
+  getHomeRate: async (_db: unknown, currency: string, day: string) => {
     fxAsked.push(`${currency}:${day}`);
     return fxAnswer;
   },

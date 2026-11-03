@@ -5,7 +5,7 @@ import { calendarMonthRange, cycleRange } from "@/lib/budget-cycle";
 import { listDebts } from "@/lib/debt-repo";
 import type { DebtDirection } from "@/lib/debt";
 import { listGoals } from "@/lib/goal-repo";
-import { formatBaht, toSatang } from "@/lib/money";
+import { money, toSatang } from "@/lib/money";
 import { listNotes } from "@/lib/note-repo";
 import type { Cadence } from "@/lib/recurring";
 import { listRules } from "@/lib/recurring-repo";
@@ -96,7 +96,7 @@ export interface OwlFacts {
   }[];
 }
 
-const baht = (satang: number) => `฿${formatBaht(satang)}`;
+const baht = (satang: number) => money(satang);
 
 function moneyLine(label: string, m: Money | null): string | null {
   if (!m) return null;

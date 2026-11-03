@@ -1,4 +1,4 @@
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { parseAmountToSatang } from "@/lib/parse/thai-number";
 import { bangkokParts } from "@/lib/thai-date";
 import { balanceOf, type Wallet } from "@/lib/wallet";
@@ -145,7 +145,7 @@ const when = (key: string) => {
 /** "พรุ่งนี้ครบกำหนดจ่ายค่าไฟ ประมาณ ฿1,250 (15/11/2569)" */
 export function billReminderText(r: DueReminder): string {
   const { bill } = r;
-  const amount = bill.amountSatang ? ` ประมาณ ฿${formatBaht(bill.amountSatang)}` : "";
+  const amount = bill.amountSatang ? ` ประมาณ ${money(bill.amountSatang)}` : "";
   const date = `(${when(bill.nextDueOn)})`;
   switch (r.kind) {
     case "overdue":

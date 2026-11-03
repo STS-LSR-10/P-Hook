@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
-import { getRate } from "./fx-repo";
+import { getHomeRate, getRate } from "./fx-repo";
 
 interface Row {
   day: string;
@@ -97,5 +97,37 @@ describe("getRate", () => {
     ]);
     expect(await getRate(db, "JPY", "2026-10-17", "2026-10-18", down)).toBeNull();
     expect(await getRate(db, "USD", "2026-10-17", "2026-10-18", down)).toBeNull();
+  });
+});
+
+describe("getHomeRate: the price of a currency in the person's own", () => {
+  const cached: Row[] = [
+    { day: "2026-10-17", currency: "JPY", rate: 0.25, source_day: "2026-10-16" },
+    { day: "2026-10-17", currency: "USD", rate: 35, source_day: "2026-10-16" },
+  ];
+
+  it("is the baht price when their books are in baht", async () => {
+    const { db } = fakeDb(cached);
+    expect((await getHomeRate(db, "JPY", "2026-10-17", "2026-10-18", "THB", down))?.rate).toBe(
+      0.25,
+    );
+  });
+
+  it("crosses through the baht for another home currency", async () => {
+    const { db } = fakeDb(cached);
+    // 1 JPY = 0.25 THB, 1 USD = 35 THB -> 1 JPY = 0.25 / 35 USD
+    const r = await getHomeRate(db, "JPY", "2026-10-17", "2026-10-18", "USD", down);
+    expect(r?.rate).toBeCloseTo(0.25 / 35, 10);
+    expect(r?.stale).toBe(false);
+    // the baht itself is foreign to a dollar book: 1 THB = 1/35 USD
+    expect(
+      (await getHomeRate(db, "THB", "2026-10-17", "2026-10-18", "USD", down))?.rate,
+    ).toBeCloseTo(1 / 35, 10);
+  });
+
+  it("is 1 for their own currency, and nothing when a side has no rate", async () => {
+    const { db } = fakeDb(cached);
+    expect((await getHomeRate(db, "USD", "2026-10-17", "2026-10-18", "USD", down))?.rate).toBe(1);
+    expect(await getHomeRate(db, "EUR", "2026-10-17", "2026-10-18", "USD", down)).toBeNull();
   });
 });

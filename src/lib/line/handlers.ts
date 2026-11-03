@@ -9,7 +9,7 @@ import {
 import { calendarMonthRange, cycleRange, dayRange } from "@/lib/budget-cycle";
 import { categorizeByRules, matchLeadingCategory, type CategoryLite } from "@/lib/categorize/rules";
 import { parseCommand, type Command } from "@/lib/commands";
-import { formatBaht, satangToString, toSatang } from "@/lib/money";
+import { formatBaht, money, satangToString, toSatang } from "@/lib/money";
 import {
   CONFIRM_THRESHOLD,
   LARGE_AMOUNT_SATANG,
@@ -803,7 +803,7 @@ async function handleText(
 async function balanceLine(deps: HandlerDeps, userId: string, walletId: string): Promise<string> {
   const wallets = await listWallets(deps.db, userId);
   const w = wallets.find((x) => x.id === walletId);
-  return w ? `${w.name} คงเหลือ ฿${formatBaht(balanceOf(w))}` : "";
+  return w ? `${w.name} คงเหลือ ${money(balanceOf(w))}` : "";
 }
 
 /** Lend / borrow / repay by chat. null when it is not about a debt of theirs (then it is an ordinary message). */
@@ -857,9 +857,9 @@ async function runDebt(
         undoData: `a=dpx&id=${ids.join(",")}`,
         text: [
           command.direction === "lent"
-            ? `รับคืนจาก ${person} ฿${formatBaht(command.amountSatang)}`
-            : `คืนเงิน ${person} ฿${formatBaht(command.amountSatang)}`,
-          left > 0 ? `ยังเหลือ ฿${formatBaht(left)}` : "ปิดหนี้ครบแล้ว 🎉",
+            ? `รับคืนจาก ${person} ${money(command.amountSatang)}`
+            : `คืนเงิน ${person} ${money(command.amountSatang)}`,
+          left > 0 ? `ยังเหลือ ${money(left)}` : "ปิดหนี้ครบแล้ว 🎉",
           await balanceLine(deps, user.id, wallet.id),
           "(ไม่นับเป็นรายรับ/รายจ่าย)",
         ]
@@ -915,8 +915,8 @@ async function runDebt(
       undoData: `a=dx&id=${id}`,
       text: [
         command.direction === "lent"
-          ? `จดแล้ว: ให้ ${person} ยืม ฿${formatBaht(command.amountSatang)}`
-          : `จดแล้ว: ยืม ${person} ฿${formatBaht(command.amountSatang)}`,
+          ? `จดแล้ว: ให้ ${person} ยืม ${money(command.amountSatang)}`
+          : `จดแล้ว: ยืม ${person} ${money(command.amountSatang)}`,
         dueAt ? `กำหนดคืน ${formatThaiDate(dueAt)}` : "",
         await balanceLine(deps, user.id, wallet.id),
         "(ไม่นับเป็นรายรับ/รายจ่าย)",
@@ -1021,7 +1021,7 @@ async function runBill(
     return [
       text(
         [
-          `ตั้งเตือนบิลแล้ว: ${command.name}${command.amountSatang ? ` ประมาณ ฿${formatBaht(command.amountSatang)}` : ""}`,
+          `ตั้งเตือนบิลแล้ว: ${command.name}${command.amountSatang ? ` ประมาณ ${money(command.amountSatang)}` : ""}`,
           `${cadence} · ครบถัดไป ${billDate(nextDueOn)}`,
           `เตือน ${command.remindDays.map((d) => (d === 0 ? "ในวันนั้น" : `ก่อน ${d} วัน`)).join(" และ ")} เวลา ${String(command.remindHour).padStart(2, "0")}:00 น.`,
         ].join("\n"),
@@ -1060,7 +1060,7 @@ async function billPaid(
           type: "action",
           action: {
             type: "postback",
-            label: `📝 จดรายจ่าย ฿${formatBaht(bill.amountSatang)}`.slice(0, 20),
+            label: `📝 จดรายจ่าย ${money(bill.amountSatang)}`.slice(0, 20),
             data: `a=be&id=${bill.id}&d=${bill.nextDueOn}`,
             displayText: "จดเป็นรายจ่าย",
           },
@@ -1098,7 +1098,7 @@ async function runGoal(
     return [
       text(
         [
-          `สร้างเป้าหมายแล้ว: ${command.name} ฿${formatBaht(command.targetSatang)}`,
+          `สร้างเป้าหมายแล้ว: ${command.name} ${money(command.targetSatang)}`,
           dueOn ? `ภายใน ${dueOn.split("-").reverse().join("/")}` : "",
           `หยอดกระปุกด้วย "ออม ${command.name} 1000" ได้เลย`,
         ]
@@ -1138,10 +1138,10 @@ async function runGoal(
       undoData: `a=gx&id=${depositId}&g=${goal.id}`,
       text: [
         out
-          ? `ถอนแล้ว ฿${formatBaht(command.amountSatang)} จาก ${goal.name}`
-          : `หยอดแล้ว ฿${formatBaht(command.amountSatang)} → ${goal.name}`,
-        `สะสม ฿${formatBaht(saved)} จาก ฿${formatBaht(goal.targetSatang)} (${after.percent}%)`,
-        after.done ? "ครบเป้าแล้ว" : `เหลืออีก ฿${formatBaht(after.remainingSatang)}`,
+          ? `ถอนแล้ว ${money(command.amountSatang)} จาก ${goal.name}`
+          : `หยอดแล้ว ${money(command.amountSatang)} → ${goal.name}`,
+        `สะสม ${money(saved)} จาก ${money(goal.targetSatang)} (${after.percent}%)`,
+        after.done ? "ครบเป้าแล้ว" : `เหลืออีก ${money(after.remainingSatang)}`,
       ].join("\n"),
     }),
   ];
@@ -1270,13 +1270,13 @@ async function runTransfer(
   const after = await listWallets(deps.db, user.id);
   const balance = (walletId: string) => {
     const w = after.find((x) => x.id === walletId);
-    return w ? `฿${formatBaht(balanceOf(w))}` : "";
+    return w ? `${money(balanceOf(w))}` : "";
   };
   return [
     buildTransferDone({
       transferId: id,
       text: [
-        `โอนแล้ว ฿${formatBaht(command.amountSatang)}`,
+        `โอนแล้ว ${money(command.amountSatang)}`,
         `${walletLabel(from.wallet)} → ${walletLabel(to.wallet)}`,
         `คงเหลือ: ${from.wallet.name} ${balance(from.wallet.id)} · ${to.wallet.name} ${balance(to.wallet.id)}`,
         "(ไม่นับเป็นรายรับ/รายจ่าย)",
@@ -1620,7 +1620,7 @@ async function saveEntries(
     } else {
       const lines = confirmed.map(
         (c) =>
-          `• ${c.entry.title} ${c.entry.type === "income" ? "+" : "-"}฿${formatBaht(c.entry.amountSatang)}`,
+          `• ${c.entry.title} ${c.entry.type === "income" ? "+" : "-"}${money(c.entry.amountSatang)}`,
       );
       messages.push(text([`จดแล้ว ${confirmed.length} รายการ`, ...lines].join("\n")));
     }
@@ -2466,7 +2466,7 @@ async function runCommand(
       const latest = await getLatestConfirmed(db, user.id);
       if (!latest) return [text(NOTHING_TO_DELETE_TEXT)];
       await updateTransaction(db, user.id, latest.id, { status: "deleted" });
-      return [text(`ลบแล้ว: ${latest.title} ฿${formatBaht(txAmountSatang(latest))}`)];
+      return [text(`ลบแล้ว: ${latest.title} ${money(txAmountSatang(latest))}`)];
     }
 
     case "edit-latest": {
@@ -2475,7 +2475,7 @@ async function runCommand(
       await updateTransaction(db, user.id, latest.id, { amountSatang: command.amountSatang });
       return [
         text(
-          `แก้แล้ว: ${latest.title} ฿${formatBaht(txAmountSatang(latest))} → ฿${formatBaht(command.amountSatang)}`,
+          `แก้แล้ว: ${latest.title} ${money(txAmountSatang(latest))} → ${money(command.amountSatang)}`,
         ),
       ];
     }
@@ -2629,7 +2629,7 @@ async function handlePostback(
     const tx = await getTransaction(deps.db, user.id, id);
     if (!tx || tx.status !== "confirmed" || !tx.slip_id) return [text(NOT_FOUND_TEXT)];
     await updateTransaction(deps.db, user.id, id, { status: "deleted" });
-    return [text(`ลบแล้ว: ${tx.title} ฿${formatBaht(txAmountSatang(tx))}`)];
+    return [text(`ลบแล้ว: ${tx.title} ${money(txAmountSatang(tx))}`)];
   }
   // The "จ่ายด้วย" row of that card moves the whole slip to a wallet or card.
   if (action === "wls" || action === "wms") {
@@ -2833,7 +2833,7 @@ async function handlePostback(
 
   if (action === "del") {
     await updateTransaction(db, user.id, id, { status: "deleted" });
-    return [text(`ลบแล้ว: ${tx.title} ฿${formatBaht(txAmountSatang(tx))}`)];
+    return [text(`ลบแล้ว: ${tx.title} ${money(txAmountSatang(tx))}`)];
   }
 
   if (action === "edit") {

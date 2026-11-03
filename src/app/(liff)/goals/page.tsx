@@ -10,7 +10,7 @@ import { Sheet } from "@/components/liff/sheet";
 import { EmptyState, ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
 import { EMOJI_CHOICES } from "@/lib/category-emoji";
 import { MAX_GOAL_NAME, MAX_GOAL_NOTE, cumulative, type GoalDto } from "@/lib/goal";
-import { formatBaht, satangToString } from "@/lib/money";
+import { money, satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, formatThaiDayMonth } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,6 @@ interface DepositItem {
   note: string | null;
 }
 
-const money = (satang: number) => `฿${formatBaht(satang)}`;
 const AMOUNT_PATTERN = /^\d{1,10}(\.\d{1,2})?$/;
 
 function dueLabel(dueOn: string): string {

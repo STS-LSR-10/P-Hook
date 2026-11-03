@@ -1,5 +1,5 @@
 import { dueState, type BillDto } from "@/lib/bill";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
@@ -62,7 +62,7 @@ export function buildBillsCard(input: {
             },
             {
               type: "text",
-              text: b.amountSatang ? `฿${formatBaht(b.amountSatang)}` : "ไม่ระบุยอด",
+              text: b.amountSatang ? `${money(b.amountSatang)}` : "ไม่ระบุยอด",
               size: "xs",
               align: "end",
               color: COLOR.muted,

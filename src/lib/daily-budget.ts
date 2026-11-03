@@ -1,14 +1,18 @@
-import { formatBaht } from "@/lib/money";
+import { currencySymbol, formatBaht, money } from "@/lib/money";
 import { dailyOverLines, dailyStillOverLine, type PersonaId } from "@/lib/personalize";
 
 /** The playful scolds sent the first time a day's spending goes over the daily limit. */
 const SCOLDS: ((v: { spent: string; limit: string; over: string }) => string)[] = [
-  (v) => `เกินงบวันนี้แล้วนะ! ใช้ไป ฿${v.spent} จาก ฿${v.limit} (เกิน ฿${v.over})`,
-  (v) => `เบรกหน่อยนะ กระเป๋าสั่นแล้ว 😅 วันนี้ใช้ไป ฿${v.spent} เกินงบ ฿${v.over}`,
   (v) =>
-    `ว้าย! วันนี้รูดเกินงบ ฿${v.over} แล้ว (฿${v.spent} จาก ฿${v.limit}) พรุ่งนี้มาตั้งหลักกันใหม่นะ`,
-  (v) => `ใจเย็น ๆ ก่อนนะ งบวันนี้ ฿${v.limit} หมดไปแล้ว ตอนนี้เกินมา ฿${v.over}`,
-  (v) => `ติ๊ด ติ๊ด! เกินงบประจำวัน ฿${v.over} (ใช้ไป ฿${v.spent}) ขอกอดกระเป๋าตังค์หน่อย 🫶`,
+    `เกินงบวันนี้แล้วนะ! ใช้ไป ${currencySymbol()}${v.spent} จาก ${currencySymbol()}${v.limit} (เกิน ${currencySymbol()}${v.over})`,
+  (v) =>
+    `เบรกหน่อยนะ กระเป๋าสั่นแล้ว 😅 วันนี้ใช้ไป ${currencySymbol()}${v.spent} เกินงบ ${currencySymbol()}${v.over}`,
+  (v) =>
+    `ว้าย! วันนี้รูดเกินงบ ${currencySymbol()}${v.over} แล้ว (${currencySymbol()}${v.spent} จาก ${currencySymbol()}${v.limit}) พรุ่งนี้มาตั้งหลักกันใหม่นะ`,
+  (v) =>
+    `ใจเย็น ๆ ก่อนนะ งบวันนี้ ${currencySymbol()}${v.limit} หมดไปแล้ว ตอนนี้เกินมา ${currencySymbol()}${v.over}`,
+  (v) =>
+    `ติ๊ด ติ๊ด! เกินงบประจำวัน ${currencySymbol()}${v.over} (ใช้ไป ${currencySymbol()}${v.spent}) ขอกอดกระเป๋าตังค์หน่อย 🫶`,
 ];
 
 export const SCOLD_COUNT = SCOLDS.length;
@@ -44,8 +48,8 @@ export function dailyBudgetStatus(spentSatang: number, limitSatang: number): str
   const percent = Math.floor((spentSatang * 100) / limitSatang);
   const left = limitSatang - spentSatang;
   return [
-    `งบวันนี้ ฿${formatBaht(limitSatang)}`,
-    `ใช้ไป ฿${formatBaht(spentSatang)} (${percent}%)`,
-    left >= 0 ? `เหลือ ฿${formatBaht(left)}` : `เกินมา ฿${formatBaht(-left)}`,
+    `งบวันนี้ ${money(limitSatang)}`,
+    `ใช้ไป ${money(spentSatang)} (${percent}%)`,
+    left >= 0 ? `เหลือ ${money(left)}` : `เกินมา ${money(-left)}`,
   ].join(" · ");
 }

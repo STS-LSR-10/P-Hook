@@ -8,7 +8,7 @@ import { cardClass, fieldClass, type Me } from "@/components/liff/settings/types
 import { Sheet } from "@/components/liff/sheet";
 import { EmptyState, ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
 import { MAX_DEBT_NOTE, MAX_PERSON, dueState, type DebtDirection, type DebtDto } from "@/lib/debt";
-import { formatBaht, satangToString } from "@/lib/money";
+import { money, satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,6 @@ interface PaymentItem {
   note: string | null;
 }
 
-const money = (satang: number) => `฿${formatBaht(satang)}`;
 const AMOUNT_PATTERN = /^\d{1,10}(\.\d{1,2})?$/;
 
 export default function DebtsPage() {

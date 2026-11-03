@@ -1,20 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { convertToSatang, formatForeign, formatRate } from "@/lib/fx";
-import { getRate } from "@/lib/fx-repo";
+import { getHomeRate } from "@/lib/fx-repo";
+import { currentCurrency } from "@/lib/money";
 import type { ParsedEntry } from "@/lib/parse/text-parser";
 import { bangkokDateKey } from "@/lib/points";
 import { FX_FAILED_TEXT, FX_TOO_SMALL_TEXT, fxUnsupportedText } from "./messages";
 
 /**
- * Turn each foreign-currency entry into baht at the rate of its day. Returns the reason (text for the
- * user) when one cannot be converted: nothing is saved then.
+ * Turn each foreign-currency entry into the person's own currency (the baht unless they chose
+ * another) at the rate of its day. An amount in their own currency is not foreign. Returns the reason
+ * (text for the user) when one cannot be converted: nothing is saved then.
  */
 export async function convertForeignEntries(
   entries: ParsedEntry[],
   deps: { db: SupabaseClient; now: () => Date },
 ): Promise<ParsedEntry[] | string> {
   const today = bangkokDateKey(deps.now());
-  const rates = new Map<string, Awaited<ReturnType<typeof getRate>>>();
+  const home = currentCurrency();
+  const rates = new Map<string, Awaited<ReturnType<typeof getHomeRate>>>();
   const out: ParsedEntry[] = [];
   for (const entry of entries) {
     const f = entry.foreign;
@@ -22,10 +25,15 @@ export async function convertForeignEntries(
       out.push(entry);
       continue;
     }
+    if (f.currency === home) {
+      // "12 USD" in a dollar book is just 12
+      out.push({ ...entry, amountSatang: f.minor, foreign: null });
+      continue;
+    }
     if (!f.supported) return fxUnsupportedText(f.currency);
     const day = bangkokDateKey(entry.occurredAt);
     const key = `${f.currency}:${day}`;
-    if (!rates.has(key)) rates.set(key, await getRate(deps.db, f.currency, day, today));
+    if (!rates.has(key)) rates.set(key, await getHomeRate(deps.db, f.currency, day, today, home));
     const resolved = rates.get(key);
     if (!resolved) return FX_FAILED_TEXT;
     const amountSatang = convertToSatang(f.minor, resolved.rate);

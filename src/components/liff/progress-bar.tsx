@@ -1,5 +1,5 @@
 import { budgetState, percentUsed } from "@/lib/budget";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 const STATE_STYLE = {
@@ -38,7 +38,7 @@ export function ProgressBar({
         />
       </div>
       <p className={cn("num mt-1 text-xs", style.text)}>
-        ใช้ไป ฿{formatBaht(spentSatang)} จาก ฿{formatBaht(limitSatang)} ({pct}%)
+        ใช้ไป {money(spentSatang)} จาก {money(limitSatang)} ({pct}%)
         {style.label ? ` · ${style.label}` : ""}
       </p>
     </div>

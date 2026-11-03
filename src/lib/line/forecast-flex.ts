@@ -1,5 +1,5 @@
 import type { Forecast, Occurrence, Scenario } from "@/lib/forecast";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { formatThaiDayMonth } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { cardHeader, pillFooter, TINT } from "./card-style";
@@ -8,7 +8,6 @@ import { COLOR } from "./flex";
 const DAY_MS = 86_400_000;
 const MAX_LISTED = 4;
 
-const money = (satang: number) => `${satang < 0 ? "-" : ""}฿${formatBaht(Math.abs(satang))}`;
 const tone = (satang: number) => (satang < 0 ? COLOR.expense : COLOR.income);
 
 const row = (label: string, value: string, color: string = TINT.strong) => ({
@@ -86,7 +85,7 @@ function upcomingLines(items: Occurrence[], sign: "+" | "-") {
     .map((o) =>
       row(
         `${formatThaiDayMonth(o.date)} ${o.title}`,
-        `${sign}฿${formatBaht(o.amountSatang)}`,
+        `${sign}${money(o.amountSatang)}`,
         sign === "+" ? COLOR.income : COLOR.expense,
       ),
     );

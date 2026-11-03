@@ -1,6 +1,6 @@
 import { cycleRange, type DateRange } from "@/lib/budget-cycle";
 import { crossedThreshold } from "@/lib/budget";
-import { formatBaht } from "@/lib/money";
+import { money } from "@/lib/money";
 import { bangkokParts, fromBangkok } from "@/lib/thai-date";
 import { balanceOf, type Wallet } from "@/lib/wallet";
 
@@ -70,7 +70,7 @@ export function limitAlert(wallet: Wallet, amountSatang: number): string | null 
   const owedBefore = Math.max(0, -(balanceOf(wallet) + amountSatang));
   const level = crossedThreshold(owedBefore, owedAfter, limit);
   if (!level) return null;
-  const figures = `ค้าง ฿${formatBaht(owedAfter)} จากวงเงิน ฿${formatBaht(limit)}`;
+  const figures = `ค้าง ${money(owedAfter)} จากวงเงิน ${money(limit)}`;
   return level === 100
     ? `บัตร ${wallet.name} เต็มวงเงินแล้ว (${figures})`
     : `บัตร ${wallet.name} ใช้วงเงินไปแล้ว 80% (${figures})`;
