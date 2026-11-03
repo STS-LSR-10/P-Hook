@@ -95,13 +95,13 @@ export function buildSearchCard(input: {
       type: "box",
       layout: "vertical",
       backgroundColor: "#CCFBF1",
-      paddingAll: "16px",
+      paddingAll: "12px",
       contents: [
         { type: "text", text: "ผลการค้นหา", weight: "bold", size: "lg", color: "#0B5D4F" },
         { type: "text", text: term, size: "sm", color: "#3F6B63", margin: "xs", wrap: true },
       ],
     },
-    body: { type: "box", layout: "vertical", paddingAll: "16px", spacing: "sm", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", spacing: "sm", contents: body },
   };
   if (input.moreUrl?.startsWith("https://")) {
     bubble.footer = {

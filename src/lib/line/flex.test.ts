@@ -57,7 +57,11 @@ describe("flex", () => {
   });
 
   it("is compact: smaller words and room, with the wallet on the date's line", () => {
-    const msg = buildConfirmMessage({ ...base, style: "full", walletName: "💵 เงินสด" }) as unknown as {
+    const msg = buildConfirmMessage({
+      ...base,
+      style: "full",
+      walletName: "💵 เงินสด",
+    }) as unknown as {
       contents: { header: { paddingAll: string }; body: { paddingAll: string } };
     };
     expect(msg.contents.header.paddingAll).toBe("12px");
@@ -568,7 +572,7 @@ describe("the look of the saved-entry card", () => {
       cycleLabel: "รายเดือน (วันที่ 1)",
     });
     expect(out).toContain('"backgroundColor":"#F6F8F9"');
-    expect(out).toContain('"size":"xxl"'); // the amount spent
+    expect(out).toContain('"size":"lg"'); // the amount spent
     expect(out).toContain('"height":"10px"'); // the bar
     expect(out).toContain("ใช้ไป 119%");
     expect(out).toContain("เกินงบ ฿571");

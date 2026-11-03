@@ -112,7 +112,7 @@ export function buildUpsellCard(input: UpsellCardInput): LineMessage {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           {
             type: "text",
@@ -127,7 +127,7 @@ export function buildUpsellCard(input: UpsellCardInput): LineMessage {
       body: {
         type: "box",
         layout: "vertical",
-        paddingAll: "16px",
+        paddingAll: "12px",
         spacing: "md",
         contents: [
           { type: "text", text: copy.body, size: "sm", color: COLOR.text, wrap: true },

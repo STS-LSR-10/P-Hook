@@ -70,7 +70,7 @@ export function buildInsightCard(input: {
       insight.source === "ai"
         ? "สร้างโดย AI จากตัวเลขของคุณ เป็นข้อสังเกตและคำแนะนำทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล"
         : "สรุปจากตัวเลขของคุณ เป็นข้อสังเกตทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล",
-    size: "xxs",
+    size: "xs",
     color: COLOR.muted,
     wrap: true,
     margin: "lg",
@@ -80,7 +80,7 @@ export function buildInsightCard(input: {
     type: "bubble",
     size: "mega",
     header: cardHeader("AI Insight ✨", [input.subtitle], "🧠"),
-    body: { type: "box", layout: "vertical", paddingAll: "16px", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const foot = pillFooter("ดูรายละเอียดในแอป ➡️", input.moreUrl);
   if (foot) bubble.footer = foot;

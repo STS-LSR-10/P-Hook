@@ -105,7 +105,7 @@ export function buildForecastCard(input: {
     {
       type: "text",
       text: money(f.endBalanceSatang),
-      size: "3xl",
+      size: "lg",
       weight: "bold",
       color: tone(f.endBalanceSatang),
     },
@@ -168,7 +168,7 @@ export function buildForecastCard(input: {
     type: "bubble",
     size: "mega",
     header: cardHeader("พยากรณ์เงินปลายรอบ", [input.subtitle], "🐷"),
-    body: { type: "box", layout: "vertical", paddingAll: "18px", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const foot = pillFooter("ดูสรุปในแอป 📈", input.moreUrl);
   if (foot) bubble.footer = foot;

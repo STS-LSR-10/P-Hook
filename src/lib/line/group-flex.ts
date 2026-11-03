@@ -59,7 +59,7 @@ export function buildGroupSummaryCard(input: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           { type: "text", text: input.title, weight: "bold", size: "lg", color: "#0B5D4F" },
           { type: "text", text: input.subtitle, size: "xs", color: "#3F6B63", margin: "xs" },
@@ -68,7 +68,7 @@ export function buildGroupSummaryCard(input: {
       body: {
         type: "box",
         layout: "vertical",
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           {
             type: "box",
@@ -182,7 +182,7 @@ export function buildTripSummaryCard(input: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           {
             type: "text",
@@ -204,7 +204,7 @@ export function buildTripSummaryCard(input: {
       body: {
         type: "box",
         layout: "vertical",
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           {
             type: "box",

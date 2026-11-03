@@ -194,11 +194,11 @@ export function buildSummaryCard(input: {
     alignItems: "center",
     margin: "md",
     contents: [
-      { type: "text", text: `${emoji} ${label}`, size: "lg", color: TINT.strong, flex: 4 },
+      { type: "text", text: `${emoji} ${label}`, size: "md", color: TINT.strong, flex: 4 },
       {
         type: "text",
         text: `${arrow}${value}`,
-        size: "xl",
+        size: "md",
         weight: "bold",
         color,
         align: "end",
@@ -216,11 +216,11 @@ export function buildSummaryCard(input: {
       alignItems: "center",
       margin: "md",
       contents: [
-        { type: "text", text: "เหลือ", size: "lg", weight: "bold", color: TINT.strong, flex: 3 },
+        { type: "text", text: "เหลือ", size: "md", weight: "bold", color: TINT.strong, flex: 3 },
         {
           type: "text",
           text: `💵 ${net < 0 ? "-" : ""}฿${formatBaht(Math.abs(net))}`,
-          size: "xxl",
+          size: "lg",
           weight: "bold",
           color: net < 0 ? TINT.bad : TINT.strong,
           align: "end",
@@ -311,7 +311,7 @@ export function buildSummaryCard(input: {
     type: "bubble",
     size: "mega",
     header: cardHeader(title, [subtitle], "📅"),
-    body: { type: "box", layout: "vertical", paddingAll: "18px", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const foot = pillFooter("ดูรายละเอียด ➡️", input.liffUrl);
   if (foot) bubble.footer = foot;

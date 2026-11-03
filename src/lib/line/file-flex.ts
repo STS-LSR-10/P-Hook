@@ -18,12 +18,12 @@ function card(input: {
     altText: input.altText,
     contents: {
       type: "bubble",
-      size: "kilo",
+      size: "mega",
       header: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "14px",
+        paddingAll: "12px",
         contents: [
           { type: "text", text: input.title, weight: "bold", size: "lg", color: "#0B5D4F" },
         ],
@@ -32,7 +32,7 @@ function card(input: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.surface,
-        paddingAll: "16px",
+        paddingAll: "12px",
         spacing: "sm",
         contents: [
           ...input.lines.map((line) => ({
@@ -94,7 +94,7 @@ export function buildFileResults(
               {
                 type: "text",
                 text: `${formatBytes(file.sizeBytes)} · ${formatThaiDate(new Date(file.createdAt))}`,
-                size: "xxs",
+                size: "xs",
                 color: COLOR.muted,
                 wrap: true,
               },

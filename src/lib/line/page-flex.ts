@@ -18,12 +18,12 @@ export function buildOpenPageCard(page: PageKey, url: string): LineMessage {
     altText: `เปิดหน้า${info.title}`,
     contents: {
       type: "bubble",
-      size: "kilo",
+      size: "mega",
       body: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.surface,
-        paddingAll: "16px",
+        paddingAll: "12px",
         spacing: "sm",
         contents: [
           { type: "text", text: info.title, weight: "bold", size: "lg", color: COLOR.text },

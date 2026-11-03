@@ -51,7 +51,7 @@ export function buildVoiceCard(input: VoiceCardInput): LineMessage {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "14px",
+        paddingAll: "12px",
         contents: [
           {
             type: "text",
@@ -67,14 +67,14 @@ export function buildVoiceCard(input: VoiceCardInput): LineMessage {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.surface,
-        paddingAll: "16px",
+        paddingAll: "12px",
         spacing: "sm",
         contents: [
           {
             type: "text",
             text: input.title,
             weight: "bold",
-            size: "lg",
+            size: "md",
             wrap: true,
             color: COLOR.text,
           },
@@ -82,7 +82,7 @@ export function buildVoiceCard(input: VoiceCardInput): LineMessage {
             type: "text",
             text: amountText,
             weight: "bold",
-            size: "xxl",
+            size: "lg",
             color: income ? COLOR.income : COLOR.expense,
           },
           row("ประเภท", income ? "รายรับ" : "รายจ่าย"),

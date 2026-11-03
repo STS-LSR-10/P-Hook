@@ -29,7 +29,7 @@ const header = (title: string, subtitle: string) => ({
   type: "box",
   layout: "vertical",
   backgroundColor: "#CCFBF1",
-  paddingAll: "16px",
+  paddingAll: "12px",
   contents: [
     { type: "text", text: title, weight: "bold", size: "lg", color: "#0B5D4F" },
     { type: "text", text: subtitle, size: "xs", color: "#3F6B63", margin: "xs", wrap: true },
@@ -80,7 +80,7 @@ export function buildCategorySpendCard(input: {
     });
   });
   body.push(
-    { type: "separator", margin: "xl", color: "#EDEDF2" },
+    { type: "separator", margin: "lg", color: "#EDEDF2" },
     {
       type: "box",
       layout: "horizontal",
@@ -98,7 +98,7 @@ export function buildCategorySpendCard(input: {
         {
           type: "text",
           text: `฿${formatBaht(input.totalSatang)}`,
-          size: "xxl",
+          size: "lg",
           weight: "bold",
           color: TINT.bad,
           align: "end",
@@ -111,7 +111,7 @@ export function buildCategorySpendCard(input: {
     type: "bubble",
     size: "mega",
     header: cardHeader("ใช้จ่ายตามหมวด", [input.subtitle], "📊"),
-    body: { type: "box", layout: "vertical", paddingAll: "18px", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const f = pillFooter("ดูกราฟในแอป 📈", input.moreUrl);
   if (f) bubble.footer = f;
@@ -141,7 +141,7 @@ export function buildRecentCard(input: { items: TxDto[]; moreUrl?: string }): Li
             {
               type: "text",
               text: `${tx.categoryName ? categoryLabel(tx.categoryName, tx.categoryIcon) : "ไม่ระบุหมวด"} · ${formatThaiDate(new Date(tx.occurredAt), true)}`,
-              size: "xxs",
+              size: "xs",
               color: COLOR.muted,
               wrap: true,
             },
@@ -170,7 +170,7 @@ export function buildRecentCard(input: { items: TxDto[]; moreUrl?: string }): Li
     type: "bubble",
     size: "mega",
     header: header("รายการล่าสุด", `${input.items.length} รายการล่าสุดที่จดไว้`),
-    body: { type: "box", layout: "vertical", paddingAll: "16px", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const f = footer("ดูทั้งหมดในแอป", input.moreUrl);
   if (f) bubble.footer = f;
@@ -238,7 +238,7 @@ export function buildCompareCard(input: {
           {
             type: "text",
             text: name,
-            size: strong ? "lg" : "md",
+            size: "md",
             weight: "bold",
             color: TINT.strong,
             wrap: true,
@@ -261,7 +261,7 @@ export function buildCompareCard(input: {
           {
             type: "text",
             text: `฿${formatBaht(currentSatang)}`,
-            size: strong ? "xl" : "md",
+            size: "md",
             weight: strong ? "bold" : "regular",
             color: strong ? TINT.bad : TINT.strong,
             align: "end",
@@ -316,7 +316,7 @@ export function buildCompareCard(input: {
       [`รอบนี้ ${input.currentLabel}`, `เทียบ ${input.previousLabel}`],
       "⚖️",
     ),
-    body: { type: "box", layout: "vertical", paddingAll: "16px", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const f = pillFooter("ดูกราฟในแอป 📈", input.moreUrl);
   if (f) bubble.footer = f;
@@ -453,7 +453,7 @@ export function buildYearCard(input: {
     type: "bubble",
     size: "mega",
     header: header(`สรุปรายปี ${input.yearBE}`, input.subtitle),
-    body: { type: "box", layout: "vertical", paddingAll: "16px", contents: body },
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const f = footer("ดูกราฟในแอป", input.moreUrl);
   if (f) bubble.footer = f;

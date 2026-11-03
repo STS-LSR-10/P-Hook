@@ -41,7 +41,7 @@ export function buildBillsCard(input: {
             {
               type: "text",
               text: `${CADENCE[b.cadence]}${b.fromCard ? " · วันชำระบัตร" : ""}`,
-              size: "xxs",
+              size: "xs",
               color: COLOR.muted,
             },
           ],
@@ -83,7 +83,7 @@ export function buildBillsCard(input: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           { type: "text", text: "บิลที่ต้องจ่าย", weight: "bold", size: "lg", color: "#0B5D4F" },
         ],
@@ -91,7 +91,7 @@ export function buildBillsCard(input: {
       body: {
         type: "box",
         layout: "vertical",
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           ...rows,
           {

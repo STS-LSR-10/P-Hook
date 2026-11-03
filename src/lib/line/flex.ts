@@ -248,7 +248,7 @@ export function budgetBlock(
     layout: "vertical",
     margin: "lg",
     spacing: "sm",
-    paddingAll: "14px",
+    paddingAll: "12px",
     cornerRadius: "16px",
     backgroundColor: "#F6F8F9",
     borderWidth: "1px",
@@ -301,7 +301,7 @@ export function budgetBlock(
           {
             type: "span",
             text: `฿${formatBaht(spent)}`,
-            size: "xxl",
+            size: "lg",
             weight: "bold",
             color: LEVEL_COLOR[level],
           },
@@ -706,9 +706,9 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
               layout: "vertical",
               backgroundColor: COLOR.surface,
               paddingTop: "0px",
-              paddingBottom: "16px",
-              paddingStart: "16px",
-              paddingEnd: "16px",
+              paddingBottom: "12px",
+              paddingStart: "12px",
+              paddingEnd: "12px",
               contents: [attachPhotoPill(input.txId)],
             },
           }
@@ -750,8 +750,8 @@ export function buildComposeCard(): LineMessage {
     layout: "baseline",
     spacing: "md",
     contents: [
-      { type: "text", text: "●", size: "xxs", color: "#1ABC9C", flex: 0 },
-      { type: "text", text: t, size: "lg", weight: "bold", color: "#334155", flex: 1 },
+      { type: "text", text: "●", size: "xs", color: "#1ABC9C", flex: 0 },
+      { type: "text", text: t, size: "md", weight: "bold", color: "#334155", flex: 1 },
     ],
   });
   return {
@@ -788,7 +788,7 @@ export function buildComposeCard(): LineMessage {
         type: "box",
         layout: "vertical",
         spacing: "lg",
-        paddingAll: "20px",
+        paddingAll: "12px",
         contents: [
           {
             type: "box",
@@ -825,7 +825,7 @@ export function buildComposeCard(): LineMessage {
             spacing: "md",
             backgroundColor: "#F6F9F8",
             cornerRadius: "14px",
-            paddingAll: "16px",
+            paddingAll: "12px",
             contents: [bullet("กระเพราหมูกรอบ 65"), bullet("เงินเดือน 25000")],
           },
           {
@@ -839,7 +839,7 @@ export function buildComposeCard(): LineMessage {
             type: "button",
             style: "primary",
             color: "#1ABC9C",
-            height: "md",
+            height: "sm",
             action: {
               type: "postback",
               label: "จดเลย",
