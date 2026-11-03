@@ -43,6 +43,7 @@ import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
 import { MAX_BULK, MAX_NOTE, MAX_TITLE } from "@/lib/tx-edit";
 import { cn } from "@/lib/utils";
+import { canSendToChat } from "@/lib/liff-chat";
 
 type TypeFilter = "all" | "expense" | "income";
 
@@ -124,7 +125,7 @@ function EditFromChat({ id }: { id: string }) {
   async function sendToChat(): Promise<string | null> {
     try {
       const liff = (await import("@line/liff")).default;
-      if (!liff.isInClient() || !liff.isApiAvailable("sendMessages")) return SEND_NOT_FROM_CHAT;
+      if (!canSendToChat(liff)) return SEND_NOT_FROM_CHAT;
       // a person who signed in before the permission existed has to agree once more
       try {
         if ((await liff.permission.query("chat_message.write")).state === "prompt") {
