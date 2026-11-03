@@ -12,6 +12,7 @@ import {
 } from "./messages";
 
 let plan = "free";
+let locale = "th";
 let active = 0;
 let repeating = 0;
 let listed: ReminderDto[] = [];
@@ -32,6 +33,7 @@ vi.mock("@/lib/repo", async (original) => ({
     display_name: null,
     plan,
     plan_expires_at: null,
+    locale,
   }),
 }));
 vi.mock("@/lib/user-reminder-repo", () => ({
@@ -92,6 +94,7 @@ const said = (reply: ReturnType<typeof setup>["reply"]) =>
 
 beforeEach(() => {
   plan = "free";
+  locale = "th";
   repeating = 0;
   active = 0;
   listed = [];
@@ -311,5 +314,24 @@ describe("the buttons under a reminder that was sent", () => {
     await handleEvent(tap(`a=rms&id=${ID}&s=999`), setup().deps);
     expect(snoozed).toHaveLength(0);
     expect(ticked).toHaveLength(0);
+  });
+});
+
+describe("someone who chose English", () => {
+  it("sets a reminder typed in English; the same words from a Thai user are not read as one", async () => {
+    const { withZoneScope } = await import("@/lib/zone-scope");
+    locale = "en";
+    const a = setup();
+    await withZoneScope(() => handleEvent(say("remind me tomorrow 9am pay rent"), a.deps));
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ body: "pay rent", repeat: null });
+    expect((created[0]?.remindAt as Date).toISOString()).toBe("2026-10-29T02:00:00.000Z");
+    locale = "th";
+    const b = setup();
+    // read as an entry instead (which this test's database cannot save): no reminder either way
+    await withZoneScope(() =>
+      handleEvent(say("remind me tomorrow 9am pay rent"), b.deps).catch(() => undefined),
+    );
+    expect(created).toHaveLength(1);
   });
 });
