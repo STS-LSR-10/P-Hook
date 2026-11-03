@@ -97,7 +97,7 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "14px",
+        paddingAll: "12px",
         contents: [
           {
             type: "text",
@@ -112,14 +112,14 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.surface,
-        paddingAll: "16px",
+        paddingAll: "12px",
         spacing: "sm",
         contents: [
           {
             type: "text",
             text: `พบ ${input.entries.length} รายการ`,
             weight: "bold",
-            size: "lg",
+            size: "md",
             color: COLOR.text,
           },
           {

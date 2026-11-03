@@ -114,10 +114,10 @@ export function buildDebtsCard(input: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [{ type: "text", text: "หนี้สิน", weight: "bold", size: "lg", color: "#0B5D4F" }],
       },
-      body: { type: "box", layout: "vertical", paddingAll: "16px", contents: body },
+      body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
       ...(input.manageUrl?.startsWith("https://")
         ? {
             footer: {

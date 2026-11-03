@@ -221,7 +221,10 @@ describe("choosing how it was paid", () => {
     expect(cardOf(a.reply)).toContain("&w=w3");
     expect(cardOf(a.reply)).not.toContain("a=wl");
 
-    wallets = [...three, wallet({ id: "w4", name: "ทรูมันนี่", kind: "ewallet", isDefault: false })];
+    wallets = [
+      ...three,
+      wallet({ id: "w4", name: "ทรูมันนี่", kind: "ewallet", isDefault: false }),
+    ];
     const b = setup();
     await handleEvent(say("กาแฟ 50"), b.deps);
     expect(cardOf(b.reply)).toContain("a=wl");

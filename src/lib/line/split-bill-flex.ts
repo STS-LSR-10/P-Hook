@@ -158,7 +158,7 @@ export function buildBillCollectingCard(input: {
               text:
                 "โอนแล้วส่งรูปสลิปเข้ากลุ่มได้เลย บอทตรวจยอดให้ แต่ต้องรอคนจ่ายกด ✅ ยืนยันว่าเงินเข้าจริง (กดได้เฉพาะคนจ่าย)" +
                 (left.length > MAX_PAID_BUTTONS ? " (คนที่เหลือพิมพ์ ได้รับแล้ว ชื่อ)" : ""),
-              size: "xxs",
+              size: "xs",
               color: COLOR.muted,
               wrap: true,
               margin: "sm",
@@ -214,7 +214,7 @@ export function billQrBubble(input: {
     lines.push({
       type: "text",
       text: "กดค้างที่เลขบัญชีเพื่อคัดลอก",
-      size: "xxs",
+      size: "xs",
       color: COLOR.muted,
       align: "center",
     });
@@ -229,7 +229,7 @@ export function billQrBubble(input: {
       {
         type: "text",
         text: baht(input.shareSatang),
-        size: "3xl",
+        size: "lg",
         weight: "bold",
         color: COLOR.primary,
         align: "center",
@@ -265,7 +265,7 @@ export function billQrBubble(input: {
             {
               type: "text",
               text: "กดรูป QR ค้างเพื่อบันทึก แล้วในแอปธนาคารเลือก “สแกนจากรูป/อัลบั้ม”",
-              size: "xxs",
+              size: "xs",
               color: COLOR.muted,
               wrap: true,
               align: "center",

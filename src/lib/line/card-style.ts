@@ -37,7 +37,7 @@ export function cardHeader(title: string, subtitles: string[], icon: string) {
     layout: "horizontal",
     alignItems: "center",
     backgroundColor: TINT.header,
-    paddingAll: "18px",
+    paddingAll: "12px",
     contents: [
       {
         type: "box",
@@ -49,7 +49,7 @@ export function cardHeader(title: string, subtitles: string[], icon: string) {
             type: "text",
             text: title,
             weight: "bold",
-            size: "xl",
+            size: "lg",
             color: TINT.headerTitle,
             wrap: true,
           },
@@ -62,7 +62,7 @@ export function cardHeader(title: string, subtitles: string[], icon: string) {
           })),
         ],
       },
-      { type: "text", text: icon, size: "3xl", flex: 0, align: "end" },
+      { type: "text", text: icon, size: "lg", flex: 0, align: "end" },
     ],
   };
 }
@@ -79,9 +79,9 @@ export function pillFooter(label: string, uri: string | undefined) {
     type: "box",
     layout: "vertical",
     backgroundColor: TINT.body,
-    paddingStart: "16px",
-    paddingEnd: "16px",
-    paddingBottom: "16px",
+    paddingStart: "12px",
+    paddingEnd: "12px",
+    paddingBottom: "12px",
     paddingTop: "4px",
     contents: [
       {
@@ -91,7 +91,7 @@ export function pillFooter(label: string, uri: string | undefined) {
         alignItems: "center",
         backgroundColor: "#0F766E",
         cornerRadius: "26px",
-        paddingAll: "13px",
+        paddingAll: "12px",
         action: { type: "uri", label: actionLabel(label), uri },
         contents: [
           {
@@ -146,7 +146,7 @@ export function badge(text: string, color: string, bg: string) {
   };
 }
 
-export const mutedText = (text: string, size: "xxs" | "xs" | "sm" = "xs") => ({
+export const mutedText = (text: string, size: "xs" | "sm" = "xs") => ({
   type: "text",
   text,
   size,

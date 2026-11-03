@@ -451,7 +451,7 @@ function row(item: HelpItem, index: number, plan: Plan) {
                         {
                           type: "text",
                           text: has ? `${badge.label} ✓` : badge.label,
-                          size: "xxs",
+                          size: "xs",
                           weight: "bold",
                           color: badge.fg,
                         },
@@ -560,16 +560,17 @@ export function topicBubble(input: {
       : [];
   return {
     type: "bubble",
+    // the group welcome is small cards to swipe through
     size: compact ? "kilo" : "mega",
     header: {
       type: "box",
       layout: "horizontal",
       backgroundColor: COLOR.primarySoft,
-      paddingAll: compact ? "12px" : "16px",
+      paddingAll: "12px",
       spacing: "md",
       alignItems: "center",
       contents: [
-        { type: "text", text: input.icon, size: compact ? "xxl" : "4xl", flex: 0 },
+        { type: "text", text: input.icon, size: "lg", flex: 0 },
         {
           type: "box",
           layout: "vertical",
@@ -580,14 +581,14 @@ export function topicBubble(input: {
               type: "text",
               text: input.title,
               weight: "bold",
-              size: compact ? "md" : "xl",
+              size: "lg",
               color: "#0B5D4F",
               wrap: true,
             },
             {
               type: "text",
               text: input.subtitle,
-              size: compact ? "xxs" : "xs",
+              size: "xs",
               color: "#3F6B63",
               wrap: true,
             },
@@ -664,7 +665,7 @@ export function buildWelcomeCard(input: { appUrl?: string }): LineMessage {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "18px",
+        paddingAll: "12px",
         spacing: "xs",
         contents: [
           {
@@ -686,7 +687,7 @@ export function buildWelcomeCard(input: { appUrl?: string }): LineMessage {
       body: {
         type: "box",
         layout: "vertical",
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           { type: "text", text: "ลองพิมพ์ดู", size: "xs", weight: "bold", color: COLOR.muted },
           example("กาแฟ 30", "จดรายจ่าย"),
@@ -826,7 +827,7 @@ export function buildGroupWelcomeCard(input: { appUrl?: string; openUrl?: string
         alignItems: "center",
         flex: 0,
         contents: [
-          { type: "text", text: n, size: "xxs", weight: "bold", color: "#FFFFFF", align: "center" },
+          { type: "text", text: n, size: "xs", weight: "bold", color: "#FFFFFF", align: "center" },
         ],
       },
       {
@@ -836,7 +837,7 @@ export function buildGroupWelcomeCard(input: { appUrl?: string; openUrl?: string
         flex: 1,
         contents: [
           { type: "text", text, size: "xs", weight: "bold", color: "#14352E", wrap: true },
-          { type: "text", text: hint, size: "xxs", color: COLOR.muted, wrap: true },
+          { type: "text", text: hint, size: "xs", color: COLOR.muted, wrap: true },
         ],
       },
     ],
@@ -868,7 +869,7 @@ export function buildGroupWelcomeCard(input: { appUrl?: string; openUrl?: string
             {
               type: "text",
               text: "ปัดไปดูวิธีเริ่มใช้ →",
-              size: "xxs",
+              size: "xs",
               color: COLOR.muted,
               margin: "md",
             },

@@ -113,12 +113,12 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: [
           { type: "text", text: "เป้าหมายการออม", weight: "bold", size: "lg", color: "#0B5D4F" },
         ],
       },
-      body: { type: "box", layout: "vertical", paddingAll: "16px", contents: body },
+      body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
       ...(input.manageUrl?.startsWith("https://")
         ? {
             footer: {
@@ -147,21 +147,21 @@ export function buildGoalReachedCard(goal: GoalDto): LineMessage {
     altText: `ถึงเป้าแล้ว! ${goal.name} ${baht(goal.savedSatang)}`,
     contents: {
       type: "bubble",
-      size: "kilo",
+      size: "mega",
       body: {
         type: "box",
         layout: "vertical",
-        paddingAll: "18px",
+        paddingAll: "12px",
         spacing: "sm",
         contents: [
           {
             type: "text",
             text: "🎉 ถึงเป้าแล้ว!",
             weight: "bold",
-            size: "xl",
+            size: "lg",
             color: COLOR.income,
           },
-          { type: "text", text: label(goal), weight: "bold", size: "lg", wrap: true },
+          { type: "text", text: label(goal), weight: "bold", size: "md", wrap: true },
           {
             type: "text",
             text: `ออมครบ ${baht(goal.savedSatang)} จากเป้า ${baht(goal.targetSatang)} เก่งมาก!`,
