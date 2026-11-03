@@ -36,6 +36,7 @@ import {
   text,
 } from "./messages";
 import { buildReminderCard } from "./reminder-flex";
+import { t } from "@/lib/i18n";
 
 const MAX_REMINDER_CHOICES = 4;
 const MAX_LABEL = 20; // LINE's limit for a quick reply
@@ -46,14 +47,14 @@ const QUESTION_RE =
   /\?|ไหม|มั้ย|เท่าไร|เท่าไหร่|กี่|ยังไง|อย่างไร|อะไร|ทำไม|หรือเปล่า|รึเปล่า|^\s*ถ้า/;
 
 const CONFIRM_LABEL: Record<RoutedIntent, string> = {
-  money: "จดเป็นรายการเงิน",
-  reminder_add: "ตั้งเตือน",
-  reminder_edit: "เลื่อนเตือน",
-  note_add: "จดเป็นโน้ต",
-  search: "ค้นหาไฟล์และโน้ต",
-  file_save: "เก็บไฟล์",
-  ask: "ให้พี่ฮูกตอบ",
-  unclear: "จัดการข้อความนี้",
+  money: t("จดเป็นรายการเงิน"),
+  reminder_add: t("ตั้งเตือน"),
+  reminder_edit: t("เลื่อนเตือน"),
+  note_add: t("จดเป็นโน้ต"),
+  search: t("ค้นหาไฟล์และโน้ต"),
+  file_save: t("เก็บไฟล์"),
+  ask: t("ให้พี่ฮูกตอบ"),
+  unclear: t("จัดการข้อความนี้"),
 };
 
 export interface IntentDeps {
@@ -186,10 +187,10 @@ async function askAboutSecret(
 ): Promise<LineMessage[]> {
   const id = await putPendingIntent(deps.db, user.id, { text: input, decision: null }, deps.now());
   const picks: [string, string][] = [
-    ["บันทึกเป็นโน้ต", "note"],
-    ["ไม่บันทึก", "no"],
+    [t("บันทึกเป็นโน้ต"), "note"],
+    [t("ไม่บันทึก"), "no"],
   ];
-  if (canBeMoney) picks.splice(1, 0, ["จดเป็นรายการเงิน", "money"]);
+  if (canBeMoney) picks.splice(1, 0, [t("จดเป็นรายการเงิน"), "money"]);
   return [choices(SECRET_ASK_TEXT, id, picks)];
 }
 
@@ -231,10 +232,10 @@ export async function routeText(
     const id = await hold(decision);
     return [
       choices(INTENT_UNCLEAR_TEXT, id, [
-        ["จดเป็นรายการเงิน", "money"],
-        ["จดเป็นโน้ต", "note"],
-        ["ตั้งเตือน", "reminder"],
-        ["ไม่ทำอะไร", "no"],
+        [t("จดเป็นรายการเงิน"), "money"],
+        [t("จดเป็นโน้ต"), "note"],
+        [t("ตั้งเตือน"), "reminder"],
+        [t("ไม่ทำอะไร"), "no"],
       ]),
     ];
   }
@@ -243,8 +244,8 @@ export async function routeText(
     const id = await hold(decision);
     return [
       choices(INTENT_CONFIRM_TEXT(CONFIRM_LABEL[decision.intent]), id, [
-        ["ใช่", "yes"],
-        ["ไม่ใช่", "no"],
+        [t("ใช่"), "yes"],
+        [t("ไม่ใช่"), "no"],
       ]),
     ];
   }

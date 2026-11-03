@@ -3,6 +3,7 @@ import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const baht = (satang: number) => money(satang);
 const label = (g: Pick<GoalDto, "emoji" | "name">) => (g.emoji ? `${g.emoji} ${g.name}` : g.name);
@@ -52,7 +53,7 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
           },
           {
             type: "text",
-            text: g.done ? "ครบแล้ว 🎉" : `${g.percent}%`,
+            text: g.done ? t("ครบแล้ว 🎉") : `${g.percent}%`,
             weight: "bold",
             size: "md",
             color: g.done ? COLOR.income : COLOR.primary,
@@ -77,7 +78,7 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
       body.push({
         type: "text",
         text: g.overdue
-          ? `เลยกำหนด ${due} แล้ว`
+          ? t("เลยกำหนด {0} แล้ว", due)
           : `ภายใน ${due}${g.monthlyNeededSatang !== null ? ` · เก็บเดือนละ ${baht(g.monthlyNeededSatang)}` : ""}`,
         size: "xs",
         color: g.overdue ? COLOR.expense : COLOR.muted,
@@ -88,7 +89,7 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
   if (input.goals.length > 8) {
     body.push({
       type: "text",
-      text: `และอีก ${input.goals.length - 8} เป้าหมาย`,
+      text: t("และอีก {0} เป้าหมาย", input.goals.length - 8),
       size: "xs",
       color: COLOR.muted,
       margin: "md",
@@ -96,7 +97,7 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
   }
   body.push({
     type: "text",
-    text: 'หยอดกระปุกด้วย "ออม ชื่อเป้าหมาย 2000" ถอนด้วย "ถอน ชื่อเป้าหมาย 500"',
+    text: t("หยอดกระปุกด้วย \"ออม ชื่อเป้าหมาย 2000\" ถอนด้วย \"ถอน ชื่อเป้าหมาย 500\""),
     size: "xs",
     color: COLOR.muted,
     wrap: true,
@@ -105,7 +106,7 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
 
   return {
     type: "flex",
-    altText: `เป้าหมายการออม ${input.goals.length} ใบ`,
+    altText: t("เป้าหมายการออม {0} ใบ", input.goals.length),
     contents: {
       type: "bubble",
       size: "mega",
@@ -144,7 +145,7 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
 export function buildGoalReachedCard(goal: GoalDto): LineMessage {
   return {
     type: "flex",
-    altText: `ถึงเป้าแล้ว! ${goal.name} ${baht(goal.savedSatang)}`,
+    altText: t("ถึงเป้าแล้ว! {0} {1}", goal.name, baht(goal.savedSatang)),
     contents: {
       type: "bubble",
       size: "mega",
@@ -156,7 +157,7 @@ export function buildGoalReachedCard(goal: GoalDto): LineMessage {
         contents: [
           {
             type: "text",
-            text: "🎉 ถึงเป้าแล้ว!",
+            text: t("🎉 ถึงเป้าแล้ว!"),
             weight: "bold",
             size: "lg",
             color: COLOR.income,
@@ -164,7 +165,7 @@ export function buildGoalReachedCard(goal: GoalDto): LineMessage {
           { type: "text", text: label(goal), weight: "bold", size: "md", wrap: true },
           {
             type: "text",
-            text: `ออมครบ ${baht(goal.savedSatang)} จากเป้า ${baht(goal.targetSatang)} เก่งมาก!`,
+            text: t("ออมครบ {0} จากเป้า {1} เก่งมาก!", baht(goal.savedSatang), baht(goal.targetSatang)),
             size: "sm",
             color: COLOR.muted,
             wrap: true,
@@ -186,9 +187,9 @@ export function buildGoalDone(input: { text: string; undoData: string }): LineMe
           type: "action",
           action: {
             type: "postback",
-            label: "↩ ยกเลิก",
+            label: t("↩ ยกเลิก"),
             data: input.undoData,
-            displayText: "ยกเลิก",
+            displayText: t("ยกเลิก"),
           },
         },
       ],

@@ -39,7 +39,7 @@ export async function runReminders(
 
   const settings = await db
     .from("user_settings")
-    .select("user_id,daily_reminder_time,last_reminded_on,users(timezone,currency)")
+    .select("user_id,daily_reminder_time,last_reminded_on,users(timezone,currency,locale)")
     .eq("daily_reminder_enabled", true)
     .not("daily_reminder_time", "is", null)
     .limit(BATCH);
@@ -48,7 +48,7 @@ export async function runReminders(
     user_id: string;
     daily_reminder_time: string;
     last_reminded_on: string | null;
-    users: { timezone?: string | null; currency?: string | null } | null;
+    users: { timezone?: string | null; currency?: string | null; locale?: string | null } | null;
   }[];
   summary.candidates = rows.length;
 
@@ -81,7 +81,12 @@ export async function runReminders(
   );
 
   for (const row of dueRows) {
-    await runInZone(zoneOf(row), () => remindOne(row.user_id), row.users?.currency);
+    await runInZone(
+      zoneOf(row),
+      () => remindOne(row.user_id),
+      row.users?.currency,
+      row.users?.locale,
+    );
   }
   return summary;
 

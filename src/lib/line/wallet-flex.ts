@@ -2,6 +2,7 @@ import { money } from "@/lib/money";
 import { balanceOf, totalBalance, walletLabel, type Wallet } from "@/lib/wallet";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 /** "กระเป๋า": every wallet with its balance, the total, and a button to the web page. */
 export function buildWalletsCard(input: {
@@ -65,8 +66,8 @@ export function buildWalletsCard(input: {
   body.push({
     type: "text",
     text: input.canAdd
-      ? 'จดลงกระเป๋าอื่นได้โดยใส่ @ชื่อ เช่น "กาแฟ 45 @บัตร"'
-      : "แผนนี้เพิ่มกระเป๋าไม่ได้แล้ว อัปเกรดเพื่อเพิ่มกระเป๋าได้นะ",
+      ? t("จดลงกระเป๋าอื่นได้โดยใส่ @ชื่อ เช่น \"กาแฟ 45 @บัตร\"")
+      : t("แผนนี้เพิ่มกระเป๋าไม่ได้แล้ว อัปเกรดเพื่อเพิ่มกระเป๋าได้นะ"),
     size: "xs",
     color: COLOR.muted,
     wrap: true,
@@ -75,7 +76,7 @@ export function buildWalletsCard(input: {
 
   return {
     type: "flex",
-    altText: `กระเป๋าเงิน รวม ${money(total)}`,
+    altText: t("กระเป๋าเงิน รวม {0}", money(total)),
     contents: {
       type: "bubble",
       size: "mega",
@@ -152,9 +153,9 @@ export function buildTransferDone(input: { transferId: string; text: string }): 
           type: "action",
           action: {
             type: "postback",
-            label: "↩ ยกเลิกการโอน",
+            label: t("↩ ยกเลิกการโอน"),
             data: `a=tc&id=${input.transferId}`,
-            displayText: "ยกเลิกการโอน",
+            displayText: t("ยกเลิกการโอน"),
           },
         },
       ],

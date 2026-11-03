@@ -1,6 +1,7 @@
 import type { LineMessage } from "@/lib/types";
 import { describeReminder, type Repeat } from "@/lib/user-reminder";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 export interface ReminderCardInput {
   id: string;
@@ -25,7 +26,7 @@ export interface ReminderCardInput {
 export function buildReminderCard(input: ReminderCardInput): LineMessage {
   return {
     type: "flex",
-    altText: `ตั้งเตือนแล้ว: ${input.body}`,
+    altText: t("ตั้งเตือนแล้ว: {0}", input.body),
     contents: {
       type: "bubble",
       size: "mega",
@@ -37,7 +38,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
         contents: [
           {
             type: "text",
-            text: input.title ?? "ตั้งเตือนแล้ว ⏰",
+            text: input.title ?? t("ตั้งเตือนแล้ว ⏰"),
             weight: "bold",
             size: "lg",
             color: "#0B5D4F",
@@ -71,7 +72,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
             ? [
                 {
                   type: "text",
-                  text: "เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)",
+                  text: t("เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)"),
                   size: "xs",
                   color: COLOR.muted,
                   wrap: true,
@@ -82,7 +83,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
             ? [
                 {
                   type: "text",
-                  text: "ไม่ได้ระบุเวลา เลยใช้ 09:00 (อยากเปลี่ยน ยกเลิกแล้วตั้งใหม่พร้อมเวลา)",
+                  text: t("ไม่ได้ระบุเวลา เลยใช้ 09:00 (อยากเปลี่ยน ยกเลิกแล้วตั้งใหม่พร้อมเวลา)"),
                   size: "xs",
                   color: COLOR.muted,
                   wrap: true,
@@ -131,7 +132,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
                 },
                 {
                   type: "text",
-                  text: "เพิ่มลงปฏิทินในมือถือ ให้มือถือเตือนเองตรงเวลา",
+                  text: t("เพิ่มลงปฏิทินในมือถือ ให้มือถือเตือนเองตรงเวลา"),
                   size: "xs",
                   color: COLOR.muted,
                   wrap: true,
@@ -145,9 +146,9 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
             height: "sm",
             action: {
               type: "postback",
-              label: "ยกเลิกเตือนนี้",
+              label: t("ยกเลิกเตือนนี้"),
               data: input.cancelData ?? `a=rmx&id=${input.id}`,
-              displayText: "ยกเลิกเตือนนี้",
+              displayText: t("ยกเลิกเตือนนี้"),
             },
           },
         ],
@@ -159,10 +160,10 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
 /** The buttons that pop up under a reminder when it arrives: done, or remind me again later. */
 export function reminderActions(id: string) {
   const picks: [label: string, data: string][] = [
-    ["✅ ทำแล้ว", `a=rmd&id=${id}`],
-    ["⏰ อีก 10 นาที", `a=rms&id=${id}&s=10`],
-    ["⏰ อีก 1 ชม.", `a=rms&id=${id}&s=60`],
-    ["🌅 พรุ่งนี้เช้า", `a=rms&id=${id}&s=tm`],
+    [t("✅ ทำแล้ว"), `a=rmd&id=${id}`],
+    [t("⏰ อีก 10 นาที"), `a=rms&id=${id}&s=10`],
+    [t("⏰ อีก 1 ชม."), `a=rms&id=${id}&s=60`],
+    [t("🌅 พรุ่งนี้เช้า"), `a=rms&id=${id}&s=tm`],
   ];
   return {
     items: picks.map(([label, data]) => ({

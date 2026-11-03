@@ -5,6 +5,7 @@ import { log, safeMessage } from "@/lib/log";
 import type { AiProviderName } from "@/lib/ocr/provider";
 import { callJson } from "./json-call";
 import { STRUCTURER_DEFAULT_MODELS, type StructurerEnv } from "./text-structurer";
+import { currentLocale } from "@/lib/i18n";
 
 /** Turns the facts of a period into a few readable observations. Swap providers freely. */
 export interface InsightWriter {
@@ -57,12 +58,13 @@ export function factsForPrompt(f: InsightFacts) {
 }
 
 export function insightPrompt(f: InsightFacts): string {
+  const language = currentLocale() === "en" ? "English" : "Thai";
   return [
-    "You write a short spending review in Thai for one person, from the facts below.",
+    `You write a short spending review in ${language} for one person, from the facts below.`,
     "Return ONLY a JSON object matching this JSON Schema, with no extra text:",
     JSON.stringify(JSON_SCHEMA),
     "Rules:",
-    "- 2 to 4 observations, each at most 120 characters, plain friendly Thai, no emoji.",
+    `- 2 to 4 observations, each at most 120 characters, plain friendly ${language}, no emoji.`,
     `- Use ONLY numbers that appear in the facts (amounts in ${currentCurrency()}, percents, counts, or a difference`,
     "  between two of them). Never invent, round or estimate a number.",
     "- Only mention categories and items that appear in the facts.",

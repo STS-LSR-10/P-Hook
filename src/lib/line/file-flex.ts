@@ -3,6 +3,7 @@ import { formatBytes } from "@/lib/file";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const MAX_LISTED = 5;
 
@@ -76,7 +77,7 @@ export function buildFileResults(
 ): LineMessage {
   return {
     type: "flex",
-    altText: `พบ ${files.length} ไฟล์`,
+    altText: t("พบ {0} ไฟล์", files.length),
     contents: {
       type: "carousel",
       contents: files.slice(0, MAX_LISTED).map((file) => {
@@ -135,12 +136,12 @@ export function buildFilesSavedCard(input: {
   const [only] = files;
   const single = files.length === 1 && only;
   const uri = single ? input.openUrl(only.id) : input.listUrl;
-  const title = single ? "เก็บไฟล์แล้ว 📁" : `เก็บแล้ว ${files.length} ไฟล์ 📁`;
+  const title = single ? t("เก็บไฟล์แล้ว 📁") : t("เก็บแล้ว {0} ไฟล์ 📁", files.length);
   return card({
     altText: title,
     title,
     lines: files.slice(0, MAX_LISTED).map((f) => `${f.name} (${formatBytes(f.sizeBytes)})`),
     hint: input.hint,
-    button: uri ? { label: single ? "เปิดไฟล์" : "ดูไฟล์ทั้งหมด", uri } : undefined,
+    button: uri ? { label: single ? t("เปิดไฟล์") : t("ดูไฟล์ทั้งหมด"), uri } : undefined,
   });
 }

@@ -3,6 +3,7 @@ import type { LineMessage } from "@/lib/types";
 import { cardHeader, pillFooter, TINT } from "./card-style";
 import { COLOR } from "./flex";
 import { HOME_CURRENCIES, symbolOf } from "@/lib/currency";
+import { t } from "@/lib/i18n";
 
 /** The soft tints the observations take in turn (lavender, peach, sky). */
 const LINE_TINTS = [
@@ -74,8 +75,8 @@ export function buildInsightCard(input: {
     type: "text",
     text:
       insight.source === "ai"
-        ? "สร้างโดย AI จากตัวเลขของคุณ เป็นข้อสังเกตและคำแนะนำทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล"
-        : "สรุปจากตัวเลขของคุณ เป็นข้อสังเกตทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล",
+        ? t("สร้างโดย AI จากตัวเลขของคุณ เป็นข้อสังเกตและคำแนะนำทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล")
+        : t("สรุปจากตัวเลขของคุณ เป็นข้อสังเกตทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล"),
     size: "xs",
     color: COLOR.muted,
     wrap: true,
@@ -88,7 +89,7 @@ export function buildInsightCard(input: {
     header: cardHeader("AI Insight ✨", [input.subtitle], "🧠"),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
-  const foot = pillFooter("ดูรายละเอียดในแอป ➡️", input.moreUrl);
+  const foot = pillFooter(t("ดูรายละเอียดในแอป ➡️"), input.moreUrl);
   if (foot) bubble.footer = foot;
   return {
     type: "flex",

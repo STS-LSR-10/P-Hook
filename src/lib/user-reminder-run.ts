@@ -10,6 +10,7 @@ import type { LineMessage } from "@/lib/types";
 import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
 import { claimDueReminders, type DueReminder } from "@/lib/user-reminder-repo";
 import { REPEAT_LABEL } from "@/lib/user-reminder";
+import { runInZone } from "@/lib/zone-scope";
 
 /**
  * Messages an owner's group reminders may push to groups in a month. A push to a group counts once per
@@ -65,6 +66,12 @@ export async function runUserReminders(
         })
       : new Map<string, { groupId: string | null; mentions: Mention[] }>();
 
+  // a personal reminder speaks the person's language (a group's stays Thai)
+  const people = await peopleOf(
+    db,
+    due.filter((r) => !r.lineGroupId).map((r) => r.userId),
+  );
+
   for (const r of due) {
     // a group's reminder goes to the group, and not at all once the bot has left it
     if (r.lineGroupId && !r.groupOpen) continue;
@@ -76,13 +83,20 @@ export async function runUserReminders(
         else summary.sent += 1;
         continue;
       }
-      await line.push(r.lineUserId, [
-        {
-          type: "text",
-          text: reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
-          quickReply: reminderActions(r.id),
-        },
-      ]);
+      const person = people.get(r.userId);
+      await runInZone(
+        person?.timezone,
+        () =>
+          line.push(r.lineUserId, [
+            {
+              type: "text",
+              text: reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
+              quickReply: reminderActions(r.id),
+            },
+          ]),
+        person?.currency,
+        person?.locale,
+      );
       summary.sent += 1;
     } catch (error) {
       summary.errors += 1;
@@ -170,4 +184,27 @@ async function sendGroupReminder(
     dueAt: new Date(Math.floor((now.getTime() - RIDE_MS) / 60_000) * 60_000),
   });
   return "late";
+}
+
+/** The zone, currency and language of these people (none when they cannot be read: Thai, Bangkok). */
+async function peopleOf(
+  db: SupabaseClient,
+  ids: string[],
+): Promise<Map<string, { timezone?: string; currency?: string; locale?: string }>> {
+  if (ids.length === 0) return new Map();
+  try {
+    const { data, error } = await db
+      .from("users")
+      .select("id,timezone,currency,locale")
+      .in("id", [...new Set(ids)]);
+    if (error) throw new Error(error.message);
+    return new Map(
+      ((data ?? []) as { id: string; timezone?: string; currency?: string; locale?: string }[]).map(
+        (u) => [u.id, u],
+      ),
+    );
+  } catch (error) {
+    log.error("reminder_people_failed", error);
+    return new Map();
+  }
 }

@@ -1539,4 +1539,914 @@ export const EN: Record<string, string> = {
     "Couldn't send from this page. Go back to the group and type:",
   "บันทึกแล้ว ปิดแล้วเปิดแอปใหม่เพื่อใช้ภาษาที่เลือก":
     "Saved. Close and reopen the app to use the chosen language",
+  "บิลที่ตั้งเตือน {0} รายการ": "{0} bill reminders",
+  'จ่ายแล้วพิมพ์ "จ่ายบิล ค่าไฟ" หรือกดปุ่มในข้อความเตือน':
+    'After paying, type "จ่ายบิล ค่าไฟ" or tap the button in the reminder',
+  "บัตรเครดิต {0} ใบ": "{0} credit cards",
+  "และอีก {0} คน": "and {0} more",
+  'พิมพ์ "สมชายคืน 200" เมื่อได้เงินคืน หรือ "คืนแม่ 1000" เมื่อเราคืนเงิน':
+    'Type "สมชายคืน 200" when you get money back, or "คืนแม่ 1000" when you repay',
+  "หนี้สิน: ติดเรา {0} · เราติด {1}": "Debts: owed to you {0} · you owe {1}",
+  "↩ ยกเลิก": "↩ Undo",
+  "พบ {0} ไฟล์": "Found {0} files",
+  "เก็บไฟล์แล้ว 📁": "File saved 📁",
+  "เก็บแล้ว {0} ไฟล์ 📁": "Saved {0} files 📁",
+  ดูไฟล์ทั้งหมด: "See all files",
+  เก็บไฟล์: "Save file",
+  อ่านเป็นรายการ: "Read as entries",
+  "✏️ ตั้งชื่อใหม่": "✏️ Rename",
+  "ชื่อไฟล์ ": "File name ",
+  'โน้ตที่มี "{0}"': 'Notes with "{0}"',
+  "{0} {1}{2} ({3}) · จดด้วยพี่ฮูก": "{0} {1}{2} ({3}) · recorded with P'Hook",
+  "อื่น ๆ": "Other",
+  "＋ เพิ่มช่องทาง": "＋ Add a wallet",
+  จ่ายด้วย: "Paid with",
+  แนบรูป: "Attach photo",
+  "📎 แนบรูป": "📎 Attach photo",
+  "งบหมวด{0}": "{0} budget",
+  งบรวม: "Overall budget",
+  "💳 ย้ายกระเป๋า": "💳 Move wallet",
+  ย้ายกระเป๋า: "Move wallet",
+  "แก้ไขรายการสำเร็จ ✅": "Entry updated ✅",
+  "จดสำเร็จ ✅": "Recorded ✅",
+  อัปเดตรายการเรียบร้อยแล้ว: "The entry is updated",
+  "เย้! มีเงินเข้ากระเป๋าเพิ่มแล้วนะ": "Yay! More money in your wallet",
+  อย่าลืมตรวจสอบรายการที่จดด้วยนะ: "Don't forget to check what was recorded",
+  แชร์: "Share",
+  แก้ไข: "Edit",
+  ลบรายการ: "Delete entry",
+  "รอบงบ: {0}": "Budget cycle: {0}",
+  "จ่ายด้วย {0}": "Paid with {0}",
+  เลือกช่องทางอื่น: "Choose another",
+  "จดแล้ว: {0} {1}": "Recorded: {0} {1}",
+  "{0} {1} เป็นรายรับหรือรายจ่ายนะ?": "Is {0} {1} income or an expense?",
+  "พิมพ์บอกพี่ฮูกได้เลย เช่น กระเพราหมูกรอบ 65 · เงินเดือน 25000":
+    'Just tell P\'Hook, e.g. "กระเพราหมูกรอบ 65" · "เงินเดือน 25000"',
+  "📅 จดย้อนหลัง": "📅 Record a past day",
+  "พิมพ์บอกพี่ฮูกได้เลย เช่น": "Just tell P'Hook, e.g.",
+  "ระบบจะช่วยจดและแยกหมวดหมู่อัตโนมัติทันทีครับ ✨":
+    "It records and categorises it for you right away ✨",
+  จดเลย: "Record now",
+  อื่นๆ: "Other",
+  'ยังไม่มีหมวดให้เลือก พิมพ์จดได้เลย เช่น "กาแฟ 30" นะ':
+    'No categories to choose yet. Just type an entry, e.g. "กาแฟ 30"',
+  "เลือกหมวด แล้วพิมพ์แค่ตัวเลขจำนวนเงินได้เลย เช่น 50":
+    "Choose a category, then just type the amount, e.g. 50",
+  เลือกวันที่ที่ต้องการจดย้อนหลังได้เลย: "Choose the day you want to record",
+  เลือกวันที่: "Choose a date",
+  "จดย้อนหลังวันที่ {0} พิมพ์ชื่อรายการและจำนวนเงินต่อได้เลย เช่น กาแฟ 60":
+    'Recording for {0}. Type the entry name and amount, e.g. "กาแฟ 60"',
+  พิมพ์รายการ: "Type an entry",
+  "📆 ช่วงวันเอง": "📆 Custom range",
+  ช่วงวันเอง: "Custom range",
+  เลือกวันเริ่มต้นของช่วงที่ต้องการสรุป: "Choose the first day of the range to summarise",
+  วันเริ่มต้น: "Start date",
+  "เริ่มวันที่ {0} เลือกวันสิ้นสุดต่อได้เลย": "Starting {0}. Now choose the end date",
+  วันสิ้นสุด: "End date",
+  "เงินหมด {0}": "Money runs out {0}",
+  "⚠️ ตอนนี้รายจ่ายมากกว่ารายรับของรอบนี้แล้ว":
+    "⚠️ Expenses are already more than income this cycle",
+  "⚠️ เงินจะหมดประมาณ {0}": "⚠️ Money will run out around {0}",
+  "✅ เงินพอใช้ไปถึงสิ้นรอบ 👍": "✅ Enough to last to the end of the cycle 👍",
+  เหลือตอนนี้: "Left now",
+  ใช้จ่ายทั่วไปต่อวัน: "Everyday spending per day",
+  "📆 {0} วัน": "📆 {0} days",
+  "และอีก {0} รายการ": "and {0} more",
+  "ถ้าใช้จ่ายเท่า 7 วันล่าสุด": "At the last 7 days' pace",
+  "งบรวม {0}: ใช้เกินงบแล้ว": "Overall budget {0}: already over budget",
+  "งบรวม {0}: คาดว่าจะใช้ {1}% และงบหมดประมาณ {2}":
+    "Overall budget {0}: expected to use {1}%, running out around {2}",
+  "งบรวม {0}: คาดว่าจะใช้ {1}% ของงบ": "Overall budget {0}: expected to use {1}% of the budget",
+  "ข้อมูลยังน้อย (ต่ำกว่า 5 วันหรือ 5 รายการ) ตัวเลขอาจคลาดเคลื่อนมาก":
+    "Not much data yet (under 5 days or 5 entries); the numbers may be far off",
+  "เป็นการประมาณจากอัตราใช้จ่ายของรอบนี้ ไม่รวมรายรับที่ยังไม่เกิดและไม่ใช่รายการประจำ (เช่น โบนัส)":
+    "An estimate from this cycle's spending pace; it leaves out income that hasn't happened and isn't recurring (e.g. a bonus)",
+  พยากรณ์เงินปลายรอบ: "End-of-cycle forecast",
+  "ดูสรุปในแอป 📈": "See the summary in the app 📈",
+  " เงินหมดประมาณ {0}": " money runs out around {0}",
+  "และอีก {0} เป้าหมาย": "and {0} more goals",
+  'หยอดกระปุกด้วย "ออม ชื่อเป้าหมาย 2000" ถอนด้วย "ถอน ชื่อเป้าหมาย 500"':
+    'Add to a jar with "ออม ชื่อเป้าหมาย 2000", withdraw with "ถอน ชื่อเป้าหมาย 500"',
+  "เป้าหมายการออม {0} ใบ": "{0} savings goals",
+  "ถึงเป้าแล้ว! {0} {1}": "Goal reached! {0} {1}",
+  "ออมครบ {0} จากเป้า {1} เก่งมาก!": "Saved all {0} of the {1} target. Well done!",
+  "{0} คงเหลือ {1}": "{0} balance {1}",
+  "รับคืนจาก {0} {1}": "Received back from {0} {1}",
+  "คืนเงิน {0} {1}": "Repaid {0} {1}",
+  "ยังเหลือ {0}": "{0} still left",
+  "ปิดหนี้ครบแล้ว 🎉": "Debt fully settled 🎉",
+  "(ไม่นับเป็นรายรับ/รายจ่าย)": "(not counted as income/expense)",
+  "จดแล้ว: ให้ {0} ยืม {1}": "Recorded: lent {0} {1}",
+  "จดแล้ว: ยืม {0} {1}": "Recorded: borrowed {1} from {0}",
+  "กำหนดคืน {0}": "Due {0}",
+  "ทุกเดือนวันที่ {0}": "Every month on day {0}",
+  "ทุกปี {0}/{1}": "Every year on {0}/{1}",
+  "{0} · ครบถัดไป {1}": "{0} · next due {1}",
+  "ครบกำหนดรอบถัดไป {0}": "Next due {0}",
+  "บิลนี้ครั้งเดียว ปิดให้แล้ว": "This bill was one-off; it's closed",
+  "📝 จดรายจ่าย {0}": "📝 Record expense {0}",
+  จดเป็นรายจ่าย: "Record as an expense",
+  "สร้างเป้าหมายแล้ว: {0} {1}": "Goal created: {0} {1}",
+  'หยอดกระปุกด้วย "ออม {0} 1000" ได้เลย': 'Add to it with "ออม {0} 1000"',
+  "ถอนแล้ว {0} จาก {1}": "Withdrew {0} from {1}",
+  "หยอดแล้ว {0} → {1}": "Added {0} → {1}",
+  "สะสม {0} จาก {1} ({2}%)": "Saved {0} of {1} ({2}%)",
+  ครบเป้าแล้ว: "Target reached",
+  "เหลืออีก {0}": "{0} to go",
+  "โอนแล้ว {0}": "Transferred {0}",
+  "คงเหลือ: {0} {1} · {2} {3}": "Balances: {0} {1} · {2} {3}",
+  สรุปช่วงที่เลือก: "Summary of the chosen range",
+  "{0} – {1} ({2} วัน)": "{0} – {1} ({2} days)",
+  "{0}\n{1}\nยังไม่มีรายการเลย": "{0}\n{1}\nNo entries yet",
+  "รายเดือน (วันที่ {0})": "Monthly (day {0})",
+  "จดแล้ว {0} รายการ": "Recorded {0} entries",
+  "เหรียญสะสมของคุณ: {0} แต้ม": "Your coins: {0} points",
+  "จดต่อเนื่อง {0} วันแล้ว": "{0}-day recording streak",
+  วันนี้จดรายการแรกเพื่อเริ่มสะสมนะ: "Record your first entry today to start collecting",
+  "แลกเป็นวันใช้ Pro ได้ {0} วัน (แลกที่หน้าตั้งค่า)": "You can redeem {0} Pro days (in settings)",
+  "สะสมครบแล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่านะ":
+    "Once you have enough, redeem them for Pro days in settings",
+  "สรุปวันนี้ ({0})\nยังไม่มีรายการเลย": "Today's summary ({0})\nNo entries yet",
+  "สรุปเดือนนี้ ({0})\nยังไม่มีรายการเลย": "This month's summary ({0})\nNo entries yet",
+  สรุปเดือนนี้: "This month's summary",
+  เดือนก่อน: "Last month",
+  "ใช้จ่ายตามหมวด ({0})\nยังไม่มีรายจ่ายในรอบนี้":
+    "Spending by category ({0})\nNo expenses this cycle yet",
+  "รอบนี้ {0} เทียบ {1}": "This cycle {0} vs {1}",
+  "↩️ ยกเลิกโน้ตนี้": "↩️ Undo this note",
+  ยกเลิกโน้ตนี้: "Undo this note",
+  "เปิดหน้า{0} ได้จากเมนูด้านล่างของแอป":
+    "Open the {0} page from the menu at the bottom of the app",
+  "เตือนที่รออยู่ ⏰": "Waiting reminders ⏰",
+  "ดู แก้ไข หรือลบ: {0}": "View, edit or delete: {0}",
+  "ลบแล้ว: {0} {1}": "Deleted: {0} {1}",
+  "แก้แล้ว: {0} {1} → {2}": "Changed: {0} {1} → {2}",
+  "ยกเลิกทั้งใบแล้ว ลบ {0} รายการ": "Cancelled the whole slip, deleted {0} entries",
+  "จำไว้แล้ว: {0} → {1}": "Remembered: {0} → {1}",
+  "📝 จดรายการ": "📝 Record entry",
+  "พิมพ์ชื่อรายการ แล้วตามด้วยจำนวนเงิน": "Type the entry name, then the amount",
+  "พิมพ์สั้น ๆ ก็จดเสร็จแล้ว": "A short message is all it takes",
+  "จดย้อนหลัง · หรือ 12/10 ค่าไฟ 1200": 'Record a past day · or "12/10 ค่าไฟ 1200"',
+  "หลายรายการ คั่นด้วยคอมมาหรือขึ้นบรรทัดใหม่": "Several entries, separated by commas or new lines",
+  "ติดแท็ก # เพื่อค้นหาทีหลัง": "Add # tags to find them later",
+  "📷 จดแบบพิเศษ": "📷 Other ways",
+  จดแบบพิเศษ: "Special ways to record",
+  "ส่งรูป ส่งเสียง หรือเงินต่างประเทศ": "Send a photo, a voice message or a foreign amount",
+  ไม่ต้องพิมพ์เองก็จดได้: "Record without typing",
+  "พูดว่า “กาแฟสามสิบบาท” · Free ลองฟรี 1 ครั้ง": 'Say "กาแฟสามสิบบาท" · Free: try once',
+  "เงินต่างสกุล แปลงเป็นสกุลของคุณให้": "Foreign currency, converted into yours",
+  "AI ช่วยอ่านแล้วถามยืนยันก่อนจด": "The AI reads it and asks before recording",
+  "📊 สรุป": "📊 Summaries",
+  แตะที่แถวเพื่อดูได้เลย: "Tap a row to see it",
+  รู้ทันทีว่าเงินไปไหนบ้าง: "See right away where your money goes",
+  "รายรับ รายจ่าย คงเหลือของวันนี้": "Today's income, expenses and balance",
+  "ตามรอบงบ พร้อมเทียบเดือนก่อน": "By budget cycle, compared with last month",
+  เทียบเดือนต่อเดือนรายหมวด: "Month-on-month by category",
+  เทียบเดือน: "Compare months",
+  "🔎 ค้นหา/วิเคราะห์": "🔎 Search/analyse",
+  ค้นหาและวิเคราะห์: "Search and analyse",
+  เจาะลึกการใช้จ่ายของคุณ: "Dig into your spending",
+  ให้ตัวเลขช่วยตัดสินใจ: "Let the numbers help you decide",
+  "เลือกช่วงวันเอง พิมพ์ได้หลายแบบ เช่น 20oct-30oct · 1-15 ต.ค. · สรุปสัปดาห์นี้":
+    'Choose your own range, e.g. "20oct-30oct" · "1-15 ต.ค." · "สรุปสัปดาห์นี้"',
+  "เปิดหน้าในแอป: หน้ารายการ · หน้างบ · กราฟ · หน้าสรุป":
+    "Open a page in the app: entries · budgets · charts · summary",
+  หน้ารายการ: "Entries page",
+  "ถามเรื่องเงิน ตั้งเตือน จดโน้ต หาไฟล์ · หรือ ฮูก ใช้ไปเท่าไร":
+    'Ask about money, set reminders, take notes, find files · or "ฮูก ใช้ไปเท่าไร"',
+  ถามพี่ฮูก: "Ask P'Hook",
+  "👛 กระเป๋า/บัตร": "👛 Wallets/cards",
+  กระเป๋าและบัตร: "Wallets and cards",
+  "แยกเงินสด บัญชี บัตรเครดิต": "Separate cash, accounts and credit cards",
+  แยกเงินให้เป็นระเบียบ: "Keep your money organised",
+  "โอนระหว่างกระเป๋า ไม่นับเป็นรายจ่าย": "Transfer between wallets, not counted as an expense",
+  "วงเงิน และยอดตามรอบบิลของบัตรเครดิต": "Credit limit and spending per billing cycle",
+  บัตร: "Card",
+  "ชวนแฟนใช้กระเป๋าร่วมกัน (ได้รหัส 6 หลัก)":
+    "Share a wallet with your partner (get a 6-digit code)",
+  เข้ากระเป๋าร่วมด้วยรหัสที่ได้รับ: "Join a shared wallet with the code you got",
+  "🎯 งบและเป้าหมาย": "🎯 Budgets/goals",
+  คุมรายจ่ายและเก็บเงิน: "Control spending and save",
+  "ค่อย ๆ เก็บ ถึงเป้าแน่นอน": "Save bit by bit and reach your goal",
+  "ดูสถานะงบวันนี้ · ปิดด้วย งบวัน ปิด": 'See today\'s budget status · turn off with "งบวัน ปิด"',
+  งบวัน: "Daily budget",
+  สร้างกระปุกใหม่: "Create a new jar",
+  "หยอดเงิน · ถอนด้วย ถอน … 500": 'Add money · withdraw with "ถอน … 500"',
+  "🤝 หนี้และบิล": "🤝 Debts/bills",
+  หนี้และบิล: "Debts and bills",
+  "ให้ยืม ยืม และเตือนวันจ่าย": "Lend, borrow and get reminded of due dates",
+  ไม่ลืมทั้งเงินที่ต้องจ่ายและเงินที่ต้องได้คืน: "Never forget money you owe or are owed",
+  "จดเงินที่ให้ยืม · ยืม แม่ 2000 คืน 25/10": 'Record money you lent · "ยืม แม่ 2000 คืน 25/10"',
+  "จดเงินที่คืนมา · คืนแม่ 1000 เมื่อคืนเอง":
+    'Record money paid back · "คืนแม่ 1000" when you repay',
+  บิลที่ต้องจ่ายและวันครบกำหนด: "Bills to pay and their due dates",
+  "ตั้งเตือนก่อนครบกำหนด · จ่ายแล้วพิมพ์ จ่ายบิล ค่าไฟ":
+    'Get reminded before the due date · after paying type "จ่ายบิล ค่าไฟ"',
+  "⏰ เตือน/โน้ต": "⏰ Reminders/notes",
+  เตือนและโน้ต: "Reminders and notes",
+  ให้บอทช่วยจำ: "Let the bot remember for you",
+  "ตั้งเตือนตามเวลา จดโน้ตไว้ค้นทีหลัง": "Set timed reminders, keep notes to search later",
+  บอทส่งข้อความเตือนตอนถึงเวลา: "The bot sends a reminder when it's time",
+  "เตือนซ้ำ ทุกวัน/ทุกสัปดาห์/ทุกเดือนได้": "Repeat daily/weekly/monthly",
+  "ดูเตือนที่ตั้งไว้ (ยกเลิกได้ที่การ์ด)": "See your reminders (cancel from the card)",
+  เตือน: "Remind",
+  "✏️ อื่น ๆ": "✏️ Other",
+  "แก้ไข เหรียญสะสม ชวนเพื่อน": "Edit, coins, invite friends",
+  "คำสั่งอื่น ๆ ที่ใช้บ่อย": "Other common commands",
+  จดผิดก็แก้ได้ในพริบตา: "Fix a mistake in a moment",
+  ดูแต้มและจดต่อเนื่องกี่วัน: "See your points and recording streak",
+  "รหัสชวนเพื่อน ได้โบนัสทั้งสองฝ่าย": "Invite code: both of you get a bonus",
+  รหัสชวน: "Invite code",
+  "🚀 ทางลัด": "🚀 Shortcuts",
+  ทางลัด: "Shortcuts",
+  "เปิดหน้าต่าง ๆ ในแอป": "Open pages in the app",
+  ดูภาพรวมได้ละเอียดกว่าในแอป: "See more detail in the app",
+  "อยากรู้เรื่องไหนเป็นพิเศษคะ แตะหัวข้อด้านล่างเพื่อดูวิธีใช้ได้เลยค่ะ ✨":
+    "What would you like to know? Tap a topic below to see how ✨",
+  "อยากรู้เรื่องไหนบอกได้เลยเพื่อน! จิ้มหัวข้อข้างล่างได้เลย 😎":
+    "Tell me what you want to know, friend! Tap a topic below 😎",
+  "ยังไม่รู้จะเริ่มตรงไหนใช่ไหม? เลือกหัวข้อข้างล่าง แล้วอ่านให้จบนะ! 📖":
+    "Not sure where to start? Pick a topic below and read it through! 📖",
+  "ถามไว้ก่อนเก่งมากเลย! เลือกหัวข้อด้านล่าง เดี๋ยวบอกให้ละเอียดเลยนะ 🌟":
+    "Great that you asked first! Pick a topic below and I'll explain it all 🌟",
+  "{0} · แตะเพื่อดู": "{0} · tap to see",
+  "📊 หน้าสรุป": "📊 Summary page",
+  "🧾 หน้ารายการ": "🧾 Entries page",
+  "🏷️ หมวดและงบ": "🏷️ Categories and budgets",
+  "⚙️ ตั้งค่า": "⚙️ Settings",
+  "⭐ อัปเกรด": "⭐ Upgrade",
+  เปิดจากเมนูด้านล่างของแชทได้เลย: "Open it from the menu at the bottom of the chat",
+  "วิธีใช้: {0}": "How to: {0}",
+  "สวัสดี! เราคือพี่ฮูก พิมพ์ เช่น กาแฟ 30 หรือ เงินเดือน 25000 ได้เลย":
+    'Hi! I\'m P\'Hook. Type e.g. "กาแฟ 30" or "เงินเดือน 25000"',
+  "สวัสดี! เราคือพี่ฮูก 👋": "Hi! I'm P'Hook 👋",
+  "ผู้ช่วยจดรายรับรายจ่ายของคุณ พิมพ์สั้น ๆ ได้เลย":
+    "Your income and expense helper. Just type something short",
+  "กาแฟ 30": '"กาแฟ 30"',
+  จดรายจ่าย: "Record an expense",
+  "เงินเดือน 25000": '"เงินเดือน 25000"',
+  จดรายรับ: "Record income",
+  "+500 ขายของ": '"+500 ขายของ"',
+  "ใส่ + เป็นรายรับ": "Add + for income",
+  ส่งรูปสลิป: "Send a slip photo",
+  "บอทอ่านให้ (ลองฟรี 1 ใบ)": "The bot reads it (try 1 free)",
+  "จดรายจ่าย ใส่คำว่า “จด” หน้าหรือหลังก็ได้ เช่น ค่าน้ำ 200 จด (คุยทั่วไปที่ไม่มี “จด” บอทไม่จด) · หลายรายการ: จด กาแฟ 90, ขนม 40 (สูงสุด 5)":
+    'Record an expense with "จด" before or after, e.g. "ค่าน้ำ 200 จด" (chat without "จด" isn\'t recorded) · several: "จด กาแฟ 90, ขนม 40" (up to 5)',
+  "ดู 5 รายการล่าสุด · ลบรายการล่าสุดของตัวเอง":
+    "See the latest 5 entries · delete your own latest entry",
+  "คนจ่ายก่อนพิมพ์ แล้วเลือกคนหาร (หรือพิมพ์ ทั้งหมด ต่อท้าย) บอทส่ง QR พร้อมเพย์ยอดรายคนเข้ากลุ่ม · โอนแล้วส่งสลิป บอทตรวจให้ · ตามเงิน ดูว่าใครยังค้าง":
+    'The payer types it, then chooses who splits (or adds "ทั้งหมด"). The bot sends each person a PromptPay QR in the group · send a slip after paying and the bot checks it · "ตามเงิน" shows who still owes',
+  "หารค่าใช้จ่ายทริป ดูว่าใครโอนคืนใคร": "Split trip costs and see who pays back whom",
+  "พิมพ์ เก็บไฟล์ แล้วส่งไฟล์หรือรูปภายใน 5 นาที เก็บแยกจากไฟล์ส่วนตัว แต่ใช้พื้นที่ของเจ้าของสมุด":
+    'Type "เก็บไฟล์", then send a file or photo within 5 minutes. Kept apart from personal files but uses the ledger owner\'s space',
+  "จดโน้ตของกลุ่ม ทุกคนในกลุ่มเห็น ใช้จำนวนโน้ตของเจ้าของสมุด":
+    "Group notes everyone in the group sees; they count toward the ledger owner's notes",
+  "แท็ก @คน ได้ · ถ้ามีคนคุยในกลุ่มช่วง 5 นาทีก่อนหรือหลังเวลา บอทเตือนตอนนั้นเลย ไม่ก็ส่งหาคนที่แท็ก · ตั้งซ้ำได้ เช่น เตือน ทุกวันศุกร์ 5 โมงเย็น จ่ายค่าห้อง · เตือนกลุ่ม ดูรายการ · ยกเลิกเตือน 1":
+    'You can tag @people · if someone chats in the group within 5 minutes of the time, the bot reminds then; otherwise it messages the people tagged · repeat it, e.g. "เตือน ทุกวันศุกร์ 5 โมงเย็น จ่ายค่าห้อง" · "เตือนกลุ่ม" lists them · "ยกเลิกเตือน 1"',
+  "ถามพี่ฮูกได้ทีละคำถาม พี่ฮูกเห็นแค่สมุดของกลุ่มนี้ ไม่เห็นข้อมูลส่วนตัวของใคร":
+    "Ask P'Hook one question at a time. P'Hook sees only this group's ledger, nobody's personal data",
+  "วิธีใช้สมุดกลุ่ม: จด ข้าวเที่ยง 350 · สรุป · ล่าสุด · ลบล่าสุด":
+    'Group ledger: "จด ข้าวเที่ยง 350" · "สรุป" · "ล่าสุด" · "ลบล่าสุด"',
+  วิธีใช้สมุดกลุ่ม: "How to use the group ledger",
+  "ช่วยกันจด ดูว่าใครจ่ายไปเท่าไร": "Record together and see who paid what",
+  "บอทรู้ว่าใครจ่ายจากบัญชี LINE ของคนที่พิมพ์ (ต้องเพิ่มบอทเป็นเพื่อนไว้ก่อน)":
+    "The bot knows who paid from the LINE account that typed (add the bot as a friend first)",
+  'พี่ฮูกมาแล้ว! ช่วยกันจดรายจ่ายในกลุ่ม แตะ "เปิดสมุดกลุ่ม" เพื่อเริ่ม':
+    "P'Hook is here! Record the group's expenses together. Tap \"Open group ledger\" to start",
+  "พี่ฮูก มาช่วยจดแล้ว": "P'Hook is here to help",
+  ช่วยกันจดรายจ่ายของกลุ่ม: "Record the group's expenses together",
+  "ดูว่าใครจ่ายไปเท่าไร หารบิล แบ่งค่าทริป ตามเงินเพื่อนได้ในกลุ่มนี้":
+    "See who paid what, split bills and trip costs, and chase money owed, right in this group",
+  "ปัดไปดูวิธีเริ่มใช้ →": "Swipe to see how to start →",
+  "เริ่มใช้ใน 3 ขั้น": "Start in 3 steps",
+  ง่ายนิดเดียว: "It's easy",
+  "เพื่อน ๆ จดได้ฟรี": "Friends record for free",
+  "กด “เปิดสมุดกลุ่ม”": 'Tap "Open group ledger"',
+  "ผู้เปิดต้องเป็น Elite (ทดลองฟรี 7 วัน)": "The opener needs Elite (7-day free trial)",
+  "พิมพ์ จด ข้าวเที่ยง 350": 'Type "จด ข้าวเที่ยง 350"',
+  "หรือ ค่าน้ำ 200 จด · หารบิลข้าว 900": 'or "ค่าน้ำ 200 จด" · "หารบิลข้าว 900"',
+  "พิมพ์ สรุป": 'Type "สรุป"',
+  ดูยอดรวมและใครจ่ายเท่าไร: "See the totals and who paid what",
+  เหมาะกับ: "Good for",
+  กลุ่มแบบไหนใช้ได้บ้าง: "What kind of groups",
+  ชวนบอทเข้ากลุ่มได้เลย: "Invite the bot to your group",
+  "สร้างโดย AI จากตัวเลขของคุณ เป็นข้อสังเกตและคำแนะนำทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล":
+    "Written by AI from your numbers: general observations and tips, not personal financial advice",
+  "สรุปจากตัวเลขของคุณ เป็นข้อสังเกตทั่วไป ไม่ใช่คำแนะนำทางการเงินส่วนบุคคล":
+    "A summary of your numbers: general observations, not personal financial advice",
+  "ดูรายละเอียดในแอป ➡️": "See details in the app ➡️",
+  จดเป็นรายการเงิน: "Record as money",
+  ตั้งเตือน: "Set a reminder",
+  เลื่อนเตือน: "Move the reminder",
+  จดเป็นโน้ต: "Save as a note",
+  ค้นหาไฟล์และโน้ต: "Search files and notes",
+  ให้พี่ฮูกตอบ: "Let P'Hook answer",
+  จัดการข้อความนี้: "What to do with this message",
+  บันทึกเป็นโน้ต: "Save as a note",
+  ไม่บันทึก: "Don't save",
+  ไม่ทำอะไร: "Do nothing",
+  ใช่: "Yes",
+  ไม่ใช่: "No",
+  'ยังไม่เข้าใจข้อความนี้ ลองพิมพ์ชื่อรายการแล้วตามด้วยจำนวนเงิน เช่น "กาแฟ 30" หรือพิมพ์ "วิธีใช้งาน" ดูวิธีใช้นะ':
+    'I didn\'t get that. Type the entry name and then the amount, e.g. "กาแฟ 30", or type "วิธีใช้งาน" to see how',
+  "ดูเหมือนรูปนี้ไม่ใช่สลิปหรือใบเสร็จ ลองส่งรูปสลิปที่เห็นจำนวนเงินชัด ๆ อีกครั้งนะ":
+    "This doesn't look like a slip or receipt. Try sending a slip photo with the amount clearly visible",
+  'อ่านสลิปนี้ไม่ได้ ลองถ่ายใหม่ให้เห็นตัวเลขชัด ๆ ไม่เบลอ ไม่มีแสงสะท้อน หรือพิมพ์จดเองได้เลย เช่น "ค่าไฟ 1200"':
+    'I couldn\'t read this slip. Take it again with clear, sharp numbers and no glare, or type it yourself, e.g. "ค่าไฟ 1200"',
+  "โหลดรูปไม่สำเร็จ ลองส่งรูปอีกครั้งนะ": "Couldn't load the image. Please send it again",
+  "รูปใหญ่เกินไป (เกิน 10 MB) ลองลดขนาดแล้วส่งใหม่นะ":
+    "The image is too large (over 10 MB). Make it smaller and send it again",
+  "สลิปนี้เคยจดไว้แล้วนะ ไม่ได้จดซ้ำ":
+    "This slip was already recorded, so it wasn't recorded again",
+  'สัปดาห์นี้อ่านสลิปฟรีครบ 3 ใบแล้ว (รีเซ็ตทุกวันจันทร์) การอ่านสลิปไม่จำกัดสัปดาห์เป็นของแผน Pro ขึ้นไป (Pro 30 ใบ/เดือน, Elite ไม่จำกัด) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ตอนนี้พิมพ์จดเองได้เลย เช่น "ค่าไฟ 1200" นะ':
+    'You\'ve used this week\'s 3 free slip reads (resets every Monday). Unlimited weekly slip reading is for Pro and above (Pro 30/month, Elite unlimited). Try it free for 7 days from the "อัปเกรด" menu. For now, type it yourself, e.g. "ค่าไฟ 1200"',
+  'อ่านสลิปฟรีสัปดาห์นี้ได้อีก {0} ใบ (สัปดาห์ละ 3 ใบ) อยากอ่านได้มากกว่านี้ ลองทดลองใช้ Pro ฟรี 7 วันที่เมนู "อัปเกรด" นะ':
+    '{0} free slip reads left this week (3 a week). For more, try Pro free for 7 days from the "อัปเกรด" menu',
+  'นี่คือสลิปฟรีใบสุดท้ายของสัปดาห์นี้ (สัปดาห์ละ 3 ใบ) อยากอ่านได้มากกว่านี้ ลองทดลองใช้ Pro ฟรี 7 วันที่เมนู "อัปเกรด" นะ':
+    'This is your last free slip read this week (3 a week). For more, try Pro free for 7 days from the "อัปเกรด" menu',
+  'เดือนนี้อ่านสลิปครบ 30 ใบแล้ว (แผน Pro) พิมพ์จดเองได้ไม่จำกัด เช่น "ค่าไฟ 1200" อัปเกรดเป็น Elite เพื่ออ่านสลิปได้ไม่จำกัด หรือรอโควตารีเซ็ตต้นเดือนหน้านะ':
+    'You\'ve read 30 slips this month (Pro plan). You can type entries without limit, e.g. "ค่าไฟ 1200". Upgrade to Elite for unlimited slips, or wait for the quota to reset next month',
+  'เดือนนี้อ่านสลิปครบ {0} ใบตามเกณฑ์ใช้งานปกติแล้ว พิมพ์จดเองได้เลย เช่น "ค่าไฟ 1200" และจะอ่านสลิปได้ใหม่ต้นเดือนหน้านะ':
+    'You\'ve read {0} slips this month, the normal-use limit. Type entries yourself, e.g. "ค่าไฟ 1200"; slip reading resets at the start of next month',
+  "ยกเลิกแล้ว ไม่ได้จดสลิปนี้": "Cancelled; this slip wasn't recorded",
+  เลือกหมวดที่ถูกต้องนะ: "Choose a valid category",
+  "ได้โบนัสชวนเพื่อน +{0} เหรียญสะสมแล้ว! ตรวจดูได้ที่หน้าตั้งค่า":
+    "Invite bonus +{0} coins received! Check it in settings",
+  'พิมพ์ "ใช้รหัส" ตามด้วยรหัสของเพื่อน เช่น "ใช้รหัส ABCD1234" เพื่อรับโบนัสทั้งสองฝ่ายนะ':
+    'Type "ใช้รหัส" followed by your friend\'s code, e.g. "ใช้รหัส ABCD1234", and you both get a bonus',
+  "ใช้รหัสแล้ว! พอจดรายการแรกจะได้โบนัส {0} เหรียญสะสม และเพื่อนก็ได้ด้วยนะ":
+    "Code used! When you record your first entry you'll get {0} coins, and so will your friend",
+  "ไม่พบรหัสชวนเพื่อนนี้ ตรวจตัวอักษรอีกครั้งนะ":
+    "That invite code wasn't found. Check the letters again",
+  ใช้รหัสของตัวเองไม่ได้นะ: "You can't use your own code",
+  คุณใช้รหัสชวนเพื่อนไปแล้ว: "You've already used an invite code",
+  "ใช้รหัสได้ภายใน {0} วันแรกหลังเริ่มใช้งานเท่านั้นนะ":
+    "A code can only be used within your first {0} days",
+  "รหัสชวนเพื่อนของคุณ: {0}": "Your invite code: {0}",
+  'ให้เพื่อนพิมพ์ "ใช้รหัส {0}" ในแชทนี้ พอเพื่อนจดรายการแรก ทั้งคู่ได้โบนัสเหรียญสะสม':
+    'Ask your friend to type "ใช้รหัส {0}" in this chat. When they record their first entry, you both get bonus coins',
+  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Pro (แลกวัน Pro ด้วยเหรียญสะสมได้ที่หน้าตั้งค่า)":
+    "Recorded in this category. Remembering payee → category automatically is a Pro feature (redeem Pro days with coins in settings)",
+  'ฟีเจอร์อ่านสลิปกำลังจะมาเร็ว ๆ นี้ ตอนนี้พิมพ์จดได้เลย เช่น "ค่าไฟ 1200" นะ':
+    'Slip reading is coming soon. For now, type it, e.g. "ค่าไฟ 1200"',
+  "ส่งมาเร็วไปนิดนะ รอสักครู่แล้วค่อยส่งต่อ ข้อความช่วงนี้อาจไม่ได้ถูกจด":
+    "A little too fast! Wait a moment before sending more; messages just now may not have been recorded",
+  "ขออภัย ระบบสะดุดชั่วคราว ลองส่งใหม่อีกครั้งในอีกสักครู่นะ":
+    "Sorry, something hiccuped. Please send it again in a moment",
+  ยังไม่มีรายการให้ลบนะ: "Nothing to delete yet",
+  "ไม่พบรายการนี้แล้ว (อาจถูกลบหรือแก้ไขไปก่อนหน้า)":
+    "This entry is gone (it may have been deleted or changed already)",
+  'พิมพ์ "แก้ล่าสุด" ตามด้วยจำนวนเงินใหม่ เช่น "แก้ล่าสุด 45" เพื่อแก้รายการล่าสุดนะ':
+    'Type "แก้ล่าสุด" followed by the new amount, e.g. "แก้ล่าสุด 45", to change your latest entry',
+  "แตะลิงก์นี้เพื่อแก้ไขรายการ (ชื่อ ยอด วันที่ หมวด) ได้เลยนะ":
+    "Tap this link to edit the entry (name, amount, date, category)",
+  'ถ้าเป็นรายการล่าสุด พิมพ์ "แก้ล่าสุด 45" เพื่อเปลี่ยนจำนวนเงินได้เลย (การแก้รายการอื่นจะทำได้ในหน้ารายการเร็ว ๆ นี้)':
+    'If it\'s your latest entry, type "แก้ล่าสุด 45" to change the amount (editing others is coming to the entries page soon)',
+  'การจดย้อนหลัง (เช่น "เมื่อวาน กาแฟ 60") เป็นฟีเจอร์ของแผน Pro ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือพิมพ์จดเป็นวันนี้ได้เลย':
+    'Recording past days (e.g. "เมื่อวาน กาแฟ 60") is for Pro and above; this entry wasn\'t recorded. Try it free for 7 days from the "อัปเกรด" menu, or record it as today',
+  'การจดหลายรายการในข้อความเดียว (เช่น "ข้าวเช้า 50 / กาแฟ 45") เป็นฟีเจอร์ของแผน Pro ขึ้นไป ยังไม่ได้จดข้อความนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือส่งทีละรายการได้เลย':
+    'Several entries in one message (e.g. "ข้าวเช้า 50 / กาแฟ 45") is for Pro and above; this message wasn\'t recorded. Try it free for 7 days from the "อัปเกรด" menu, or send one at a time',
+  'การติดแท็ก (เช่น "หมูกระทะ 500 #ปาร์ตี้") เป็นฟีเจอร์ของแผน Pro ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือพิมพ์จดโดยไม่ใส่แท็กได้เลย':
+    'Tags (e.g. "หมูกระทะ 500 #ปาร์ตี้") are for Pro and above; this entry wasn\'t recorded. Try it free for 7 days from the "อัปเกรด" menu, or record it without the tag',
+  'การสรุปรายปีเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ "สรุปเดือนนี้" ได้เลย':
+    'Yearly summaries are for Pro and above. Try it free for 7 days from the "อัปเกรด" menu. For now, type "สรุปเดือนนี้"',
+  "ระบุปีไม่ถูกต้อง ใส่ปี พ.ศ. หรือ ค.ศ. ที่ไม่เกินปีนี้และย้อนหลังไม่เกิน 10 ปี เช่น สรุปปี 2568":
+    'Invalid year. Use a Buddhist or Western year no later than this year and no more than 10 years back, e.g. "สรุปปี 2568"',
+  "สรุปรายปี {0}\nยังไม่มีรายการในปีนี้": "Yearly summary {0}\nNo entries this year yet",
+  'การเทียบเดือนต่อเดือนรายหมวดเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Month-on-month by category is for Pro and above. Try it free for 7 days from the "อัปเกรด" menu',
+  "ยังไม่มีรายจ่ายทั้งสองช่วงให้เทียบ ลองจดรายการเพิ่มก่อนนะ":
+    "No expenses in both periods to compare yet. Record a few more first",
+  'AI Insight (วิเคราะห์การใช้จ่ายด้วย AI) เป็นฟีเจอร์เฉพาะแผน Elite ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้ดูได้ด้วย "เทียบเดือน" หรือ "สรุปหมวด"':
+    'AI Insight (AI spending analysis) is for the Elite plan only. Try it free for 7 days from the "อัปเกรด" menu. For now, use "เทียบเดือน" or "สรุปหมวด"',
+  "วันนี้ขอวิเคราะห์ครบจำนวนแล้ว พรุ่งนี้ลองใหม่ได้นะ":
+    "You've reached today's analyses. Try again tomorrow",
+  "ยังไม่มีรายจ่ายในรอบนี้ให้วิเคราะห์ ลองจดรายการสักพักแล้วถามใหม่นะ":
+    "No expenses this cycle to analyse yet. Record for a while, then ask again",
+  'การพยากรณ์เงินปลายเดือนเป็นฟีเจอร์เฉพาะแผน Elite ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้ดูสรุปได้ด้วย "สรุปเดือนนี้" หรือ "เทียบเดือน"':
+    'The end-of-month forecast is for the Elite plan only. Try it free for 7 days from the "อัปเกรด" menu. For now, use "สรุปเดือนนี้" or "เทียบเดือน"',
+  "ยังไม่มีข้อมูลในรอบนี้พอให้พยากรณ์ ลองจดรายการสักพักแล้วถามใหม่นะ":
+    "Not enough data this cycle for a forecast yet. Record for a while, then ask again",
+  "ยังไม่มีรายการเลย ลองพิมพ์ เช่น กาแฟ 30 ดูนะ": 'No entries yet. Try typing e.g. "กาแฟ 30"',
+  'การค้นหาพร้อมยอดรวมเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้ค้นหาในหน้ารายการของแอปได้เลย':
+    'Search with totals is for Pro and above. Try it free for 7 days from the "อัปเกรด" menu. For now, search on the entries page in the app',
+  "พิมพ์คำที่ต้องการค้นหาต่อท้าย เช่น": "Type what to search for after it, e.g.",
+  "• ค้นหา กาแฟ": '• "ค้นหา กาแฟ"',
+  "• ค้นหา #ปาร์ตี้บริษัท": '• "ค้นหา #ปาร์ตี้บริษัท"',
+  'ค้นหา "{0}"\nไม่พบรายการที่ตรงกันเลย': 'Search "{0}"\nNo matching entries',
+  'การสรุปช่วงวันเองเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ "สรุปเดือนนี้" ได้เลย':
+    'Custom-range summaries are for Pro and above. Try it free for 7 days from the "อัปเกรด" menu. For now, type "สรุปเดือนนี้"',
+  "ระบุช่วงวันที่ให้ครบทั้งวันเริ่มและวันสิ้นสุด เช่น": "Give both a start and an end date, e.g.",
+  "• สรุป 1/10 ถึง 15/10": '• "สรุป 1/10 ถึง 15/10"',
+  "• สรุป 20/10-30/10 หรือ 20oct-30oct": '• "สรุป 20/10-30/10" or "20oct-30oct"',
+  "• สรุป 1-15 ต.ค. หรือ 20 ต.ค. - 30 ต.ค.": '• "สรุป 1-15 ต.ค." or "20 ต.ค. - 30 ต.ค."',
+  "• สรุป ตั้งแต่ 1/1/2569 ถึง วันนี้": '• "สรุป ตั้งแต่ 1/1/2569 ถึง วันนี้"',
+  'หรือกดปุ่ม "📆 ช่วงวันเอง" ใต้การ์ดสรุปแล้วเลือกจากปฏิทิน':
+    'or tap "📆 Custom range" under the summary card and pick from the calendar',
+  "วันที่ไม่ถูกต้อง ลองใหม่ เช่น สรุป 1/10 ถึง 15/10 นะ":
+    'Invalid date. Try e.g. "สรุป 1/10 ถึง 15/10"',
+  "วันเริ่มต้องไม่อยู่หลังวันสิ้นสุด ลองสลับวันที่แล้วส่งใหม่นะ":
+    "The start can't be after the end. Swap the dates and send again",
+  "เลือกช่วงได้ไม่เกิน 366 วัน ลองย่อช่วงวันที่ลงแล้วส่งใหม่นะ":
+    "The range can be up to 366 days. Shorten it and send again",
+  'การจดย้อนหลังเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์จดเป็นวันนี้ได้เลย':
+    'Recording past days is for Pro and above. Try it free for 7 days from the "อัปเกรด" menu. For now, record it as today',
+  'วันที่ที่เลือกใช้ไม่ได้ (ต้องไม่เกินวันนี้) ลองกด "จดย้อนหลัง" แล้วเลือกใหม่ได้เลยนะ':
+    "That date can't be used (it can't be after today). Tap \"Record a past day\" and choose again",
+  "ให้ AI ช่วยอ่านข้อความนี้แล้ว ตรวจก่อนจดนะ":
+    "The AI read this message for you. Check it before recording",
+  "ยกเลิกแล้ว ไม่ได้จดรายการนี้ ลองพิมพ์ใหม่ได้เลย":
+    "Cancelled; this entry wasn't recorded. Type it again any time",
+  'การแยกรายการจากใบเสร็จเป็นฟีเจอร์เฉพาะแผน Elite กด "ยืนยัน" เพื่อจดเป็นยอดรวมใบเดียวได้เลยนะ':
+    'Splitting a receipt into entries is for the Elite plan only. Tap "Confirm" to record the receipt as one total',
+  'ใบนี้แยกรายการไม่ได้ (อ่านรายการได้ไม่พอ หรือยอดรายการเกินยอดรวม) กด "ยืนยัน" เพื่อจดเป็นยอดรวมใบเดียวนะ':
+    'This receipt can\'t be split (not enough items read, or the items add up to more than the total). Tap "Confirm" to record it as one total',
+  "แยกเป็น {0} รายการแล้ว (รวม {1}{2})": "Split into {0} entries (total {1}{2})",
+  'การแนบรูปประกอบรายการเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Attaching photos to entries is for Pro and above. Try it free for 7 days from the "อัปเกรด" menu',
+  "📎 เลือกรูปที่จะแนบ": "📎 Choose a photo to attach",
+  "📎 เลือกรูปใหม่ (แทนรูปเดิม)": "📎 Choose a new photo (replaces the old one)",
+  "เดือนนี้แนบรูปครบจำนวนแล้ว ไว้เดือนหน้าแนบเพิ่มได้ใหม่นะ ตอนนี้จดรายการได้ตามปกติ":
+    "You've attached all the photos for this month. You can attach more next month; recording works as usual",
+  'แนบรูปกับ "{0}" แล้ว': 'Photo attached to "{0}"',
+  'หมดเวลารอรูปของรายการนี้แล้ว กดปุ่ม "แนบรูป" ที่การ์ดรายการอีกครั้งได้เลยนะ':
+    'Stopped waiting for this entry\'s photo. Tap "Attach photo" on the entry card again',
+  'ใช้สิทธิ์ลองจดด้วยเสียงฟรีครบแล้ว จดด้วยเสียงเป็นฟีเจอร์ของแผน Pro ขึ้นไป (Pro 20 ครั้ง/เดือน, Elite ไม่จำกัด) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ตอนนี้พิมพ์จดได้เลย เช่น "กาแฟ 30"':
+    'You\'ve used your free voice try. Voice entries are for Pro and above (Pro 20/month, Elite unlimited). Try it free for 7 days from the "อัปเกรด" menu. For now, type it, e.g. "กาแฟ 30"',
+  'นี่คือสิทธิ์ลองจดด้วยเสียงฟรี 1 ครั้ง (ใช้ครบแล้ว) ชอบไหม? ลองทดลองใช้ Pro ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'That was your 1 free voice try (now used). Like it? Try Pro free for 7 days from the "อัปเกรด" menu',
+  "เดือนนี้จดด้วยเสียงครบ {0} ครั้งตามเกณฑ์ใช้งานปกติแล้ว พิมพ์จดแทนได้เลย และจะใช้เสียงได้ใหม่ต้นเดือนหน้านะ":
+    "You've used {0} voice entries this month, the normal-use limit. Type instead; voice comes back at the start of next month",
+  "เดือนนี้จดด้วยเสียงครบ {0} ครั้งแล้ว (แผน Pro) พิมพ์จดแทนได้เลย อัปเกรดเป็น Elite เพื่อจดด้วยเสียงได้ไม่จำกัด หรือรอรีเซ็ตต้นเดือนหน้านะ":
+    "You've used {0} voice entries this month (Pro plan). Type instead; upgrade to Elite for unlimited voice, or wait for the reset next month",
+  "ตอนนี้ยังไม่เปิดให้จดด้วยเสียง พิมพ์จดแทนได้เลยนะ":
+    "Voice entries aren't open yet. Type instead",
+  "ข้อความเสียงยาวเกินไป (สูงสุด 30 วินาที) ลองพูดสั้น ๆ ครั้งละไม่กี่รายการนะ":
+    "The voice message is too long (up to 30 seconds). Say just a few entries at a time",
+  "วันนี้จดด้วยเสียงครบจำนวนแล้ว พิมพ์จดแทนได้เลย พรุ่งนี้ใช้ได้ใหม่นะ":
+    "You've reached today's voice entries. Type instead; it resets tomorrow",
+  "ถอดเสียงไม่สำเร็จ ลองใหม่อีกครั้ง หรือพิมพ์จดแทนได้นะ":
+    "Couldn't transcribe it. Try again, or type instead",
+  "ไม่ได้ยินเสียงพูดชัด ๆ ลองพูดใหม่ให้ใกล้ไมค์อีกนิดนะ":
+    "I couldn't hear clearly. Try again a little closer to the mic",
+  "ยกเลิกแล้ว ไม่ได้จดรายการนี้ ลองพูดใหม่ได้เลย":
+    "Cancelled; this entry wasn't recorded. Say it again any time",
+  'ได้ยินว่า: "{0}"': 'I heard: "{0}"',
+  'ได้ยินว่า "{0}" แต่ไม่เจอจำนวนเงิน ลองพูดใหม่ เช่น "กาแฟ สามสิบบาท" หรือพิมพ์จดแทนได้นะ':
+    'I heard "{0}" but found no amount. Try again, e.g. "กาแฟ สามสิบบาท", or type instead',
+  'ไม่พบกระเป๋า "{0}" เลยยังไม่ได้จดรายการนี้\nกระเป๋าที่มี: {1}\nพิมพ์ชื่อใหม่อีกครั้ง หรือไม่ใส่ @ เพื่อจดลงกระเป๋าหลักนะ':
+    'Wallet "{0}" not found, so this entry wasn\'t recorded\nYour wallets: {1}\nType the name again, or leave out @ to record into the main wallet',
+  '"{0}" ตรงกับหลายกระเป๋า ({1}) เลยยังไม่ได้จดรายการนี้\nพิมพ์ชื่อให้ชัดขึ้นอีกนิดนะ':
+    '"{0}" matches several wallets ({1}), so this entry wasn\'t recorded\nType the name a bit more clearly',
+  'ย้าย "{0}" ไปที่ {1} แล้ว': 'Moved "{0}" to {1}',
+  "ย้ายรายการของสลิปนี้ไปกระเป๋าไหนดี?": "Which wallet should this slip's entries move to?",
+  "ย้ายรายการนี้ไปกระเป๋าไหนดี?": "Which wallet should this entry move to?",
+  'การโอนระหว่างกระเป๋าเป็นฟีเจอร์ของแผน Pro ขึ้นไป (มีกระเป๋าได้ถึง 5 ใบ) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Transfers between wallets are for Pro and above (up to 5 wallets). Try it free for 7 days from the "อัปเกรด" menu',
+  "โอนไปกระเป๋าเดียวกันไม่ได้ ลองระบุสองกระเป๋าที่ต่างกันนะ":
+    "You can't transfer to the same wallet. Name two different wallets",
+  'โอนระหว่างกระเป๋าพิมพ์ เช่น "โอน 500 เงินสด>KTC" หรือ "โอน 500 จาก เงินสด ไป KTC" การโอนไม่นับเป็นรายรับหรือรายจ่ายนะ':
+    'To transfer between wallets, type e.g. "โอน 500 เงินสด>KTC" or "โอน 500 จาก เงินสด ไป KTC". Transfers aren\'t counted as income or expenses',
+  "ยกเลิกการโอนแล้ว ยอดสองกระเป๋ากลับเป็นเหมือนเดิม":
+    "Transfer cancelled; both wallets are back as they were",
+  'วงเงินและยอดตามรอบบิลของบัตรเครดิตเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Credit limits and per-cycle spending are for Pro and above. Try it free for 7 days from the "อัปเกรด" menu',
+  'ยังไม่มีกระเป๋าบัตรเครดิต เพิ่มได้ที่หน้ากระเป๋า (เลือกชนิด "บัตรเครดิต" แล้วใส่วงเงินกับวันตัดรอบ) แล้วจดด้วย "กาแฟ 45 @ชื่อบัตร" นะ':
+    'No credit card wallet yet. Add one on the wallets page (choose type "Credit card" with its limit and statement day), then record with "กาแฟ 45 @ชื่อบัตร"',
+  "บัตรนี้ยังไม่ได้ตั้งวงเงินหรือวันตัดรอบ ตั้งได้ที่หน้ากระเป๋านะ":
+    "This card has no limit or statement day yet. Set them on the wallets page",
+  'การจดหนี้สิน (ให้ยืม/ยืม) เป็นฟีเจอร์ของแผน Elite ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Recording debts (lending/borrowing) is for the Elite plan. Try it free for 7 days from the "อัปเกรด" menu',
+  'ยังไม่มีหนี้ค้าง ลองพิมพ์ "ให้ยืม สมชาย 500" หรือ "ยืม แม่ 2000 คืน 25/10" (ใส่ @กระเป๋า ท้ายข้อความได้ เช่น "ให้ยืม สมชาย 500 @เงินสด") และ "สมชายคืน 200" เมื่อได้เงินคืนนะ':
+    'No open debts. Try "ให้ยืม สมชาย 500" or "ยืม แม่ 2000 คืน 25/10" (add @wallet at the end, e.g. "ให้ยืม สมชาย 500 @เงินสด") and "สมชายคืน 200" when you get money back',
+  "คนเดียวกันมีหนี้ค้างได้ไม่เกิน 200 ก้อน": "One person can have up to 200 open debts",
+  "วันครบกำหนดไม่ถูกต้อง ลองใช้รูปแบบ 25/10 หรือ พรุ่งนี้ หรือ ภายใน 7 วัน นะ":
+    'Invalid due date. Try "25/10", "พรุ่งนี้" or "ภายใน 7 วัน"',
+  "ยกเลิกแล้ว ยอดกระเป๋ากลับเป็นเหมือนเดิม": "Cancelled; the wallet balance is back as it was",
+  "ชำระเกินยอดที่เหลือไม่ได้ {0} เหลือ {1}{2} ลองพิมพ์ยอดที่ไม่เกินนี้นะ":
+    "You can't pay more than what's left. {0} has {1}{2} left; type an amount no more than that",
+  'การจดเงินต่างสกุล (เช่น 1500 JPY) แปลงเป็นสกุลเงินของคุณให้อัตโนมัติ เป็นฟีเจอร์ของแผน Elite ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ยอดเป็นสกุลเงินของคุณได้เลย':
+    'Foreign currency entries (e.g. 1500 JPY), converted into your currency automatically, are an Elite feature. Try it free for 7 days from the "อัปเกรด" menu. For now, type the amount in your currency',
+  "ยังไม่รองรับสกุล {0} (แหล่งอัตราแลกเปลี่ยนไม่มี) ลองพิมพ์ยอดเป็นสกุลเงินของคุณแทนนะ":
+    "{0} isn't supported yet (no exchange rate source). Type the amount in your currency instead",
+  "ดึงอัตราแลกเปลี่ยนไม่ได้ในตอนนี้ เลยยังไม่ได้จดรายการนี้ ลองใหม่อีกครั้งในสักครู่ หรือพิมพ์ยอดเป็นสกุลเงินของคุณได้เลยนะ":
+    "Couldn't get the exchange rate right now, so this entry wasn't recorded. Try again shortly, or type the amount in your currency",
+  "ยอดนี้แปลงแล้วน้อยกว่า 0.01 ลองตรวจจำนวนเงินอีกครั้งนะ":
+    "Converted, this amount is less than 0.01. Check the amount again",
+  'งบรายวัน (บอทเตือนทันทีเมื่อวันนี้ใช้เกิน) เป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'A daily budget (the bot warns as soon as you go over today) is for Pro and above. Try it free for 7 days from the "อัปเกรด" menu',
+  'ตั้งงบรายวันพิมพ์ เช่น "งบวัน 500" ดูสถานะด้วย "งบวัน" และปิดด้วย "งบวัน ปิด" นะ':
+    'To set a daily budget type e.g. "งบวัน 500"; see its status with "งบวัน" and turn it off with "งบวัน ปิด"',
+  'ยังไม่ได้ตั้งงบรายวัน พิมพ์ เช่น "งบวัน 500" เพื่อตั้งวงเงินที่วันหนึ่งไม่ควรใช้เกินนะ':
+    'No daily budget yet. Type e.g. "งบวัน 500" to set how much a day shouldn\'t go over',
+  ปิดงบรายวันแล้ว: "Daily budget turned off",
+  "ตั้งงบรายวัน {0}{1} แล้ว ถ้าวันไหนใช้เกิน บอทจะเตือนทันทีนะ":
+    "Daily budget set to {0}{1}. If you go over on any day, the bot warns you right away",
+  'เป้าหมายการออม (กระปุก) เป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Savings goals (jars) are for Pro and above. Try it free for 7 days from the "อัปเกรด" menu',
+  'ยังไม่มีเป้าหมายการออม ลองพิมพ์ "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000" (ใส่วันที่ได้ เช่น "ภายใน 31/3") แล้วหยอดกระปุกด้วย "ออม เที่ยวญี่ปุ่น 2000" นะ':
+    'No savings goals yet. Try "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000" (add a date like "ภายใน 31/3") and add to the jar with "ออม เที่ยวญี่ปุ่น 2000"',
+  "มีเป้าหมายได้ {0} ใบแล้ว ลบอันที่ไม่ใช้ในหน้าเป้าหมาย{1}นะ":
+    "You already have {0} goals. Delete ones you don't use on the goals page{1}",
+  " หรืออัปเกรดเป็น Elite เพื่อมีได้ 20 ใบ": " or upgrade to Elite for 20",
+  "มีเป้าหมายชื่อนี้อยู่แล้ว ใช้ชื่ออื่นหรือหยอดกระปุกเดิมได้เลยนะ":
+    "A goal with this name already exists. Use another name or add to the existing jar",
+  "วันที่ไม่ถูกต้อง ลองใช้รูปแบบ 31/3 หรือ ภายใน 90 วัน นะ":
+    'Invalid date. Try "31/3" or "ภายใน 90 วัน"',
+  '"{0}" ตรงกับหลายเป้าหมาย ({1}) พิมพ์ชื่อให้ชัดขึ้นอีกนิดนะ':
+    '"{0}" matches several goals ({1}). Type the name a bit more clearly',
+  "ถอนเกินยอดที่ออมไว้ไม่ได้ {0} มี {1}{2} ลองพิมพ์ยอดที่ไม่เกินนี้นะ":
+    "You can't withdraw more than you've saved. {0} has {1}{2}; type an amount no more than that",
+  ยกเลิกรายการหยอดกระปุกแล้ว: "Jar deposit cancelled",
+  "ยกเลิกรายการนี้ไม่ได้ เพราะมีการถอนที่ตามมา":
+    "This entry can't be cancelled because a withdrawal came after it",
+  'การเตือนวันครบกำหนดจ่ายบิลเป็นฟีเจอร์ของแผน Elite ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Bill due-date reminders are for the Elite plan. Try it free for 7 days from the "อัปเกรด" menu',
+  'ยังไม่มีบิลที่ตั้งเตือนไว้ ลองพิมพ์ "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15 เตือนก่อน 2 วัน" (ระบุเวลาได้ เช่น "เวลา 20:00") นะ':
+    'No bill reminders yet. Try "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15 เตือนก่อน 2 วัน" (add a time, e.g. "เวลา 20:00")',
+  'ตั้งบิลพิมพ์ เช่น "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15" · "บิล ใหม่ ประกันรถ 12000 ทุกปี 1/3" · "บิล ใหม่ ค่าส่วนกลาง 800 วันที่ 25/12" ต่อท้ายด้วย "เตือนก่อน 2 วัน" (หรือ "เตือนก่อน 3,1 วัน") และ "เวลา 20:00" ได้ ไม่ใส่ = เตือนก่อน 1 วัน เวลา 09:00':
+    'To set a bill type e.g. "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15" · "บิล ใหม่ ประกันรถ 12000 ทุกปี 1/3" · "บิล ใหม่ ค่าส่วนกลาง 800 วันที่ 25/12", followed by "เตือนก่อน 2 วัน" (or "เตือนก่อน 3,1 วัน") and "เวลา 20:00". Without them: 1 day before at 09:00',
+  "มีบิลได้ {0} รายการแล้ว ลบอันที่ไม่ใช้ในหน้าบิลก่อนนะ":
+    "You already have {0} bills. Delete ones you don't use on the bills page first",
+  "มีบิลชื่อนี้อยู่แล้ว ใช้ชื่ออื่น หรือแก้ของเดิมในหน้าบิลนะ":
+    "A bill with this name already exists. Use another name or edit the existing one on the bills page",
+  '"{0}" ตรงกับหลายบิล ({1}) พิมพ์ชื่อให้ชัดขึ้นอีกนิดนะ':
+    '"{0}" matches several bills ({1}). Type the name a bit more clearly',
+  'บิลนี้ถูกจัดการไปแล้ว (หรือไม่พบแล้ว) ดูรายการล่าสุดด้วยคำสั่ง "บิล" นะ':
+    'This bill was already handled (or is gone). See the latest with the command "บิล"',
+  "ได้เลย พรุ่งนี้จะเตือนอีกครั้ง": "OK, I'll remind you again tomorrow",
+  จดรายจ่ายของบิลรอบนี้ไปแล้วนะ: "This bill's expense is already recorded for this round",
+  'สมุดกลุ่มเป็นฟีเจอร์ของแผน Elite เฉพาะคนที่เปิดสมุดต้องเป็น Elite เพื่อน ๆ ในกลุ่มใช้ได้ฟรี ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ของบอทในแชทส่วนตัวนะ':
+    'The group ledger is an Elite feature: only the person opening the ledger needs Elite, and friends in the group use it for free. Try it free for 7 days from the bot\'s "อัปเกรด" menu in your private chat',
+  'เปิดสมุดกลุ่มแล้ว 🎉 ใครในกลุ่มก็จดได้ เช่น "จด ข้าวเที่ยง 350" แล้วพิมพ์ "สรุป" ดูว่าใครจ่ายไปเท่าไร (พิมพ์ "วิธีใช้งาน" ดูวิธีใช้ทั้งหมด)':
+    'Group ledger opened 🎉 Anyone in the group can record, e.g. "จด ข้าวเที่ยง 350", then type "สรุป" to see who paid what (type "วิธีใช้งาน" for everything)',
+  สมุดกลุ่มนี้เปิดอยู่แล้วนะ: "This group ledger is already open",
+  'สมุดกลุ่มนี้มีเจ้าของสมุดอยู่แล้ว ถ้าอยากเปลี่ยน ให้เจ้าของเดิมพิมพ์ "ปิดสมุดกลุ่ม" ก่อนแล้วเปิดใหม่นะ':
+    'This group ledger already has an owner. To change it, the current owner types "ปิดสมุดกลุ่ม" first, then opens it again',
+  "คุณเป็นเจ้าของสมุดกลุ่มครบ 5 กลุ่มแล้ว ปิดกลุ่มที่ไม่ใช้ก่อนนะ":
+    "You already own 5 group ledgers. Close one you don't use first",
+  'กลุ่มนี้ยังไม่ได้เปิดสมุด สมาชิกที่เป็นแผน Elite พิมพ์ "เปิดสมุดกลุ่ม" ได้เลย':
+    "This group's ledger isn't open yet. A member on the Elite plan can type \"เปิดสมุดกลุ่ม\"",
+  "สมุดกลุ่มนี้หยุดจดชั่วคราว เพราะแผน Elite ของเจ้าของสมุดหมดอายุ ดูสรุปได้ตามปกติ ต่ออายุแผนแล้วจดต่อได้เลยนะ":
+    "This group ledger is paused because the owner's Elite plan expired. Summaries still work; renew to keep recording",
+  'ปิดสมุดกลุ่มแล้ว ข้อมูลยังเก็บไว้ เปิดใหม่ได้ด้วย "เปิดสมุดกลุ่ม"':
+    'Group ledger closed. The data is kept; open it again with "เปิดสมุดกลุ่ม"',
+  เฉพาะเจ้าของสมุดเท่านั้นที่ทำอย่างนี้ได้นะ: "Only the ledger owner can do this",
+  "บอทยังไม่รู้ว่าใครพิมพ์ ให้เพิ่มบอทเป็นเพื่อน (และยอมรับข้อกำหนดของ LINE OA) ก่อน แล้วลองพิมพ์ใหม่นะ":
+    "The bot doesn't know who typed yet. Add the bot as a friend (and accept the LINE OA terms) first, then try again",
+  'พิมพ์ชื่อรายการแล้วตามด้วยจำนวนเงิน เช่น "จด ข้าวเที่ยง 350" นะ':
+    'Type the entry name, then the amount, e.g. "จด ข้าวเที่ยง 350"',
+  "สมุดกลุ่มจดรายจ่ายเท่านั้นนะ ลองพิมพ์ยอดโดยไม่ใส่ + นำหน้า":
+    "The group ledger records expenses only. Type the amount without a + in front",
+  "จดได้ครั้งละไม่เกิน 5 รายการนะ": "Up to 5 entries at a time",
+  "วันนี้กลุ่มนี้จดครบ 300 รายการแล้ว พรุ่งนี้มาจดต่อนะ":
+    "This group has recorded 300 entries today. Continue tomorrow",
+  ยังไม่มีรายการในสมุดกลุ่ม: "No entries in the group ledger yet",
+  ไม่มีรายการของคุณให้ลบ: "You have no entries to delete",
+  "ลบได้เฉพาะรายการของตัวเอง (หรือเจ้าของสมุดลบได้ทุกรายการ)":
+    "You can delete only your own entries (the ledger owner can delete any)",
+  ไม่พบรายการนี้แล้ว: "This entry is gone",
+  'มีทริปที่เปิดอยู่แล้ว พิมพ์ "จบทริป" ก่อนแล้วค่อยเริ่มทริปใหม่นะ':
+    'A trip is already open. Type "จบทริป" first, then start a new one',
+  'ยังไม่มีทริปที่เปิดอยู่ พิมพ์ "เริ่มทริป ชื่อทริป" เพื่อเริ่มหารค่าใช้จ่ายนะ':
+    'No open trip. Type "เริ่มทริป ชื่อทริป" to start splitting costs',
+  'ยังไม่เคยมีทริปในกลุ่มนี้ พิมพ์ "เริ่มทริป ชื่อทริป" ได้เลย':
+    'No trips in this group yet. Type "เริ่มทริป ชื่อทริป"',
+  จบทริปได้เฉพาะคนที่เริ่มทริปหรือเจ้าของสมุดนะ:
+    "Only the person who started the trip or the ledger owner can end it",
+  'ใช้ "หาร" / "ไม่หาร" ได้เฉพาะตอนมีทริปที่เปิดอยู่ พิมพ์ "เริ่มทริป ชื่อทริป" ก่อนนะ':
+    '"หาร" / "ไม่หาร" work only during an open trip. Type "เริ่มทริป ชื่อทริป" first',
+  'เริ่มทริป "{0}" แล้ว 🧳 ต่อไปทุกรายการที่ "จด" จะหารเท่ากันทุกคนที่ร่วมทริป\nกดปุ่มด้านล่างเพื่อร่วมทริป (หรือพิมพ์ "ร่วมทริป") ถ้าจะหารไม่เท่ากันพิมพ์เช่น "จด ไวน์ 900 หาร แอน บ๊อบ" หรือ "จด ค่าห้อง 3000 ไม่หาร บ๊อบ" จบแล้วพิมพ์ "สรุปทริป"':
+    'Trip "{0}" started 🧳 From now on every "จด" entry is split evenly among everyone on the trip\nTap the button below to join (or type "ร่วมทริป"). To split unevenly type e.g. "จด ไวน์ 900 หาร แอน บ๊อบ" or "จด ค่าห้อง 3000 ไม่หาร บ๊อบ". When done type "สรุปทริป"',
+  '{0} ร่วมทริป "{1}" แล้ว (ตอนนี้ {2} คน)': '{0} joined the trip "{1}" (now {2} people)',
+  'ไม่รู้จัก {0} ในทริปนี้ ให้เขาพิมพ์ "ร่วมทริป" ก่อน (หรือพิมพ์ชื่อให้ตรงกับชื่อใน LINE) เลยยังไม่ได้จดรายการนี้นะ':
+    "{0} isn't on this trip. Ask them to type \"ร่วมทริป\" first (or type the name as it appears in LINE), so this entry wasn't recorded",
+  "{0} ตรงกับหลายคน พิมพ์ชื่อให้ชัดขึ้นอีกนิดนะ เลยยังไม่ได้จดรายการนี้":
+    "{0} matches several people. Type the name a bit more clearly, so this entry wasn't recorded",
+  ยังไม่มีทริปที่จบแล้ว: "No finished trips yet",
+  "กระเป๋าร่วมใช้ได้เฉพาะรายรับ/รายจ่ายตอนนี้ โอน หนี้ และบัตรเครดิตยังใช้ได้กับกระเป๋าส่วนตัวเท่านั้นนะ":
+    "Shared wallets support only income/expenses for now. Transfers, debts and credit cards work with personal wallets only",
+  'กระเป๋าร่วมกับคนอื่นเป็นฟีเจอร์ของแผน Pro ขึ้นไป (Pro 2 คน, Elite สูงสุด 10 คน) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ส่วนการถูกชวนเข้ากระเป๋าร่วม ใช้แผนไหนก็ร่วมได้ฟรี':
+    'Wallets shared with others are for Pro and above (Pro 2 people, Elite up to 10). Try it free for 7 days from the "อัปเกรด" menu. Anyone on any plan can join a wallet they\'re invited to for free',
+  'ชวนเข้ากระเป๋า "{0}" 💑\nรหัส: {1}\nให้เขาพิมพ์ในแชทกับบอทว่า\nร่วมกระเป๋า {2}\n(ใช้ได้ครั้งเดียว ภายใน 24 ชั่วโมง)':
+    'Invite to the wallet "{0}" 💑\nCode: {1}\nAsk them to type to the bot in the chat:\n\"ร่วมกระเป๋า {2}\"\n(works once, within 24 hours)',
+  'ร่วมกระเป๋า "{0}" แล้ว 🎉 จดลงกระเป๋านี้ได้ด้วย @{1} เช่น "ข้าวเย็น 300 @{2}" ส่วนกระเป๋าและรายการส่วนตัวของคุณยังเป็นส่วนตัวเหมือนเดิม คนที่ร่วมเห็นเฉพาะรายการที่ลงกระเป๋านี้':
+    'Joined the wallet "{0}" 🎉 Record into it with @{1}, e.g. "ข้าวเย็น 300 @{2}". Your own wallets and entries stay private; members see only the entries in this wallet',
+  'ออกจากกระเป๋า "{0}" แล้ว รายการที่เคยจดไว้ยังอยู่ในกระเป๋านั้น':
+    'Left the wallet "{0}". Entries you recorded stay in that wallet',
+  เฉพาะเจ้าของกระเป๋าที่ชวนคนอื่นได้นะ: "Only the wallet's owner can invite others",
+  "เจ้าของออกจากกระเป๋าร่วมไม่ได้ ถ้าไม่ใช้แล้วให้ลบกระเป๋าที่หน้ากระเป๋าเงินนะ":
+    "The owner can't leave a shared wallet. If it's no longer needed, delete it on the wallets page",
+  'พิมพ์ "ร่วมกระเป๋า" ตามด้วยรหัส 6 หลัก เช่น "ร่วมกระเป๋า 482913" นะ':
+    'Type "ร่วมกระเป๋า" followed by the 6-digit code, e.g. "ร่วมกระเป๋า 482913"',
+  "ตอนนี้ยังไม่เปิดให้จดจากไฟล์ PDF ลองพิมพ์จดเองไปก่อนนะ":
+    "Recording from PDF files isn't open yet. Type entries yourself for now",
+  "รับเฉพาะไฟล์ PDF นะ (บิล ใบเสร็จ หรือรายการเดินบัญชี) ไฟล์อื่นยังอ่านไม่ได้":
+    "Only PDF files are accepted (bills, receipts or statements); other files can't be read yet",
+  'จดจากไฟล์ PDF เป็นฟีเจอร์ของแผน Pro ขึ้นไป (Pro 10 ไฟล์/เดือน, Elite 30 ไฟล์/เดือน) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ตอนนี้พิมพ์จดเองได้เลย เช่น "ค่าไฟ 1200" นะ':
+    'Recording from PDF files is for Pro and above (Pro 10 files/month, Elite 30 files/month). Try it free for 7 days from the "อัปเกรด" menu. For now, type it, e.g. "ค่าไฟ 1200"',
+  "ไฟล์ใหญ่เกิน 5 MB ลองแยกเป็นไฟล์เล็กลง (เช่น ทีละเดือน) แล้วส่งใหม่นะ":
+    "The file is over 5 MB. Split it into smaller files (e.g. one month each) and send again",
+  "ไฟล์ยาวเกิน 10 หน้า ลองแยกเป็นไฟล์สั้นลง (เช่น ทีละเดือน) แล้วส่งใหม่นะ":
+    "The file is over 10 pages. Split it into shorter files (e.g. one month each) and send again",
+  "ไฟล์นี้ตั้งรหัสผ่านไว้ บอทเปิดอ่านไม่ได้ ปลดรหัสผ่านก่อน (หรือบันทึกเป็น PDF ใหม่แบบไม่มีรหัส) แล้วส่งมาอีกครั้งนะ":
+    "This file has a password, so the bot can't open it. Remove the password (or save a new PDF without one) and send it again",
+  "ไฟล์นี้เปิดไม่ได้หรือไม่ใช่ PDF ลองส่งใหม่อีกครั้งนะ":
+    "This file can't be opened or isn't a PDF. Please send it again",
+  "อ่านไฟล์ PDF ไม่สำเร็จ ลองส่งอีกครั้ง หรือพิมพ์จดเองได้เลยนะ (ไฟล์นี้ยังไม่ถูกนับโควตา)":
+    "Couldn't read the PDF. Send it again, or type entries yourself (this file wasn't counted toward your quota)",
+  "ไม่เจอรายการรายรับ/รายจ่ายในไฟล์นี้ ถ้าเป็นไฟล์สแกนที่ภาพไม่ชัด ลองส่งใหม่ให้ชัดขึ้น หรือพิมพ์จดเองได้เลยนะ (ไฟล์นี้ยังไม่ถูกนับโควตา)":
+    "No income/expense entries found in this file. If it's a blurry scan, send a clearer one, or type entries yourself (this file wasn't counted toward your quota)",
+  "ทุกรายการในไฟล์นี้มีอยู่ในสมุดของคุณแล้ว (วันที่ ยอด และประเภทตรงกัน) เลยไม่ได้จดซ้ำ ไม่นับโควตา":
+    "Every entry in this file is already in your ledger (same date, amount and type), so nothing was recorded again and it wasn't counted",
+  "ไฟล์นี้เคยส่งมาจดแล้วนะ ไม่ได้จดซ้ำ":
+    "This file was already sent and recorded, so it wasn't recorded again",
+  "วันนี้อ่านไฟล์ PDF เยอะแล้ว พรุ่งนี้ค่อยส่งใหม่ได้นะ":
+    "You've read a lot of PDFs today. Send more tomorrow",
+  "เดือนนี้อ่านไฟล์ PDF ครบ {0} ไฟล์แล้ว (แผน Pro) พิมพ์จดเองได้ไม่จำกัด หรืออัปเกรดเป็น Elite เพื่อให้อ่านได้ 30 ไฟล์/เดือน หรือรอโควตารีเซ็ตต้นเดือนหน้านะ":
+    "You've read {0} PDF files this month (Pro plan). You can type entries without limit, upgrade to Elite for 30 files/month, or wait for the quota to reset next month",
+  "เดือนนี้อ่านไฟล์ PDF ครบ {0} ไฟล์แล้ว พิมพ์จดเองได้เลย และจะอ่านไฟล์ได้ใหม่ต้นเดือนหน้านะ":
+    "You've read {0} PDF files this month. Type entries yourself; file reading resets at the start of next month",
+  "ยกเลิกแล้ว ไม่ได้จดรายการจากไฟล์นี้ ส่งไฟล์ใหม่ได้เลย":
+    "Cancelled; nothing from this file was recorded. Send a new file any time",
+  "ชุดรายการนี้จัดการไปแล้ว หรือหมดอายุแล้วนะ":
+    "This set of entries was already handled or has expired",
+  'จดแล้ว {0} รายการ ดูได้ที่เมนู "รายการ" และแก้ไขภายหลังได้':
+    'Recorded {0} entries. See them in the "Entries" menu; you can edit them later',
+  "ข้อความนี้ดูเหมือนรหัสหรือเลขสำคัญ พี่ฮูกเลยไม่ส่งให้ AI อ่าน จะบันทึกเป็นโน้ตไหม?\n⚠️ โน้ตเก็บเป็นข้อความธรรมดา ไม่ควรเก็บรหัสผ่านสำคัญ":
+    "This looks like a password or an important number, so P'Hook didn't send it to the AI. Save it as a note?\n⚠️ Notes are stored as plain text; don't keep important passwords there",
+  "พี่ฮูกเข้าใจว่าให้{0} ใช่ไหม?": "Did you want me to {0}?",
+  "พี่ฮูกไม่แน่ใจ อยากให้ทำอะไรกับข้อความนี้?": "I'm not sure. What should I do with this message?",
+  "ยกเลิกแล้ว ไม่ได้บันทึกอะไร": "Cancelled; nothing was saved",
+  "รายการนี้หมดเวลาหรือทำไปแล้ว ลองพิมพ์ใหม่อีกครั้งนะ":
+    "This has expired or was already done. Please type it again",
+  'ถ้าจะตั้งเตือน พิมพ์ขึ้นต้นด้วย "เตือน" เช่น "เตือน กินยา 6 โมงเย็น"\nถ้าจะจดเงิน พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"':
+    'To set a reminder, start with "เตือน", e.g. "เตือน กินยา 6 โมงเย็น"\nTo record money, type the name and amount, e.g. "กาแฟ 50"',
+  'ลองพิมพ์ชื่อรายการกับจำนวนเงิน เช่น "ค่าหมอ 800" นะ':
+    'Try typing the entry name and amount, e.g. "ค่าหมอ 800"',
+  "ส่งไฟล์หรือรูปมาในกลุ่มได้เลย พี่ฮูกรอ 5 นาที แล้วจะเก็บไว้ในคลังไฟล์ของกลุ่มนะ":
+    "Send the file or photo in the group. P'Hook waits 5 minutes and keeps it in the group's files",
+  'กลุ่มนี้ยังไม่มีไฟล์ที่เก็บไว้ พิมพ์ "เก็บไฟล์" แล้วส่งไฟล์หรือรูปมาได้เลย':
+    'This group has no saved files yet. Type "เก็บไฟล์", then send a file or photo',
+  'ไม่พบไฟล์ของกลุ่มที่มีคำว่า "{0}"': 'No group files with "{0}"',
+  "พื้นที่เก็บไฟล์ของเจ้าของสมุดเต็มแล้ว ({0} ใช้ร่วมกับไฟล์ส่วนตัว) ลบไฟล์เก่าก่อนนะ":
+    "The ledger owner's storage is full ({0}, shared with personal files). Delete old files first",
+  "วันนี้เก็บไฟล์ครบ {0} ไฟล์แล้ว (นับรวมกับของเจ้าของสมุด) พรุ่งนี้ส่งใหม่ได้เลยนะ":
+    "{0} files saved today (counted with the ledger owner's). Send more tomorrow",
+  'กลุ่มนี้ยังไม่มีเตือนที่รออยู่ ตั้งได้ เช่น "เตือน พรุ่งนี้ 9 โมง ประชุม"':
+    'This group has no waiting reminders. Set one, e.g. "เตือน พรุ่งนี้ 9 โมง ประชุม"',
+  'ไม่พบเตือนนี้แล้ว พิมพ์ "เตือนกลุ่ม" เพื่อดูรายการอีกครั้งนะ':
+    'This reminder is gone. Type "เตือนกลุ่ม" to see the list again',
+  "ยกเลิกเตือนกลุ่มแล้ว: {0}": "Group reminder cancelled: {0}",
+  "{0}ของเจ้าของสมุดครบ {1} รายการแล้ว (ใช้ร่วมกับเตือนส่วนตัว) ยกเลิกอันที่ไม่ใช้ก่อนนะ":
+    "The ledger owner already has {1} {0} (shared with personal reminders). Cancel one you don't use first",
+  เตือนประจำ: "repeating reminders",
+  เตือนครั้งเดียว: "one-off reminders",
+  "⚠️ ทุกคนในกลุ่มเห็นโน้ตนี้ ไม่ควรจดรหัสผ่านสำคัญหรือเลขบัตรไว้ในกลุ่ม":
+    "⚠️ Everyone in the group sees this note. Don't put important passwords or card numbers in the group",
+  "โน้ตของเจ้าของสมุดเต็ม {0} รายการแล้ว (ใช้ร่วมกับโน้ตส่วนตัว) ลบอันเก่าก่อนนะ":
+    "The ledger owner's notes are full ({0}, shared with personal notes). Delete old ones first",
+  'กลุ่มนี้ยังไม่มีโน้ต พิมพ์ เช่น "โน้ต ซื้อน้ำแข็ง 2 ถุง" ได้เลย':
+    'This group has no notes yet. Type e.g. "โน้ต ซื้อน้ำแข็ง 2 ถุง"',
+  'ไม่เจอโน้ตของกลุ่มที่มีคำว่า "{0}"': 'No group notes with "{0}"',
+  "ลบได้เฉพาะคนที่จดโน้ตนี้ หรือเจ้าของสมุดนะ":
+    "Only the person who wrote this note or the ledger owner can delete it",
+  "ไม่พบโน้ตนี้แล้ว อาจถูกลบไปก่อนหน้า": "This note is gone; it may have been deleted",
+  '🦉 ถามพี่ฮูกในกลุ่ม พิมพ์ "ฮูก" ตามด้วยคำถาม เช่น "ฮูก เดือนนี้กลุ่มใช้ไปเท่าไร"\nพี่ฮูกเห็นแค่สมุดของกลุ่มนี้ ไม่เห็นข้อมูลส่วนตัวของใคร':
+    "🦉 Ask P'Hook in the group: type \"ฮูก\" followed by your question, e.g. \"ฮูก เดือนนี้กลุ่มใช้ไปเท่าไร\"\nP'Hook sees only this group's ledger, nobody's personal data",
+  "สิทธิ์ถามพี่ฮูกของเจ้าของสมุดเดือนนี้ครบ {0} ครั้งแล้ว เดือนหน้าถามใหม่ได้นะ":
+    "The ledger owner has used all {0} P'Hook questions this month. Ask again next month",
+  "จะให้พี่ฮูกเก็บไฟล์นี้ไว้ไหม?": "Should P'Hook keep this file?",
+  "ไฟล์ PDF นี้ จะให้พี่ฮูกทำอะไร?": "What should P'Hook do with this PDF?",
+  "พี่ฮูกไม่รับไฟล์ติดตั้งโปรแกรม เช่น .exe หรือ .apk นะ":
+    "P'Hook doesn't accept installer files such as .exe or .apk",
+  "ไฟล์ใหญ่เกิน 20 MB ลองย่อขนาดแล้วส่งใหม่นะ":
+    "The file is over 20 MB. Make it smaller and send again",
+  "พื้นที่เก็บไฟล์เต็มแล้ว ({0}) ลบไฟล์เก่าในคลัง หรืออัปเกรดแผนเพื่อเพิ่มพื้นที่นะ":
+    "Your storage is full ({0}). Delete old files in the vault or upgrade for more space",
+  "วันนี้เก็บไฟล์ครบ {0} ไฟล์แล้ว พรุ่งนี้ส่งใหม่ได้เลยนะ":
+    "{0} files saved today. Send more tomorrow",
+  "ไฟล์นี้หมดอายุจาก LINE แล้ว ส่งไฟล์มาอีกครั้งได้เลย พี่ฮูกรออยู่ 5 นาที":
+    "This file has expired on LINE. Send it again; P'Hook is waiting for 5 minutes",
+  "เก็บไฟล์ไม่สำเร็จ ลองส่งอีกครั้งนะ": "Couldn't save the file. Please send it again",
+  "ตอนนี้ระบบเก็บไฟล์ยังไม่พร้อม ลองใหม่อีกครั้งนะ":
+    "File storage isn't ready yet. Please try again",
+  "ไฟล์นี้หมดเวลาหรือจัดการไปแล้ว ส่งใหม่ได้เลยนะ":
+    "This file has expired or was already handled. Send it again",
+  "ส่งไฟล์มาได้เลย พี่ฮูกรออยู่ 5 นาที": "Send the file; P'Hook is waiting for 5 minutes",
+  ยังไม่มีไฟล์ที่เก็บไว้: "No saved files yet",
+  "วิดีโอนี้อยู่นอก LINE พี่ฮูกเก็บให้ไม่ได้นะ":
+    "This video is outside LINE, so P'Hook can't keep it",
+  'อยากตั้งชื่อใหม่ให้หาง่ายไหม? กดปุ่มตั้งชื่อใหม่ หรือพิมพ์ เช่น "ชื่อไฟล์ รูปบัตร"':
+    'Want a new name to find it easily? Tap rename, or type e.g. "ชื่อไฟล์ รูปบัตร"',
+  ตั้งชื่อแต่ละไฟล์ให้หาง่ายได้ที่คลัง: "Name each file to find it easily in the vault",
+  'ไม่พบไฟล์หรือโน้ตที่มีคำว่า "{0}"': 'No files or notes with "{0}"',
+  'เปลี่ยนชื่อเป็น "{0}" แล้ว': 'Renamed to "{0}"',
+  "⚠️ โน้ตเก็บเป็นข้อความธรรมดา ไม่ควรเก็บรหัสผ่านสำคัญหรือเลขบัตรไว้ที่นี่":
+    "⚠️ Notes are stored as plain text; don't keep important passwords or card numbers here",
+  ยกเลิกโน้ตแล้ว: "Note cancelled",
+  "โน้ตยาวเกิน {0} ตัวอักษร ลองแบ่งเป็นหลายโน้ตนะ":
+    "The note is over {0} characters. Split it into several notes",
+  "โน้ตเต็ม {0} รายการแล้ว ลบอันเก่าในคลัง หรืออัปเกรดแผนเพื่อเก็บเพิ่มนะ":
+    "Notes are full ({0}). Delete old ones in the vault or upgrade to keep more",
+  'ยังไม่มีโน้ต พิมพ์ เช่น "โน้ต ซื้อนม รหัสไวไฟ 1234" ได้เลย':
+    'No notes yet. Type e.g. "โน้ต ซื้อนม รหัสไวไฟ 1234"',
+  'พิมพ์คำที่ต้องการหาต่อท้าย เช่น "ค้นหาโน้ต ไวไฟ"':
+    'Type what to look for after it, e.g. "ค้นหาโน้ต ไวไฟ"',
+  'ไม่เจอโน้ตที่มีคำว่า "{0}"': 'No notes with "{0}"',
+  "ตั้งเตือน พิมพ์วันเวลาแล้วตามด้วยเรื่องที่ให้เตือน เช่น":
+    "To set a reminder, type the date and time, then what to remind, e.g.",
+  "• เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ": '• "เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ"',
+  "• เตือน 25/12 ซื้อของขวัญ": '• "เตือน 25/12 ซื้อของขวัญ"',
+  "• เตือน อีก 30 นาที พักสายตา": '• "เตือน อีก 30 นาที พักสายตา"',
+  "• เตือน ทุกวัน 8 โมง กินยา": '• "เตือน ทุกวัน 8 โมง กินยา"',
+  "• เตือน ทุกวันที่ 1 จ่ายค่าเช่า": '• "เตือน ทุกวันที่ 1 จ่ายค่าเช่า"',
+  'บอกด้วยว่าให้เตือนเรื่องอะไร เช่น "เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ"':
+    'Say what to remind you about, e.g. "เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ"',
+  'เวลานั้นผ่านไปแล้ว ลองระบุใหม่ เช่น "เตือน พรุ่งนี้ 9 โมง …"':
+    'That time has passed. Try again, e.g. "เตือน พรุ่งนี้ 9 โมง …"',
+  "ตั้งเตือนล่วงหน้าได้ไม่เกิน 1 ปีนะ ลองเช็กวันที่อีกครั้ง":
+    "Reminders can be set up to 1 year ahead. Check the date again",
+  "มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ":
+    "You already have {0} repeating reminders. Delete ones you don't use on the reminders page, or upgrade to set more",
+  "มีเตือนที่รออยู่ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ":
+    "You already have {0} reminders waiting. Delete ones you don't use on the reminders page, or upgrade to set more",
+  ยังไม่มีเตือนที่รออยู่: "No waiting reminders",
+  'ไม่พบเตือนนี้ พิมพ์ "รายการเตือน" เพื่อดูเตือนทั้งหมดได้':
+    'Reminder not found. Type "รายการเตือน" to see all your reminders',
+  "มีหลายเตือนที่ตรง อันไหนนะ?": "Several reminders match. Which one?",
+  "มีหลายเตือนที่ตรง นี่คือ 4 อันแรก ถ้าไม่มีอันที่ต้องการ ลองพิมพ์ชื่อเตือนให้ชัดขึ้นนะ":
+    "Several reminders match; here are the first 4. If yours isn't there, type its name more clearly",
+  ยกเลิกเตือนแล้ว: "Reminder cancelled",
+  "ไม่พบเตือนนี้แล้ว (อาจส่งไปแล้วหรือถูกยกเลิก)":
+    "This reminder is gone (it may have been sent or cancelled)",
+  เตือนนี้จัดการไปแล้วนะ: "This reminder was already handled",
+  "เยี่ยมเลย ✅ รอบหน้าเตือนอีกที {0}": "Great ✅ Next reminder {0}",
+  "เยี่ยมเลย ✅ ปิดเตือนนี้แล้ว": "Great ✅ This reminder is closed",
+  "ได้เลย เดี๋ยวเตือนอีกที{0} นะ {1}": "OK, I'll remind you again {0} {1}",
+  "⏰ เตือน: {0}": "⏰ Reminder: {0}",
+  "⏰ เตือนกลุ่ม: {0}": "⏰ Group reminder: {0}",
+  '({0} · พิมพ์ "เตือนกลุ่ม" เพื่อดูหรือยกเลิก)': '({0} · type "เตือนกลุ่ม" to see or cancel)',
+  "พี่ฮูกยังไม่เปิดให้ถามตอนนี้ ลองใหม่ภายหลังนะ":
+    "P'Hook isn't open for questions yet. Try again later",
+  '🦉 พี่ฮูกมาแล้ว ถามเรื่องเงินหรือเรื่องทั่วไปได้เลย\nให้ตั้งเตือน จดโน้ต หรือหาไฟล์กับโน้ตก็ได้ เช่น "เตือนกินยา 2 ทุ่ม" หรือ "หาไฟล์สัญญาเช่า"\n(พิมพ์ "จบ" เมื่อคุยเสร็จ)':
+    '🦉 P\'Hook is here. Ask about money or anything else\nYou can also set reminders, take notes, or find files and notes, e.g. "เตือนกินยา 2 ทุ่ม" or "หาไฟล์สัญญาเช่า"\n(type "จบ" when you\'re done)',
+  วิเคราะห์เดือนนี้: "Analyse this month",
+  เหลืองบเท่าไร: "How much budget is left",
+  ควรออมเดือนละเท่าไร: "How much should I save a month",
+  ไฟล์ของฉัน: "My files",
+  "กลับมาจดรายการตามปกติแล้ว 🦉": "Back to recording as usual 🦉",
+  'ตอนนี้ไม่ได้ถามพี่ฮูกอยู่นะ พิมพ์ "ถามพี่ฮูก" เมื่ออยากถาม':
+    "You're not asking P'Hook right now. Type \"ถามพี่ฮูก\" when you want to ask",
+  "ถามสั้นลงหน่อยนะ (ไม่เกิน {0} ตัวอักษร)": "Please keep it shorter (up to {0} characters)",
+  "ข้อความนี้ดูเหมือนมีรหัสหรือเลขสำคัญ พี่ฮูกเลยไม่ส่งให้ AI นะ ลองถามแบบไม่ใส่เลขดู":
+    "This message seems to contain a password or an important number, so P'Hook didn't send it to the AI. Try asking without the numbers",
+  "พี่ฮูกตอบไม่ได้ตอนนี้ ลองถามใหม่อีกครั้งนะ (ไม่นับโควตาครั้งนี้)":
+    "P'Hook can't answer right now. Please ask again (this one wasn't counted)",
+  "วันนี้ถามพี่ฮูกเยอะแล้ว พรุ่งนี้ค่อยมาถามใหม่นะ":
+    "You've asked P'Hook a lot today. Ask again tomorrow",
+  "เดือนนี้ถามพี่ฮูกครบ {0} ครั้งแล้ว (แผน Free) อัปเกรดเป็น Pro ถามได้ 50 ครั้ง/เดือน หรือรอโควตารีเซ็ตต้นเดือนหน้านะ":
+    "You've asked P'Hook {0} times this month (Free plan). Upgrade to Pro for 50 a month, or wait for the reset next month",
+  "เดือนนี้ถามพี่ฮูกครบ {0} ครั้งแล้ว (แผน Pro) อัปเกรดเป็น Elite ถามได้ 300 ครั้ง/เดือน หรือรอโควตารีเซ็ตต้นเดือนหน้านะ":
+    "You've asked P'Hook {0} times this month (Pro plan). Upgrade to Elite for 300 a month, or wait for the reset next month",
+  "เดือนนี้ถามพี่ฮูกครบ {0} ครั้งตามเกณฑ์ใช้งานปกติแล้ว ถามได้ใหม่ต้นเดือนหน้านะ":
+    "You've asked P'Hook {0} times this month, the normal-use limit. Ask again next month",
+  ภาพรวมรายรับรายจ่ายและงบ: "An overview of income, expenses and budgets",
+  "ดู ค้นหา แก้ไข และส่งออกรายการทั้งหมด": "See, search, edit and export all entries",
+  หมวดและงบ: "Categories and budgets",
+  "ตั้งงบ จัดการหมวดหมู่": "Set budgets, manage categories",
+  กราฟและเปรียบเทียบการใช้จ่าย: "Charts and spending comparisons",
+  "เปิดหน้า{0}": "Open the {0} page",
+  "ตั้งที่รับเงินตอนหารบิลในกลุ่ม (พิมพ์ในแชทนี้ ไม่ต้องพิมพ์ในกลุ่ม)":
+    "Set where you receive money when splitting bills in groups (type it in this chat, not in the group)",
+  "• พร้อมเพย์ 0812345678 (เบอร์โทร 10 หลัก, เลขบัตรประชาชน 13 หลัก หรือ e-Wallet 15 หลัก)":
+    '• "พร้อมเพย์ 0812345678" (10-digit phone, 13-digit ID card or 15-digit e-Wallet)',
+  "• บัญชี กสิกร 123-4-56789-0 สมชาย ใจดี (ธนาคาร เลขบัญชี ชื่อบัญชี)":
+    '• "บัญชี กสิกร 123-4-56789-0 สมชาย ใจดี" (bank, account number, account name)',
+  "• พร้อมเพย์ ลบ · บัญชี ลบ": '• "พร้อมเพย์ ลบ" · "บัญชี ลบ"',
+  "พร้อมเพย์: {0}": "PromptPay: {0}",
+  "พร้อมเพย์: ยังไม่ได้ตั้ง": "PromptPay: not set",
+  "บัญชี: ยังไม่ได้ตั้ง": "Account: not set",
+  "ตั้งพร้อมเพย์ {0} แล้ว ตอนคุณหารบิลในกลุ่ม เพื่อนจะได้ QR ที่ใส่ยอดของแต่ละคนให้เลย (เพื่อนในกลุ่มจะเห็นเลขแบบปิดบางส่วน)":
+    "PromptPay set to {0}. When you split a bill in a group, friends get a QR with their own amount (friends see the number partly hidden)",
+  ลบพร้อมเพย์แล้ว: "PromptPay removed",
+  ลบบัญชีแล้ว: "Account removed",
+  "…และอีก {0} รายการ": "…and {0} more",
+  "ข้าม {0} รายการที่ตรงกับรายการที่จดไว้แล้ว (วันที่ ยอด ประเภทเท่ากัน) ถ้าไม่ซ้ำจริง พิมพ์จดเองได้เลย":
+    "Skipped {0} entries that match ones already recorded (same date, amount and type). If they're really new, type them yourself",
+  "{0} รายการอ่านวันที่ไม่ได้ ใช้วันนี้แทน แก้ได้ที่หน้ารายการ":
+    "{0} entries had no readable date, so today was used. Edit them on the entries page",
+  "ไฟล์มีมากกว่า 30 รายการ อ่านให้ 30 รายการ ที่เหลือส่งแยกเป็นไฟล์เล็กลงนะ":
+    "The file has over 30 entries; 30 were read. Send the rest as smaller files",
+  "AI อาจอ่านผิด ตรวจก่อนจดนะ ยกเลิกได้ทั้งชุด หรือจดแล้วแก้ทีหลัง":
+    "The AI may misread. Check before recording: cancel the whole set, or record and edit later",
+  "ตรวจรายการจากไฟล์ PDF: {0} รายการ": "Check the entries from the PDF: {0} entries",
+  "ตรวจรายการจากไฟล์ PDF — ยังไม่ได้จด": "Check the entries from the PDF — not recorded yet",
+  "พบ {0} รายการ": "Found {0} entries",
+  "รายจ่าย {0} · รายรับ {1}": "Expenses {0} · income {1}",
+  "รายจ่ายรวม -{0}": "Total expenses -{0}",
+  "รายรับรวม +{0}": "Total income +{0}",
+  "จดทั้งหมด ({0})": "Record all ({0})",
+  จดทั้งหมด: "Record all",
+  "…และอีก {0} รายการ (จดไว้แล้ว ดูและแก้ได้ที่หน้ารายการ)":
+    "…and {0} more (recorded; see and edit them on the entries page)",
+  "* ไม่เห็นวันที่บนสลิป ใช้เวลาที่ส่งแทน แก้ได้ด้วยปุ่ม ✏️":
+    "* No date on the slip, so the time sent was used. Change it with the ✏️ button",
+  "จดสำเร็จ {0} รายการ": "Recorded {0} entries",
+  ยกเลิกทั้งใบ: "Cancel the whole slip",
+  "ตั้งเตือนแล้ว: {0}": "Reminder set: {0}",
+  "ตั้งเตือนแล้ว ⏰": "Reminder set ⏰",
+  "เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)":
+    "That time today has passed, so it's set for tomorrow (if not, cancel and set it again)",
+  "ไม่ได้ระบุเวลา เลยใช้ 09:00 (อยากเปลี่ยน ยกเลิกแล้วตั้งใหม่พร้อมเวลา)":
+    "No time given, so 09:00 was used (to change it, cancel and set it again with a time)",
+  "เพิ่มลงปฏิทินในมือถือ ให้มือถือเตือนเองตรงเวลา":
+    "Add it to your phone's calendar so the phone reminds you on time",
+  ยกเลิกเตือนนี้: "Cancel this reminder",
+  "✅ ทำแล้ว": "✅ Done",
+  "⏰ อีก 10 นาที": "⏰ In 10 minutes",
+  "⏰ อีก 1 ชม.": "⏰ In 1 hour",
+  "🌅 พรุ่งนี้เช้า": "🌅 Tomorrow morning",
+  สุทธิ: "Net",
+  "ค้นหา {0}: พบ {1} รายการ รายจ่าย {2}": "Search {0}: {1} entries, expenses {2}",
+  "รายจ่ายรวม 💰": "Total expenses 💰",
+  ใช้จ่ายตามหมวด: "Spending by category",
+  "ดูกราฟในแอป 📈": "See the chart in the app 📈",
+  "ใช้จ่ายตามหมวด {0}: รวม {1}": "Spending by category {0}: total {1}",
+  "ลบล่าสุด · แก้ล่าสุด 45": '"ลบล่าสุด" · "แก้ล่าสุด 45"',
+  "{0} รายการล่าสุดที่จดไว้": "The latest {0} entries",
+  ดูทั้งหมดในแอป: "See all in the app",
+  "รายการล่าสุด {0} รายการ": "Latest {0} entries",
+  ใหม่: "New",
+  เท่าเดิม: "Same",
+  "ก่อนหน้า {0}": "Previous {0}",
+  "💰 รายจ่ายรวม": "💰 Total expenses",
+  เทียบรายจ่ายรายหมวด: "Compare spending by category",
+  "เทียบรายจ่ายรายหมวด: {0} ({1}) จาก {2}": "Spending by category: {0} ({1}) vs {2}",
+  "รายจ่ายเท่ากับปีก่อน (ช่วงวันที่เดียวกัน)": "Spending is the same as last year (same dates)",
+  "รายจ่าย{0} {1}% จากปีก่อน (ช่วงวันที่เดียวกัน)": "Spending {0} {1}% from last year (same dates)",
+  เพิ่มขึ้น: "up",
+  ลดลง: "down",
+  "สรุปรายปี {0}": "Yearly summary {0}",
+  ดูกราฟในแอป: "See the chart in the app",
+  "สรุปรายปี {0}: รายรับ {1} รายจ่าย {2}": "Yearly summary {0}: income {1}, expenses {2}",
+  "อยากดูสรุปแบบไหน? เลือกได้เลย หรือพิมพ์ช่วงเอง เช่น สรุป 20/10-30/10":
+    'Which summary would you like? Pick one, or type your own range, e.g. "สรุป 20/10-30/10"',
+  "📅 วันนี้": "📅 Today",
+  "🗓️ เมื่อวาน": "🗓️ Yesterday",
+  "📆 สัปดาห์นี้": "📆 This week",
+  "📆 สัปดาห์ที่แล้ว": "📆 Last week",
+  "🗓️ เดือนนี้": "🗓️ This month",
+  "🗓️ เดือนที่แล้ว": "🗓️ Last month",
+  "🏷️ ตามหมวด": "🏷️ By category",
+  "⚖️ เทียบเดือนก่อน": "⚖️ Vs last month",
+  "📊 ปีนี้": "📊 This year",
+  "📌 เลือกช่วงวันที่": "📌 Choose dates",
+  "จดย้อนหลังสำหรับสมาชิก Pro": "Past-day entries for Pro members",
+  "ระบบตรวจพบการระบุวันที่ย้อนหลัง (เช่น “เมื่อวาน”) ฟังก์ชันนี้สำหรับสมาชิกแพ็กเกจ Pro ขึ้นไป ยังไม่ได้จดรายการนี้นะ":
+    'A past date was mentioned (e.g. "yesterday"). This is for Pro members and above; the entry wasn\'t recorded',
+  "จดด้วยเสียงสำหรับสมาชิก Pro": "Voice entries for Pro members",
+  "พูดสั้น ๆ เช่น “กาแฟสามสิบบาท” แล้วบอทจดให้ ไม่ต้องพิมพ์ ใช้สิทธิ์ลองจดด้วยเสียงฟรีครบแล้ว":
+    'Just say e.g. "coffee thirty baht" and the bot records it, no typing. You\'ve used your free voice try',
+  ถามพี่ฮูกได้มากขึ้น: "Ask P'Hook more",
+  "ถามพี่ฮูก (AI) เรื่องรายรับรายจ่าย งบ เตือน และโน้ตของคุณได้เลย ใช้สิทธิ์ถามฟรีของเดือนนี้ครบแล้ว":
+    "Ask P'Hook (AI) about your income, expenses, budgets, reminders and notes. You've used this month's free questions",
+  "จดจากไฟล์ PDF สำหรับสมาชิก Pro": "Record from PDF for Pro members",
+  "ส่งไฟล์ PDF บิลหรือรายการเดินบัญชีมา ให้ AI แยกรายรับ/รายจ่ายแล้วจดให้ทีเดียว ไม่ต้องพิมพ์ทีละรายการ ยังไม่ได้จดไฟล์นี้นะ":
+    "Send a PDF bill or bank statement and the AI separates income/expenses and records them in one go, no typing one by one. This file wasn't recorded",
+  ให้บอทอ่านสลิปให้อัตโนมัติ: "Let the bot read slips for you",
+  "อยากให้บอทช่วยอ่านสลิปให้อัตโนมัติโดยไม่ต้องพิมพ์เองไหม? ส่งรูปปุ๊บ บันทึกปั๊บ!":
+    "Want the bot to read slips for you with no typing? Send a photo and it's recorded!",
+  " (ราคาเปิดตัวถึง {0})": " (launch price until {0})",
+  "Pro ฿{0}/เดือน อ่านสลิปได้ {1} ใบ/เดือน · Elite ฿{2}/เดือน อ่านสลิปไม่จำกัด{3}":
+    "Pro ฿{0}/month reads {1} slips/month · Elite ฿{2}/month reads unlimited slips{3}",
+  "Pro ฿{0}/เดือน ถามพี่ฮูกได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}":
+    "Pro ฿{0}/month: ask P'Hook {1} times/month · Elite ฿{2}/month: {3} times/month{4}",
+  "Pro ฿{0}/เดือน อ่าน PDF ได้ {1} ไฟล์/เดือน · Elite ฿{2}/เดือน {3} ไฟล์/เดือน{4}":
+    "Pro ฿{0}/month reads {1} PDFs/month · Elite ฿{2}/month: {3} PDFs/month{4}",
+  "Pro ฿{0}/เดือน จดด้วยเสียงได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน ไม่จำกัด{3}":
+    "Pro ฿{0}/month: {1} voice entries/month · Elite ฿{2}/month: unlimited{3}",
+  "ทดลองใช้ฟรี {0} วัน": "Try free for {0} days",
+  "ทดลองใช้ Pro ฟรี {0} วัน": "Try Pro free for {0} days",
+  จดเป็นวันนี้แทน: "Record as today instead",
+  "เริ่มทดลองใช้ Pro ฟรี {0} วันแล้ว (ถึง {1}) ลองจดย้อนหลัง อ่านสลิป หรือใช้ฟีเจอร์อื่นได้เลย":
+    "Your {0}-day free Pro trial started (until {1}). Try past-day entries, slip reading and more",
+  "เริ่มทดลองใช้ไม่ได้ในตอนนี้ (เคยทดลองแล้ว หรือมีแผนที่ใช้งานอยู่) ดูแผนอัปเกรดได้ที่เมนู “อัปเกรด” นะ":
+    "The trial can't be started now (you've tried before, or a plan is active). See the plans in the \"อัปเกรด\" menu",
+  "ตรวจรายการที่ AI อ่านให้ — ยังไม่ได้จด": "Check what the AI read — not recorded yet",
+  "ตรวจรายการจากเสียง — ยังไม่ได้จด": "Check what was heard — not recorded yet",
+  "หมวด (เดา)": "Category (guess)",
+  วันเวลา: "Date and time",
+  "AI อ่านผิด? กดยกเลิกแล้วพิมพ์ใหม่ให้สั้นลง หรือแก้หมวดได้เลย":
+    "Did the AI misread? Cancel and type it shorter, or change the category",
+  "ฟังผิด? กดยกเลิกแล้วพูดใหม่ หรือพิมพ์จดเองได้เลย":
+    "Misheard? Cancel and say it again, or type it yourself",
+  เปลี่ยนหมวด: "Change category",
+  'จดลงกระเป๋าอื่นได้โดยใส่ @ชื่อ เช่น "กาแฟ 45 @บัตร"':
+    'Record into another wallet with @name, e.g. "กาแฟ 45 @บัตร"',
+  "แผนนี้เพิ่มกระเป๋าไม่ได้แล้ว อัปเกรดเพื่อเพิ่มกระเป๋าได้นะ":
+    "This plan can't add more wallets. Upgrade to add more",
+  "กระเป๋าเงิน รวม {0}": "Wallets, total {0}",
+  "↩ ยกเลิกการโอน": "↩ Undo the transfer",
+  ยกเลิกการโอน: "Undo the transfer",
 };

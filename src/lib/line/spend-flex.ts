@@ -7,6 +7,7 @@ import { formatThaiDate, formatThaiMonthShort } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { badge, bar, barColor, cardHeader, pillFooter, TINT } from "./card-style";
 import { COLOR } from "./flex";
+import { t } from "@/lib/i18n";
 
 const footer = (label: string, uri: string | undefined) =>
   uri?.startsWith("https://")
@@ -89,7 +90,7 @@ export function buildCategorySpendCard(input: {
       contents: [
         {
           type: "text",
-          text: "รายจ่ายรวม 💰",
+          text: t("รายจ่ายรวม 💰"),
           size: "lg",
           weight: "bold",
           color: TINT.strong,
@@ -110,14 +111,14 @@ export function buildCategorySpendCard(input: {
   const bubble: Record<string, unknown> = {
     type: "bubble",
     size: "mega",
-    header: cardHeader("ใช้จ่ายตามหมวด", [input.subtitle], "📊"),
+    header: cardHeader(t("ใช้จ่ายตามหมวด"), [input.subtitle], "📊"),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
-  const f = pillFooter("ดูกราฟในแอป 📈", input.moreUrl);
+  const f = pillFooter(t("ดูกราฟในแอป 📈"), input.moreUrl);
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: `ใช้จ่ายตามหมวด ${input.subtitle}: รวม ${money(input.totalSatang)}`,
+    altText: t("ใช้จ่ายตามหมวด {0}: รวม {1}", input.subtitle, money(input.totalSatang)),
     contents: bubble,
   };
 }
@@ -161,7 +162,7 @@ export function buildRecentCard(input: { items: TxDto[]; moreUrl?: string }): Li
   });
   body.push({
     type: "text",
-    text: "ลบล่าสุด · แก้ล่าสุด 45",
+    text: t("ลบล่าสุด · แก้ล่าสุด 45"),
     size: "xs",
     color: COLOR.muted,
     margin: "lg",
@@ -169,14 +170,14 @@ export function buildRecentCard(input: { items: TxDto[]; moreUrl?: string }): Li
   const bubble: Record<string, unknown> = {
     type: "bubble",
     size: "mega",
-    header: header("รายการล่าสุด", `${input.items.length} รายการล่าสุดที่จดไว้`),
+    header: header(t("รายการล่าสุด"), t("{0} รายการล่าสุดที่จดไว้", input.items.length)),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
-  const f = footer("ดูทั้งหมดในแอป", input.moreUrl);
+  const f = footer(t("ดูทั้งหมดในแอป"), input.moreUrl);
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: `รายการล่าสุด ${input.items.length} รายการ`,
+    altText: t("รายการล่าสุด {0} รายการ", input.items.length),
     contents: bubble,
   };
 }
@@ -194,9 +195,9 @@ export function changeLabel(
     case "gone":
       return { text: "▼ 100%", color: COLOR.income };
     case "new":
-      return { text: "ใหม่", color: COLOR.expense };
+      return { text: t("ใหม่"), color: COLOR.expense };
     default:
-      return { text: "เท่าเดิม", color: COLOR.muted };
+      return { text: t("เท่าเดิม"), color: COLOR.muted };
   }
 }
 
@@ -245,7 +246,7 @@ export function buildCompareCard(input: {
           },
           {
             type: "text",
-            text: `ก่อนหน้า ${money(previousSatang)}`,
+            text: t("ก่อนหน้า {0}", money(previousSatang)),
             size: "xs",
             color: COLOR.muted,
           },
@@ -283,7 +284,7 @@ export function buildCompareCard(input: {
       backgroundColor: "#FFFFFF",
       contents: [
         line(
-          "💰 รายจ่ายรวม",
+          t("💰 รายจ่ายรวม"),
           input.previousSatang,
           input.currentSatang,
           total,
@@ -312,17 +313,17 @@ export function buildCompareCard(input: {
     type: "bubble",
     size: "mega",
     header: cardHeader(
-      "เทียบรายจ่ายรายหมวด",
+      t("เทียบรายจ่ายรายหมวด"),
       [`รอบนี้ ${input.currentLabel}`, `เทียบ ${input.previousLabel}`],
       "⚖️",
     ),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
-  const f = pillFooter("ดูกราฟในแอป 📈", input.moreUrl);
+  const f = pillFooter(t("ดูกราฟในแอป 📈"), input.moreUrl);
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: `เทียบรายจ่ายรายหมวด: ${money(input.currentSatang)} (${total.text}) จาก ${money(input.previousSatang)}`,
+    altText: t("เทียบรายจ่ายรายหมวด: {0} ({1}) จาก {2}", money(input.currentSatang), total.text, money(input.previousSatang)),
     contents: bubble,
   };
 }
@@ -349,10 +350,10 @@ export function buildYearCard(input: {
     ],
   });
   const body: unknown[] = [
-    sumRow("รายรับ", `+${money(input.income)}`, COLOR.income),
-    sumRow("รายจ่าย", `-${money(input.expense)}`, COLOR.expense),
+    sumRow(t("รายรับ"), `+${money(input.income)}`, COLOR.income),
+    sumRow(t("รายจ่าย"), `-${money(input.expense)}`, COLOR.expense),
     sumRow(
-      "เหลือ",
+      t("เหลือ"),
       `${net < 0 ? "-" : ""}${money(Math.abs(net))}`,
       net < 0 ? COLOR.expense : COLOR.income,
     ),
@@ -363,8 +364,8 @@ export function buildYearCard(input: {
       type: "text",
       text:
         input.changePercent === 0
-          ? "รายจ่ายเท่ากับปีก่อน (ช่วงวันที่เดียวกัน)"
-          : `รายจ่าย${up ? "เพิ่มขึ้น" : "ลดลง"} ${Math.abs(input.changePercent)}% จากปีก่อน (ช่วงวันที่เดียวกัน)`,
+          ? t("รายจ่ายเท่ากับปีก่อน (ช่วงวันที่เดียวกัน)")
+          : t("รายจ่าย{0} {1}% จากปีก่อน (ช่วงวันที่เดียวกัน)", up ? t("เพิ่มขึ้น") : t("ลดลง"), Math.abs(input.changePercent)),
       size: "xs",
       color: up ? COLOR.expense : COLOR.income,
       wrap: true,
@@ -452,14 +453,14 @@ export function buildYearCard(input: {
   const bubble: Record<string, unknown> = {
     type: "bubble",
     size: "mega",
-    header: header(`สรุปรายปี ${input.yearBE}`, input.subtitle),
+    header: header(t("สรุปรายปี {0}", input.yearBE), input.subtitle),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
-  const f = footer("ดูกราฟในแอป", input.moreUrl);
+  const f = footer(t("ดูกราฟในแอป"), input.moreUrl);
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: `สรุปรายปี ${input.yearBE}: รายรับ ${money(input.income)} รายจ่าย ${money(input.expense)}`,
+    altText: t("สรุปรายปี {0}: รายรับ {1} รายจ่าย {2}", input.yearBE, money(input.income), money(input.expense)),
     contents: bubble,
   };
 }

@@ -1,4 +1,5 @@
 import type { LineMessage } from "@/lib/types";
+import { localizeMessages } from "./localize";
 
 const API = "https://api.line.me/v2/bot";
 
@@ -19,7 +20,8 @@ export function createLineClient(accessToken: string) {
       const res = await fetch(`${API}/message/reply`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ replyToken, messages: messages.slice(0, 5) }),
+        // in the person's language (see localizeMessages)
+        body: JSON.stringify({ replyToken, messages: localizeMessages(messages.slice(0, 5)) }),
       });
       if (!res.ok) throw new Error(`LINE reply failed: ${res.status}`);
     },
@@ -42,7 +44,7 @@ export function createLineClient(accessToken: string) {
       const res = await fetch(`${API}/message/push`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ to: lineUserId, messages: messages.slice(0, 5) }),
+        body: JSON.stringify({ to: lineUserId, messages: localizeMessages(messages.slice(0, 5)) }),
       });
       if (!res.ok) throw new Error(`LINE push failed: ${res.status}`);
     },
