@@ -2,7 +2,7 @@ import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity } from "@/lib/note";
-import { countNotes, createNote, listNotes } from "@/lib/note-repo";
+import { countGroupNotes, countNotes, createNote, listNotes } from "@/lib/note-repo";
 import { getPlanInfo } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -15,7 +15,7 @@ const querySchema = z.object({
   before: z.string().datetime({ offset: true }).optional(),
 });
 
-/** GET /api/notes?q=&before= — the person's notes, newest first, 30 at a time. */
+/** GET /api/notes?q=&before= — the person's own notes, newest first, 30 at a time. */
 export async function GET(request: Request): Promise<Response> {
   return guard(async () => {
     const auth = await requireUser(request);
@@ -29,13 +29,15 @@ export async function GET(request: Request): Promise<Response> {
     const links = url.searchParams.get("links") === "1";
 
     const db = getAdminClient();
-    const [{ items, hasMore }, count, { plan }] = await Promise.all([
+    const [{ items, hasMore }, count, inGroups, { plan }] = await Promise.all([
       listNotes(db, auth.userId, { ...parsed.data, links }),
       countNotes(db, auth.userId),
+      countGroupNotes(db, auth.userId),
       getPlanInfo(db, auth.userId),
     ]);
     const limit = noteCapacity(plan);
-    return json({ items, hasMore, count, limit, canAdd: count < limit });
+    // `count` includes the notes kept in their groups (`inGroups`), which share the limit
+    return json({ items, hasMore, count, inGroups, limit, canAdd: count < limit });
   });
 }
 

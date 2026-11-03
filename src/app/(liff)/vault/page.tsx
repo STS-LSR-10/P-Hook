@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { GroupFiles, type GroupUsage } from "@/components/liff/group-space";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { fieldClass } from "@/components/liff/settings/types";
 import { Sheet } from "@/components/liff/sheet";
@@ -31,20 +30,48 @@ import { looksSecret } from "@/lib/secret-text";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 
+/** In a group, `mine` says whether this person may change or remove it (always so for their own). */
+type VaultNote = NoteDto & { mine?: boolean };
+type VaultFile = FileDto & { mine?: boolean };
 interface NotesResponse {
-  items: NoteDto[];
+  items: VaultNote[];
   hasMore: boolean;
   canAdd: boolean;
+  /** Their own only: the notes kept in their groups, which share the limit. */
+  inGroups?: number;
 }
+/** Whether a note may be written now, and (their own only) how many of the limit groups take. */
+interface Room {
+  canAdd: boolean;
+  inGroups: number;
+}
+const ROOM: Room = { canAdd: true, inGroups: 0 };
 interface FilesResponse {
-  items: FileDto[];
+  items: VaultFile[];
   hasMore: boolean;
-  usedBytes: number;
-  capacityBytes: number;
+  /** The space is always the owner's: in a group a member gets null, and only `spaceLow`. */
+  usedBytes: number | null;
+  capacityBytes: number | null;
+  /** A group's only: what the owner's groups take of it. */
+  groupBytes?: number | null;
+  spaceLow?: boolean;
   viewToken: string;
 }
 
-type Usage = Pick<FilesResponse, "usedBytes" | "capacityBytes"> | "failed";
+type Usage =
+  Pick<FilesResponse, "usedBytes" | "capacityBytes" | "groupBytes" | "spaceLow"> | "failed";
+
+/** Where the list's notes and files come from: the person's own, or a group's. */
+interface Space {
+  notes: string;
+  files: string;
+  group: boolean;
+}
+const spaceOf = (groupId: string | null): Space =>
+  groupId
+    ? { notes: `/api/groups/${groupId}/notes`, files: `/api/groups/${groupId}/files`, group: true }
+    : { notes: "/api/notes", files: "/api/files", group: false };
+const mayChange = (item: { mine?: boolean }) => item.mine !== false;
 
 type Tab = "all" | "note" | "link" | "image" | "file";
 const TABS: { key: Tab; label: string }[] = [
@@ -65,9 +92,24 @@ const EMPTY: Record<Tab, { title: string; hint: string }> = {
   file: { title: "ยังไม่มีไฟล์", hint: 'ส่งไฟล์ในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"' },
 };
 
+const GROUP_EMPTY: Record<Tab, { title: string; hint: string }> = {
+  all: {
+    title: "กลุ่มนี้ยังไม่มีอะไรในคลัง",
+    hint: 'พิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง" หรือ "เก็บไฟล์" แล้วส่งไฟล์มา',
+  },
+  note: {
+    title: "กลุ่มนี้ยังไม่มีโน้ต",
+    hint: 'กดปุ่ม + หรือพิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง"',
+  },
+  link: { title: "กลุ่มนี้ยังไม่มีลิงก์", hint: "จดโน้ตที่มีลิงก์ แล้วจะขึ้นที่นี่ครับ" },
+  image: { title: "กลุ่มนี้ยังไม่มีรูป", hint: 'พิมพ์ "เก็บรูป" ในกลุ่ม แล้วส่งรูปมาภายใน 5 นาที' },
+  file: {
+    title: "กลุ่มนี้ยังไม่มีไฟล์",
+    hint: 'พิมพ์ "เก็บไฟล์" ในกลุ่ม แล้วส่งไฟล์มาภายใน 5 นาที',
+  },
+};
+
 const isTab = (value: string | null): value is Tab => TABS.some((t) => t.key === value);
-/** A group keeps only files: no notes or links. */
-const GROUP_TABS = TABS.filter((t) => t.key === "all" || t.key === "image" || t.key === "file");
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 const CARD = "rounded-2xl border border-[#E7DFD2] bg-[#F6EFE6] text-left";
@@ -83,8 +125,8 @@ function query(params: Record<string, string | null | undefined>): string {
 }
 
 /**
- * Reads `?tab=`, `?q=`, `?open=` and `?g=` (a group's files, from the links in a group or the switch
- * at the top), which needs Suspense.
+ * Reads `?tab=`, `?q=`, `?open=` and `?g=` (a group's notes and files, from the links in a group or
+ * the switch at the top), which needs Suspense.
  */
 export default function VaultPage() {
   return (
@@ -103,21 +145,15 @@ function Vault() {
   const toOpen = UUID_RE.test(requestedOpen) ? requestedOpen : null;
   const requestedGroup = params.get("g") ?? "";
   const groupId = UUID_RE.test(requestedGroup) ? requestedGroup : null;
-  const tabs = groupId ? GROUP_TABS : TABS;
+  const space = spaceOf(groupId);
 
-  const [tab, setTab] = useState<Tab>(
-    isTab(requested) && (!groupId || GROUP_TABS.some((t) => t.key === requested))
-      ? requested
-      : "all",
-  );
-  const [groupUsage, setGroupUsage] = useState<GroupUsage | "failed" | null>(null);
+  const [tab, setTab] = useState<Tab>(isTab(requested) ? requested : "all");
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [typed, setTyped] = useState(search);
   const [notice, setNotice] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
-  const shown = usage !== null && usage !== "failed" ? usage : null;
-  const [canAdd, setCanAdd] = useState(true);
+  const [room, setRoom] = useState<Room>(ROOM);
   // bumped after a change, so the list below loads again
   const [version, setVersion] = useState(0);
   const opened = useRef(false);
@@ -126,30 +162,29 @@ function Vault() {
     async (id: string) => {
       setNotice(null);
       try {
-        const { url } = await api<{ url: string }>(`/api/files/${id}/link`, { method: "POST" });
+        const { url } = await api<{ url: string }>(`${space.files}/${id}/link`, {
+          method: "POST",
+        });
         await openExternal(url);
       } catch (err) {
         setNotice(err instanceof Error ? err.message : "เปิดไฟล์ไม่สำเร็จ");
       }
     },
-    [api, openExternal],
+    [api, openExternal, space.files],
   );
 
   // the button on a card in the chat lands here; the address loses it, so a reload opens nothing
   useEffect(() => {
-    if (groupId || !toOpen || opened.current || status !== "ready") return;
+    if (!toOpen || opened.current || status !== "ready") return;
     opened.current = true;
     void download(toOpen);
-    router.replace("/vault");
+    router.replace(groupId ? `/vault?g=${groupId}` : "/vault");
   }, [groupId, toOpen, status, download, router]);
-  const groupOpened = useCallback(() => {
-    if (groupId) router.replace(`/vault?g=${groupId}`);
-  }, [groupId, router]);
 
   function switchSpace(next: string | null) {
     setNotice(null);
-    setGroupUsage(null);
-    if (next && !GROUP_TABS.some((t) => t.key === tab)) setTab("all");
+    setUsage(null);
+    setRoom(ROOM);
     router.replace(next ? `/vault?g=${next}` : "/vault");
   }
 
@@ -165,33 +200,27 @@ function Vault() {
   }
 
   // in a group the space is still the owner's; a member sees only whether it is running out
-  const ownerSpace =
-    groupUsage && groupUsage !== "failed" && groupUsage.usedBytes !== null
+  const bar =
+    usage && usage !== "failed" && usage.usedBytes !== null
       ? {
-          usedBytes: groupUsage.usedBytes,
-          capacityBytes: groupUsage.capacityBytes ?? 0,
-          groupBytes: groupUsage.groupBytes ?? 0,
+          usedBytes: usage.usedBytes,
+          capacityBytes: usage.capacityBytes ?? 0,
+          groupBytes: usage.groupBytes ?? 0,
         }
       : null;
-  const bar = groupId ? ownerSpace : shown;
   const percent = bar
     ? Math.min(100, Math.round((bar.usedBytes / Math.max(1, bar.capacityBytes)) * 100))
     : 0;
-  const spaceText = groupId
-    ? groupUsage === null
-      ? ""
-      : groupUsage === "failed"
-        ? "โหลดไม่สำเร็จ"
-        : ownerSpace
-          ? `${formatBytes(ownerSpace.usedBytes)} / ${formatBytes(ownerSpace.capacityBytes)}`
-          : groupUsage.spaceLow
-            ? "ของเจ้าของสมุดใกล้เต็มแล้ว"
-            : "ใช้พื้นที่ของเจ้าของสมุด"
-    : usage === null
+  const spaceText =
+    usage === null
       ? ""
       : usage === "failed"
         ? "โหลดไม่สำเร็จ"
-        : `${formatBytes(usage.usedBytes)} / ${formatBytes(usage.capacityBytes)}`;
+        : bar
+          ? `${formatBytes(bar.usedBytes)} / ${formatBytes(bar.capacityBytes)}`
+          : usage.spaceLow
+            ? "ของเจ้าของสมุดใกล้เต็มแล้ว"
+            : "ใช้พื้นที่ของเจ้าของสมุด";
 
   return (
     <main className="-mb-24 flex min-h-screen flex-col bg-[#FAF7F2] pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800">
@@ -211,7 +240,7 @@ function Vault() {
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             maxLength={100}
-            placeholder="บิลค่าไฟ, รหัสคอม, ใบเสนอราคา"
+            placeholder={groupId ? "รหัสไวไฟ, เมนูร้าน, สัญญา" : "บิลค่าไฟ, รหัสคอม, ใบเสนอราคา"}
             className="h-11 min-w-0 flex-1 rounded-xl bg-[#EFEBE3] px-4 text-sm text-stone-800 placeholder:text-stone-500"
           />
           <button
@@ -243,7 +272,7 @@ function Vault() {
         aria-label="หมวดในคลัง"
         className="mt-1 flex justify-between border-b border-stone-200 px-4"
       >
-        {tabs.map(({ key, label }) => (
+        {TABS.map(({ key, label }) => (
           <button
             key={key}
             type="button"
@@ -268,28 +297,17 @@ function Vault() {
           </p>
         ) : null}
         {/* a new key starts clean: no old list, and an answer to an old request lands nowhere */}
-        {groupId ? (
-          <GroupFiles
-            key={`${groupId}|${tab}|${search}`}
-            groupId={groupId}
-            q={search}
-            kind={tab === "image" || tab === "file" ? tab : null}
-            toOpen={toOpen}
-            onOpened={groupOpened}
-            onUsage={setGroupUsage}
-          />
-        ) : (
-          <VaultList
-            key={`${tab}|${search}|${version}`}
-            tab={tab}
-            search={search}
-            onUsage={setUsage}
-            onCanAdd={setCanAdd}
-            onDone={done}
-            onDownload={download}
-            onOpenLink={openExternal}
-          />
-        )}
+        <VaultList
+          key={`${groupId ?? ""}|${tab}|${search}|${version}`}
+          space={space}
+          tab={tab}
+          search={search}
+          onUsage={setUsage}
+          onRoom={setRoom}
+          onDone={done}
+          onDownload={download}
+          onOpenLink={openExternal}
+        />
       </div>
 
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-stone-200 bg-[#FAF7F2] px-4 py-2.5">
@@ -298,21 +316,16 @@ function Vault() {
             <Archive className="h-4 w-4" aria-hidden /> พื้นที่เก็บไฟล์
           </p>
           <p className="num text-xs text-stone-700">{spaceText}</p>
-          {groupId ? (
-            // a group's files are kept from the group's chat, so there is nothing to add here
-            <span className="ml-auto h-9" aria-hidden />
-          ) : (
-            <button
-              type="button"
-              aria-label="เพิ่มโน้ต"
-              onClick={() => setAdding(true)}
-              className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2D7347] text-white"
-            >
-              <Plus className="h-5 w-5" aria-hidden />
-            </button>
-          )}
+          <button
+            type="button"
+            aria-label={groupId ? "เพิ่มโน้ตของกลุ่ม" : "เพิ่มโน้ต"}
+            onClick={() => setAdding(true)}
+            className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2D7347] text-white"
+          >
+            <Plus className="h-5 w-5" aria-hidden />
+          </button>
         </div>
-        {!groupId || ownerSpace ? (
+        {!groupId || bar ? (
           <div
             role="progressbar"
             aria-label="พื้นที่ที่ใช้ไป"
@@ -324,16 +337,17 @@ function Vault() {
             <div className="h-full bg-[#2D7347]" style={{ width: `${percent}%` }} />
           </div>
         ) : null}
-        {ownerSpace ? (
+        {groupId && bar ? (
           <p className="num mt-1 text-xs text-stone-600">
-            ไฟล์ในกลุ่มของคุณ {formatBytes(ownerSpace.groupBytes)} · ใช้พื้นที่เดียวกับไฟล์ส่วนตัว
+            ไฟล์ในกลุ่มของคุณ {formatBytes(bar.groupBytes)} · ใช้พื้นที่เดียวกับไฟล์ส่วนตัว
           </p>
         ) : null}
       </div>
 
       {adding ? (
         <AddNoteSheet
-          canAdd={canAdd}
+          space={space}
+          room={room}
           onClose={() => setAdding(false)}
           onSaved={() => done("จดแล้ว")}
         />
@@ -342,52 +356,54 @@ function Vault() {
   );
 }
 
-/** One tab and one search. It is replaced, not changed, when either of them changes. */
+/** One space, tab and search. It is replaced, not changed, when any of them changes. */
 function VaultList({
+  space,
   tab,
   search,
   onUsage,
-  onCanAdd,
+  onRoom,
   onDone,
   onDownload,
   onOpenLink,
 }: {
+  space: Space;
   tab: Tab;
   search: string;
   onUsage: (usage: Usage) => void;
-  onCanAdd: (canAdd: boolean) => void;
+  onRoom: (room: Room) => void;
   onDone: (message: string) => void;
   onDownload: (id: string) => Promise<void>;
   onOpenLink: (url: string) => Promise<void>;
 }) {
   const { api } = useLiff();
   const [grid, setGrid] = useState(false);
-  const [moreNotes, setMoreNotes] = useState<NoteDto[]>([]);
-  const [moreFiles, setMoreFiles] = useState<FileDto[]>([]);
+  const [moreNotes, setMoreNotes] = useState<VaultNote[]>([]);
+  const [moreFiles, setMoreFiles] = useState<VaultFile[]>([]);
   const [notesHaveMore, setNotesHaveMore] = useState<boolean | null>(null);
   const [filesHaveMore, setFilesHaveMore] = useState<boolean | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreFailed, setMoreFailed] = useState<string | null>(null);
-  const [openNote, setOpenNote] = useState<NoteDto | null>(null);
-  const [openFile, setOpenFile] = useState<FileDto | null>(null);
-  const [openPicture, setOpenPicture] = useState<FileDto | null>(null);
+  const [openNote, setOpenNote] = useState<VaultNote | null>(null);
+  const [openFile, setOpenFile] = useState<VaultFile | null>(null);
+  const [openPicture, setOpenPicture] = useState<VaultFile | null>(null);
 
   const q = search || null;
   const showsNotes = tab === "all" || tab === "note" || tab === "link";
   const showsFiles = tab === "all" || tab === "image" || tab === "file";
   const links = tab === "link" ? "1" : null;
   const kind = tab === "image" || tab === "file" ? tab : null;
-  const notes = useApi<NotesResponse>(`/api/notes${query({ q, links })}`);
+  const notes = useApi<NotesResponse>(`${space.notes}${query({ q, links })}`);
   // always asked for: the space bar needs it on every tab
-  const files = useApi<FilesResponse>(`/api/files${query({ q, kind })}`);
+  const files = useApi<FilesResponse>(`${space.files}${query({ q, kind })}`);
 
   useEffect(() => {
     if (files.data) onUsage(files.data);
     else if (files.error) onUsage("failed");
   }, [files.data, files.error, onUsage]);
   useEffect(() => {
-    if (notes.data) onCanAdd(notes.data.canAdd);
-  }, [notes.data, onCanAdd]);
+    if (notes.data) onRoom({ canAdd: notes.data.canAdd, inGroups: notes.data.inGroups ?? 0 });
+  }, [notes.data, onRoom]);
 
   const noteItems = showsNotes ? [...(notes.data?.items ?? []), ...moreNotes] : [];
   const fileItems = showsFiles ? [...(files.data?.items ?? []), ...moreFiles] : [];
@@ -436,13 +452,13 @@ function VaultList({
         item ? new Date(item.createdAt).getTime() : -Infinity;
       if (noteMore && lastNote && at(lastNote) === cutoff) {
         const before = lastNote.createdAt;
-        const page = await api<NotesResponse>(`/api/notes${query({ q, links, before })}`);
+        const page = await api<NotesResponse>(`${space.notes}${query({ q, links, before })}`);
         setMoreNotes((m) => [...m, ...page.items]);
         setNotesHaveMore(page.hasMore);
       }
       if (fileMore && lastFile && at(lastFile) === cutoff) {
         const before = lastFile.createdAt;
-        const page = await api<FilesResponse>(`/api/files${query({ q, kind, before })}`);
+        const page = await api<FilesResponse>(`${space.files}${query({ q, kind, before })}`);
         setMoreFiles((m) => [...m, ...page.items]);
         setFilesHaveMore(page.hasMore);
       }
@@ -465,7 +481,7 @@ function VaultList({
       : filesFailed
         ? "โหลดไฟล์ไม่สำเร็จ"
         : null;
-  const empty = EMPTY[tab];
+  const empty = (space.group ? GROUP_EMPTY : EMPTY)[tab];
 
   return (
     <>
@@ -564,6 +580,7 @@ function VaultList({
 
       {openNote ? (
         <NoteSheet
+          space={space}
           note={openNote}
           onClose={() => setOpenNote(null)}
           onDone={onDone}
@@ -572,6 +589,7 @@ function VaultList({
       ) : null}
       {openFile ? (
         <FileSheet
+          space={space}
           file={openFile}
           onClose={() => setOpenFile(null)}
           onDone={onDone}
@@ -661,11 +679,13 @@ function Thumb({ file, token, className }: { file: FileDto; token: string; class
 }
 
 function AddNoteSheet({
-  canAdd,
+  space,
+  room,
   onClose,
   onSaved,
 }: {
-  canAdd: boolean;
+  space: Space;
+  room: Room;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -679,7 +699,7 @@ function AddNoteSheet({
     setBusy(true);
     setError(null);
     try {
-      await api("/api/notes", { method: "POST", body: JSON.stringify({ body }) });
+      await api(space.notes, { method: "POST", body: JSON.stringify({ body }) });
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "จดไม่สำเร็จ");
@@ -689,7 +709,7 @@ function AddNoteSheet({
   }
 
   return (
-    <Sheet title="เพิ่มโน้ต" onClose={onClose}>
+    <Sheet title={space.group ? "เพิ่มโน้ตของกลุ่ม" : "เพิ่มโน้ต"} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         <label htmlFor="vault-new-note" className="sr-only">
           โน้ตใหม่
@@ -703,8 +723,17 @@ function AddNoteSheet({
           placeholder="จดอะไรไว้ดี เช่น รายการซื้อของ ลิงก์ ที่อยู่"
           className={`${fieldClass} h-auto resize-none py-3`}
         />
-        {!canAdd ? (
-          <p className="text-sm text-warn">โน้ตเต็มแล้ว ลบอันเก่าหรืออัปเกรดแผนเพื่อเก็บเพิ่ม</p>
+        {space.group ? (
+          <p className="text-xs text-stone-600">ทุกคนในกลุ่มเห็นโน้ตนี้ ไม่ควรจดรหัสผ่านสำคัญไว้</p>
+        ) : null}
+        {!room.canAdd ? (
+          <p className="text-sm text-warn">
+            {space.group
+              ? "จดเพิ่มไม่ได้ตอนนี้ โน้ตของเจ้าของสมุดอาจเต็ม หรือสมุดกลุ่มปิดอยู่"
+              : room.inGroups > 0
+                ? `โน้ตเต็มแล้ว (นับรวมโน้ตในกลุ่มของคุณ ${room.inGroups} รายการ) ลบอันเก่าในคลังส่วนตัวหรือของกลุ่ม หรืออัปเกรดแผนเพื่อเก็บเพิ่ม`
+                : "โน้ตเต็มแล้ว ลบอันเก่าหรืออัปเกรดแผนเพื่อเก็บเพิ่ม"}
+          </p>
         ) : null}
         {error ? (
           <p role="alert" className="text-sm text-expense">
@@ -713,7 +742,7 @@ function AddNoteSheet({
         ) : null}
         <button
           type="submit"
-          disabled={busy || !canAdd || !body.trim()}
+          disabled={busy || !room.canAdd || !body.trim()}
           className="h-12 w-full rounded-2xl bg-primary font-semibold text-surface disabled:opacity-60"
         >
           {busy ? "กำลังจด…" : "จดโน้ต"}
@@ -724,12 +753,14 @@ function AddNoteSheet({
 }
 
 function NoteSheet({
+  space,
   note,
   onClose,
   onDone,
   onOpenLink,
 }: {
-  note: NoteDto;
+  space: Space;
+  note: VaultNote;
   onClose: () => void;
   onDone: (message: string) => void;
   onOpenLink: (url: string) => void;
@@ -756,18 +787,19 @@ function NoteSheet({
   const save = (e: FormEvent) => {
     e.preventDefault();
     void run(
-      () => api(`/api/notes/${note.id}`, { method: "PATCH", body: JSON.stringify({ body }) }),
+      () => api(`${space.notes}/${note.id}`, { method: "PATCH", body: JSON.stringify({ body }) }),
       "แก้ไขแล้ว",
       "บันทึกไม่สำเร็จ",
     );
   };
   const remove = () => {
     if (!window.confirm("ลบโน้ตนี้ใช่ไหม?")) return;
-    void run(() => api(`/api/notes/${note.id}`, { method: "DELETE" }), "ลบแล้ว", "ลบไม่สำเร็จ");
+    void run(() => api(`${space.notes}/${note.id}`, { method: "DELETE" }), "ลบแล้ว", "ลบไม่สำเร็จ");
   };
+  const editable = mayChange(note);
 
   return (
-    <Sheet title="โน้ต" onClose={onClose}>
+    <Sheet title={space.group ? "โน้ตของกลุ่ม" : "โน้ต"} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         <label htmlFor="vault-note" className="sr-only">
           เนื้อหาโน้ต
@@ -778,6 +810,7 @@ function NoteSheet({
           onChange={(e) => setBody(e.target.value)}
           maxLength={MAX_NOTE_LENGTH}
           rows={6}
+          readOnly={!editable}
           className={`${fieldClass} h-auto resize-none py-3`}
         />
         {error ? (
@@ -794,33 +827,41 @@ function NoteSheet({
             <ExternalLink className="h-4 w-4" aria-hidden /> เปิดลิงก์
           </button>
         ) : null}
-        <button
-          type="submit"
-          disabled={busy || !body.trim()}
-          className="h-12 w-full rounded-2xl bg-primary font-semibold text-surface disabled:opacity-60"
-        >
-          {busy ? "กำลังบันทึก…" : "บันทึก"}
-        </button>
-        <button
-          type="button"
-          onClick={remove}
-          disabled={busy}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-semibold text-expense"
-        >
-          <Trash2 className="h-4 w-4" aria-hidden /> ลบโน้ต
-        </button>
+        {editable ? (
+          <>
+            <button
+              type="submit"
+              disabled={busy || !body.trim()}
+              className="h-12 w-full rounded-2xl bg-primary font-semibold text-surface disabled:opacity-60"
+            >
+              {busy ? "กำลังบันทึก…" : "บันทึก"}
+            </button>
+            <button
+              type="button"
+              onClick={remove}
+              disabled={busy}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-semibold text-expense"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden /> ลบโน้ต
+            </button>
+          </>
+        ) : (
+          <p className="text-xs text-stone-600">แก้หรือลบได้เฉพาะคนที่จดโน้ตนี้ หรือเจ้าของสมุด</p>
+        )}
       </form>
     </Sheet>
   );
 }
 
 function FileSheet({
+  space,
   file,
   onClose,
   onDone,
   onDownload,
 }: {
-  file: FileDto;
+  space: Space;
+  file: VaultFile;
   onClose: () => void;
   onDone: (message: string) => void;
   onDownload: () => void;
@@ -846,18 +887,18 @@ function FileSheet({
   const save = (e: FormEvent) => {
     e.preventDefault();
     void run(
-      () => api(`/api/files/${file.id}`, { method: "PATCH", body: JSON.stringify({ name }) }),
+      () => api(`${space.files}/${file.id}`, { method: "PATCH", body: JSON.stringify({ name }) }),
       "เปลี่ยนชื่อแล้ว",
       "บันทึกไม่สำเร็จ",
     );
   };
   const remove = () => {
     if (!window.confirm(`ลบไฟล์ "${file.name}" ใช่ไหม? ลบแล้วกู้คืนไม่ได้`)) return;
-    void run(() => api(`/api/files/${file.id}`, { method: "DELETE" }), "ลบแล้ว", "ลบไม่สำเร็จ");
+    void run(() => api(`${space.files}/${file.id}`, { method: "DELETE" }), "ลบแล้ว", "ลบไม่สำเร็จ");
   };
 
   return (
-    <Sheet title="ไฟล์" onClose={onClose}>
+    <Sheet title={space.group ? "ไฟล์ของกลุ่ม" : "ไฟล์"} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         <p className="num text-xs text-muted">
           {formatBytes(file.sizeBytes)} · {formatThaiDate(new Date(file.createdAt), true)}
@@ -869,36 +910,49 @@ function FileSheet({
         >
           <Download className="h-4 w-4" aria-hidden /> เปิดไฟล์
         </button>
-        <label htmlFor="vault-file-name" className="block text-sm font-semibold">
-          ชื่อไฟล์
-        </label>
-        <input
-          id="vault-file-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={MAX_NAME_LENGTH}
-          className={fieldClass}
-        />
+        {/* a group's file keeps the name it was kept with */}
+        {!space.group ? (
+          <>
+            <label htmlFor="vault-file-name" className="block text-sm font-semibold">
+              ชื่อไฟล์
+            </label>
+            <input
+              id="vault-file-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={MAX_NAME_LENGTH}
+              className={fieldClass}
+            />
+          </>
+        ) : (
+          <p className="break-words text-sm font-semibold">{file.name}</p>
+        )}
         {error ? (
           <p role="alert" className="text-sm text-expense">
             {error}
           </p>
         ) : null}
-        <button
-          type="submit"
-          disabled={busy || !name.trim()}
-          className="h-11 w-full rounded-2xl border border-border font-semibold text-primary disabled:opacity-60"
-        >
-          {busy ? "กำลังบันทึก…" : "บันทึกชื่อ"}
-        </button>
-        <button
-          type="button"
-          onClick={remove}
-          disabled={busy}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-semibold text-expense"
-        >
-          <Trash2 className="h-4 w-4" aria-hidden /> ลบไฟล์
-        </button>
+        {!space.group ? (
+          <button
+            type="submit"
+            disabled={busy || !name.trim()}
+            className="h-11 w-full rounded-2xl border border-border font-semibold text-primary disabled:opacity-60"
+          >
+            {busy ? "กำลังบันทึก…" : "บันทึกชื่อ"}
+          </button>
+        ) : null}
+        {mayChange(file) ? (
+          <button
+            type="button"
+            onClick={remove}
+            disabled={busy}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-semibold text-expense"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden /> ลบไฟล์
+          </button>
+        ) : (
+          <p className="text-xs text-stone-600">ลบได้เฉพาะคนที่เก็บไฟล์นี้ หรือเจ้าของสมุด</p>
+        )}
       </form>
     </Sheet>
   );

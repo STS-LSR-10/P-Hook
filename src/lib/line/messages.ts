@@ -398,6 +398,17 @@ export const GROUP_REMIND_DENIED_TEXT = "ยกเลิกได้เฉพา
 export const groupRemindCancelledText = (body: string) => `ยกเลิกเตือนกลุ่มแล้ว: ${body}`;
 export const groupReminderFullText = (limit: number, repeat: boolean) =>
   `${repeat ? "เตือนประจำ" : "เตือนครั้งเดียว"}ของเจ้าของสมุดครบ ${limit} รายการแล้ว (ใช้ร่วมกับเตือนส่วนตัว) ยกเลิกอันที่ไม่ใช้ก่อนนะ`;
+export const groupNoteSavedText = (preview: string, url?: string) =>
+  `จดโน้ตกลุ่มแล้ว 📝\n"${preview}"${url ? `\nดู แก้ไข หรือค้นหาโน้ตของกลุ่ม: ${url}` : ""}`;
+export const GROUP_NOTE_SECRET_TEXT =
+  "⚠️ ทุกคนในกลุ่มเห็นโน้ตนี้ ไม่ควรจดรหัสผ่านสำคัญหรือเลขบัตรไว้ในกลุ่ม";
+export const groupNoteFullText = (limit: number) =>
+  `โน้ตของเจ้าของสมุดเต็ม ${limit.toLocaleString("en-US")} รายการแล้ว (ใช้ร่วมกับโน้ตส่วนตัว) ลบอันเก่าก่อนนะ`;
+export const GROUP_NOTE_EMPTY_TEXT =
+  'กลุ่มนี้ยังไม่มีโน้ต พิมพ์ เช่น "โน้ต ซื้อน้ำแข็ง 2 ถุง" ได้เลย';
+export const groupNoteNotFoundText = (term: string) => `ไม่เจอโน้ตของกลุ่มที่มีคำว่า "${term}"`;
+export const GROUP_NOTE_DENIED_TEXT = "ลบได้เฉพาะคนที่จดโน้ตนี้ หรือเจ้าของสมุดนะ";
+export const GROUP_NOTE_GONE_TEXT = "ไม่พบโน้ตนี้แล้ว อาจถูกลบไปก่อนหน้า";
 export const GROUP_OWL_USAGE_TEXT =
   '🦉 ถามพี่ฮูกในกลุ่ม พิมพ์ "ฮูก" ตามด้วยคำถาม เช่น "ฮูก เดือนนี้กลุ่มใช้ไปเท่าไร"\nพี่ฮูกเห็นแค่สมุดของกลุ่มนี้ ไม่เห็นข้อมูลส่วนตัวของใคร';
 export const groupOwlQuotaText = (limit: number) =>

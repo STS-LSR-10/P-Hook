@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Route } from "@playwright/test";
 import {
   expectNoHorizontalScroll,
   expectNoSeriousA11yViolations,
@@ -51,6 +51,21 @@ const OWN_FILES = {
   viewToken: "tok",
 };
 const OWN_NOTES = { items: [], hasMore: false, canAdd: true };
+const N1 = "00000000-0000-4000-8000-00000000000d";
+const N2 = "00000000-0000-4000-8000-00000000000e";
+const gnote = (id: string, body: string, mine: boolean) => ({
+  id,
+  body,
+  createdAt: "2026-10-04T05:00:00.000Z",
+  updatedAt: "2026-10-04T05:00:00.000Z",
+  mine,
+});
+const GROUP_NOTES = (items: unknown[] = [], canAdd = true) => ({
+  items,
+  hasMore: false,
+  canAdd,
+  isOwner: false,
+});
 const GROUPS = { items: [{ id: G, name: "บ้านเรา", isActive: true }] };
 
 test.describe("switching the vault and reminders to a group (360px)", () => {
@@ -64,6 +79,7 @@ test.describe("switching the vault and reminders to a group (360px)", () => {
         file(F1, "สัญญาเช่า.pdf", true),
         file(F2, "เมนูร้าน.pdf", false),
       ]),
+      [`GET /api/groups/${G}/notes`]: GROUP_NOTES([gnote(N1, "ซื้อน้ำแข็ง 2 ถุง", true)]),
     });
     await page.goto("/vault");
     await expect(page.getByText("บิลค่าไฟ.pdf")).toBeVisible();
@@ -72,10 +88,8 @@ test.describe("switching the vault and reminders to a group (360px)", () => {
     await pick.selectOption({ label: "กลุ่ม: บ้านเรา" });
     await expect(page).toHaveURL(new RegExp(`/vault\\?g=${G}`));
     await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
+    await expect(page.getByText("ซื้อน้ำแข็ง 2 ถุง")).toBeVisible();
     await expect(page.getByText("บิลค่าไฟ.pdf")).toHaveCount(0);
-    // a group keeps no notes, and its files are kept from the group's chat
-    await expect(page.getByRole("button", { name: "โน้ต", exact: true })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "เพิ่มโน้ต" })).toHaveCount(0);
     await expect(page.getByText("30 MB / 2 GB")).toBeVisible();
     await expect(page.getByText(/ไฟล์ในกลุ่มของคุณ 12 MB/)).toBeVisible();
     await expectNoHorizontalScroll(page);
@@ -112,6 +126,7 @@ test.describe("switching the vault and reminders to a group (360px)", () => {
       "GET /api/me": ME_FREE,
       "GET /api/groups": { items: [] },
       [`GET /api/groups/${G}/files`]: files([file(F1, "สัญญาเช่า.pdf", true)], false),
+      [`GET /api/groups/${G}/notes`]: GROUP_NOTES(),
     });
     await page.goto(`/vault?g=${G}`);
     await expect(page.getByText("สัญญาเช่า.pdf")).toBeVisible();
@@ -179,6 +194,7 @@ test.describe("switching the vault and reminders to a group (360px)", () => {
       "GET /api/me": ME_FREE,
       "GET /api/groups": GROUPS,
       [`GET /api/groups/${G}/files`]: files([file(F1, "สัญญาเช่า.pdf", true)]),
+      [`GET /api/groups/${G}/notes`]: GROUP_NOTES(),
       [`GET /api/groups/${G}/reminders`]: { items: [reminder], isOwner: true },
     });
     await page.goto(`/group?id=${G}`);
@@ -199,8 +215,58 @@ test.describe("switching the vault and reminders to a group (360px)", () => {
         status: 404,
         body: { error: "ไม่พบกลุ่มนี้ หรือคุณไม่ได้อยู่ในกลุ่มนี้" },
       },
+      [`GET /api/groups/${G}/notes`]: {
+        status: 404,
+        body: { error: "ไม่พบกลุ่มนี้ หรือคุณไม่ได้อยู่ในกลุ่มนี้" },
+      },
     });
     await page.goto(`/vault?g=${G}`);
     await expect(page.getByText("ไม่พบกลุ่มนี้ หรือคุณไม่ได้อยู่ในกลุ่มนี้")).toBeVisible();
+  });
+
+  test("a member writes a note for the group, and only changes their own", async ({ page }) => {
+    let notes = [gnote(N2, "เมนูร้านโปรด", false)];
+    const posted: unknown[] = [];
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/groups": { items: [] },
+      [`GET /api/groups/${G}/files`]: files([], false),
+      [`GET /api/groups/${G}/notes`]: () => GROUP_NOTES(notes),
+      [`POST /api/groups/${G}/notes`]: (route: Route) => {
+        const body = route.request().postDataJSON() as { body: string };
+        posted.push(body);
+        notes = [gnote(N1, body.body, true), ...notes];
+        return { status: 201, body: { note: notes[0] } };
+      },
+    });
+    await page.goto(`/vault?g=${G}&tab=note`);
+    await expect(page.getByText("เมนูร้านโปรด")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectNoSeriousA11yViolations(page);
+
+    await page.getByRole("button", { name: "เพิ่มโน้ตของกลุ่ม" }).click();
+    await expect(page.getByText("ทุกคนในกลุ่มเห็นโน้ตนี้")).toBeVisible();
+    await page.getByLabel("โน้ตใหม่").fill("ซื้อน้ำแข็ง 2 ถุง");
+    await page.getByRole("button", { name: "จดโน้ต" }).click();
+    await expect(page.getByText("ซื้อน้ำแข็ง 2 ถุง")).toBeVisible();
+    expect(posted).toEqual([{ body: "ซื้อน้ำแข็ง 2 ถุง" }]);
+
+    // someone else's note opens to read only
+    await page.getByText("เมนูร้านโปรด").click();
+    await expect(page.getByText("แก้หรือลบได้เฉพาะคนที่จดโน้ตนี้")).toBeVisible();
+    await expect(page.getByRole("button", { name: "ลบโน้ต" })).toHaveCount(0);
+  });
+
+  test("an owner whose notes are full is told how many are kept in groups", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/groups": GROUPS,
+      "GET /api/files": OWN_FILES,
+      "GET /api/notes": { ...OWN_NOTES, canAdd: false, inGroups: 12 },
+    });
+    await page.goto("/vault");
+    await expect(page.getByText("บิลค่าไฟ.pdf")).toBeVisible();
+    await page.getByRole("button", { name: "เพิ่มโน้ต", exact: true }).click();
+    await expect(page.getByText(/นับรวมโน้ตในกลุ่มของคุณ 12 รายการ/)).toBeVisible();
   });
 });

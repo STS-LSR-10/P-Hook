@@ -37,12 +37,22 @@ describe("parseGroupCommand", () => {
     ["ถามพี่ฮูก แปลว่าอะไร", { kind: "owl", question: "แปลว่าอะไร" }],
     ["พี่ฮูก ช่วยคิดหน่อย", { kind: "owl", question: "ช่วยคิดหน่อย" }],
     ["ถามพี่ฮูก", { kind: "owl", question: "" }],
+    ["โน้ต ซื้อน้ำแข็ง 2 ถุง", { kind: "note-add", body: "ซื้อน้ำแข็ง 2 ถุง" }],
+    ["โน๊ต รหัสไวไฟ\nabc", { kind: "note-add", body: "รหัสไวไฟ\nabc" }],
+    ["โน้ตกลุ่ม", { kind: "note-list", term: null }],
+    ["ค้นหาโน้ต ไวไฟ", { kind: "note-list", term: "ไวไฟ" }],
+    ["หาโน้ต ไวไฟ", { kind: "note-list", term: "ไวไฟ" }],
+    ["โน้ต ค้นหา ไวไฟ", { kind: "note-list", term: "ไวไฟ" }],
   ])("group extras: %s", (input, expected) => {
     expect(parseGroupCommand(input)).toEqual(expected);
   });
 
   it("ordinary chat that only starts like an extra stays quiet", () => {
     expect(parseGroupCommand("เก็บไว้ก่อนนะ")).toBeNull();
+    expect(parseGroupCommand("โน้ตบุ๊กพังอีกแล้ว")).toBeNull();
+    // "โน้ต" is a common nickname: calling a friend is not a command
+    expect(parseGroupCommand("โน้ต")).toBeNull();
+    expect(parseGroupCommand("โน๊ต")).toBeNull();
     expect(parseGroupCommand("ฮูกกี้ น่ารัก")).toBeNull();
     expect(parseGroupCommand("เตือนแล้วนะ")).toBeNull();
     expect(parseGroupCommand("ไฟล์อยู่ไหน")).toBeNull();

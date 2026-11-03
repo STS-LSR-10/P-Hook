@@ -54,6 +54,8 @@ export type GroupCommand =
   | { kind: "remind-list" }
   | { kind: "remind-cancel"; index: number }
   | { kind: "owl"; question: string }
+  | { kind: "note-add"; body: string }
+  | { kind: "note-list"; term: string | null }
   | TripCommand
   | BillCommand;
 
@@ -89,8 +91,8 @@ export function parseGroupCommand(input: string): GroupCommand | null {
 }
 
 /**
- * Files, reminders and พี่ฮูก in a group. Each needs its own words in front ("เก็บไฟล์", "เตือน " with a
- * space, "ฮูก " ...), so a chat that merely starts the same way ("เตือนแล้วนะ", "ฮูกกี้") is not one.
+ * Files, reminders, notes and พี่ฮูก in a group. Each needs its own words in front ("เก็บไฟล์", "เตือน "
+ * or "โน้ต " with a space, "ฮูก " ...), so a chat that merely starts the same way ("เตือนแล้วนะ", "ฮูกกี้") is not one.
  */
 function parseGroupExtra(text: string, one: string): GroupCommand | null {
   if (["เก็บไฟล์", "เก็บรูป"].includes(one)) return { kind: "file-keep", name: null };
@@ -109,6 +111,14 @@ function parseGroupExtra(text: string, one: string): GroupCommand | null {
   }
   const remind = /^เตือน\s+([\s\S]+)$/.exec(text);
   if (remind?.[1]?.trim()) return { kind: "remind-add", text: remind[1].trim() };
+
+  // never "โน้ต" alone: it is a common nickname, and calling a friend is not a command
+  if (["โน้ตกลุ่ม", "โน๊ตกลุ่ม", "โน้ตทั้งหมด"].includes(one))
+    return { kind: "note-list", term: null };
+  const noteFind = /^(?:ค้นหา\s*โน[้๊็]ต|หาโน[้๊็]ต|โน[้๊็]ต\s+ค้นหา)\s+([\s\S]+)$/.exec(text);
+  if (noteFind?.[1]?.trim()) return { kind: "note-list", term: noteFind[1].trim() };
+  const note = /^โน[้๊็]ต\s+([\s\S]+)$/.exec(text);
+  if (note?.[1]?.trim()) return { kind: "note-add", body: note[1].trim() };
 
   if (["ถามพี่ฮูก", "ถามฮูก", "พี่ฮูก", "ฮูก"].includes(one)) return { kind: "owl", question: "" };
   const ask = /^(?:ถาม)?(?:พี่)?ฮูก\s+([\s\S]+)$/.exec(text);

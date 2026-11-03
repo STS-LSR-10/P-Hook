@@ -147,6 +147,13 @@ vi.mock("@/lib/user-reminder-repo", async (original) => ({
     ended.push({ groupId, exceptOwner });
   },
 }));
+const movedNotes: { groupId: string; owner: string }[] = [];
+vi.mock("@/lib/note-repo", async (original) => ({
+  ...(await original<typeof import("@/lib/note-repo")>()),
+  moveGroupNotes: async (_db: unknown, groupId: string, owner: string) => {
+    movedNotes.push({ groupId, owner });
+  },
+}));
 vi.mock("@/lib/fx-repo", () => ({
   getRate: async () => fxAnswer,
 }));
@@ -203,6 +210,7 @@ beforeEach(() => {
   closed.length = 0;
   upserts.length = 0;
   ended.length = 0;
+  movedNotes.length = 0;
 });
 
 describe("the bot joining and leaving", () => {
@@ -278,6 +286,8 @@ describe("เปิดสมุดกลุ่ม", () => {
     expect(opened).toEqual([{ lineGroupId: GID, owner: "app-Uother" }]);
     // the old owner's group reminders stop; the new owner's own stay
     expect(ended).toEqual([{ groupId: "g1", exceptOwner: "app-Uother" }]);
+    // the group's notes go with the ledger, onto the new owner's limit
+    expect(movedNotes).toEqual([{ groupId: "g1", owner: "app-Uother" }]);
   });
 
   it("an owner of five ledgers cannot open a sixth", async () => {

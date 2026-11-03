@@ -11,6 +11,14 @@ import { saveFile, type FileOwner, type SaveFailure } from "@/lib/file-save";
 import type { GroupRow } from "@/lib/group";
 import { loadGroupOwlFacts, renderGroupOwlContext } from "@/lib/group-owl-context";
 import { log, safeMessage } from "@/lib/log";
+import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
+import {
+  countNotes,
+  createNote,
+  deleteGroupNote,
+  getGroupNote,
+  listGroupNotes,
+} from "@/lib/note-repo";
 import { effectivePlan, OWL_LIMIT, type Plan } from "@/lib/plan";
 import { LIMITS } from "@/lib/rate-limit";
 import { looksSecret } from "@/lib/secret-text";
@@ -34,6 +42,10 @@ import {
   GROUP_FILE_EMPTY_TEXT,
   GROUP_FILE_SEND_NOW_TEXT,
   GROUP_NO_USER_TEXT,
+  GROUP_NOTE_DENIED_TEXT,
+  GROUP_NOTE_EMPTY_TEXT,
+  GROUP_NOTE_GONE_TEXT,
+  GROUP_NOTE_SECRET_TEXT,
   GROUP_OWL_USAGE_TEXT,
   GROUP_PAUSED_TEXT,
   GROUP_REMIND_DENIED_TEXT,
@@ -51,9 +63,16 @@ import {
   groupFileFullText,
   groupFileListText,
   groupFileNotFoundText,
+  groupNoteFullText,
+  groupNoteNotFoundText,
+  groupNoteSavedText,
   groupOwlQuotaText,
   groupReminderFullText,
   groupRemindCancelledText,
+  NOTE_EMPTY_TEXT,
+  NOTE_TOO_LONG_TEXT,
+  NOTE_UNDONE_TEXT,
+  noteListText,
   text,
 } from "./messages";
 import { buildReminderCard } from "./reminder-flex";
@@ -91,6 +110,7 @@ const ownerPlan = (ctx: GroupExtraContext, owner: FileOwner) =>
 // the vault and reminders pages, switched to this group
 const groupFilesPath = (ctx: GroupExtraContext) => `/vault?g=${ctx.group.id}`;
 const groupRemindersPath = (ctx: GroupExtraContext) => `/reminders?g=${ctx.group.id}`;
+const groupNotesPath = (ctx: GroupExtraContext) => `/vault?g=${ctx.group.id}&tab=note`;
 const openUrlOf = (ctx: GroupExtraContext) => (id: string) =>
   ctx.pageUrl(`${groupFilesPath(ctx)}&open=${id}`);
 
@@ -284,6 +304,72 @@ export async function cancelGroupReminderById(
   if (!ctx.isOwner && target.createdBy !== ctx.userId) return [text(GROUP_REMIND_DENIED_TEXT)];
   const gone = await cancelGroupReminder(ctx.db, ctx.group.id, id);
   return [text(gone ? groupRemindCancelledText(target.body) : GROUP_REMIND_GONE_TEXT)];
+}
+
+// ───────────── notes ─────────────
+
+const MAX_NOTES_SHOWN = 5;
+
+/** "โน้ต ซื้อน้ำแข็ง": a note for the group, on the owner's note limit. */
+export async function addGroupNote(ctx: GroupExtraContext, raw: string): Promise<LineMessage[]> {
+  const body = cleanNoteBody(raw);
+  if (!body) return [text(NOTE_EMPTY_TEXT)];
+  if (body.length > MAX_NOTE_LENGTH) return [text(NOTE_TOO_LONG_TEXT(MAX_NOTE_LENGTH))];
+  if (!ctx.userId) return [text(GROUP_NO_USER_TEXT)];
+  const owner = ownerOf(ctx);
+  if (!ctx.writable || !owner) return [text(GROUP_PAUSED_TEXT)];
+
+  const limit = noteCapacity(ownerPlan(ctx, owner));
+  if ((await countNotes(ctx.db, owner.id)) >= limit) return [text(groupNoteFullText(limit))];
+  const note = await createNote(ctx.db, owner.id, body, {
+    groupId: ctx.group.id,
+    createdBy: ctx.userId,
+  });
+  const saved = groupNoteSavedText(noteTitle(body, 60), ctx.pageUrl(groupNotesPath(ctx)));
+  return [
+    {
+      ...text(looksSecret(body) ? `${saved}\n\n${GROUP_NOTE_SECRET_TEXT}` : saved),
+      quickReply: {
+        items: [
+          {
+            type: "action",
+            action: {
+              type: "postback",
+              label: "↩️ ยกเลิกโน้ตนี้",
+              data: `a=gntx&id=${note.id}`,
+              displayText: "ยกเลิกโน้ตนี้",
+            },
+          },
+        ],
+      },
+    },
+  ];
+}
+
+/** "โน้ตกลุ่ม" / "หาโน้ต …": the group's latest notes, or those that hold `term`. */
+export async function listGroupNotesText(
+  ctx: GroupExtraContext,
+  term: string | null,
+): Promise<LineMessage[]> {
+  const { items, hasMore } = await listGroupNotes(ctx.db, ctx.group.id, {
+    q: term ?? undefined,
+    limit: MAX_NOTES_SHOWN,
+  });
+  if (items.length === 0) {
+    return [text(term ? groupNoteNotFoundText(term) : GROUP_NOTE_EMPTY_TEXT)];
+  }
+  const title = term ? `โน้ตของกลุ่มที่มี "${term}"` : "โน้ตล่าสุดของกลุ่ม";
+  return [text(noteListText(title, items, ctx.pageUrl(groupNotesPath(ctx)), hasMore))];
+}
+
+/** "↩️ ยกเลิกโน้ตนี้": whoever wrote it, or the owner, may remove it. */
+export async function undoGroupNote(ctx: GroupExtraContext, id: string): Promise<LineMessage[]> {
+  if (!ctx.userId) return [text(GROUP_NO_USER_TEXT)];
+  const note = id ? await getGroupNote(ctx.db, ctx.group.id, id) : null;
+  if (!note) return [text(GROUP_NOTE_GONE_TEXT)];
+  if (!ctx.isOwner && note.createdBy !== ctx.userId) return [text(GROUP_NOTE_DENIED_TEXT)];
+  const gone = await deleteGroupNote(ctx.db, ctx.group.id, id);
+  return [text(gone ? NOTE_UNDONE_TEXT : GROUP_NOTE_GONE_TEXT)];
 }
 
 // ───────────── พี่ฮูก ─────────────
