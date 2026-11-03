@@ -22,7 +22,7 @@ setLocaleSource(() => scope.getStore()?.locale);
 
 /** Run with a scope whose zone and currency are set later, when the person is known. */
 export function withZoneScope<T>(fn: () => T): T {
-  return scope.run({ zone: null, currency: null }, fn);
+  return scope.run({ zone: null, currency: null, locale: null }, fn);
 }
 
 /** Run in that zone and currency (ones we do not offer are Bangkok and the baht). */

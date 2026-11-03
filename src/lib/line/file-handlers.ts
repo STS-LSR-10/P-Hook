@@ -60,7 +60,8 @@ const NAME_BUTTON = {
         label: t("✏️ ตั้งชื่อใหม่"),
         data: "a=compose-go",
         inputOption: "openKeyboard",
-        fillInText: t("ชื่อไฟล์ "),
+        // a command the bot reads: stays Thai
+        fillInText: "ชื่อไฟล์ ",
       },
     },
   ],
@@ -213,7 +214,7 @@ export async function runFileSearch(
   const messages: LineMessage[] = [];
   if (notes.items.length > 0) {
     const url = deps.pageUrl(`/notes?q=${encodeURIComponent(term)}`);
-    messages.push(text(noteListText(t("โน้ตที่มี \"{0}\"", term), notes.items, url, notes.hasMore)));
+    messages.push(text(noteListText(t('โน้ตที่มี "{0}"', term), notes.items, url, notes.hasMore)));
   }
   if (files.items.length > 0) messages.push(buildFileResults(files.items, openUrlOf(deps)));
   return messages.length > 0 ? messages : [text(fileNotFoundText(term))];

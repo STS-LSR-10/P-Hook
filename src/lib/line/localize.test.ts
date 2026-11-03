@@ -1,8 +1,20 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { setLocaleSource } from "@/lib/i18n";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { loadTimePhrases, setLocaleSource } from "@/lib/i18n";
 import { localizeMessages } from "./localize";
 
 afterEach(() => setLocaleSource(null));
+// the app's own fixed phrases (in the bot they are made when the code loads)
+beforeAll(() => {
+  for (const p of [
+    "บันทึกแล้ว",
+    "ยกเลิก",
+    "บันทึก",
+    "ลบแล้ว",
+    "บันทึกไม่สำเร็จ ลองใหม่อีกครั้งนะ",
+  ]) {
+    loadTimePhrases.add(p);
+  }
+});
 
 const card = {
   type: "flex",
@@ -81,5 +93,43 @@ describe("the AI answers in the person's language", () => {
     ).not.toContain("Answer in English.");
     setLocaleSource(null);
     expect(owlUserPrompt({ question: "x", data: null } as never)).not.toContain("English");
+  });
+});
+
+describe("sending in English stays within LINE's rules and leaves the person's own words", () => {
+  it("a quick-reply label fits LINE's 20 characters, any other label its 40", () => {
+    setLocaleSource(() => "en");
+    const [out] = localizeMessages([
+      {
+        type: "text",
+        text: "x",
+        quickReply: {
+          items: [
+            { type: "action", action: { type: "message", label: "📷 จดแบบพิเศษ", text: "a" } },
+          ],
+        },
+      },
+    ]) as unknown as [{ quickReply: { items: { action: { label: string } }[] } }];
+    expect([...(out.quickReply.items[0]?.action.label ?? "")].length).toBeLessThanOrEqual(20);
+  });
+
+  it("text that is not one of the app's fixed phrases is left as written: the person's own words", () => {
+    setLocaleSource(() => "en");
+    loadTimePhrases.add("เงินสด"); // the wallet kind's name is also a fixed phrase, but a wallet's name too
+    expect(localizeMessages([{ type: "text", text: "เงินสด" }])).toEqual([
+      { type: "text", text: "เงินสด" },
+    ]);
+    // a sentence is still the app's own words
+    expect(localizeMessages([{ type: "text", text: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้งนะ" }])).toEqual(
+      [{ type: "text", text: "Couldn't save. Please try again" }],
+    );
+  });
+
+  it("every help chip still fits in English", async () => {
+    const { HELP_TOPICS } = await import("./help-flex");
+    const { EN } = await import("@/lib/i18n-en");
+    for (const topic of HELP_TOPICS) {
+      expect([...(EN[topic.chip] ?? topic.chip)].length, topic.chip).toBeLessThanOrEqual(20);
+    }
   });
 });

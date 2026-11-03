@@ -1,6 +1,7 @@
-import { currentLocale } from "@/lib/i18n";
+import { currentLocale, loadTimePhrases } from "@/lib/i18n";
 import { EN } from "@/lib/i18n-en";
 import type { LineMessage } from "@/lib/types";
+import { WALLET_KIND_LABEL } from "@/lib/wallet";
 
 /** Words the person reads: these fields of a message or card, when they are text. */
 const SHOWN = new Set(["text", "altText", "label", "displayText", "title"]);
@@ -26,10 +27,32 @@ function walk(node: unknown, isMessageAction: boolean): unknown {
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === "string") {
       const keep = key === "text" && (messageAction || isMessageAction);
-      out[key] = SHOWN.has(key) && !keep ? (EN[value] ?? value) : value;
+      out[key] = SHOWN.has(key) && !keep ? translated(key, value) : value;
     } else {
       out[key] = walk(value, messageAction);
     }
   }
   return out;
+}
+
+/**
+ * Words that are also names people keep: a wallet is created with its kind's name ("เงินสด"), and
+ * typed back as @name, so it is never translated.
+ */
+const NAMES = new Set<string>(Object.values(WALLET_KIND_LABEL));
+
+/** A label LINE accepts: 20 characters in a quick reply, 40 on a button (its longest). */
+const LABEL_MAX = 20;
+
+/**
+ * The English for one field. Shown text is translated only when it is one of the app's own fixed
+ * phrases (made when the code loaded): a wallet, a category or an entry's title the person wrote stays
+ * as written even when it happens to match a phrase. A label is the app's own, kept short for LINE.
+ */
+function translated(key: string, value: string): string {
+  if ((key === "text" || key === "altText") && (!loadTimePhrases.has(value) || NAMES.has(value))) {
+    return value;
+  }
+  const en = EN[value] ?? value;
+  return key === "label" && en !== value ? [...en].slice(0, LABEL_MAX).join("") : en;
 }

@@ -51,13 +51,32 @@ type Value = string | number | null | undefined;
 const fill = (text: string, values: readonly Value[]) =>
   values.length === 0
     ? text
-    : text.replace(/\{(\d+)\}/g, (m, i) => (Number(i) < values.length ? String(values[Number(i)]) : m));
+    : text.replace(/\{(\d+)\}/g, (m, i) =>
+        Number(i) < values.length ? String(values[Number(i)]) : m,
+      );
 
 /**
  * The words in the person's language: `th` as written, or its English. "{0}", "{1}" in it are
  * replaced by `values`. A phrase with no English yet stays Thai (never blank).
  */
+/**
+ * The phrases made when the server's code loads, before anyone's language is known (constants of
+ * messages and cards). They are the ones translated as the bot sends them; anything else shown as
+ * text, such as a wallet or an entry's title the person wrote, is left as it is.
+ */
+export const loadTimePhrases = new Set<string>();
+
 export function t(th: string, ...values: Value[]): string {
+  if (typeof window === "undefined" && values.length === 0) {
+    let source: string | null | undefined;
+    try {
+      source = localeSource?.();
+    } catch {
+      source = undefined;
+    }
+    // no request at all (undefined), not a request in Thai (null)
+    if (source === undefined) loadTimePhrases.add(th);
+  }
   const text = currentLocale() === "en" ? (EN[th] ?? th) : th;
   return fill(text, values);
 }
