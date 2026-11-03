@@ -9,7 +9,7 @@ import {
 import { calendarMonthRange, cycleRange, dayRange } from "@/lib/budget-cycle";
 import { categorizeByRules, matchLeadingCategory, type CategoryLite } from "@/lib/categorize/rules";
 import { parseCommand, type Command } from "@/lib/commands";
-import { formatBaht, money, satangToString, toSatang } from "@/lib/money";
+import { currentCurrency, formatBaht, money, satangToString, toSatang } from "@/lib/money";
 import {
   CONFIRM_THRESHOLD,
   LARGE_AMOUNT_SATANG,
@@ -756,7 +756,12 @@ async function handleText(
   }
 
   if (entries.length === 0) return [notUnderstood()];
-  // "ราเมน 1500 JPY": convert to baht first (Elite); everything after sees plain baht entries
+  // an amount in the book's own currency ("4 USD" in a dollar book) is not foreign, on any plan
+  const home = currentCurrency();
+  entries = entries.map((e) =>
+    e.foreign?.currency === home ? { ...e, amountSatang: e.foreign.minor, foreign: null } : e,
+  );
+  // "ราเมน 1500 JPY": convert to the book's currency first (Elite); everything after sees plain entries
   if (entries.some((e) => e.foreign)) {
     if (!can(plan, "foreignCurrency")) return [text(FX_LOCKED_TEXT)];
     const converted = await convertForeignEntries(entries, deps);

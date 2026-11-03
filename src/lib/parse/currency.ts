@@ -1,3 +1,4 @@
+import { currentCurrency } from "@/lib/money";
 import { parseAmountToSatang } from "./thai-number";
 
 /** Currencies the rate source (Frankfurter, ECB reference rates) knows. */
@@ -84,6 +85,12 @@ const BEFORE_RE = new RegExp(
   "i",
 );
 const SYMBOL_RE = /([+\-−–])?\s*([$€£¥₩])\s*(\d(?:[\d,]*\d)?(?:\.\d+)?)/;
+// the baht, which is foreign only in a book kept in another currency: 60 บาท · 60 baht · ฿60
+const BAHT_AFTER_RE = new RegExp(
+  String.raw`([+\-−–])?\s*${NUMBER}\s*(?:บาท|บ\.|baht|thb)${NOT_LETTER_AFTER}`,
+  "i",
+);
+const BAHT_BEFORE_RE = /([+\-−–])?\s*฿\s*(\d(?:[\d,]*\d)?(?:\.\d+)?)/;
 
 export interface ForeignAmount {
   /** ISO code, upper case. */
@@ -129,6 +136,14 @@ export function extractForeign(
       text: `${line.slice(0, index)} ${line.slice(index + length)}`.replace(/\s+/g, " ").trim(),
     };
   };
+
+  if (currentCurrency() !== "THB") {
+    const baht = BAHT_AFTER_RE.exec(line) ?? BAHT_BEFORE_RE.exec(line);
+    if (baht?.[2]) {
+      const found = hit(baht.index, baht[0].length, baht[1], "THB", baht[2]);
+      if (found) return { ...found, foreign: { ...found.foreign, supported: true } };
+    }
+  }
 
   const after = AFTER_RE.exec(line);
   if (after?.[2] && after[3]) {

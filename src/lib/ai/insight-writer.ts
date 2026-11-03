@@ -1,4 +1,4 @@
-import { formatBaht } from "@/lib/money";
+import { currentCurrency, formatBaht } from "@/lib/money";
 import type { Insight, InsightFacts } from "@/lib/insight";
 import { chooseInsight } from "@/lib/insight";
 import { log, safeMessage } from "@/lib/log";
@@ -63,7 +63,7 @@ export function insightPrompt(f: InsightFacts): string {
     JSON.stringify(JSON_SCHEMA),
     "Rules:",
     "- 2 to 4 observations, each at most 120 characters, plain friendly Thai, no emoji.",
-    "- Use ONLY numbers that appear in the facts (amounts in baht, percents, counts, or a difference",
+    `- Use ONLY numbers that appear in the facts (amounts in ${currentCurrency()}, percents, counts, or a difference`,
     "  between two of them). Never invent, round or estimate a number.",
     "- Only mention categories and items that appear in the facts.",
     "- Neutral tone: no blame, no shaming. Notice rises, falls and habits worth knowing about.",

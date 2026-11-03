@@ -1,4 +1,5 @@
 import { can, type Plan } from "@/lib/plan";
+import { currencySymbol } from "@/lib/money";
 
 // ───────────────────────── card colour themes ─────────────────────────
 
@@ -287,29 +288,33 @@ export function dailyOverLines(persona: PersonaId): ((v: DailyVars) => string)[]
   switch (persona) {
     case "friendly":
       return [
-        (v) => `เพื่อนนน วันนี้เกินงบแล้วนะ ใช้ไป ฿${v.spent} จาก ฿${v.limit} (เกิน ฿${v.over}) 😅`,
-        (v) => `โอ๊ย กระเป๋าร้องแล้ว วันนี้เกิน ฿${v.over} พรุ่งนี้ผ่อนหน่อยน้า`,
-        (v) => `งบวันนี้ ฿${v.limit} หมดแล้วนะ เกินมา ฿${v.over} ไว้พรุ่งนี้ค่อยสู้ใหม่`,
-        (v) => `เอ้า เกินงบวันนี้ ฿${v.over} แล้ว (฿${v.spent}) เลี้ยงข้าวเค้าชดเชยด้วย 😆`,
+        (v) =>
+          `เพื่อนนน วันนี้เกินงบแล้วนะ ใช้ไป ${currencySymbol()}${v.spent} จาก ${currencySymbol()}${v.limit} (เกิน ${currencySymbol()}${v.over}) 😅`,
+        (v) => `โอ๊ย กระเป๋าร้องแล้ว วันนี้เกิน ${currencySymbol()}${v.over} พรุ่งนี้ผ่อนหน่อยน้า`,
+        (v) =>
+          `งบวันนี้ ${currencySymbol()}${v.limit} หมดแล้วนะ เกินมา ${currencySymbol()}${v.over} ไว้พรุ่งนี้ค่อยสู้ใหม่`,
+        (v) =>
+          `เอ้า เกินงบวันนี้ ${currencySymbol()}${v.over} แล้ว (${currencySymbol()}${v.spent}) เลี้ยงข้าวเค้าชดเชยด้วย 😆`,
       ];
     case "strict":
       return [
         (v) =>
-          `เกินงบวันนี้แล้ว! ใช้ไป ฿${v.spent} จาก ฿${v.limit} (เกิน ฿${v.over}) หยุดใช้ได้แล้ว!`,
-        (v) => `ไหนบอกจะคุมไง! วันนี้เกินงบ ฿${v.over} แล้วนะ 😤`,
+          `เกินงบวันนี้แล้ว! ใช้ไป ${currencySymbol()}${v.spent} จาก ${currencySymbol()}${v.limit} (เกิน ${currencySymbol()}${v.over}) หยุดใช้ได้แล้ว!`,
+        (v) => `ไหนบอกจะคุมไง! วันนี้เกินงบ ${currencySymbol()}${v.over} แล้วนะ 😤`,
         (v) =>
-          `เตือนแล้วนะ งบวันนี้ ฿${v.limit} หมด ตอนนี้เกิน ฿${v.over} งดซื้อของที่เหลือของวันนี้!`,
-        (v) => `วันนี้รูดเกินงบ ฿${v.over} (฿${v.spent}) พรุ่งนี้ห้ามพลาดอีกนะ!`,
-        (v) => `เกินอีกแล้ว ฿${v.over}! ตั้งสติก่อนจะกดซื้ออะไรต่อ`,
+          `เตือนแล้วนะ งบวันนี้ ${currencySymbol()}${v.limit} หมด ตอนนี้เกิน ${currencySymbol()}${v.over} งดซื้อของที่เหลือของวันนี้!`,
+        (v) =>
+          `วันนี้รูดเกินงบ ${currencySymbol()}${v.over} (${currencySymbol()}${v.spent}) พรุ่งนี้ห้ามพลาดอีกนะ!`,
+        (v) => `เกินอีกแล้ว ${currencySymbol()}${v.over}! ตั้งสติก่อนจะกดซื้ออะไรต่อ`,
       ];
     case "cheer":
       return [
         (v) =>
-          `วันนี้เกินงบไปนิด ฿${v.over} (฿${v.spent} จาก ฿${v.limit}) ไม่เป็นไรนะ พรุ่งนี้ทำได้ดีกว่านี้แน่ ✨`,
-        (v) => `ไม่เป็นไรเลย! เกินงบ ฿${v.over} แต่คุณจดครบทุกบาท เก่งมากแล้ว 👏`,
+          `วันนี้เกินงบไปนิด ${currencySymbol()}${v.over} (${currencySymbol()}${v.spent} จาก ${currencySymbol()}${v.limit}) ไม่เป็นไรนะ พรุ่งนี้ทำได้ดีกว่านี้แน่ ✨`,
+        (v) => `ไม่เป็นไรเลย! เกินงบ ${currencySymbol()}${v.over} แต่คุณจดครบทุกบาท เก่งมากแล้ว 👏`,
         (v) =>
-          `งบวันนี้ ฿${v.limit} เต็มแล้ว (เกิน ฿${v.over}) ขอบคุณที่ดูแลเงินตัวเองนะ พรุ่งนี้เริ่มใหม่ด้วยกัน 🌈`,
-        (v) => `เกินมา ฿${v.over} นิดเดียว คุณรู้ตัวเร็วแล้วนั่นแหละคือเก่ง 🌟`,
+          `งบวันนี้ ${currencySymbol()}${v.limit} เต็มแล้ว (เกิน ${currencySymbol()}${v.over}) ขอบคุณที่ดูแลเงินตัวเองนะ พรุ่งนี้เริ่มใหม่ด้วยกัน 🌈`,
+        (v) => `เกินมา ${currencySymbol()}${v.over} นิดเดียว คุณรู้ตัวเร็วแล้วนั่นแหละคือเก่ง 🌟`,
       ];
     default:
       return undefined;
@@ -320,13 +325,13 @@ export function dailyOverLines(persona: PersonaId): ((v: DailyVars) => string)[]
 export function dailyStillOverLine(persona: PersonaId, over: string): string {
   switch (persona) {
     case "friendly":
-      return `ยังเกินงบวันนี้อยู่ ฿${over} นะเพื่อน`;
+      return `ยังเกินงบวันนี้อยู่ ${currencySymbol()}${over} นะเพื่อน`;
     case "strict":
-      return `ยังเกินอยู่ ฿${over}! ยังจะใช้ต่ออีกเหรอ!`;
+      return `ยังเกินอยู่ ${currencySymbol()}${over}! ยังจะใช้ต่ออีกเหรอ!`;
     case "cheer":
-      return `ยังเกินงบอยู่ ฿${over} นิดหน่อย ค่อย ๆ ปรับกันนะ ✨`;
+      return `ยังเกินงบอยู่ ${currencySymbol()}${over} นิดหน่อย ค่อย ๆ ปรับกันนะ ✨`;
     default:
-      return `ยังเกินงบวันนี้อยู่ ฿${over}`;
+      return `ยังเกินงบวันนี้อยู่ ${currencySymbol()}${over}`;
   }
 }
 
