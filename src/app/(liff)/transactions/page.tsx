@@ -137,15 +137,20 @@ function EditFromChat({ id }: { id: string }) {
       setSent(true);
       return null;
     } catch (e) {
-      const code = e instanceof Error ? ((e as Error & { code?: string }).code ?? e.message) : "";
-      // where LINE thinks the page was opened from ("utou" is a 1:1 chat), to tell why it refused
+      const err = e instanceof Error ? (e as Error & { code?: string }) : null;
+      // LINE's own words, and where LINE thinks the page was opened from ("utou" is a 1:1 chat), to
+      // tell why it refused; "login" when this visit signed in again (a token not tied to the chat)
       let from = "";
+      let relogin = false;
       try {
         from = (await import("@line/liff")).default.getContext()?.type ?? "";
+        relogin = window.sessionStorage.getItem("jodtang-liff-login-at") !== null;
       } catch {
         /* leave it out */
       }
-      const why = [code, from].filter(Boolean).join(" · ");
+      const why = [err?.code, err?.message, from, relogin ? "login" : ""]
+        .filter(Boolean)
+        .join(" · ");
       return `${SEND_REFUSED}${why ? ` (${why})` : ""}`;
     }
   }
