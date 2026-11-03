@@ -95,11 +95,12 @@ export const chip = (
   color: string,
   action: unknown,
   width = "44px",
+  height = "40px",
 ) => ({
   type: "box",
   layout: "vertical",
   width,
-  height: "40px",
+  height,
   cornerRadius: "12px",
   backgroundColor: bg,
   justifyContent: "center",
@@ -120,8 +121,8 @@ export function payPill(label: string, selected: boolean, action?: unknown) {
     type: "box",
     layout: "vertical",
     flex: 1,
-    height: "38px",
-    cornerRadius: "19px",
+    height: "34px",
+    cornerRadius: "17px",
     paddingStart: "6px",
     paddingEnd: "6px",
     justifyContent: "center",
@@ -184,15 +185,16 @@ export function paymentRow(
   ].slice(0, PAY_ROW);
   if (add && pills.length < PAY_ROW) pills.push(payPill("＋ เพิ่มช่องทาง", false, add));
   // a short row keeps its pills a third wide: empty boxes take the rest
-  while (pills.length < PAY_ROW) pills.push({ type: "box", layout: "vertical", flex: 1, contents: [] });
+  while (pills.length < PAY_ROW)
+    pills.push({ type: "box", layout: "vertical", flex: 1, contents: [] });
   return [
     {
       type: "text",
       text: "จ่ายด้วย",
-      size: "sm",
+      size: "xs",
       weight: "bold",
       color: TINT_STRONG,
-      margin: "lg",
+      margin: "md",
     },
     { type: "box", layout: "horizontal", spacing: "sm", margin: "sm", contents: pills },
   ];
@@ -399,7 +401,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           text: input.edited ? "แก้ไขรายการสำเร็จ ✅" : "จดสำเร็จ ✅",
           weight: "bold",
           // the longer edit title is a notch smaller
-          size: input.edited ? "lg" : "xl",
+          size: input.edited ? "md" : "lg",
           color: "#0B5D4F",
           wrap: true,
         },
@@ -422,7 +424,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
     header.push({
       type: "image",
       url: input.logoUrl,
-      size: "60px",
+      size: "48px",
       aspectMode: "fit",
       flex: 0,
     });
@@ -439,17 +441,17 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           type: "box",
           layout: "vertical",
           backgroundColor: accent,
-          cornerRadius: "14px",
-          paddingTop: "4px",
-          paddingBottom: "4px",
-          paddingStart: "12px",
-          paddingEnd: "12px",
+          cornerRadius: "12px",
+          paddingTop: "2px",
+          paddingBottom: "2px",
+          paddingStart: "10px",
+          paddingEnd: "10px",
           flex: 0,
           contents: [
             {
               type: "text",
               text: TYPE_LABEL[input.type],
-              size: "sm",
+              size: "xs",
               weight: "bold",
               color: "#FFFFFF",
             },
@@ -459,23 +461,31 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           type: "text",
           text: `- ${category}`,
           weight: "bold",
-          size: "md",
+          size: "sm",
           color: "#14352E",
           flex: 1,
         },
-        chip("แชร์", accentSoft, accent, {
-          type: "uri",
-          label: "แชร์",
-          uri: `https://line.me/R/share?text=${encodeURIComponent(shareText(input))}`,
-        }),
+        chip(
+          "แชร์",
+          accentSoft,
+          accent,
+          {
+            type: "uri",
+            label: "แชร์",
+            uri: `https://line.me/R/share?text=${encodeURIComponent(shareText(input))}`,
+          },
+          "48px",
+          "30px",
+        ),
       ],
     },
     {
       type: "text",
-      text: formatThaiDate(input.occurredAt, true),
+      text: `${formatThaiDate(input.occurredAt, true)}${input.walletName ? ` · ${input.walletName}` : ""}`,
       size: "xs",
       color: COLOR.muted,
-      margin: "md",
+      margin: "sm",
+      wrap: true,
     },
     ...(input.fxNote
       ? [
@@ -488,9 +498,6 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
             wrap: true,
           },
         ]
-      : []),
-    ...(input.walletName
-      ? [{ type: "text", text: input.walletName, size: "xs", color: COLOR.muted, margin: "xs" }]
       : []),
     ...(input.tags && input.tags.length > 0
       ? [
@@ -515,7 +522,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           type: "text",
           text: input.title,
           weight: "bold",
-          size: "lg",
+          size: "md",
           color: "#1F2933",
           wrap: true,
           flex: 1,
@@ -524,7 +531,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
           type: "text",
           text: `${income ? "+" : ""}${amountText}`,
           weight: "bold",
-          size: "lg",
+          size: "md",
           color: accent,
           flex: 0,
         },
@@ -540,13 +547,22 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
                 data: `a=edit&id=${input.txId}`,
                 displayText: "แก้ไข",
               },
+          "36px",
+          "32px",
         ),
-        chip("🗑️", accentSoft, COLOR.expense, {
-          type: "postback",
-          label: "ลบ",
-          data: `a=del&id=${input.txId}`,
-          displayText: "ลบรายการ",
-        }),
+        chip(
+          "🗑️",
+          accentSoft,
+          COLOR.expense,
+          {
+            type: "postback",
+            label: "ลบ",
+            data: `a=del&id=${input.txId}`,
+            displayText: "ลบรายการ",
+          },
+          "36px",
+          "32px",
+        ),
       ],
     },
   ];
@@ -555,19 +571,19 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
     body.push(budgetBlock(input.budget, input.cycleLabel));
   } else if (total !== null) {
     body.push(
-      { type: "separator", margin: "lg" },
+      { type: "separator", margin: "md" },
       {
         type: "box",
         layout: "horizontal",
         spacing: "md",
-        margin: "lg",
+        margin: "md",
         alignItems: "center",
         contents: [
           {
             type: "text",
             text: category,
             weight: "bold",
-            size: "lg",
+            size: "md",
             color: "#14352E",
             wrap: true,
             flex: 1,
@@ -582,7 +598,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
                 type: "text",
                 text: `฿${formatBaht(total)}`,
                 weight: "bold",
-                size: "lg",
+                size: "md",
                 color: accent,
               },
               {
@@ -615,7 +631,7 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
         size: "xs",
         color: COLOR.muted,
         align: "end",
-        margin: "md",
+        margin: "sm",
       });
     }
   }
@@ -673,14 +689,14 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
         layout: "horizontal",
         alignItems: "center",
         backgroundColor: COLOR.primarySoft,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: header,
       },
       body: {
         type: "box",
         layout: "vertical",
         backgroundColor: COLOR.surface,
-        paddingAll: "16px",
+        paddingAll: "12px",
         contents: body,
       },
       ...(input.photoButton
