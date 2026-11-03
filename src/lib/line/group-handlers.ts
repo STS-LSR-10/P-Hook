@@ -61,14 +61,17 @@ import {
 import { checkGroupSlip } from "./split-bill-slip";
 import { endGroupReminders } from "@/lib/user-reminder-repo";
 import {
+  addGroupNote,
   addGroupReminder,
   askOwlInGroup,
   cancelGroupReminderAt,
   cancelGroupReminderById,
   keepIfWaiting,
   listGroupFiles,
+  listGroupNotesText,
   listGroupRemindersText,
   startGroupKeep,
+  undoGroupNote,
   type GroupExtraContext,
 } from "./group-extras";
 import type { HandlerDeps, LineEvent } from "./handlers";
@@ -438,6 +441,8 @@ async function runGroupCommand(
     case "remind-add":
     case "remind-list":
     case "remind-cancel":
+    case "note-add":
+    case "note-list":
     case "owl": {
       const ctx: GroupExtraContext = {
         db,
@@ -455,6 +460,8 @@ async function runGroupCommand(
       if (command.kind === "remind-list") return reply(await listGroupRemindersText(ctx));
       if (command.kind === "remind-cancel")
         return reply(await cancelGroupReminderAt(ctx, command.index));
+      if (command.kind === "note-add") return reply(await addGroupNote(ctx, command.body));
+      if (command.kind === "note-list") return reply(await listGroupNotesText(ctx, command.term));
       return reply(await askOwlInGroup(ctx, command.question));
     }
 
@@ -765,6 +772,7 @@ async function handleGroupPostback(
     action !== "gdx" &&
     action !== "gtj" &&
     action !== "grmx" &&
+    action !== "gntx" &&
     !(action && BILL_POSTBACKS.has(action))
   )
     return;
@@ -772,12 +780,15 @@ async function handleGroupPostback(
   if (!userId) return reply([text(GROUP_NO_USER_TEXT)]);
   const { db } = deps;
 
-  // "ยกเลิกเตือนนี้" under a group's reminder
-  if (action === "grmx") {
+  // "ยกเลิกเตือนนี้" under a group's reminder, "ยกเลิกโน้ตนี้" under a group's note
+  if (action === "grmx" || action === "gntx") {
     const group = await getGroup(db, groupId);
     if (!group || !group.isActive) return reply([text(GROUP_NOT_OPEN_TEXT)]);
     const ctx = await extraContext(group, userId, deps);
-    return reply(await cancelGroupReminderById(ctx, params.get("id") ?? ""));
+    const id = params.get("id") ?? "";
+    return reply(
+      action === "grmx" ? await cancelGroupReminderById(ctx, id) : await undoGroupNote(ctx, id),
+    );
   }
 
   // the buttons on a split bill: join, close the list, cancel, my QR, got the money from …

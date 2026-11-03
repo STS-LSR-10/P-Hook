@@ -23,6 +23,9 @@ let owlRefunded = 0;
 let owlAllowed = true;
 let slipChecks = 0;
 const removed: string[] = [];
+let noteCount = 0;
+let notes: { id: string; body: string; createdBy: string | null; userId: string }[] = [];
+let noteCalls: { userId?: string; body?: string; group?: unknown; q?: string }[] = [];
 
 vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
@@ -123,6 +126,29 @@ vi.mock("@/lib/user-reminder-repo", () => ({
     return reminders.length < before;
   },
 }));
+vi.mock("@/lib/note-repo", () => ({
+  countNotes: async () => noteCount,
+  createNote: async (_db: unknown, userId: string, body: string, g?: unknown) => {
+    noteCalls.push({ userId, body, group: g });
+    return { id: "n-new", body, createdAt: NOW.toISOString(), updatedAt: NOW.toISOString() };
+  },
+  listGroupNotes: async (_db: unknown, groupId: string, options: { q?: string }) => {
+    noteCalls.push({ q: options.q });
+    const items = notes
+      .filter((n) => groupId === "g1" && (!options.q || n.body.includes(options.q)))
+      .map((n) => ({ ...n, createdAt: NOW.toISOString(), updatedAt: NOW.toISOString() }));
+    return { items, hasMore: false };
+  },
+  getGroupNote: async (_db: unknown, groupId: string, id: string) => {
+    const n = notes.find((x) => x.id === id && groupId === "g1");
+    return n ? { ...n, createdAt: NOW.toISOString(), updatedAt: NOW.toISOString() } : null;
+  },
+  deleteGroupNote: async (_db: unknown, _g: string, id: string) => {
+    const before = notes.length;
+    notes = notes.filter((n) => n.id !== id);
+    return notes.length < before;
+  },
+}));
 vi.mock("@/lib/usage", async (original) => ({
   ...(await original<typeof import("@/lib/usage")>()),
   takeUsage: async (_db: unknown, userId: string, kind: string) => {
@@ -198,6 +224,9 @@ beforeEach(() => {
   owlAllowed = true;
   slipChecks = 0;
   removed.length = 0;
+  noteCount = 0;
+  notes = [];
+  noteCalls = [];
 });
 
 describe("members leaving", () => {
@@ -398,5 +427,77 @@ describe("พี่ฮูก in a group", () => {
     await handleEvent(say("Uanna", "ฮูก สรุปเดือนนี้"), deps);
     expect(owlRefunded).toBe(1);
     expect(reply).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("notes in a group", () => {
+  it("are written for the group, on the owner's note limit", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("Uanna", "โน้ต ซื้อน้ำแข็ง 2 ถุง"), deps);
+    expect(noteCalls).toEqual([
+      {
+        userId: "app-owner",
+        body: "ซื้อน้ำแข็ง 2 ถุง",
+        group: { groupId: "g1", createdBy: "Uanna" },
+      },
+    ]);
+    const out = said(reply);
+    expect(out).toContain("จดโน้ตกลุ่มแล้ว");
+    expect(out).toContain("a=gntx&id=n-new");
+    expect(out).toContain("/vault?g=g1&tab=note");
+  });
+
+  it("warn that everyone in the group sees one that looks secret", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("Uanna", "โน้ต รหัสไวไฟ 12345678"), deps);
+    expect(said(reply)).toContain("ทุกคนในกลุ่มเห็นโน้ตนี้");
+  });
+
+  it("are refused when the owner's notes are full, or the owner is no longer on Elite", async () => {
+    noteCount = 2000;
+    const full = setup();
+    await handleEvent(say("Uanna", "โน้ต ซื้อนม"), full.deps);
+    expect(said(full.reply)).toContain("โน้ตของเจ้าของสมุดเต็ม 2,000 รายการแล้ว");
+
+    noteCount = 0;
+    ownerPlan = "free";
+    const paused = setup();
+    await handleEvent(say("Uanna", "โน้ต ซื้อนม"), paused.deps);
+    expect(noteCalls.filter((c) => c.body)).toEqual([]);
+  });
+
+  it("are listed and searched for anyone in the group", async () => {
+    notes = [
+      { id: "n1", body: "รหัสห้องประชุม", createdBy: "Uanna", userId: "app-owner" },
+      { id: "n2", body: "ซื้อน้ำแข็ง", createdBy: "Ubob", userId: "app-owner" },
+    ];
+    const all = setup();
+    await handleEvent(say("Ubob", "โน้ตกลุ่ม"), all.deps);
+    expect(said(all.reply)).toContain("ซื้อน้ำแข็ง");
+    expect(said(all.reply)).toContain("/vault?g=g1&tab=note");
+
+    const found = setup();
+    await handleEvent(say("Ubob", "หาโน้ต น้ำแข็ง"), found.deps);
+    expect(noteCalls.at(-1)).toEqual({ q: "น้ำแข็ง" });
+    expect(said(found.reply)).toContain("ซื้อน้ำแข็ง");
+    expect(said(found.reply)).not.toContain("รหัสห้องประชุม");
+
+    notes = [];
+    const none = setup();
+    await handleEvent(say("Ubob", "โน้ตกลุ่ม"), none.deps);
+    expect(said(none.reply)).toContain("กลุ่มนี้ยังไม่มีโน้ต");
+  });
+
+  it("are undone by whoever wrote them, or the owner", async () => {
+    notes = [{ id: "n1", body: "ซื้อนม", createdBy: "Uanna", userId: "app-owner" }];
+    const denied = setup();
+    await handleEvent(tap("Ubob", "a=gntx&id=n1"), denied.deps);
+    expect(said(denied.reply)).toContain("ลบได้เฉพาะคนที่จดโน้ตนี้");
+    expect(notes).toHaveLength(1);
+
+    const owner = setup();
+    await handleEvent(tap("Uowner", "a=gntx&id=n1"), owner.deps);
+    expect(said(owner.reply)).toContain("ยกเลิกโน้ตแล้ว");
+    expect(notes).toHaveLength(0);
   });
 });
