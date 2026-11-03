@@ -7,8 +7,21 @@ vi.mock("./user-reminder-repo", () => ({ claimDueReminders: async () => due }));
 let targets = new Map<string, { groupId: string | null; mentions: unknown[] }>();
 const late: unknown[] = [];
 let purged = 0;
+let targetsFail = false;
+let usageFail = false;
+vi.mock("@/lib/group-repo", () => ({
+  getGroup: async () => ({
+    id: "g-from-line",
+    lineGroupId: "Cg",
+    ownerUserId: "u1",
+    isActive: true,
+  }),
+}));
 vi.mock("./group-reminder-repo", () => ({
-  reminderTargets: async () => targets,
+  reminderTargets: async () => {
+    if (targetsFail) throw new Error("db down");
+    return targets;
+  },
   addLateReminder: async (_db: unknown, input: unknown) => {
     late.push(input);
   },
@@ -27,6 +40,7 @@ vi.mock("./usage", async (original) => ({
     amount: number,
     limit: number,
   ) => {
+    if (usageFail) throw new Error("db down");
     if (kind !== "group_push" || pushUsed + amount > limit) return false;
     pushUsed += amount;
     return true;
@@ -58,6 +72,8 @@ beforeEach(() => {
   purged = 0;
   pushUsed = 0;
   refunds.length = 0;
+  targetsFail = false;
+  usageFail = false;
 });
 
 describe("runUserReminders", () => {
@@ -151,7 +167,7 @@ describe("runUserReminders", () => {
       expect(sentText(l.push.mock.calls[0] ?? [])).toBe(
         "⏰ เตือนจากกลุ่ม “ทีมงาน”: บอกให้ @bot1 ส่งงานด้วย",
       );
-      expect(pushUsed).toBe(0);
+      expect(pushUsed).toBe(1); // one message, to the one person
       expect(out.sent).toBe(1);
     });
 
@@ -204,6 +220,64 @@ describe("runUserReminders", () => {
       await runUserReminders({} as SupabaseClient, l as never, NOW);
       expect(refunds).toEqual([20]);
       expect(late).toHaveLength(1);
+    });
+
+    it("counts each person reached against the same 300 a month", async () => {
+      pushUsed = 299;
+      due = [group()];
+      targets = new Map([
+        [
+          "r1",
+          {
+            groupId: "g1",
+            mentions: [
+              { label: "@bot1", userId: "U9" },
+              { label: "@bot2", userId: "U8" },
+            ],
+          },
+        ],
+      ]);
+      const l = line(["U9", "U8"], 20);
+      await runUserReminders({} as SupabaseClient, l as never, NOW);
+      // one more fits: the second person and the group are past the allowance, so it waits
+      expect(l.push.mock.calls.map((c) => c[0])).toEqual(["U9"]);
+      expect(pushUsed).toBe(300);
+      expect(late).toHaveLength(1);
+    });
+
+    it("still sends the personal ones when the group details cannot be read", async () => {
+      targetsFail = true;
+      due = [r(), group({ id: "r2", body: "ประชุม" })];
+      const l = line([], 5);
+      const out = await runUserReminders({} as SupabaseClient, l as never, NOW);
+      expect(l.push.mock.calls.map((c) => c[0])).toEqual(["U1", "Cg"]);
+      expect(out.sent).toBe(2);
+    });
+
+    it("waits instead of being lost when the allowance cannot be read", async () => {
+      usageFail = true;
+      due = [group({ body: "ประชุม" })];
+      targets = new Map([["r1", { groupId: "g1", mentions: [] }]]);
+      const l = line([], 20);
+      const out = await runUserReminders({} as SupabaseClient, l as never, NOW);
+      expect(l.push).not.toHaveBeenCalled();
+      expect(late).toHaveLength(1);
+      expect(out.late).toBe(1);
+    });
+
+    it("tries plain text only when LINE refused the tagged form", async () => {
+      due = [group()];
+      targets = new Map([["r1", { groupId: "g1", mentions: [{ label: "@All", all: true }] }]]);
+      const refused = line([], 5);
+      refused.push.mockRejectedValueOnce(new Error("LINE push failed: 400"));
+      await runUserReminders({} as SupabaseClient, refused as never, NOW);
+      expect(refused.push).toHaveBeenCalledTimes(2);
+
+      due = [group()];
+      const down = line([], 5);
+      down.push.mockRejectedValueOnce(new Error("LINE push failed: 500"));
+      await runUserReminders({} as SupabaseClient, down as never, NOW);
+      expect(down.push).toHaveBeenCalledTimes(1);
     });
 
     it("forgets reminders whose 12 hours of waiting are over", async () => {

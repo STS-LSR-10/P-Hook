@@ -29,6 +29,8 @@ let owlRefunded = 0;
 let owlAllowed = true;
 let slipChecks = 0;
 const removed: string[] = [];
+let ridersTaken = 0;
+let takenWhenListed = -1;
 let riders: {
   body: string;
   repeat: string | null;
@@ -140,8 +142,10 @@ vi.mock("@/lib/user-reminder-repo", () => ({
       category: null,
     };
   },
-  listGroupReminders: async (_db: unknown, groupId: string) =>
-    reminders.filter((r) => r.groupId === groupId),
+  listGroupReminders: async (_db: unknown, groupId: string) => {
+    takenWhenListed = ridersTaken;
+    return reminders.filter((r) => r.groupId === groupId);
+  },
   cancelGroupReminder: async (_db: unknown, groupId: string, id: string) => {
     const before = reminders.length;
     reminders = reminders.filter((r) => !(r.id === id && r.groupId === groupId));
@@ -150,6 +154,7 @@ vi.mock("@/lib/user-reminder-repo", () => ({
 }));
 vi.mock("@/lib/group-reminder-repo", () => ({
   takeGroupRiders: async () => {
+    ridersTaken += 1;
     const out = riders;
     riders = [];
     return out;
@@ -258,6 +263,7 @@ beforeEach(() => {
   slipChecks = 0;
   removed.length = 0;
   riders = [];
+  ridersTaken = 0;
   lateAdded = [];
   noteCount = 0;
   notes = [];
@@ -642,10 +648,29 @@ describe("a group's reminder riding on a message", () => {
 
     riders = [due()];
     const broken = setup();
-    broken.reply.mockRejectedValue(new Error("LINE reply failed: 500"));
+    broken.reply.mockRejectedValue(new Error("LINE reply failed: 400"));
     await handleEvent(say("Ubob", "ok"), broken.deps);
+    expect(broken.reply).toHaveBeenCalledTimes(2);
     expect(lateAdded).toHaveLength(1);
     expect(lateAdded[0]).toMatchObject({ groupId: "g1", body: "บอกให้ @bot1 ส่งงานด้วย" });
+  });
+
+  it("is taken only when the answer is about to go, so a slow answer that dies loses nothing", async () => {
+    riders = [due()];
+    const { deps } = setup();
+    await handleEvent(say("Ubob", "เตือนกลุ่ม"), deps);
+    // nothing was taken while the command was worked out; once, just before the answer went
+    expect(takenWhenListed).toBe(0);
+    expect(ridersTaken).toBe(1);
+  });
+
+  it("is not sent again as plain text when the answer failed for another reason", async () => {
+    riders = [due()];
+    const { deps, reply } = setup();
+    reply.mockRejectedValue(new Error("LINE reply failed: 500"));
+    await handleEvent(say("Ubob", "ok"), deps);
+    expect(reply).toHaveBeenCalledTimes(1);
+    expect(lateAdded).toHaveLength(1);
   });
 
   it("leaves ordinary chat unanswered when nothing is due", async () => {

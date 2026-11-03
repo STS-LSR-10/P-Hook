@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Mention } from "@/lib/group-mention";
 import { addLateReminder, purgeLateReminders, reminderTargets } from "@/lib/group-reminder-repo";
-import { groupReminderMessage } from "@/lib/line/group-riders";
+import { getGroup } from "@/lib/group-repo";
+import { groupReminderMessage, refusedAsMalformed } from "@/lib/line/group-riders";
 import { groupReminderDirectText, reminderPushText } from "@/lib/line/messages";
 import { log } from "@/lib/log";
 import type { LineMessage } from "@/lib/types";
@@ -54,7 +55,14 @@ export async function runUserReminders(
   const due = await claimDueReminders(db, now);
   summary.claimed = due.length;
   const groupIds = due.filter((r) => r.lineGroupId && r.groupOpen).map((r) => r.id);
-  const targets = groupIds.length > 0 ? await reminderTargets(db, groupIds) : new Map();
+  // they are already taken: a failure here must not cost the others (a group's then goes untagged)
+  const targets =
+    groupIds.length > 0
+      ? await reminderTargets(db, groupIds).catch((e) => {
+          log.error("reminder_targets_failed", e);
+          return new Map<string, { groupId: string | null; mentions: Mention[] }>();
+        })
+      : new Map<string, { groupId: string | null; mentions: Mention[] }>();
 
   for (const r of due) {
     // a group's reminder goes to the group, and not at all once the bot has left it
@@ -96,6 +104,17 @@ async function sendGroupReminder(
   const people = target.mentions.filter((m) => m.userId);
   const everyone = target.mentions.some((m) => m.all);
 
+  const month = monthKey(now);
+  // every message pushed counts against the owner's allowance; a counter that cannot be reached
+  // counts as no room, so the reminder waits rather than being lost
+  const take = (amount: number) =>
+    takeUsageAmount(db, r.userId, "group_push", amount, GROUP_PUSH_PER_MONTH, month).catch((e) => {
+      log.error("group_push_count_failed", e);
+      return false;
+    });
+  const giveBack = (amount: number) =>
+    refundUsageAmount(db, r.userId, "group_push", amount, month).catch(() => undefined);
+
   // 1. tagged people only: one message each, to those who have พี่ฮูก as a friend
   let unreached: Mention[] = target.mentions;
   if (people.length > 0 && !everyone && line.isFriend) {
@@ -103,13 +122,15 @@ async function sendGroupReminder(
     const text = groupReminderDirectText(name ?? null, r.body, repeatLabel);
     unreached = [];
     for (const person of people) {
-      const reached =
-        person.userId !== undefined &&
-        (await line.isFriend(person.userId).catch(() => false)) &&
-        (await line
-          .push(person.userId, [{ type: "text", text }])
+      const id = person.userId;
+      let reached = false;
+      if (id && (await line.isFriend(id).catch(() => false)) && (await take(1))) {
+        reached = await line
+          .push(id, [{ type: "text", text }])
           .then(() => true)
-          .catch(() => false));
+          .catch(() => false);
+        if (!reached) await giveBack(1);
+      }
       if (!reached) unreached.push(person);
     }
     if (unreached.length === 0) return "sent";
@@ -117,29 +138,30 @@ async function sendGroupReminder(
 
   // 2. the group, tagging whoever was not reached, within the owner's monthly allowance
   const members = await line.groupMemberCount?.(lineGroupId).catch(() => null);
-  const month = monthKey(now);
-  if (
-    members &&
-    (await takeUsageAmount(db, r.userId, "group_push", members, GROUP_PUSH_PER_MONTH, month))
-  ) {
+  if (members && (await take(members))) {
     const { tagged, plain } = groupReminderMessage([
       { body: r.body, repeat: r.repeat, mentions: unreached },
     ]);
     try {
-      await line.push(lineGroupId, [tagged]).catch(() => line.push(lineGroupId, [plain]));
+      // plain text only when LINE turned the tagged form down: any other failure may have been sent
+      await line.push(lineGroupId, [tagged]).catch((error: unknown) => {
+        if (!refusedAsMalformed(error)) throw error;
+        return line.push(lineGroupId, [plain]);
+      });
       return "sent";
     } catch (error) {
       log.warn("group_reminder_push_failed", {
         reason: error instanceof Error ? error.message : "unknown",
       });
-      await refundUsageAmount(db, r.userId, "group_push", members, month).catch(() => undefined);
+      await giveBack(members);
     }
   }
 
   // 3. wait for the next message in the group (for 12 hours)
-  if (!target.groupId) throw new Error("group reminder without its group");
+  const groupId = target.groupId ?? (await getGroup(db, lineGroupId))?.id;
+  if (!groupId) throw new Error("group reminder without its group");
   await addLateReminder(db, {
-    groupId: target.groupId,
+    groupId,
     body: r.body,
     repeat: r.repeat,
     mentions: target.mentions,

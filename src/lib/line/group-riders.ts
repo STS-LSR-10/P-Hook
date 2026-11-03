@@ -37,11 +37,17 @@ export function groupReminderMessage(
 
 type Reply = (messages: LineMessage[]) => Promise<void>;
 
+/** LINE turned the message down as malformed (the tagged form), rather than failing to send it. */
+export const refusedAsMalformed = (error: unknown) =>
+  error instanceof Error && /: 400\b/.test(error.message);
+
 /**
  * Someone wrote in the group: its reminders due around now (and those whose push could not go) ride
  * on the answer, for free. `handle` answers the message itself through the reply it is given; the
- * reminders go first in that answer, or alone when it has none. When LINE refuses the tagged form
- * they go as plain text, and when that fails too they wait for the next message.
+ * reminders go first in that answer, or alone when it has none. They are taken only as the answer
+ * goes, so an answer that never goes (a slow command cut off) leaves them for the next message or the
+ * cron. When LINE turns the tagged form down they go as plain text; when the answer fails for any
+ * other reason they wait for the next message.
  */
 export async function withGroupRiders(
   db: SupabaseClient,
@@ -50,23 +56,25 @@ export async function withGroupRiders(
   reply: Reply,
   handle: (reply: Reply) => Promise<void>,
 ): Promise<void> {
-  let riders: Rider[] = [];
-  try {
-    riders = await takeGroupRiders(db, lineGroupId, now);
-  } catch (error) {
-    log.error("group_riders_failed", error);
-  }
-  if (riders.length === 0) return handle(reply);
-
-  const { tagged, plain } = groupReminderMessage(riders);
-  let carried = false;
+  let answered = false;
   const send = async (messages: LineMessage[]) => {
+    let riders: Rider[] = [];
     try {
-      await reply([tagged, ...messages].slice(0, 5));
+      riders = await takeGroupRiders(db, lineGroupId, now);
+    } catch (error) {
+      log.error("group_riders_failed", error);
+    }
+    if (riders.length === 0) return reply(messages);
+    const { tagged, plain } = groupReminderMessage(riders);
+    // the answer keeps its own messages; the reminders take the one place left over
+    const withRider = (rider: LineMessage) => [rider, ...messages.slice(0, 4)];
+    try {
+      await reply(withRider(tagged));
     } catch (error) {
       log.warn("group_rider_reply_failed", { reason: error instanceof Error ? error.message : "" });
+      if (!refusedAsMalformed(error)) return keepForLater(db, lineGroupId, riders);
       try {
-        await reply([plain, ...messages].slice(0, 5));
+        await reply(withRider(plain));
       } catch {
         await keepForLater(db, lineGroupId, riders);
       }
@@ -75,11 +83,11 @@ export async function withGroupRiders(
   try {
     await handle(async (messages) => {
       if (messages.length === 0) return;
-      carried = true;
+      answered = true;
       await send(messages);
     });
   } finally {
-    if (!carried) await send([]);
+    if (!answered) await send([]);
   }
 }
 
