@@ -63,8 +63,8 @@ describe("what the bot sends, in the person's language", () => {
     expect(localizeMessages([{ type: "text", text: "ลบแล้ว" }])).toEqual([
       { type: "text", text: "Deleted" },
     ]);
-    expect(localizeMessages([{ type: "text", text: "กาแฟ 30" }])).toEqual([
-      { type: "text", text: "กาแฟ 30" },
+    expect(localizeMessages([{ type: "text", text: "ข้าวมันไก่ 45" }])).toEqual([
+      { type: "text", text: "ข้าวมันไก่ 45" },
     ]);
   });
 });

@@ -24,7 +24,13 @@ function keys(): { key: string; where: string }[] {
     )) {
       const raw = m[1] ?? '""';
       const key = raw.startsWith("'")
-        ? raw.slice(1, -1).replace(/\\'/g, "'").replace(/\\"/g, '"')
+        ? // the same string in double quotes: its escapes (\n, \") read as JSON
+          (JSON.parse(
+            `"${raw
+              .slice(1, -1)
+              .replace(/\\'/g, "'")
+              .replace(/(^|[^\\])"/g, '$1\\"')}"`,
+          ) as string)
         : (JSON.parse(raw) as string);
       out.push({ key, where });
     }
