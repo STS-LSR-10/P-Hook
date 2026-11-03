@@ -7,6 +7,7 @@ import {
   rescheduleReminder,
   setReminderDone,
   skipReminderRound,
+  snoozeReminder,
   updateReminder,
 } from "./user-reminder-repo";
 
@@ -167,5 +168,35 @@ describe("changing a reminder", () => {
 
   it("is false when the job got there first", async () => {
     await expect(setReminderDone(fakeDb(null).db, "u1", "r1")).resolves.toBe(false);
+  });
+});
+
+describe("snoozing a reminder that was just sent", () => {
+  it("brings back their own one-off that went out, at the new time", async () => {
+    const { db, filters, sets } = fakeDb({
+      id: "r1",
+      body: "ส่งรายงาน",
+      remind_at: when.toISOString(),
+      repeat: null,
+      status: "active",
+    });
+    const back = await snoozeReminder(db, "u1", "r1", when);
+    expect(back?.status).toBe("active");
+    expect(filters).toEqual([
+      ["id", "r1"],
+      ["user_id", "u1"],
+      ["group_id", null],
+      ["status", "done"],
+      ["repeat", null],
+    ]);
+    expect(sets[0]).toEqual({
+      status: "active",
+      remind_at: when.toISOString(),
+      last_sent_at: null,
+    });
+  });
+
+  it("is null when it was already brought back, or has gone", async () => {
+    await expect(snoozeReminder(fakeDb(null).db, "u1", "r1", when)).resolves.toBeNull();
   });
 });

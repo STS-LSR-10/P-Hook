@@ -4,6 +4,8 @@ import {
   parseReminder,
   reminderCapacity,
   moveReminderTime,
+  snoozeTime,
+  whenFromNow,
 } from "./user-reminder";
 
 // Wednesday 28 Oct 2026, 10:00 in Bangkok
@@ -242,5 +244,27 @@ describe("moveReminderTime", () => {
 
   it("says when no time was given", () => {
     expect(time(at("2026-11-05T01:00:00Z", "เร็วๆ นี้"))).toBe("no_time");
+  });
+});
+
+describe("snoozing", () => {
+  // Tuesday 3 Nov 2026, 10:30:20 in Bangkok
+  const now = new Date("2026-11-03T03:30:20Z");
+
+  it("is 10 minutes or an hour from now, on the minute", () => {
+    expect(snoozeTime("10", now).toISOString()).toBe("2026-11-03T03:41:00.000Z");
+    expect(snoozeTime("60", now).toISOString()).toBe("2026-11-03T04:31:00.000Z");
+  });
+
+  it("is 09:00 tomorrow, or this morning when it is still the small hours", () => {
+    expect(snoozeTime("tm", now).toISOString()).toBe("2026-11-04T02:00:00.000Z");
+    const late = new Date("2026-11-02T18:30:00Z"); // 01:30 on the 3rd in Bangkok
+    expect(snoozeTime("tm", late).toISOString()).toBe("2026-11-03T02:00:00.000Z");
+  });
+
+  it("says when as a person would", () => {
+    expect(whenFromNow(new Date("2026-11-03T03:41:00Z"), now)).toBe("ตอน 10:41");
+    expect(whenFromNow(new Date("2026-11-04T02:00:00Z"), now)).toBe("พรุ่งนี้ 09:00");
+    expect(whenFromNow(new Date("2026-11-10T01:00:00Z"), now)).toBe("10 พ.ย. 2569 08:00");
   });
 });

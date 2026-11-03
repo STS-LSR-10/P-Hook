@@ -5,6 +5,7 @@ import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 import {
   REMINDER_CANCELLED_TEXT,
   REMINDER_GONE_TEXT,
+  REMINDER_HANDLED_TEXT,
   REMINDER_NO_TEXT_TEXT,
   REMINDER_PAST_TEXT,
   REMINDER_USAGE_TEXT,
@@ -17,6 +18,10 @@ let listed: ReminderDto[] = [];
 let cancelFound = true;
 const created: Record<string, unknown>[] = [];
 const cancelled: string[] = [];
+let stored: ReminderDto | null = null;
+let snoozeFound = true;
+const snoozed: [string, string][] = [];
+const ticked: string[] = [];
 const ID = "11111111-1111-4111-8111-111111111111";
 
 vi.mock("@/lib/repo", async (original) => ({
@@ -36,6 +41,15 @@ vi.mock("@/lib/user-reminder-repo", () => ({
   createReminder: async (_db: unknown, _u: string, input: Record<string, unknown>) => {
     created.push(input);
     return { id: ID, body: input.body, remindAt: String(input.remindAt), repeat: input.repeat };
+  },
+  getReminder: async () => stored,
+  snoozeReminder: async (_db: unknown, _u: string, id: string, at: Date) => {
+    snoozed.push([id, at.toISOString()]);
+    return snoozeFound ? { ...stored, status: "active", remindAt: at.toISOString() } : null;
+  },
+  setReminderDone: async (_db: unknown, _u: string, id: string) => {
+    ticked.push(id);
+    return true;
   },
   cancelReminder: async (_db: unknown, _u: string, id: string) => {
     cancelled.push(id);
@@ -84,6 +98,10 @@ beforeEach(() => {
   cancelFound = true;
   created.length = 0;
   cancelled.length = 0;
+  stored = null;
+  snoozeFound = true;
+  snoozed.length = 0;
+  ticked.length = 0;
   process.env.NEXT_PUBLIC_LIFF_ID = "1234-abcd";
 });
 
@@ -197,5 +215,101 @@ describe("listing and cancelling", () => {
   it("a made-up id never reaches the database", async () => {
     await handleEvent(tap("a=rmx&id=../x"), setup().deps);
     expect(cancelled).toHaveLength(0);
+  });
+});
+
+describe("the buttons under a reminder that was sent", () => {
+  const once = (over: Partial<ReminderDto> = {}): ReminderDto => ({
+    id: ID,
+    body: "ส่งรายงาน",
+    remindAt: "2026-10-28T02:55:00Z",
+    repeat: null,
+    status: "done",
+    category: "work",
+    ...over,
+  });
+
+  it("✅ ทำแล้ว closes a one-off", async () => {
+    stored = once();
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=rmd&id=${ID}`), deps);
+    expect(said(reply)).toBe("เยี่ยมเลย ✅ ปิดเตือนนี้แล้ว");
+    expect(ticked).toEqual([]);
+  });
+
+  it("✅ ทำแล้ว left over, on a one-off since moved to another time, leaves it waiting", async () => {
+    stored = once({ status: "active", remindAt: "2026-10-29T03:10:00Z" });
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=rmd&id=${ID}`), deps);
+    expect(ticked).toEqual([]);
+    expect(said(reply)).toBe(REMINDER_HANDLED_TEXT);
+  });
+
+  it("✅ ทำแล้ว on a repeating one says when the next round is", async () => {
+    stored = once({ repeat: "daily", status: "active", remindAt: "2026-10-29T01:00:00Z" });
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=rmd&id=${ID}`), deps);
+    expect(said(reply)).toBe("เยี่ยมเลย ✅ รอบหน้าเตือนอีกที พรุ่งนี้ 08:00");
+    expect(ticked).toEqual([]);
+  });
+
+  it("⏰ อีก 10 นาที brings a one-off back at that time", async () => {
+    stored = once();
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=rms&id=${ID}&s=10`), deps);
+    expect(snoozed).toEqual([[ID, "2026-10-28T03:10:00.000Z"]]);
+    expect(said(reply)).toBe("ได้เลย เดี๋ยวเตือนอีกทีตอน 10:10 นะ ⏰");
+    expect(created).toHaveLength(0);
+  });
+
+  it("🌅 พรุ่งนี้เช้า is 09:00 tomorrow", async () => {
+    stored = once();
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=rms&id=${ID}&s=tm`), deps);
+    expect(snoozed).toEqual([[ID, "2026-10-29T02:00:00.000Z"]]);
+    expect(said(reply)).toBe("ได้เลย เดี๋ยวเตือนอีกทีพรุ่งนี้ 09:00 นะ 🌅");
+  });
+
+  it("a repeating one gets this round again as a one-off, and keeps its rounds", async () => {
+    stored = once({ repeat: "daily", status: "active", remindAt: "2026-10-29T01:00:00Z" });
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=rms&id=${ID}&s=60`), deps);
+    expect(snoozed).toEqual([]);
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ body: "ส่งรายงาน", repeat: null, category: "work" });
+    expect((created[0]?.remindAt as Date).toISOString()).toBe("2026-10-28T04:00:00.000Z");
+    expect(said(reply)).toBe("ได้เลย เดี๋ยวเตือนอีกทีตอน 11:00 นะ ⏰");
+  });
+
+  it("a repeating one's extra round needs room for a one-off", async () => {
+    stored = once({ repeat: "daily", status: "active" });
+    active = 3;
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=rms&id=${ID}&s=10`), deps);
+    expect(created).toHaveLength(0);
+    expect(said(reply)).toContain("ครบ 3 รายการ");
+  });
+
+  it("a second tap, or a reminder that has gone, is already handled", async () => {
+    stored = once();
+    snoozeFound = false;
+    const a = setup();
+    await handleEvent(tap(`a=rms&id=${ID}&s=10`), a.deps);
+    expect(said(a.reply)).toBe(REMINDER_HANDLED_TEXT);
+    stored = null;
+    const b = setup();
+    await handleEvent(tap(`a=rmd&id=${ID}`), b.deps);
+    expect(said(b.reply)).toBe(REMINDER_HANDLED_TEXT);
+    const c = setup();
+    await handleEvent(tap(`a=rms&id=${ID}&s=10`), c.deps);
+    expect(said(c.reply)).toBe(REMINDER_HANDLED_TEXT);
+  });
+
+  it("a made-up id or snooze never reaches the database", async () => {
+    stored = once();
+    await handleEvent(tap("a=rmd&id=../x"), setup().deps);
+    await handleEvent(tap(`a=rms&id=${ID}&s=999`), setup().deps);
+    expect(snoozed).toHaveLength(0);
+    expect(ticked).toHaveLength(0);
   });
 });

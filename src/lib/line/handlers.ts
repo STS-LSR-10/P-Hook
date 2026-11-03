@@ -140,9 +140,20 @@ import {
   cancelReminder,
   countActiveReminders,
   createReminder,
+  getReminder,
   listReminders,
+  snoozeReminder,
 } from "@/lib/user-reminder-repo";
-import { capacityOf, describeReminder, parseReminder, reminderKind } from "@/lib/user-reminder";
+import {
+  capacityOf,
+  describeReminder,
+  isSnooze,
+  parseReminder,
+  reminderKind,
+  type Snooze,
+  snoozeTime,
+  whenFromNow,
+} from "@/lib/user-reminder";
 import { buildReminderCard } from "./reminder-flex";
 import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
 import { buildSummaryMenu } from "./summary-menu";
@@ -251,6 +262,9 @@ import {
   REMINDER_EMPTY_TEXT,
   REMINDER_FULL_TEXT,
   REMINDER_GONE_TEXT,
+  REMINDER_HANDLED_TEXT,
+  reminderDoneText,
+  reminderSnoozedText,
   REMINDER_NO_TEXT_TEXT,
   REMINDER_PAST_TEXT,
   REMINDER_TOO_FAR_TEXT,
@@ -2497,6 +2511,45 @@ async function runCommand(
   }
 }
 
+/**
+ * "✅ ทำแล้ว" (no snooze), or "remind me again" under a reminder that was just sent. A one-off comes
+ * back itself; a repeating one keeps its rounds, so this round comes back as a one-off of its own.
+ */
+async function answerReminderButton(
+  deps: HandlerDeps,
+  user: UserRow,
+  id: string,
+  snooze: Snooze | null,
+): Promise<string> {
+  const { db } = deps;
+  const now = deps.now();
+  const reminder = await getReminder(db, user.id, id);
+  if (!reminder) return REMINDER_HANDLED_TEXT;
+
+  if (!snooze) {
+    if (reminder.repeat) return reminderDoneText(whenFromNow(new Date(reminder.remindAt), now));
+    // waiting again (snoozed, or moved on the page since): an old button must not cancel that
+    return reminder.status === "active" ? REMINDER_HANDLED_TEXT : reminderDoneText(null);
+  }
+
+  const at = snoozeTime(snooze, now);
+  if (reminder.repeat) {
+    const limit = capacityOf(effectivePlan(user.plan, user.plan_expires_at, now), "once");
+    if ((await countActiveReminders(db, user.id, "once")) >= limit) {
+      return REMINDER_FULL_TEXT(limit);
+    }
+    await createReminder(db, user.id, {
+      body: reminder.body,
+      remindAt: at,
+      repeat: null,
+      category: reminder.category,
+    });
+  } else if (!(await snoozeReminder(db, user.id, id, at))) {
+    return REMINDER_HANDLED_TEXT;
+  }
+  return reminderSnoozedText(whenFromNow(at, now), snooze === "tm");
+}
+
 // ───────────────────────── postbacks ─────────────────────────
 
 async function handlePostback(
@@ -2520,6 +2573,14 @@ async function handlePostback(
         (await cancelReminder(deps.db, user.id, id)) ? REMINDER_CANCELLED_TEXT : REMINDER_GONE_TEXT,
       ),
     ];
+  }
+  // The buttons that pop up under a reminder when it arrives.
+  if (action === "rmd" || action === "rms") {
+    const id = params.get("id") ?? "";
+    const s = params.get("s");
+    const snooze = action === "rms" && isSnooze(s) ? s : null;
+    if (!UUID_RE.test(id) || (action === "rms" && !snooze)) return [text(NOT_FOUND_TEXT)];
+    return [text(await answerReminderButton(deps, user, id, snooze))];
   }
   // The buttons under a file that was sent: keep it, or read a PDF for its entries.
   if (action === "fsv" || action === "frd") {
