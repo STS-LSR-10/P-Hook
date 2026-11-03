@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
+import { t } from "@/lib/i18n";
 
 /** Bottom sheet dialog: closes on Escape and on backdrop tap. */
 export function Sheet({
@@ -30,7 +31,7 @@ export function Sheet({
       <div className="mx-auto max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-3xl bg-surface p-4 text-foreground pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="ปิด" className="h-11 w-11">
+          <button type="button" onClick={onClose} aria-label={t("ปิด")} className="h-11 w-11">
             <X className="mx-auto h-5 w-5" aria-hidden />
           </button>
         </div>

@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { PlusLock } from "./plus-lock";
 import { cardClass, type Me, type Settings } from "./types";
+import { t as tr } from "@/lib/i18n";
 
 /** Pick the colour of the cards the bot sends and the way it talks (Pro and above). */
 export function PersonalizeCard({
@@ -43,47 +44,47 @@ export function PersonalizeCard({
         body: JSON.stringify(patch),
       });
       onSaved(saved);
-      setNotice("บันทึกแล้ว");
+      setNotice(tr("บันทึกแล้ว"));
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("บันทึกไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section className={cardClass} aria-label="ธีมการ์ดและนิสัยบอท">
+    <section className={cardClass} aria-label={tr("ธีมการ์ดและนิสัยบอท")}>
       <div>
-        <h2 className="font-semibold">ธีมการ์ดและนิสัยบอท</h2>
-        <p className="text-xs text-muted">เลือกสีการ์ดในแชทและน้ำเสียงที่บอทคุยกับคุณ</p>
+        <h2 className="font-semibold">{tr("ธีมการ์ดและนิสัยบอท")}</h2>
+        <p className="text-xs text-muted">{tr("เลือกสีการ์ดในแชทและน้ำเสียงที่บอทคุยกับคุณ")}</p>
       </div>
 
-      {locked ? <PlusLock>เปลี่ยนสีการ์ดและนิสัยบอท</PlusLock> : null}
+      {locked ? <PlusLock>{tr("เปลี่ยนสีการ์ดและนิสัยบอท")}</PlusLock> : null}
 
       <div
         className="overflow-hidden rounded-2xl border border-border text-sm"
-        aria-label="ตัวอย่างการ์ด"
+        aria-label={tr("ตัวอย่างการ์ด")}
       >
         <div className="px-4 py-3" style={{ backgroundColor: palette.soft }}>
           <p className="font-bold" style={{ color: palette.headTitle }}>
-            สรุปวันนี้
+            {tr("สรุปวันนี้")}
           </p>
           <p className="text-xs" style={{ color: palette.headSub }}>
-            ตัวอย่างหัวการ์ด
+            {tr("ตัวอย่างหัวการ์ด")}
           </p>
         </div>
         <div className="flex items-center justify-between bg-surface px-4 py-3">
-          <span className="text-muted">รายจ่าย</span>
+          <span className="text-muted">{tr("รายจ่าย")}</span>
           <span
             className="rounded-full px-3 py-1 text-xs font-semibold text-white"
             style={{ backgroundColor: palette.primary }}
           >
-            ดูรายละเอียด
+            {tr("ดูรายละเอียด")}
           </span>
         </div>
       </div>
 
-      <div role="radiogroup" aria-label="ธีมสีการ์ด" className="grid grid-cols-2 gap-2">
+      <div role="radiogroup" aria-label={tr("ธีมสีการ์ด")} className="grid grid-cols-2 gap-2">
         {THEME_IDS.map((id) => {
           const t = THEMES[id];
           const disabled = busy || (locked && id !== DEFAULT_THEME);
@@ -111,7 +112,7 @@ export function PersonalizeCard({
         })}
       </div>
 
-      <div role="radiogroup" aria-label="นิสัยบอท" className="space-y-2">
+      <div role="radiogroup" aria-label={tr("นิสัยบอท")} className="space-y-2">
         {PERSONA_IDS.map((id) => {
           const p = PERSONAS[id];
           const disabled = busy || (locked && id !== DEFAULT_PERSONA);

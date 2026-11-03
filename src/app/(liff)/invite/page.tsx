@@ -7,14 +7,15 @@ import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { cardClass, fieldClass, type Me } from "@/components/liff/settings/types";
 import { ErrorState, LoadingBlock } from "@/components/liff/states";
 import { REFERRAL_BONUS_REFEREE, REFERRAL_BONUS_REFERRER } from "@/lib/config";
+import { t } from "@/lib/i18n";
 
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID;
 const LINK = LIFF_ID ? `https://liff.line.me/${LIFF_ID}` : null;
 
 const STEPS = [
-  { n: 1, title: "ส่งคำชวนให้เพื่อน", sub: "กดแชร์ผ่าน LINE" },
-  { n: 2, title: "เพื่อนเพิ่มเพื่อน", sub: "แล้วพิมพ์ “ใช้รหัส” ของคุณ" },
-  { n: 3, title: "รับเหรียญสะสมทั้งคู่", sub: "เมื่อเพื่อนจดรายการแรก" },
+  { n: 1, title: t("ส่งคำชวนให้เพื่อน"), sub: t("กดแชร์ผ่าน LINE") },
+  { n: 2, title: t("เพื่อนเพิ่มเพื่อน"), sub: t("แล้วพิมพ์ “ใช้รหัส” ของคุณ") },
+  { n: 3, title: t("รับเหรียญสะสมทั้งคู่"), sub: t("เมื่อเพื่อนจดรายการแรก") },
 ] as const;
 
 export default function InvitePage() {
@@ -25,7 +26,7 @@ export default function InvitePage() {
       <header className="relative overflow-hidden bg-gradient-to-b from-warn-soft to-primary-soft px-4 pb-12 pt-4">
         <Link
           href="/settings"
-          aria-label="กลับไปหน้าตั้งค่า"
+          aria-label={t("กลับไปหน้าตั้งค่า")}
           className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-surface/80"
         >
           <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -41,8 +42,8 @@ export default function InvitePage() {
             className="h-[118px] w-[128px] shrink-0 object-contain"
           />
           <h1 className="text-xl font-extrabold leading-snug text-primary">
-            ชวนเพื่อนมาจดใช้งาน
-            <span className="block text-foreground">รับเหรียญสะสมฟรี!</span>
+            {t("ชวนเพื่อนมาจดใช้งาน")}
+            <span className="block text-foreground">{t("รับเหรียญสะสมฟรี!")}</span>
           </h1>
         </div>
       </header>
@@ -62,16 +63,18 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const shareText = `มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส ${me.referralCode}" ทั้งคู่ได้โบนัสเหรียญสะสม${
-    LINK ? `\n${LINK}` : ""
-  }`;
+  const shareText =
+    t(
+      'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสเหรียญสะสม',
+      me.referralCode,
+    ) + (LINK ? `\n${LINK}` : "");
 
   async function copy(value: string, done: string) {
     try {
       await navigator.clipboard.writeText(value);
       setNotice(done);
     } catch {
-      setNotice("คัดลอกอัตโนมัติไม่ได้ ลองกดค้างที่ข้อความเพื่อคัดลอกนะ");
+      setNotice(t("คัดลอกอัตโนมัติไม่ได้ ลองกดค้างที่ข้อความเพื่อคัดลอกนะ"));
     }
   }
 
@@ -88,7 +91,7 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
       setCode("");
       onChanged();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ใช้รหัสไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ใช้รหัสไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
@@ -97,7 +100,7 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
   return (
     <>
       <section
-        aria-label="สถิติการชวนเพื่อน"
+        aria-label={t("สถิติการชวนเพื่อน")}
         className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 shadow-card"
       >
         {me.pictureUrl ? (
@@ -117,34 +120,40 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
         )}
         <dl className="min-w-0 flex-1 space-y-0.5 text-sm">
           <div className="flex justify-between gap-2">
-            <dt className="text-muted">เพื่อนที่ชวนสำเร็จแล้ว</dt>
-            <dd className="num font-bold">{me.referrals} คน</dd>
+            <dt className="text-muted">{t("เพื่อนที่ชวนสำเร็จแล้ว")}</dt>
+            <dd className="num font-bold">
+              {me.referrals} {t("คน")}
+            </dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted">เหรียญสะสมของคุณ</dt>
+            <dt className="text-muted">{t("เหรียญสะสมของคุณ")}</dt>
             <dd className="num font-bold">{me.points}</dd>
           </div>
         </dl>
       </section>
 
-      <section className={cardClass} aria-label="สิทธิประโยชน์ที่ได้รับ">
+      <section className={cardClass} aria-label={t("สิทธิประโยชน์ที่ได้รับ")}>
         <h2 className="mx-auto rounded-full bg-warn-soft px-5 py-1.5 text-center font-semibold text-warn">
-          สิทธิประโยชน์ที่ได้รับ
+          {t("สิทธิประโยชน์ที่ได้รับ")}
         </h2>
         <div className="grid grid-cols-2 gap-2 text-center">
           <div className="rounded-2xl bg-primary-soft p-3">
-            <p className="text-xs text-muted">คุณได้รับ</p>
-            <p className="num text-lg font-bold text-primary">+{REFERRAL_BONUS_REFERRER} เหรียญ</p>
+            <p className="text-xs text-muted">{t("คุณได้รับ")}</p>
+            <p className="num text-lg font-bold text-primary">
+              +{REFERRAL_BONUS_REFERRER} {t("เหรียญ")}
+            </p>
           </div>
           <div className="rounded-2xl bg-warn-soft p-3">
-            <p className="text-xs text-muted">เพื่อนได้รับ</p>
-            <p className="num text-lg font-bold text-warn">+{REFERRAL_BONUS_REFEREE} เหรียญ</p>
+            <p className="text-xs text-muted">{t("เพื่อนได้รับ")}</p>
+            <p className="num text-lg font-bold text-warn">
+              +{REFERRAL_BONUS_REFEREE} {t("เหรียญ")}
+            </p>
           </div>
         </div>
       </section>
 
-      <section aria-label="ชวนเพื่อนง่าย ๆ ใน 3 ขั้นตอน" className="space-y-3">
-        <h2 className="text-center font-bold">ชวนเพื่อนง่าย ๆ ใน 3 ขั้นตอน</h2>
+      <section aria-label={t("ชวนเพื่อนง่าย ๆ ใน 3 ขั้นตอน")} className="space-y-3">
+        <h2 className="text-center font-bold">{t("ชวนเพื่อนง่าย ๆ ใน 3 ขั้นตอน")}</h2>
         <ol className="grid grid-cols-3 gap-2 text-center">
           {STEPS.map((s) => (
             <li key={s.n} className="space-y-1">
@@ -158,24 +167,24 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
         </ol>
       </section>
 
-      <section className={cardClass} aria-label="รหัสชวนเพื่อนของคุณ">
+      <section className={cardClass} aria-label={t("รหัสชวนเพื่อนของคุณ")}>
         <div className="space-y-2 rounded-2xl bg-primary-soft p-3">
-          <p className="text-sm font-semibold">รหัสชวนของคุณ</p>
+          <p className="text-sm font-semibold">{t("รหัสชวนของคุณ")}</p>
           <div className="flex items-center gap-2">
             <p
               className="num min-w-0 flex-1 select-all rounded-xl bg-surface px-3 py-2 text-center text-xl font-bold tracking-widest"
-              aria-label="รหัสชวนเพื่อนของคุณ"
+              aria-label={t("รหัสชวนเพื่อนของคุณ")}
             >
               {me.referralCode}
             </p>
             <button
               type="button"
-              onClick={() => copy(me.referralCode, "คัดลอกรหัสแล้ว")}
-              aria-label="คัดลอกรหัส"
+              onClick={() => copy(me.referralCode, t("คัดลอกรหัสแล้ว"))}
+              aria-label={t("คัดลอกรหัส")}
               className="flex h-11 shrink-0 items-center gap-1 rounded-xl bg-surface px-3 text-sm font-semibold text-primary"
             >
               <Copy className="h-4 w-4" aria-hidden />
-              คัดลอก
+              {t("คัดลอก")}
             </button>
           </div>
         </div>
@@ -185,31 +194,31 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
           className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-surface"
         >
           <Share2 className="h-4 w-4" aria-hidden />
-          ส่งคำชวนผ่าน LINE
+          {t("ส่งคำชวนผ่าน LINE")}
         </a>
         <button
           type="button"
-          onClick={() => copy(shareText, "คัดลอกข้อความชวนแล้ว")}
+          onClick={() => copy(shareText, t("คัดลอกข้อความชวนแล้ว"))}
           className="flex h-11 w-full items-center justify-center gap-2 text-sm font-semibold"
         >
           <Link2 className="h-4 w-4" aria-hidden />
-          คัดลอกลิงก์ชวนเพื่อน
+          {t("คัดลอกลิงก์ชวนเพื่อน")}
         </button>
       </section>
 
       {!me.referred ? (
-        <section className={cardClass} aria-label="กรอกรหัสจากเพื่อน">
-          <h2 className="font-semibold">มีรหัสจากเพื่อน?</h2>
+        <section className={cardClass} aria-label={t("กรอกรหัสจากเพื่อน")}>
+          <h2 className="font-semibold">{t("มีรหัสจากเพื่อน?")}</h2>
           <p className="text-xs text-muted">
-            ใช้ได้ภายในไม่กี่วันแรกหลังเริ่มใช้งาน พอจดรายการแรก ทั้งคู่ได้โบนัสเหรียญสะสม
+            {t("ใช้ได้ภายในไม่กี่วันแรกหลังเริ่มใช้งาน พอจดรายการแรก ทั้งคู่ได้โบนัสเหรียญสะสม")}
           </p>
           <div className="flex gap-2">
             <input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               maxLength={16}
-              placeholder="เช่น ABCD1234"
-              aria-label="รหัสของเพื่อน"
+              placeholder={t("เช่น ABCD1234")}
+              aria-label={t("รหัสของเพื่อน")}
               autoCapitalize="characters"
               className={`${fieldClass} min-w-0 flex-1`}
             />
@@ -219,12 +228,12 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
               disabled={busy || code.trim().length < 4}
               className="h-12 rounded-2xl bg-primary px-4 text-sm font-semibold text-surface disabled:opacity-60"
             >
-              ใช้รหัส
+              {t("ใช้รหัส")}
             </button>
           </div>
         </section>
       ) : (
-        <p className="text-center text-xs text-muted">คุณใช้รหัสชวนเพื่อนแล้ว</p>
+        <p className="text-center text-xs text-muted">{t("คุณใช้รหัสชวนเพื่อนแล้ว")}</p>
       )}
 
       {notice ? (

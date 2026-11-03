@@ -9,6 +9,7 @@ import { getSettings } from "@/lib/repo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { DEFAULT_CURRENCY, isHomeCurrency } from "@/lib/currency";
+import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n";
 import { DEFAULT_ZONE, isZone } from "@/lib/zone";
 
 export const runtime = "nodejs";
@@ -26,14 +27,15 @@ export async function GET(request: Request): Promise<Response> {
 async function settingsOf(db: SupabaseClient, userId: string) {
   const [settings, user] = await Promise.all([
     getSettings(db, userId),
-    db.from("users").select("timezone,currency").eq("id", userId).single(),
+    db.from("users").select("timezone,currency,locale").eq("id", userId).single(),
   ]);
   if (user.error) throw new Error(`load zone: ${user.error.message}`);
-  const row = user.data as { timezone?: string; currency?: string } | null;
+  const row = user.data as { timezone?: string; currency?: string; locale?: string } | null;
   return {
     ...settings,
     timezone: isZone(row?.timezone) ? row.timezone : DEFAULT_ZONE,
     currency: isHomeCurrency(row?.currency) ? row.currency : DEFAULT_CURRENCY,
+    locale: isLocale(row?.locale) ? row.locale : DEFAULT_LOCALE,
   };
 }
 
@@ -55,6 +57,8 @@ const patchSchema = z
     /** The books' currency: amounts keep their numbers, only the sign changes (and new foreign
      * amounts turn into it). One we offer; the page signs in again after a change. */
     currency: z.string().refine(isHomeCurrency),
+    /** The app's language: Thai or English (the page reloads in it). */
+    locale: z.string().refine(isLocale),
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0, "empty");
@@ -66,17 +70,18 @@ export async function PATCH(request: Request): Promise<Response> {
 
     const parsed = patchSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return apiError("ค่าที่ส่งมาไม่ถูกต้อง", 400);
-    const { timezone, currency, ...rest } = parsed.data;
+    const { timezone, currency, locale, ...rest } = parsed.data;
     const patch: Record<string, unknown> = { ...rest };
 
     const db = getAdminClient();
 
-    if (timezone !== undefined || currency !== undefined) {
+    if (timezone !== undefined || currency !== undefined || locale !== undefined) {
       const { error } = await db
         .from("users")
         .update({
           ...(timezone !== undefined ? { timezone } : {}),
           ...(currency !== undefined ? { currency } : {}),
+          ...(locale !== undefined ? { locale } : {}),
         })
         .eq("id", auth.userId);
       if (error) throw new Error(`save zone or currency: ${error.message}`);

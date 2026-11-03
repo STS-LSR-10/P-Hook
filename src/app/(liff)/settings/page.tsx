@@ -23,7 +23,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { DeleteCard } from "@/components/liff/settings/delete-card";
 import { MemoryCard } from "@/components/liff/settings/memory-card";
-import { MenuButton, MenuGroup, MenuInfo, MenuLink } from "@/components/liff/settings/menu";
+import { MenuButton, MenuGroup, MenuLink } from "@/components/liff/settings/menu";
 import { NotificationsCard } from "@/components/liff/settings/notifications-card";
 import { PaymentHistorySheet } from "@/components/liff/settings/payment-history-sheet";
 import { PersonalizeCard } from "@/components/liff/settings/personalize-card";
@@ -48,22 +48,24 @@ import {
 import { PLAN_LABEL } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { CurrencySheet } from "@/components/liff/settings/currency-sheet";
+import { LanguageSheet } from "@/components/liff/settings/language-sheet";
 import { ZoneSheet } from "@/components/liff/settings/zone-sheet";
 import { DEFAULT_CURRENCY, currencyLabel } from "@/lib/currency";
 import { DEFAULT_ZONE, ZONES } from "@/lib/zone";
+import { t } from "@/lib/i18n";
 
 const zoneCity = (zone?: string) =>
   ZONES.find((z) => z.id === (zone ?? DEFAULT_ZONE))?.city ?? zone ?? "Bangkok";
 
 const CONFIRM_OPTIONS: { value: Settings["confirm_style"]; label: string; hint: string }[] = [
-  { value: "full", label: "เต็ม", hint: "การ์ดพร้อมปุ่มแก้ไข/ลบ" },
-  { value: "short", label: "สั้น", hint: "ข้อความบรรทัดเดียว" },
-  { value: "off", label: "ไม่ส่ง", hint: "จดเงียบ ๆ ไม่ตอบกลับ" },
+  { value: "full", label: t("เต็ม"), hint: t("การ์ดพร้อมปุ่มแก้ไข/ลบ") },
+  { value: "short", label: t("สั้น"), hint: t("ข้อความบรรทัดเดียว") },
+  { value: "off", label: t("ไม่ส่ง"), hint: t("จดเงียบ ๆ ไม่ตอบกลับ") },
 ];
 
 const CYCLE_OPTIONS: { value: Settings["budget_cycle"]; label: string }[] = [
-  { value: "monthly", label: "รายเดือน" },
-  { value: "weekly", label: "รายสัปดาห์" },
+  { value: "monthly", label: t("รายเดือน") },
+  { value: "weekly", label: t("รายสัปดาห์") },
 ];
 
 const START_DAYS = Array.from({ length: MAX_START_DAY }, (_, i) => i + 1);
@@ -83,45 +85,49 @@ interface SectionDef {
 const SECTIONS: SectionDef[] = [
   {
     id: "bot",
-    title: "การแจ้งเตือนและแชทบอท",
-    sub: "การ์ดหลังจด, ธีม, นิสัยบอท, สรุปอัตโนมัติ",
+    title: t("การแจ้งเตือนและแชทบอท"),
+    sub: t("การ์ดหลังจด, ธีม, นิสัยบอท, สรุปอัตโนมัติ"),
     tone: "primary",
     icon: <MessageCircle className="h-5 w-5" />,
-    words:
+    words: t(
       "การ์ดยืนยันหลังจด เต็ม สั้น ไม่ส่ง แนบรูป ธีม สี การ์ด นิสัยบอท น้ำเสียง แจ้งเตือน เตือนจด ประจำวัน สรุปรายสัปดาห์ สรุปรายเดือน",
+    ),
   },
   {
     id: "money",
-    title: "รอบงบ บัญชี และเป้าหมาย",
-    sub: "รอบงบ, กระเป๋าเงิน, ออมเงิน, บิล, รายการประจำ",
+    title: t("รอบงบ บัญชี และเป้าหมาย"),
+    sub: t("รอบงบ, กระเป๋าเงิน, ออมเงิน, บิล, รายการประจำ"),
     tone: "sky",
     icon: <Wallet className="h-5 w-5" />,
-    words:
+    words: t(
       "รอบงบ งบ รายเดือน รายสัปดาห์ วันเริ่ม กระเป๋าเงิน บัญชี บัตร เป้าหมาย ออม บิล รายการประจำ ความจำ หมวด สลิป ผู้รับ",
+    ),
   },
   {
     id: "member",
-    title: "สมาชิกและสิทธิประโยชน์",
-    sub: "อัปเกรด, ชวนเพื่อน, แลกเหรียญ, ประวัติชำระเงิน",
+    title: t("สมาชิกและสิทธิประโยชน์"),
+    sub: t("อัปเกรด, ชวนเพื่อน, แลกเหรียญ, ประวัติชำระเงิน"),
     tone: "warm",
     icon: <Crown className="h-5 w-5" />,
-    words: "สมาชิก แผน อัปเกรด ต่ออายุ ชวนเพื่อน เหรียญ แต้ม แลก ประวัติการชำระเงิน ใบเสร็จ โควตา",
+    words: t(
+      "สมาชิก แผน อัปเกรด ต่ออายุ ชวนเพื่อน เหรียญ แต้ม แลก ประวัติการชำระเงิน ใบเสร็จ โควตา",
+    ),
   },
   {
     id: "general",
-    title: "ตั้งค่าทั่วไป",
-    sub: "ภาษา, สกุลเงิน, โซนเวลา",
+    title: t("ตั้งค่าทั่วไป"),
+    sub: t("ภาษา, สกุลเงิน, โซนเวลา"),
     tone: "indigo",
     icon: <Settings2 className="h-5 w-5" />,
-    words: "ทั่วไป ภาษา สกุลเงิน บาท โซนเวลา เวลา",
+    words: t("ทั่วไป ภาษา สกุลเงิน บาท โซนเวลา เวลา"),
   },
   {
     id: "privacy",
-    title: "จัดการข้อมูลและความเป็นส่วนตัว",
-    sub: "ล้างข้อมูล, ลบเฉพาะเดือน, ลบบัญชี, นโยบาย",
+    title: t("จัดการข้อมูลและความเป็นส่วนตัว"),
+    sub: t("ล้างข้อมูล, ลบเฉพาะเดือน, ลบบัญชี, นโยบาย"),
     tone: "danger",
     icon: <ShieldAlert className="h-5 w-5" />,
-    words: "ข้อมูล ความเป็นส่วนตัว ล้าง ลบ เดือน รีเซ็ต นโยบาย ข้อกำหนด บัญชี",
+    words: t("ข้อมูล ความเป็นส่วนตัว ล้าง ลบ เดือน รีเซ็ต นโยบาย ข้อกำหนด บัญชี"),
   },
 ];
 
@@ -137,7 +143,7 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState<{ at: SectionId; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [sheet, setSheet] = useState<
-    "recurring" | "memory" | "payments" | "zone" | "currency" | null
+    "recurring" | "memory" | "payments" | "zone" | "currency" | "language" | null
   >(null);
   const [opened, setOpened] = useState<Set<SectionId>>(new Set());
   // sections closed by hand while a search is on (it opens everything it finds)
@@ -167,10 +173,10 @@ export default function SettingsPage() {
         body: JSON.stringify(patch),
       });
       setOverride(saved);
-      setNotice({ at, text: "บันทึกแล้ว" });
+      setNotice({ at, text: t("บันทึกแล้ว") });
     } catch (e) {
       setOverride(previous);
-      setNotice({ at, text: e instanceof Error ? e.message : "บันทึกไม่สำเร็จ" });
+      setNotice({ at, text: e instanceof Error ? e.message : t("บันทึกไม่สำเร็จ") });
     } finally {
       setSaving(false);
     }
@@ -209,14 +215,14 @@ export default function SettingsPage() {
       }
       case "money":
         return current.budget_cycle === "weekly"
-          ? "รอบรายสัปดาห์"
-          : `รอบวันที่ ${current.cycle_start_day}`;
+          ? t("รอบรายสัปดาห์")
+          : t("รอบวันที่ {0}", current.cycle_start_day);
       case "member":
-        return `สมาชิก ${PLAN_LABEL[user.plan]}`;
+        return t("สมาชิก {0}", PLAN_LABEL[user.plan]);
       case "general":
-        return `ไทย • ${settings.data?.currency ?? DEFAULT_CURRENCY} • ${zoneCity(settings.data?.timezone)}`;
+        return `${settings.data?.locale === "en" ? "English" : t("ไทย")} • ${settings.data?.currency ?? DEFAULT_CURRENCY} • ${zoneCity(settings.data?.timezone)}`;
       case "privacy":
-        return "ระวัง";
+        return t("ระวัง");
     }
   }
 
@@ -226,12 +232,16 @@ export default function SettingsPage() {
         return (
           <>
             {noticeIn("bot")}
-            <section className={cardClass} aria-label="การ์ดยืนยันหลังจด">
+            <section className={cardClass} aria-label={t("การ์ดยืนยันหลังจด")}>
               <div>
-                <h3 className="text-sm font-semibold">การ์ดยืนยันหลังจด</h3>
-                <p className="text-xs text-muted">รูปแบบข้อความสรุปหลังจดบันทึกใน LINE</p>
+                <h3 className="text-sm font-semibold">{t("การ์ดยืนยันหลังจด")}</h3>
+                <p className="text-xs text-muted">{t("รูปแบบข้อความสรุปหลังจดบันทึกใน LINE")}</p>
               </div>
-              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="รูปแบบการ์ด">
+              <div
+                className="grid grid-cols-3 gap-2"
+                role="radiogroup"
+                aria-label={t("รูปแบบการ์ด")}
+              >
                 {CONFIRM_OPTIONS.map((o) => (
                   <button
                     key={o.value}
@@ -262,12 +272,12 @@ export default function SettingsPage() {
         return (
           <>
             {noticeIn("money")}
-            <section className={cardClass} aria-label="รอบงบ">
+            <section className={cardClass} aria-label={t("รอบงบ")}>
               <div>
-                <h3 className="text-sm font-semibold">รอบงบ</h3>
-                <p className="text-xs text-muted">ระยะเวลาการคำนวณสรุปยอดรายรับและรายจ่าย</p>
+                <h3 className="text-sm font-semibold">{t("รอบงบ")}</h3>
+                <p className="text-xs text-muted">{t("ระยะเวลาการคำนวณสรุปยอดรายรับและรายจ่าย")}</p>
               </div>
-              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="ชนิดรอบงบ">
+              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("ชนิดรอบงบ")}>
                 {CYCLE_OPTIONS.map((o) => (
                   <button
                     key={o.value}
@@ -289,7 +299,7 @@ export default function SettingsPage() {
               </div>
               {data.budget_cycle === "monthly" ? (
                 <label className="flex items-center justify-between gap-3 border-t border-border pt-3 text-sm">
-                  <span className="font-medium">เริ่มรอบทุกวันที่</span>
+                  <span className="font-medium">{t("เริ่มรอบทุกวันที่")}</span>
                   <select
                     value={data.cycle_start_day}
                     disabled={saving}
@@ -305,50 +315,50 @@ export default function SettingsPage() {
                 </label>
               ) : (
                 <p className="border-t border-border pt-3 text-xs text-muted">
-                  รอบสัปดาห์เริ่มทุกวันจันทร์
+                  {t("รอบสัปดาห์เริ่มทุกวันจันทร์")}
                 </p>
               )}
             </section>
-            <MenuGroup label="จัดการฟีเจอร์">
+            <MenuGroup label={t("จัดการฟีเจอร์")}>
               <MenuLink
                 href="/wallets"
-                ariaLabel="กระเป๋าเงิน"
+                ariaLabel={t("กระเป๋าเงิน")}
                 icon={<Wallet className="h-[18px] w-[18px]" />}
-                title="กระเป๋าเงิน"
-                sub={`แยกเงินสด บัญชี บัตร เงินเก็บ · มีได้ ${person.limits.wallets} ใบ`}
+                title={t("กระเป๋าเงิน")}
+                sub={t("แยกเงินสด บัญชี บัตร เงินเก็บ · มีได้ {0} ใบ", person.limits.wallets)}
               />
               <MenuLink
                 href="/goals"
-                ariaLabel="เป้าหมายการออม"
+                ariaLabel={t("เป้าหมายการออม")}
                 icon={<PiggyBank className="h-[18px] w-[18px]" />}
-                title="เป้าหมายการออม"
-                sub="กระปุกออมสิน ตั้งเป้า ดูความคืบหน้า · Pro ขึ้นไป"
+                title={t("เป้าหมายการออม")}
+                sub={t("กระปุกออมสิน ตั้งเป้า ดูความคืบหน้า · Pro ขึ้นไป")}
               />
               <MenuLink
                 href="/bills"
-                ariaLabel="บิลที่ต้องจ่าย"
+                ariaLabel={t("บิลที่ต้องจ่าย")}
                 icon={<CalendarClock className="h-[18px] w-[18px]" />}
-                title="เตือนจ่ายบิล"
-                sub="บอทเตือนก่อนวันครบกำหนด · แผน Elite"
+                title={t("เตือนจ่ายบิล")}
+                sub={t("บอทเตือนก่อนวันครบกำหนด · แผน Elite")}
               />
               <MenuButton
                 onClick={() => setSheet("recurring")}
-                ariaLabel="รายการประจำ"
+                ariaLabel={t("รายการประจำ")}
                 icon={<Repeat className="h-[18px] w-[18px]" />}
-                title="รายการประจำ"
-                sub="จดให้อัตโนมัติ เช่น ค่าเน็ต ค่าเช่า เงินเดือน"
+                title={t("รายการประจำ")}
+                sub={t("จดให้อัตโนมัติ เช่น ค่าเน็ต ค่าเช่า เงินเดือน")}
                 badge={
                   <span className="flex items-center gap-0.5 rounded-md bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary">
-                    <Plus className="h-3 w-3" aria-hidden /> เพิ่ม
+                    <Plus className="h-3 w-3" aria-hidden /> {t("เพิ่ม")}
                   </span>
                 }
               />
               <MenuButton
                 onClick={() => setSheet("memory")}
-                ariaLabel="จัดหมวดด้วยความจำ"
+                ariaLabel={t("จัดหมวดด้วยความจำ")}
                 icon={<Brain className="h-[18px] w-[18px]" />}
-                title="จัดหมวดด้วยความจำ"
-                sub={'เมื่อแก้หมวดสลิป บอทจะจำคู่ "ผู้รับ → หมวด" ไว้ใช้ครั้งต่อไป'}
+                title={t("จัดหมวดด้วยความจำ")}
+                sub={t('เมื่อแก้หมวดสลิป บอทจะจำคู่ "ผู้รับ → หมวด" ไว้ใช้ครั้งต่อไป')}
               />
             </MenuGroup>
           </>
@@ -356,36 +366,36 @@ export default function SettingsPage() {
       case "member":
         return (
           <>
-            <MenuGroup label="สมาชิก">
+            <MenuGroup label={t("สมาชิก")}>
               <MenuLink
                 href="/upgrade"
                 tone="warm"
                 icon={<Crown className="h-[18px] w-[18px]" />}
-                title={person.plan === "free" ? "อัปเกรด" : "อัปเกรด / ต่ออายุ"}
-                ariaLabel="อัปเกรด"
-                sub="ปลดล็อกฟีเจอร์พรีเมียมทั้งหมด"
+                title={person.plan === "free" ? t("อัปเกรด") : t("อัปเกรด / ต่ออายุ")}
+                ariaLabel={t("อัปเกรด")}
+                sub={t("ปลดล็อกฟีเจอร์พรีเมียมทั้งหมด")}
               />
               <MenuLink
                 href="/settings/quota"
                 icon={<Gauge className="h-[18px] w-[18px]" />}
-                title="โควตาการใช้งาน"
-                sub="ดูว่าใช้ไปเท่าไรจากโควตาของแผน"
+                title={t("โควตาการใช้งาน")}
+                sub={t("ดูว่าใช้ไปเท่าไรจากโควตาของแผน")}
               />
               <MenuLink
                 href="/invite"
                 icon={<Gift className="h-[18px] w-[18px]" />}
-                title="ชวนเพื่อน"
-                sub="รหัสชวนของคุณ และรับเหรียญสะสมทั้งคู่"
-                value={person.referrals > 0 ? `${person.referrals} คน` : undefined}
+                title={t("ชวนเพื่อน")}
+                sub={t("รหัสชวนของคุณ และรับเหรียญสะสมทั้งคู่")}
+                value={person.referrals > 0 ? t("{0} คน", person.referrals) : undefined}
               />
               <MenuButton
                 onClick={() => setSheet("payments")}
                 icon={<Receipt className="h-[18px] w-[18px]" />}
-                title="ประวัติการชำระเงิน"
+                title={t("ประวัติการชำระเงิน")}
                 sub={
                   person.payments.history.length === 0
-                    ? "ดูใบเสร็จและรอบต่ออายุสมาชิก"
-                    : `ดูใบเสร็จและรอบต่ออายุสมาชิก (${person.payments.history.length} รายการ)`
+                    ? t("ดูใบเสร็จและรอบต่ออายุสมาชิก")
+                    : t("ดูใบเสร็จและรอบต่ออายุสมาชิก ({0} รายการ)", person.payments.history.length)
                 }
               />
             </MenuGroup>
@@ -394,20 +404,25 @@ export default function SettingsPage() {
         );
       case "general":
         return (
-          <MenuGroup label="ทั่วไป">
-            <MenuInfo icon={<Languages className="h-[18px] w-[18px]" />} title="ภาษา" value="ไทย" />
+          <MenuGroup label={t("ทั่วไป")}>
+            <MenuButton
+              onClick={() => setSheet("language")}
+              icon={<Languages className="h-[18px] w-[18px]" />}
+              title={t("ภาษา")}
+              value={settings.data?.locale === "en" ? "English" : t("ไทย")}
+            />
             <MenuButton
               onClick={() => setSheet("currency")}
               icon={<Coins className="h-[18px] w-[18px]" />}
-              title="สกุลเงิน"
-              sub="ยอดเงินทั้งหมดแสดงเป็นสกุลนี้"
+              title={t("สกุลเงิน")}
+              sub={t("ยอดเงินทั้งหมดแสดงเป็นสกุลนี้")}
               value={currencyLabel(settings.data?.currency ?? DEFAULT_CURRENCY)}
             />
             <MenuButton
               onClick={() => setSheet("zone")}
               icon={<Clock className="h-[18px] w-[18px]" />}
-              title="โซนเวลา"
-              sub="เวลาเตือน การตัดวัน และรอบงบ คิดตามโซนนี้"
+              title={t("โซนเวลา")}
+              sub={t("เวลาเตือน การตัดวัน และรอบงบ คิดตามโซนนี้")}
               value={zoneCity(settings.data?.timezone)}
             />
           </MenuGroup>
@@ -424,13 +439,13 @@ export default function SettingsPage() {
 
   return (
     <main>
-      <PageHeader title="ตั้งค่า" />
+      <PageHeader title={t("ตั้งค่า")} />
       <div className="space-y-4 px-4 pb-4">
         {loading ? (
           <LoadingBlock rows={4} />
         ) : error || !current || !user ? (
           <ErrorState
-            message={error ?? "โหลดไม่สำเร็จ"}
+            message={error ?? t("โหลดไม่สำเร็จ")}
             onRetry={() => {
               settings.reload();
               me.reload();
@@ -450,8 +465,8 @@ export default function SettingsPage() {
                   setSearch(e.target.value);
                   setClosedInSearch(new Set());
                 }}
-                aria-label="ค้นหาการตั้งค่า"
-                placeholder="ค้นหาการตั้งค่า เช่น แจ้งเตือน, ธีม, สรุป"
+                aria-label={t("ค้นหาการตั้งค่า")}
+                placeholder={t("ค้นหาการตั้งค่า เช่น แจ้งเตือน, ธีม, สรุป")}
                 className="h-11 w-full rounded-2xl border border-border bg-surface pl-10 pr-4 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -459,7 +474,7 @@ export default function SettingsPage() {
             <ProfileCard me={user} />
 
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-xs font-semibold text-muted">หมวดการตั้งค่า</h2>
+              <h2 className="text-xs font-semibold text-muted">{t("หมวดการตั้งค่า")}</h2>
               {term ? null : (
                 <button
                   type="button"
@@ -468,13 +483,16 @@ export default function SettingsPage() {
                   }
                   className="h-8 text-xs font-semibold text-primary"
                 >
-                  {allOpen ? "ย่อทั้งหมด" : "เปิดทั้งหมด"}
+                  {allOpen ? t("ย่อทั้งหมด") : t("เปิดทั้งหมด")}
                 </button>
               )}
             </div>
 
             {found.length === 0 ? (
-              <EmptyState title="ไม่พบการตั้งค่า" hint={`ไม่มีหมวดที่ตรงกับ "${search.trim()}"`} />
+              <EmptyState
+                title={t("ไม่พบการตั้งค่า")}
+                hint={t('ไม่มีหมวดที่ตรงกับ "{0}"', search.trim())}
+              />
             ) : null}
             {/* every section stays in the page, so a search never loses what was typed in one */}
             <div className="space-y-3">
@@ -499,14 +517,17 @@ export default function SettingsPage() {
         )}
       </div>
       {sheet === "recurring" && me.data ? (
-        <Sheet title="รายการประจำ" onClose={() => setSheet(null)}>
+        <Sheet title={t("รายการประจำ")} onClose={() => setSheet(null)}>
           <RecurringCard me={me.data} embedded />
         </Sheet>
       ) : null}
       {sheet === "memory" && me.data ? (
-        <Sheet title="จัดหมวดด้วยความจำ" onClose={() => setSheet(null)}>
+        <Sheet title={t("จัดหมวดด้วยความจำ")} onClose={() => setSheet(null)}>
           <MemoryCard me={me.data} embedded />
         </Sheet>
+      ) : null}
+      {sheet === "language" ? (
+        <LanguageSheet current={settings.data?.locale} onClose={() => setSheet(null)} />
       ) : null}
       {sheet === "currency" ? (
         <CurrencySheet current={settings.data?.currency} onClose={() => setSheet(null)} />

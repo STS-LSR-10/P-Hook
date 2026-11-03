@@ -20,6 +20,7 @@ import {
   type WalletKind,
 } from "@/lib/wallet";
 import { cn } from "@/lib/utils";
+import { t as tr } from "@/lib/i18n";
 
 interface WalletItem {
   id: string;
@@ -77,11 +78,11 @@ export default function WalletsPage() {
 
   async function join() {
     const code = normalizeThaiDigits(joinCode).trim();
-    if (!/^\d{6}$/.test(code)) return setNotice("รหัสต้องเป็นตัวเลข 6 หลักนะ");
+    if (!/^\d{6}$/.test(code)) return setNotice(tr("รหัสต้องเป็นตัวเลข 6 หลักนะ"));
     await act(async () => {
       await api("/api/wallets/join", { method: "POST", body: JSON.stringify({ code }) });
       setJoinCode("");
-    }, "ร่วมกระเป๋าแล้ว");
+    }, tr("ร่วมกระเป๋าแล้ว"));
   }
 
   async function act(run: () => Promise<unknown>, done: string) {
@@ -92,18 +93,18 @@ export default function WalletsPage() {
       wallets.reload();
       transfers.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("ทำรายการไม่สำเร็จ"));
     }
   }
 
   return (
     <main>
       <PageHeader
-        title="กระเป๋าเงิน"
+        title={tr("กระเป๋าเงิน")}
         right={
           <Link
             href="/settings"
-            aria-label="กลับไปตั้งค่า"
+            aria-label={tr("กลับไปตั้งค่า")}
             className="flex h-11 w-11 items-center justify-center text-muted"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -114,11 +115,11 @@ export default function WalletsPage() {
         {wallets.loading ? (
           <LoadingBlock rows={3} />
         ) : wallets.error || !wallets.data ? (
-          <ErrorState message={wallets.error ?? "โหลดไม่สำเร็จ"} onRetry={wallets.reload} />
+          <ErrorState message={wallets.error ?? tr("โหลดไม่สำเร็จ")} onRetry={wallets.reload} />
         ) : (
           <>
-            <section className={cardClass} aria-label="ยอดรวม">
-              <p className="text-sm text-muted">รวมทุกกระเป๋า</p>
+            <section className={cardClass} aria-label={tr("ยอดรวม")}>
+              <p className="text-sm text-muted">{tr("รวมทุกกระเป๋า")}</p>
               <p
                 className={cn(
                   "num text-2xl font-bold",
@@ -128,12 +129,13 @@ export default function WalletsPage() {
                 {money(wallets.data.totalSatang)}
               </p>
               <p className="text-xs text-muted">
-                ยอดคงเหลือ = ยอดตั้งต้น + รายรับ − รายจ่าย · จดลงกระเป๋าอื่นในแชทโดยใส่ @ชื่อ เช่น
-                &quot;กาแฟ 45 @บัตร&quot;
+                {tr(
+                  'ยอดคงเหลือ = ยอดตั้งต้น + รายรับ − รายจ่าย · จดลงกระเป๋าอื่นในแชทโดยใส่ @ชื่อ เช่น "กาแฟ 45 @บัตร"',
+                )}
               </p>
             </section>
 
-            <ul className="space-y-3" aria-label="รายการกระเป๋า">
+            <ul className="space-y-3" aria-label={tr("รายการกระเป๋า")}>
               {items.map((w) => (
                 <li key={w.id} className={cardClass}>
                   <div className="flex items-center gap-3">
@@ -145,17 +147,17 @@ export default function WalletsPage() {
                         {w.name}
                         {w.isDefault && items.length > 1 ? (
                           <span className="ml-2 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] text-primary">
-                            หลัก
+                            {tr("หลัก")}
                           </span>
                         ) : null}
                         {w.shared ? (
                           <span className="ml-2 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] text-primary">
-                            👥 ร่วมกัน {w.memberCount ?? 1} คน
+                            {tr("👥 ร่วมกัน")} {w.memberCount ?? 1} {tr("คน")}
                           </span>
                         ) : null}
                       </p>
                       <p className="text-xs text-muted">
-                        {WALLET_KIND_LABEL[w.kind]} · {w.entryCount} รายการ
+                        {WALLET_KIND_LABEL[w.kind]} · {w.entryCount} {tr("รายการ")}
                       </p>
                     </div>
                     <p
@@ -169,7 +171,7 @@ export default function WalletsPage() {
                     {!w.isDefault && !w.shared ? (
                       <button
                         type="button"
-                        aria-label={`ตั้ง ${w.name} เป็นกระเป๋าหลัก`}
+                        aria-label={tr("ตั้ง {0} เป็นกระเป๋าหลัก", w.name)}
                         onClick={() =>
                           act(
                             () =>
@@ -177,7 +179,7 @@ export default function WalletsPage() {
                                 method: "PATCH",
                                 body: JSON.stringify({ isDefault: true }),
                               }),
-                            `ตั้ง ${w.name} เป็นกระเป๋าหลักแล้ว`,
+                            tr("ตั้ง {0} เป็นกระเป๋าหลักแล้ว", w.name),
                           )
                         }
                         className="flex h-11 w-9 shrink-0 items-center justify-center text-muted"
@@ -188,7 +190,7 @@ export default function WalletsPage() {
                     {!w.shared || w.isOwner ? (
                       <button
                         type="button"
-                        aria-label={`แก้ไข ${w.name}`}
+                        aria-label={tr("แก้ไข {0}", w.name)}
                         onClick={() => setEditing(w)}
                         className="flex h-11 w-9 shrink-0 items-center justify-center text-muted"
                       >
@@ -198,16 +200,19 @@ export default function WalletsPage() {
                     {!w.isDefault && (!w.shared || w.isOwner) ? (
                       <button
                         type="button"
-                        aria-label={`ลบ ${w.name}`}
+                        aria-label={tr("ลบ {0}", w.name)}
                         onClick={() => {
                           if (
                             window.confirm(
-                              `ลบกระเป๋า "${w.name}" ใช่ไหม? รายการในกระเป๋านี้ไม่หาย แต่จะย้ายไปกระเป๋าหลัก`,
+                              tr(
+                                'ลบกระเป๋า "{0}" ใช่ไหม? รายการในกระเป๋านี้ไม่หาย แต่จะย้ายไปกระเป๋าหลัก',
+                                w.name,
+                              ),
                             )
                           ) {
                             void act(
                               () => api(`/api/wallets/${w.id}`, { method: "DELETE" }),
-                              "ลบกระเป๋าแล้ว",
+                              tr("ลบกระเป๋าแล้ว"),
                             );
                           }
                         }}
@@ -234,11 +239,11 @@ export default function WalletsPage() {
             </ul>
 
             {privateItems.length > 1 ? (
-              <section className={cardClass} aria-label="โอนระหว่างกระเป๋า">
+              <section className={cardClass} aria-label={tr("โอนระหว่างกระเป๋า")}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-semibold">โอนระหว่างกระเป๋า</h2>
-                    <p className="text-xs text-muted">ไม่นับเป็นรายรับหรือรายจ่าย</p>
+                    <h2 className="font-semibold">{tr("โอนระหว่างกระเป๋า")}</h2>
+                    <p className="text-xs text-muted">{tr("ไม่นับเป็นรายรับหรือรายจ่าย")}</p>
                   </div>
                   <button
                     type="button"
@@ -246,14 +251,16 @@ export default function WalletsPage() {
                     disabled={!me.data?.features.transfer}
                     className="flex h-11 items-center gap-1 rounded-2xl bg-primary px-3 text-sm font-semibold text-surface disabled:opacity-40"
                   >
-                    <ArrowRightLeft className="h-4 w-4" aria-hidden /> โอน
+                    <ArrowRightLeft className="h-4 w-4" aria-hidden /> {tr("โอน")}
                   </button>
                 </div>
                 {me.data && !me.data.features.transfer ? (
-                  <PlusLock>โอนเงินระหว่างกระเป๋าของคุณได้โดยไม่กระทบสรุปรายรับ-รายจ่าย</PlusLock>
+                  <PlusLock>
+                    {tr("โอนเงินระหว่างกระเป๋าของคุณได้โดยไม่กระทบสรุปรายรับ-รายจ่าย")}
+                  </PlusLock>
                 ) : null}
                 {(transfers.data?.items.length ?? 0) === 0 ? (
-                  <p className="text-sm text-muted">ยังไม่มีรายการโอน</p>
+                  <p className="text-sm text-muted">{tr("ยังไม่มีรายการโอน")}</p>
                 ) : (
                   <ul className="divide-y divide-border">
                     {transfers.data?.items.map((t) => (
@@ -270,16 +277,16 @@ export default function WalletsPage() {
                         <p className="num shrink-0 text-sm font-bold">{money(t.amountSatang)}</p>
                         <button
                           type="button"
-                          aria-label={`ยกเลิกการโอน ${t.fromName} ไป ${t.toName}`}
+                          aria-label={tr("ยกเลิกการโอน {0} ไป {1}", t.fromName, t.toName)}
                           onClick={() => {
                             if (
                               window.confirm(
-                                "ยกเลิกการโอนนี้ใช่ไหม? ยอดสองกระเป๋าจะกลับเป็นเหมือนเดิม",
+                                tr("ยกเลิกการโอนนี้ใช่ไหม? ยอดสองกระเป๋าจะกลับเป็นเหมือนเดิม"),
                               )
                             ) {
                               void act(
                                 () => api(`/api/transfers/${t.id}`, { method: "DELETE" }),
-                                "ยกเลิกการโอนแล้ว",
+                                tr("ยกเลิกการโอนแล้ว"),
                               );
                             }
                           }}
@@ -297,13 +304,13 @@ export default function WalletsPage() {
             <Link
               href="/debts"
               className={`${cardClass} flex items-center gap-3 !space-y-0`}
-              aria-label="หนี้สิน"
+              aria-label={tr("หนี้สิน")}
             >
               <Banknote className="h-5 w-5 text-primary" aria-hidden />
               <span className="flex-1">
-                <span className="block font-semibold">หนี้สิน</span>
+                <span className="block font-semibold">{tr("หนี้สิน")}</span>
                 <span className="block text-xs text-muted">
-                  จดให้ยืม/ยืม ตัดยอดกระเป๋าให้ · แผน Elite
+                  {tr("จดให้ยืม/ยืม ตัดยอดกระเป๋าให้ · แผน Elite")}
                 </span>
               </span>
             </Link>
@@ -317,16 +324,16 @@ export default function WalletsPage() {
               </p>
             ) : null}
 
-            <section className={cardClass} aria-label="ร่วมกระเป๋าด้วยรหัส">
-              <h2 className="font-semibold">มีรหัสเชิญเข้ากระเป๋าร่วม?</h2>
+            <section className={cardClass} aria-label={tr("ร่วมกระเป๋าด้วยรหัส")}>
+              <h2 className="font-semibold">{tr("มีรหัสเชิญเข้ากระเป๋าร่วม?")}</h2>
               <div className="flex gap-2">
                 <input
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value)}
                   inputMode="numeric"
                   maxLength={6}
-                  placeholder="รหัส 6 หลัก"
-                  aria-label="รหัสเชิญ"
+                  placeholder={tr("รหัส 6 หลัก")}
+                  aria-label={tr("รหัสเชิญ")}
                   className="num h-11 min-w-0 flex-1 rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary"
                 />
                 <button
@@ -334,11 +341,13 @@ export default function WalletsPage() {
                   onClick={() => void join()}
                   className="h-11 rounded-2xl border border-border px-4 text-sm font-semibold"
                 >
-                  ร่วมกระเป๋า
+                  {tr("ร่วมกระเป๋า")}
                 </button>
               </div>
               <p className="text-xs text-muted">
-                คนที่ร่วมเห็นเฉพาะรายการที่ลงกระเป๋านั้น กระเป๋าและรายการส่วนตัวของคุณยังเป็นส่วนตัว
+                {tr(
+                  "คนที่ร่วมเห็นเฉพาะรายการที่ลงกระเป๋านั้น กระเป๋าและรายการส่วนตัวของคุณยังเป็นส่วนตัว",
+                )}
               </p>
             </section>
 
@@ -348,15 +357,15 @@ export default function WalletsPage() {
                 onClick={() => setEditing("new")}
                 className="flex h-12 w-full items-center justify-center gap-1 rounded-2xl bg-primary text-base font-semibold text-surface"
               >
-                <Plus className="h-5 w-5" aria-hidden /> เพิ่มกระเป๋า
+                <Plus className="h-5 w-5" aria-hidden /> {tr("เพิ่มกระเป๋า")}
               </button>
             ) : (
               <p className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                แผนปัจจุบันมีกระเป๋าได้ {wallets.data.limit} ใบ{" "}
+                {tr("แผนปัจจุบันมีกระเป๋าได้")} {wallets.data.limit} {tr("ใบ")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
-                  ดูแผนอัปเกรด
+                  {tr("ดูแผนอัปเกรด")}
                 </Link>{" "}
-                (Pro มีได้ 5 ใบ · Elite ไม่จำกัด)
+                {tr("(Pro มีได้ 5 ใบ · Elite ไม่จำกัด)")}
               </p>
             )}
           </>
@@ -369,7 +378,7 @@ export default function WalletsPage() {
           onClose={() => setTransferring(false)}
           onSaved={() => {
             setTransferring(false);
-            setNotice("โอนแล้ว");
+            setNotice(tr("โอนแล้ว"));
             wallets.reload();
             transfers.reload();
           }}
@@ -400,14 +409,14 @@ function CardDetails({ card }: { card: NonNullable<WalletItem["card"]> }) {
   return (
     <div className="mt-3 space-y-1 border-t border-border pt-3 text-sm">
       <div className="flex justify-between">
-        <span className="text-muted">ยอดค้างชำระ</span>
+        <span className="text-muted">{tr("ยอดค้างชำระ")}</span>
         <span className="num font-semibold">{money(card.owedSatang)}</span>
       </div>
       {card.limitSatang !== null && card.availableSatang !== null ? (
         <>
           <div className="flex justify-between">
             <span className="text-muted">
-              {card.availableSatang < 0 ? "เกินวงเงิน" : "วงเงินคงเหลือ"} (จาก{" "}
+              {card.availableSatang < 0 ? tr("เกินวงเงิน") : tr("วงเงินคงเหลือ")} {tr("(จาก")}{" "}
               {money(card.limitSatang)})
             </span>
             <span
@@ -422,11 +431,11 @@ function CardDetails({ card }: { card: NonNullable<WalletItem["card"]> }) {
           {percent !== null ? (
             <div
               role="progressbar"
-              aria-label="การใช้วงเงิน"
+              aria-label={tr("การใช้วงเงิน")}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.min(100, percent)}
-              aria-valuetext={`ใช้วงเงินไป ${percent}%`}
+              aria-valuetext={tr("ใช้วงเงินไป {0}%", percent)}
               className="h-2 overflow-hidden rounded-full bg-border"
             >
               <div
@@ -438,28 +447,32 @@ function CardDetails({ card }: { card: NonNullable<WalletItem["card"]> }) {
               />
             </div>
           ) : null}
-          {percent !== null ? <p className="text-xs text-muted">ใช้วงเงินไป {percent}%</p> : null}
+          {percent !== null ? (
+            <p className="text-xs text-muted">
+              {tr("ใช้วงเงินไป")} {percent}%
+            </p>
+          ) : null}
         </>
       ) : null}
       {card.nextStatement ? (
         <>
           <div className="flex justify-between">
-            <span className="text-muted">ยอดใช้รอบนี้</span>
+            <span className="text-muted">{tr("ยอดใช้รอบนี้")}</span>
             <span className="num">{money(card.cycleSpentSatang)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted">ยอดใช้รอบที่แล้ว</span>
+            <span className="text-muted">{tr("ยอดใช้รอบที่แล้ว")}</span>
             <span className="num">{money(card.previousCycleSpentSatang)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted">ตัดรอบบิลถัดไป</span>
+            <span className="text-muted">{tr("ตัดรอบบิลถัดไป")}</span>
             <span>{formatThaiDate(new Date(card.nextStatement))}</span>
           </div>
         </>
       ) : null}
       {card.nextDue ? (
         <div className="flex justify-between">
-          <span className="text-muted">ครบกำหนดชำระ</span>
+          <span className="text-muted">{tr("ครบกำหนดชำระ")}</span>
           <span>{formatThaiDate(new Date(card.nextDue))}</span>
         </div>
       ) : null}
@@ -502,11 +515,11 @@ function WalletSheet({
     const normalized = normalizeThaiDigits(opening).replace(/,/g, "").trim();
     const limitText = normalizeThaiDigits(limit).replace(/,/g, "").trim();
     if (kind === "card" && canCard && limitText && !/^\d{1,10}(\.\d{1,2})?$/.test(limitText)) {
-      return setError("วงเงินไม่ถูกต้อง (เช่น 50000)");
+      return setError(tr("วงเงินไม่ถูกต้อง (เช่น 50000)"));
     }
-    if (!name.trim()) return setError("ตั้งชื่อกระเป๋าด้วยนะ");
+    if (!name.trim()) return setError(tr("ตั้งชื่อกระเป๋าด้วยนะ"));
     if (normalized && !BALANCE_PATTERN.test(normalized)) {
-      return setError("ยอดตั้งต้นไม่ถูกต้อง (เช่น 5000 หรือ -1200.50)");
+      return setError(tr("ยอดตั้งต้นไม่ถูกต้อง (เช่น 5000 หรือ -1200.50)"));
     }
     setSaving(true);
     setError(null);
@@ -531,28 +544,28 @@ function WalletSheet({
       } else {
         await api("/api/wallets", { method: "POST", body });
       }
-      onSaved(wallet ? "บันทึกแล้ว" : "เพิ่มกระเป๋าแล้ว");
+      onSaved(wallet ? tr("บันทึกแล้ว") : tr("เพิ่มกระเป๋าแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   return (
-    <Sheet title={wallet ? "แก้ไขกระเป๋า" : "เพิ่มกระเป๋า"} onClose={onClose}>
+    <Sheet title={wallet ? tr("แก้ไขกระเป๋า") : tr("เพิ่มกระเป๋า")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={MAX_WALLET_NAME}
-          placeholder="ชื่อกระเป๋า เช่น บัตร KTC"
-          aria-label="ชื่อกระเป๋า"
+          placeholder={tr("ชื่อกระเป๋า เช่น บัตร KTC")}
+          aria-label={tr("ชื่อกระเป๋า")}
           className={fieldClass}
         />
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as WalletKind)}
-          aria-label="ชนิดกระเป๋า"
+          aria-label={tr("ชนิดกระเป๋า")}
           className={fieldClass}
         >
           {WALLET_KINDS.map((k) => (
@@ -565,11 +578,11 @@ function WalletSheet({
           value={opening}
           onChange={(e) => setOpening(e.target.value)}
           inputMode="decimal"
-          placeholder={`ยอดตั้งต้น (${currencyUnit()}) เว้นว่าง = 0`}
-          aria-label="ยอดตั้งต้น"
+          placeholder={tr("ยอดตั้งต้น ({0}) เว้นว่าง = 0", currencyUnit())}
+          aria-label={tr("ยอดตั้งต้น")}
           className={cn(fieldClass, "num")}
         />
-        <p className="text-xs text-muted">บัตรเครดิตที่มียอดค้าง ใส่ติดลบได้ เช่น -3500</p>
+        <p className="text-xs text-muted">{tr("บัตรเครดิตที่มียอดค้าง ใส่ติดลบได้ เช่น -3500")}</p>
         {!wallet ? (
           canShare ? (
             <label className="flex min-h-11 items-start gap-2 text-sm">
@@ -583,15 +596,17 @@ function WalletSheet({
                 className="mt-1 h-4 w-4"
               />
               <span>
-                <span className="font-semibold">กระเป๋าร่วมกับคนอื่น (เช่น แฟน)</span>
+                <span className="font-semibold">{tr("กระเป๋าร่วมกับคนอื่น (เช่น แฟน)")}</span>
                 <span className="block text-xs text-muted">
-                  ต่างคนต่างจดลงกระเป๋านี้จากแชทของตัวเอง ยอดเดียวกัน ชวนด้วยรหัส 6 หลักทีหลังได้
-                  (ใช้ได้เฉพาะรายรับ/รายจ่าย)
+                  {tr(
+                    "ต่างคนต่างจดลงกระเป๋านี้จากแชทของตัวเอง ยอดเดียวกัน ชวนด้วยรหัส 6 หลักทีหลังได้",
+                  )}
+                  {tr("(ใช้ได้เฉพาะรายรับ/รายจ่าย)")}
                 </span>
               </span>
             </label>
           ) : (
-            <PlusLock>กระเป๋าร่วมกับแฟนหรือคนอื่น จดจากแชทของตัวเองได้ยอดเดียวกัน</PlusLock>
+            <PlusLock>{tr("กระเป๋าร่วมกับแฟนหรือคนอื่น จดจากแชทของตัวเองได้ยอดเดียวกัน")}</PlusLock>
           )
         ) : null}
         {kind === "card" ? (
@@ -601,39 +616,39 @@ function WalletSheet({
                 value={limit}
                 onChange={(e) => setLimit(e.target.value)}
                 inputMode="decimal"
-                placeholder={`วงเงิน (${currencyUnit()}) เช่น 50000`}
-                aria-label="วงเงิน"
+                placeholder={tr("วงเงิน ({0}) เช่น 50000", currencyUnit())}
+                aria-label={tr("วงเงิน")}
                 className={cn(fieldClass, "num")}
               />
               <select
                 value={statementDay}
                 onChange={(e) => setStatementDay(Number(e.target.value))}
-                aria-label="วันตัดรอบบิล"
+                aria-label={tr("วันตัดรอบบิล")}
                 className={fieldClass}
               >
-                <option value={0}>วันตัดรอบบิล (ไม่ระบุ)</option>
+                <option value={0}>{tr("วันตัดรอบบิล (ไม่ระบุ)")}</option>
                 {DAYS.map((d) => (
                   <option key={d} value={d}>
-                    ตัดรอบทุกวันที่ {d}
+                    {tr("ตัดรอบทุกวันที่")} {d}
                   </option>
                 ))}
               </select>
               <select
                 value={dueDay}
                 onChange={(e) => setDueDay(Number(e.target.value))}
-                aria-label="วันครบกำหนดชำระ"
+                aria-label={tr("วันครบกำหนดชำระ")}
                 className={fieldClass}
               >
-                <option value={0}>วันครบกำหนดชำระ (ไม่ระบุ)</option>
+                <option value={0}>{tr("วันครบกำหนดชำระ (ไม่ระบุ)")}</option>
                 {DAYS.map((d) => (
                   <option key={d} value={d}>
-                    ครบกำหนดทุกวันที่ {d}
+                    {tr("ครบกำหนดทุกวันที่")} {d}
                   </option>
                 ))}
               </select>
             </>
           ) : (
-            <PlusLock>ตั้งวงเงิน วันตัดรอบ และดูยอดตามรอบบิลของบัตรเครดิต</PlusLock>
+            <PlusLock>{tr("ตั้งวงเงิน วันตัดรอบ และดูยอดตามรอบบิลของบัตรเครดิต")}</PlusLock>
           )
         ) : null}
         {error ? (
@@ -646,7 +661,7 @@ function WalletSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก..." : "บันทึก"}
+          {saving ? tr("กำลังบันทึก...") : tr("บันทึก")}
         </button>
       </form>
     </Sheet>
@@ -673,9 +688,9 @@ function TransferSheet({
   async function submit(e: FormEvent) {
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
-    if (fromId === toId) return setError("เลือกสองกระเป๋าที่ต่างกันนะ");
+    if (fromId === toId) return setError(tr("เลือกสองกระเป๋าที่ต่างกันนะ"));
     if (!/^\d{1,10}(\.\d{1,2})?$/.test(normalized) || Number(normalized) <= 0) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 500 หรือ 500.50)");
+      return setError(tr("จำนวนเงินไม่ถูกต้อง (เช่น 500 หรือ 500.50)"));
     }
     setSaving(true);
     setError(null);
@@ -686,7 +701,7 @@ function TransferSheet({
       });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "โอนไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("โอนไม่สำเร็จ"));
       setSaving(false);
     }
   }
@@ -698,12 +713,12 @@ function TransferSheet({
   ));
 
   return (
-    <Sheet title="โอนระหว่างกระเป๋า" onClose={onClose}>
+    <Sheet title={tr("โอนระหว่างกระเป๋า")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
         <select
           value={fromId}
           onChange={(e) => setFromId(e.target.value)}
-          aria-label="จากกระเป๋า"
+          aria-label={tr("จากกระเป๋า")}
           className={fieldClass}
         >
           {options}
@@ -711,7 +726,7 @@ function TransferSheet({
         <select
           value={toId}
           onChange={(e) => setToId(e.target.value)}
-          aria-label="ไปกระเป๋า"
+          aria-label={tr("ไปกระเป๋า")}
           className={fieldClass}
         >
           {options}
@@ -720,16 +735,16 @@ function TransferSheet({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder={`จำนวนเงิน (${currencyUnit()})`}
-          aria-label="จำนวนเงินที่โอน"
+          placeholder={tr("จำนวนเงิน ({0})", currencyUnit())}
+          aria-label={tr("จำนวนเงินที่โอน")}
           className={cn(fieldClass, "num")}
         />
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={MAX_TRANSFER_NOTE}
-          placeholder="โน้ต (ไม่บังคับ)"
-          aria-label="โน้ตการโอน"
+          placeholder={tr("โน้ต (ไม่บังคับ)")}
+          aria-label={tr("โน้ตการโอน")}
           className={fieldClass}
         />
         {error ? (
@@ -742,7 +757,7 @@ function TransferSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังโอน..." : "โอน"}
+          {saving ? tr("กำลังโอน...") : tr("โอน")}
         </button>
       </form>
     </Sheet>
@@ -766,37 +781,39 @@ function SharedDetails({
 
   async function removeMember(userId: string, name: string, leaving: boolean) {
     const ask = leaving
-      ? `ออกจากกระเป๋า "${wallet.name}" ใช่ไหม? รายการที่เคยจดไว้ยังอยู่ในกระเป๋านั้น`
-      : `เอา ${name} ออกจากกระเป๋า "${wallet.name}" ใช่ไหม? รายการที่เขาเคยจดยังอยู่`;
+      ? tr('ออกจากกระเป๋า "{0}" ใช่ไหม? รายการที่เคยจดไว้ยังอยู่ในกระเป๋านั้น', wallet.name)
+      : tr('เอา {0} ออกจากกระเป๋า "{1}" ใช่ไหม? รายการที่เขาเคยจดยังอยู่', name, wallet.name);
     if (!window.confirm(ask)) return;
     try {
       await api(`/api/wallets/${wallet.id}/members/${userId}`, { method: "DELETE" });
-      onChanged(leaving ? "ออกจากกระเป๋าแล้ว" : "เอาออกแล้ว");
+      onChanged(leaving ? tr("ออกจากกระเป๋าแล้ว") : tr("เอาออกแล้ว"));
     } catch (err) {
-      onChanged(err instanceof Error ? err.message : "ทำรายการไม่สำเร็จ");
+      onChanged(err instanceof Error ? err.message : tr("ทำรายการไม่สำเร็จ"));
     }
   }
 
   return (
     <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
       <p className="text-xs text-muted">
-        คนที่ร่วม: เห็นและจดรายการที่ลงกระเป๋านี้ได้ทุกคน แต่แก้/ลบได้เฉพาะของตัวเอง
+        {tr("คนที่ร่วม: เห็นและจดรายการที่ลงกระเป๋านี้ได้ทุกคน แต่แก้/ลบได้เฉพาะของตัวเอง")}
       </p>
-      <ul className="space-y-1" aria-label={`สมาชิกของ ${wallet.name}`}>
+      <ul className="space-y-1" aria-label={tr("สมาชิกของ {0}", wallet.name)}>
         {members.map((m) => (
           <li key={m.userId} className="flex items-center justify-between gap-2">
             <span className="truncate">
               {m.name}
-              {m.role === "owner" ? <span className="ml-2 text-xs text-muted">เจ้าของ</span> : null}
+              {m.role === "owner" ? (
+                <span className="ml-2 text-xs text-muted">{tr("เจ้าของ")}</span>
+              ) : null}
             </span>
             {mine && m.role === "member" ? (
               <button
                 type="button"
-                aria-label={`เอา ${m.name} ออกจาก ${wallet.name}`}
+                aria-label={tr("เอา {0} ออกจาก {1}", m.name, wallet.name)}
                 onClick={() => void removeMember(m.userId, m.name, false)}
                 className="flex h-11 items-center px-2 text-xs text-expense"
               >
-                เอาออก
+                {tr("เอาออก")}
               </button>
             ) : null}
           </li>
@@ -807,20 +824,20 @@ function SharedDetails({
           <button
             type="button"
             onClick={onInvite}
-            aria-label={`ชวนเข้า ${wallet.name}`}
+            aria-label={tr("ชวนเข้า {0}", wallet.name)}
             className="h-11 flex-1 rounded-2xl border border-border text-sm font-semibold"
           >
-            ชวนเข้ากระเป๋า
+            {tr("ชวนเข้ากระเป๋า")}
           </button>
         ) : null}
         {!mine && viewerId ? (
           <button
             type="button"
-            aria-label={`ออกจากกระเป๋า ${wallet.name}`}
+            aria-label={tr("ออกจากกระเป๋า {0}", wallet.name)}
             onClick={() => void removeMember(viewerId, "", true)}
             className="h-11 flex-1 rounded-2xl border border-border text-sm font-semibold text-expense"
           >
-            ออกจากกระเป๋านี้
+            {tr("ออกจากกระเป๋านี้")}
           </button>
         ) : null}
       </div>
@@ -841,7 +858,7 @@ function InviteSheet({ wallet, onClose }: { wallet: WalletItem; onClose: () => v
     try {
       setInvite(await api(`/api/wallets/${wallet.id}/invite`, { method: "POST" }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "สร้างรหัสไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("สร้างรหัสไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
@@ -858,27 +875,27 @@ function InviteSheet({ wallet, onClose }: { wallet: WalletItem; onClose: () => v
   }
 
   return (
-    <Sheet title={`ชวนเข้า ${wallet.name}`} onClose={onClose}>
+    <Sheet title={tr("ชวนเข้า {0}", wallet.name)} onClose={onClose}>
       <div className="space-y-3">
         {invite ? (
           <>
             <p
               className="num text-center text-4xl font-bold tracking-widest"
-              aria-label="รหัสเชิญของกระเป๋า"
+              aria-label={tr("รหัสเชิญของกระเป๋า")}
             >
               {invite.code}
             </p>
             <p className="text-sm text-muted">
-              ให้เขาพิมพ์ในแชทกับบอทว่า{" "}
+              {tr("ให้เขาพิมพ์ในแชทกับบอทว่า")}{" "}
               <span className="font-semibold">ร่วมกระเป๋า {invite.code}</span>{" "}
-              (หรือใส่รหัสในหน้ากระเป๋าเงิน) ใช้ได้ครั้งเดียวและหมดอายุใน 24 ชั่วโมง
+              {tr("(หรือใส่รหัสในหน้ากระเป๋าเงิน) ใช้ได้ครั้งเดียวและหมดอายุใน 24 ชั่วโมง")}
             </p>
             <button
               type="button"
               onClick={() => void copy()}
               className="h-11 w-full rounded-2xl border border-border text-sm font-semibold"
             >
-              {copied ? "คัดลอกแล้ว" : "คัดลอกข้อความ"}
+              {copied ? tr("คัดลอกแล้ว") : tr("คัดลอกข้อความ")}
             </button>
           </>
         ) : (
@@ -888,7 +905,7 @@ function InviteSheet({ wallet, onClose }: { wallet: WalletItem; onClose: () => v
             onClick={() => void make()}
             className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
           >
-            {busy ? "กำลังสร้างรหัส..." : "สร้างรหัสเชิญ"}
+            {busy ? tr("กำลังสร้างรหัส...") : tr("สร้างรหัสเชิญ")}
           </button>
         )}
         {error ? (

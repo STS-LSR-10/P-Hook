@@ -14,17 +14,19 @@ import {
   type Ymd,
 } from "@/lib/date-range";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
+import { yearOf } from "@/lib/thai-date";
 
 export interface DayRange {
   start: Ymd;
   end: Ymd;
 }
 
-const WEEKDAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+const WEEKDAYS = [t("อา."), t("จ."), t("อ."), t("พ."), t("พฤ."), t("ศ."), t("ส.")];
 const PRESETS: { value: Preset; label: string }[] = [
-  { value: "month", label: "เดือนนี้" },
-  { value: "week", label: "สัปดาห์นี้" },
-  { value: "lastMonth", label: "เดือนที่แล้ว" },
+  { value: "month", label: t("เดือนนี้") },
+  { value: "week", label: t("สัปดาห์นี้") },
+  { value: "lastMonth", label: t("เดือนที่แล้ว") },
 ];
 
 /**
@@ -86,14 +88,14 @@ export function RangeCalendar({
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4"
       role="dialog"
       aria-modal
-      aria-label="เลือกช่วงวันที่"
+      aria-label={t("เลือกช่วงวันที่")}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-sm space-y-3 rounded-3xl border border-border bg-surface p-5 shadow-card">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <button
             type="button"
-            aria-label="เดือนก่อนหน้า"
+            aria-label={t("เดือนก่อนหน้า")}
             onClick={() => step(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-xl text-muted"
           >
@@ -101,13 +103,13 @@ export function RangeCalendar({
           </button>
           <div className="text-center">
             <h2 className="num text-sm font-bold">
-              {MONTHS_FULL[view.month - 1]} {view.year + 543}
+              {MONTHS_FULL[view.month - 1]} {yearOf(view.year)}
             </h2>
-            <p className="text-[10px] text-muted">เลือกช่วงวันที่ต้องการดูรายการ</p>
+            <p className="text-[10px] text-muted">{t("เลือกช่วงวันที่ต้องการดูรายการ")}</p>
           </div>
           <button
             type="button"
-            aria-label="เดือนถัดไป"
+            aria-label={t("เดือนถัดไป")}
             onClick={() => step(1)}
             className="flex h-10 w-10 items-center justify-center rounded-xl text-muted"
           >
@@ -129,7 +131,7 @@ export function RangeCalendar({
               <button
                 key={`${d.year}-${d.month}-${d.day}`}
                 type="button"
-                aria-label={`${d.day} ${MONTHS_FULL[d.month - 1]} ${d.year + 543}`}
+                aria-label={`${d.day} ${MONTHS_FULL[d.month - 1]} ${yearOf(d.year)}`}
                 aria-pressed={selected}
                 onClick={() => pick(d)}
                 className={cn(
@@ -165,7 +167,7 @@ export function RangeCalendar({
             onClick={() => onApply(null)}
             className="h-9 flex-1 rounded-lg border border-border bg-background text-[11px] font-medium text-muted"
           >
-            ทั้งหมด
+            {t("ทั้งหมด")}
           </button>
         </div>
 
@@ -173,8 +175,8 @@ export function RangeCalendar({
           {start && end
             ? formatRange(start, end)
             : start
-              ? "เลือกวันสุดท้ายของช่วง (หรือกดวันเดียวซ้ำ)"
-              : "ยังไม่ได้เลือกช่วงวันที่"}
+              ? t("เลือกวันสุดท้ายของช่วง (หรือกดวันเดียวซ้ำ)")
+              : t("ยังไม่ได้เลือกช่วงวันที่")}
         </p>
 
         <div className="flex gap-2">
@@ -183,7 +185,7 @@ export function RangeCalendar({
             onClick={onClose}
             className="h-11 flex-1 rounded-xl bg-background text-xs font-semibold text-muted"
           >
-            ยกเลิก
+            {t("ยกเลิก")}
           </button>
           <button
             type="button"
@@ -191,7 +193,7 @@ export function RangeCalendar({
             onClick={() => start && onApply({ start, end: end ?? start })}
             className="h-11 flex-1 rounded-xl bg-primary text-xs font-semibold text-surface disabled:opacity-50"
           >
-            ตกลง
+            {t("ตกลง")}
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { setZoneSource } from "@/lib/thai-date";
 import { isZone } from "@/lib/zone";
 import { isHomeCurrency } from "@/lib/currency";
 import { setCurrencySource } from "@/lib/money";
+import { currentLocale, isLocale, loadedLocale, LOCALE_KEY, setLocaleSource, t } from "@/lib/i18n";
 import {
   createContext,
   useCallback,
@@ -41,6 +42,23 @@ export class ApiError extends Error {
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID;
 
 const RELOGIN_KEY = "jodtang-liff-login-at";
+/**
+ * Remember the language and load the page in it (after sign-in told another, or a change). A browser
+ * that keeps nothing is not reloaded (it would load in the old language again, for ever): its page
+ * follows the sign-in instead, words made at load staying Thai.
+ */
+export function switchLocale(locale: string): boolean {
+  try {
+    window.localStorage.setItem(LOCALE_KEY, locale);
+    if (window.localStorage.getItem(LOCALE_KEY) === locale) {
+      window.location.reload();
+      return true;
+    }
+  } catch {
+    /* kept nothing: no reload */
+  }
+  return false;
+}
 const RELOGIN_WINDOW_MS = 30_000;
 
 /**
@@ -48,17 +66,20 @@ const RELOGIN_WINDOW_MS = 30_000;
  * produce a session (a server-side configuration problem, for example), looping through the login
  * redirect forever shows only a flickering page, so give up with a clear message instead.
  */
+/** Signing in again was just tried: give up instead of redirecting again (told apart by type, not words). */
+class ReloginBlocked extends Error {}
+
 function loginOnce(liff: { login: (o: { redirectUri: string }) => void }): Promise<string> {
   try {
     const last = Number(window.sessionStorage.getItem(RELOGIN_KEY) ?? 0);
     if (Date.now() - last < RELOGIN_WINDOW_MS) {
-      throw new Error(
-        "เข้าสู่ระบบไม่สำเร็จ ลองปิดแล้วเปิดใหม่อีกครั้งนะ (ถ้ายังไม่ได้ แจ้งผู้ดูแล)",
+      throw new ReloginBlocked(
+        t("เข้าสู่ระบบไม่สำเร็จ ลองปิดแล้วเปิดใหม่อีกครั้งนะ (ถ้ายังไม่ได้ แจ้งผู้ดูแล)"),
       );
     }
     window.sessionStorage.setItem(RELOGIN_KEY, String(Date.now()));
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith("เข้าสู่ระบบ")) throw e;
+    if (e instanceof ReloginBlocked) throw e;
     // sessionStorage unavailable: fall through to a single normal redirect
   }
   liff.login({ redirectUri: window.location.href });
@@ -76,6 +97,11 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   const token = useRef<string | null>(null);
   const inflight = useRef<Promise<string> | null>(null);
   // Follow the device's light/dark preference (tokens define a `.dark` class).
+  // the page says which language it is in (screen readers pick their voice by it)
+  useEffect(() => {
+    document.documentElement.lang = currentLocale();
+  }, []);
+
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => document.documentElement.classList.toggle("dark", media.matches);
@@ -94,7 +120,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         token.current = "e2e-token";
         return token.current;
       }
-      if (!LIFF_ID) throw new Error("ยังไม่ได้ตั้งค่า LIFF");
+      if (!LIFF_ID) throw new Error(t("ยังไม่ได้ตั้งค่า LIFF"));
       const liff = (await import("@line/liff")).default;
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) return loginOnce(liff);
@@ -110,11 +136,12 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         error?: string;
         tz?: string | null;
         cur?: string | null;
+        loc?: string | null;
       };
       if (!res.ok || !body.token) {
         // An expired ID token needs a fresh login rather than a retry.
         if (res.status === 401) return loginOnce(liff);
-        throw new Error(body.error ?? "เข้าสู่ระบบไม่สำเร็จ");
+        throw new Error(body.error ?? t("เข้าสู่ระบบไม่สำเร็จ"));
       }
       token.current = body.token;
       // dates on every page are shown and read in the person's zone
@@ -123,6 +150,12 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       // and amounts in their currency
       const cur = body.cur;
       if (isHomeCurrency(cur)) setCurrencySource(() => cur);
+      // and words in their language: a page loaded in another reloads once in theirs
+      const loc = body.loc;
+      if (isLocale(loc)) {
+        setLocaleSource(() => loc);
+        if (loc !== loadedLocale()) switchLocale(loc);
+      }
       try {
         window.sessionStorage.removeItem(RELOGIN_KEY);
       } catch {
@@ -146,7 +179,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "เข้าสู่ระบบไม่สำเร็จ");
+        setError(e instanceof Error ? e.message : t("เข้าสู่ระบบไม่สำเร็จ"));
         setStatus("error");
       });
     return () => {
@@ -171,7 +204,8 @@ export function LiffProvider({ children }: { children: ReactNode }) {
         res = await call(await authenticate());
       }
       const body = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new ApiError(body.error ?? "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ", res.status);
+      if (!res.ok)
+        throw new ApiError(body.error ?? t("เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ"), res.status);
       return body as T;
     },
     [authenticate],
@@ -229,7 +263,7 @@ export function useApi<T>(path: string | null): ApiState<T> {
 
   useEffect(() => {
     if (status === "error") {
-      setError(authError ?? "เข้าสู่ระบบไม่สำเร็จ");
+      setError(authError ?? t("เข้าสู่ระบบไม่สำเร็จ"));
       setLoading(false);
       return;
     }
@@ -246,7 +280,7 @@ export function useApi<T>(path: string | null): ApiState<T> {
     api<T>(path)
       .then((d) => !cancelled && setData(d))
       .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+        if (!cancelled) setError(e instanceof Error ? e.message : t("เกิดข้อผิดพลาด"));
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {

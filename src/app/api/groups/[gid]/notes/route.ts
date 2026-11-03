@@ -6,6 +6,7 @@ import { countNotes, createNote, listGroupNotes } from "@/lib/note-repo";
 import { can } from "@/lib/plan";
 import { getPlanInfo } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     const parsed = bodySchema.safeParse(await request.json().catch(() => null));
     const body = parsed.success ? cleanNoteBody(parsed.data.body) : "";
     if (!body || body.length > MAX_NOTE_LENGTH) {
-      return apiError(`เขียนโน้ตให้ไม่ว่างและไม่เกิน ${MAX_NOTE_LENGTH} ตัวอักษรนะ`, 400);
+      return apiError(t("เขียนโน้ตให้ไม่ว่างและไม่เกิน {0} ตัวอักษรนะ", MAX_NOTE_LENGTH), 400);
     }
 
     const owner = viewer.group.ownerUserId;
@@ -83,7 +84,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     }
     const limit = noteCapacity(plan);
     if (count >= limit) {
-      return apiError(`โน้ตของเจ้าของสมุดเต็ม ${limit} รายการแล้ว ลบอันเก่าก่อนนะ`, 409);
+      return apiError(t("โน้ตของเจ้าของสมุดเต็ม {0} รายการแล้ว ลบอันเก่าก่อนนะ", limit), 409);
     }
     const note = await createNote(db, owner, body, {
       groupId: viewer.group.id,

@@ -14,6 +14,7 @@ import { currencyUnit, money, satangToString } from "@/lib/money";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, formatThaiDayMonth } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface GoalsResponse {
   items: GoalDto[];
@@ -46,26 +47,26 @@ export default function GoalsPage() {
   const items = (goals.data?.items ?? []).filter((g) => !g.archived);
 
   async function remove(g: GoalDto) {
-    const extra = g.savedSatang > 0 ? ` ยอดที่ออมไว้ ${money(g.savedSatang)} จะหายไปด้วย` : "";
-    if (!window.confirm(`ลบเป้าหมาย "${g.name}" ใช่ไหม?${extra}`)) return;
+    const extra = g.savedSatang > 0 ? t(" ยอดที่ออมไว้ {0} จะหายไปด้วย", money(g.savedSatang)) : "";
+    if (!window.confirm(t('ลบเป้าหมาย "{0}" ใช่ไหม?{1}', g.name, extra))) return;
     setNotice(null);
     try {
       await api(`/api/goals/${g.id}`, { method: "DELETE" });
-      setNotice("ลบแล้ว");
+      setNotice(t("ลบแล้ว"));
       goals.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ลบไม่สำเร็จ"));
     }
   }
 
   return (
     <main>
       <PageHeader
-        title="เป้าหมายการออม"
+        title={t("เป้าหมายการออม")}
         right={
           <Link
             href="/settings"
-            aria-label="กลับไปตั้งค่า"
+            aria-label={t("กลับไปตั้งค่า")}
             className="flex h-11 w-11 items-center justify-center text-muted"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -76,26 +77,28 @@ export default function GoalsPage() {
         {goals.loading || me.loading ? (
           <LoadingBlock rows={3} />
         ) : goals.error || !goals.data ? (
-          <ErrorState message={goals.error ?? "โหลดไม่สำเร็จ"} onRetry={goals.reload} />
+          <ErrorState message={goals.error ?? t("โหลดไม่สำเร็จ")} onRetry={goals.reload} />
         ) : (
           <>
             {locked ? (
               <div className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                <span className="font-semibold">สำหรับแผน Pro</span> · สร้างกระปุกออมสิน
-                ตั้งเป้าและดูความคืบหน้า{" "}
+                <span className="font-semibold">{t("สำหรับแผน Pro")}</span>{" "}
+                {t("· สร้างกระปุกออมสิน ตั้งเป้าและดูความคืบหน้า")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
-                  ดูแผนอัปเกรด
+                  {t("ดูแผนอัปเกรด")}
                 </Link>
               </div>
             ) : null}
 
             {items.length === 0 ? (
               <EmptyState
-                title="ยังไม่มีเป้าหมายการออม"
-                hint='เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000"'
+                title={t("ยังไม่มีเป้าหมายการออม")}
+                hint={t(
+                  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000"',
+                )}
               />
             ) : (
-              <ul className="space-y-3" aria-label="เป้าหมายการออม">
+              <ul className="space-y-3" aria-label={t("เป้าหมายการออม")}>
                 {items.map((g) => (
                   <li key={g.id} className={cardClass}>
                     <div className="flex items-start justify-between gap-2">
@@ -105,7 +108,7 @@ export default function GoalsPage() {
                           {g.name}
                         </p>
                         <p className="text-xs text-muted">
-                          {money(g.savedSatang)} จาก {money(g.targetSatang)}
+                          {money(g.savedSatang)} {t("จาก")} {money(g.targetSatang)}
                         </p>
                       </div>
                       <p
@@ -114,16 +117,16 @@ export default function GoalsPage() {
                           g.done ? "text-income" : "text-primary",
                         )}
                       >
-                        {g.done ? "ครบแล้ว 🎉" : `${g.percent}%`}
+                        {g.done ? t("ครบแล้ว 🎉") : `${g.percent}%`}
                       </p>
                     </div>
                     <div
                       role="progressbar"
-                      aria-label={`ความคืบหน้า ${g.name}`}
+                      aria-label={t("ความคืบหน้า {0}", g.name)}
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={Math.min(100, g.percent)}
-                      aria-valuetext={`ออมแล้ว ${g.percent}%`}
+                      aria-valuetext={t("ออมแล้ว {0}%", g.percent)}
                       className="h-2.5 overflow-hidden rounded-full bg-border"
                     >
                       <div
@@ -134,7 +137,9 @@ export default function GoalsPage() {
                       />
                     </div>
                     {!g.done ? (
-                      <p className="text-xs text-muted">เหลืออีก {money(g.remainingSatang)}</p>
+                      <p className="text-xs text-muted">
+                        {t("เหลืออีก")} {money(g.remainingSatang)}
+                      </p>
                     ) : null}
                     {g.dueOn && !g.done ? (
                       <p
@@ -144,28 +149,27 @@ export default function GoalsPage() {
                         )}
                       >
                         {g.overdue
-                          ? `เลยกำหนด ${dueLabel(g.dueOn)} แล้ว`
-                          : `ภายใน ${dueLabel(g.dueOn)}${
-                              g.monthlyNeededSatang !== null
-                                ? ` · เก็บเดือนละ ${money(g.monthlyNeededSatang)}`
-                                : ""
-                            }`}
+                          ? t("เลยกำหนด {0} แล้ว", dueLabel(g.dueOn))
+                          : t("ภายใน {0}", dueLabel(g.dueOn)) +
+                            (g.monthlyNeededSatang !== null
+                              ? t(" · เก็บเดือนละ {0}", money(g.monthlyNeededSatang))
+                              : "")}
                       </p>
                     ) : null}
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => setDepositing(g)}
-                        aria-label={`หยอดกระปุก ${g.name}`}
+                        aria-label={t("หยอดกระปุก {0}", g.name)}
                         className="flex h-11 flex-1 items-center justify-center gap-1 rounded-2xl border border-border text-sm font-semibold"
                       >
-                        <PiggyBank className="h-4 w-4" aria-hidden /> หยอด / ถอน / กราฟ
+                        <PiggyBank className="h-4 w-4" aria-hidden /> {t("หยอด / ถอน / กราฟ")}
                       </button>
                       <button
                         type="button"
                         onClick={() => setEditing(g)}
                         disabled={locked}
-                        aria-label={`แก้ไข ${g.name}`}
+                        aria-label={t("แก้ไข {0}", g.name)}
                         className="flex h-11 w-11 items-center justify-center text-muted disabled:opacity-40"
                       >
                         <Pencil className="h-4 w-4" aria-hidden />
@@ -173,7 +177,7 @@ export default function GoalsPage() {
                       <button
                         type="button"
                         onClick={() => void remove(g)}
-                        aria-label={`ลบ ${g.name}`}
+                        aria-label={t("ลบ {0}", g.name)}
                         className="flex h-11 w-11 items-center justify-center text-muted"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden />
@@ -199,15 +203,15 @@ export default function GoalsPage() {
                 onClick={() => setEditing("new")}
                 className="flex h-12 w-full items-center justify-center gap-1 rounded-2xl bg-primary text-base font-semibold text-surface"
               >
-                <Plus className="h-5 w-5" aria-hidden /> เพิ่มเป้าหมาย
+                <Plus className="h-5 w-5" aria-hidden /> {t("เพิ่มเป้าหมาย")}
               </button>
             ) : locked ? null : (
               <p className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                มีเป้าหมายได้ {goals.data.limit} ใบแล้ว{" "}
+                {t("มีเป้าหมายได้")} {goals.data.limit} {t("ใบแล้ว")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
-                  ดูแผนอัปเกรด
+                  {t("ดูแผนอัปเกรด")}
                 </Link>{" "}
-                (Elite มีได้ 20 ใบ)
+                {t("(Elite มีได้ 20 ใบ)")}
               </p>
             )}
           </>
@@ -261,9 +265,9 @@ function GoalSheet({
   async function submit(e: FormEvent) {
     e.preventDefault();
     const normalized = normalizeThaiDigits(target).replace(/,/g, "").trim();
-    if (!name.trim()) return setError("ตั้งชื่อเป้าหมายด้วยนะ");
+    if (!name.trim()) return setError(t("ตั้งชื่อเป้าหมายด้วยนะ"));
     if (!AMOUNT_PATTERN.test(normalized) || Number(normalized) <= 0) {
-      return setError("ยอดเป้าหมายไม่ถูกต้อง (เช่น 30000)");
+      return setError(t("ยอดเป้าหมายไม่ถูกต้อง (เช่น 30000)"));
     }
     setSaving(true);
     setError(null);
@@ -276,52 +280,56 @@ function GoalSheet({
       });
       if (goal) await api(`/api/goals/${goal.id}`, { method: "PATCH", body });
       else await api("/api/goals", { method: "POST", body });
-      onSaved(goal ? "บันทึกแล้ว" : "เพิ่มเป้าหมายแล้ว");
+      onSaved(goal ? t("บันทึกแล้ว") : t("เพิ่มเป้าหมายแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   return (
-    <Sheet title={goal ? "แก้ไขเป้าหมาย" : "เพิ่มเป้าหมาย"} onClose={onClose}>
+    <Sheet title={goal ? t("แก้ไขเป้าหมาย") : t("เพิ่มเป้าหมาย")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={MAX_GOAL_NAME}
-          placeholder="ชื่อเป้าหมาย เช่น เที่ยวญี่ปุ่น"
-          aria-label="ชื่อเป้าหมาย"
+          placeholder={t("ชื่อเป้าหมาย เช่น เที่ยวญี่ปุ่น")}
+          aria-label={t("ชื่อเป้าหมาย")}
           className={fieldClass}
         />
         <input
           value={target}
           onChange={(e) => setTarget(e.target.value)}
           inputMode="decimal"
-          placeholder={`ยอดเป้าหมาย (${currencyUnit()})`}
-          aria-label="ยอดเป้าหมาย"
+          placeholder={t("ยอดเป้าหมาย ({0})", currencyUnit())}
+          aria-label={t("ยอดเป้าหมาย")}
           className={cn(fieldClass, "num")}
         />
         <label className="block text-sm text-muted">
-          อยากได้ภายในวันที่ (ไม่บังคับ)
+          {t("อยากได้ภายในวันที่ (ไม่บังคับ)")}
           <input
             type="date"
             value={due}
             onChange={(e) => setDue(e.target.value)}
-            aria-label="วันที่อยากได้"
+            aria-label={t("วันที่อยากได้")}
             className={cn(fieldClass, "mt-1")}
           />
         </label>
         <div>
-          <p className="text-sm font-semibold">อีโมจิ (ไม่บังคับ)</p>
-          <div className="mt-1 grid grid-cols-8 gap-1" role="radiogroup" aria-label="เลือกอีโมจิ">
+          <p className="text-sm font-semibold">{t("อีโมจิ (ไม่บังคับ)")}</p>
+          <div
+            className="mt-1 grid grid-cols-8 gap-1"
+            role="radiogroup"
+            aria-label={t("เลือกอีโมจิ")}
+          >
             {EMOJI_CHOICES.map((e) => (
               <button
                 key={e}
                 type="button"
                 role="radio"
                 aria-checked={emoji === e}
-                aria-label={`อีโมจิ ${e}`}
+                aria-label={t("อีโมจิ {0}", e)}
                 onClick={() => setEmoji(emoji === e ? "" : e)}
                 className={cn(
                   "flex h-10 items-center justify-center rounded-xl border text-xl",
@@ -343,7 +351,7 @@ function GoalSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก..." : "บันทึก"}
+          {saving ? t("กำลังบันทึก...") : t("บันทึก")}
         </button>
       </form>
     </Sheet>
@@ -379,7 +387,7 @@ function DepositSheet({
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
     if (!AMOUNT_PATTERN.test(normalized) || Number(normalized) <= 0) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 2000 หรือ 2000.50)");
+      return setError(t("จำนวนเงินไม่ถูกต้อง (เช่น 2000 หรือ 2000.50)"));
     }
     setSaving(true);
     setError(null);
@@ -389,21 +397,25 @@ function DepositSheet({
         body: JSON.stringify({ amount: normalized, direction, note: note.trim() || null }),
       });
       onChanged(
-        res.reachedTarget ? "🎉 ถึงเป้าแล้ว!" : direction === "in" ? "หยอดกระปุกแล้ว" : "ถอนแล้ว",
+        res.reachedTarget
+          ? t("🎉 ถึงเป้าแล้ว!")
+          : direction === "in"
+            ? t("หยอดกระปุกแล้ว")
+            : t("ถอนแล้ว"),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   async function undo(d: DepositItem) {
-    if (!window.confirm("ยกเลิกรายการนี้ใช่ไหม?")) return;
+    if (!window.confirm(t("ยกเลิกรายการนี้ใช่ไหม?"))) return;
     try {
       await api(`/api/goals/${goal.id}/deposits/${d.id}`, { method: "DELETE" });
-      onChanged("ยกเลิกรายการแล้ว");
+      onChanged(t("ยกเลิกรายการแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("ยกเลิกไม่สำเร็จ"));
     }
   }
 
@@ -411,15 +423,15 @@ function DepositSheet({
     <Sheet title={`${goal.emoji ? `${goal.emoji} ` : ""}${goal.name}`} onClose={onClose}>
       <div className="space-y-3">
         <p className="text-sm text-muted">
-          ออมแล้ว{" "}
-          <span className="num font-semibold text-foreground">{money(goal.savedSatang)}</span> จาก{" "}
-          {money(goal.targetSatang)} ({goal.percent}%)
+          {t("ออมแล้ว")}{" "}
+          <span className="num font-semibold text-foreground">{money(goal.savedSatang)}</span>{" "}
+          {t("จาก")} {money(goal.targetSatang)} ({goal.percent}%)
         </p>
         {points.length > 0 ? <GoalChart points={points} target={goal.targetSatang / 100} /> : null}
 
         {locked ? null : (
           <form onSubmit={submit} className="space-y-3">
-            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="หยอดหรือถอน">
+            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("หยอดหรือถอน")}>
               {(["in", "out"] as const).map((d) => (
                 <button
                   key={d}
@@ -436,7 +448,7 @@ function DepositSheet({
                       : "border-border text-muted",
                   )}
                 >
-                  {d === "in" ? "หยอดกระปุก" : "ถอนออก"}
+                  {d === "in" ? t("หยอดกระปุก") : t("ถอนออก")}
                 </button>
               ))}
             </div>
@@ -444,16 +456,16 @@ function DepositSheet({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               inputMode="decimal"
-              placeholder={`จำนวนเงิน (${currencyUnit()})`}
-              aria-label="จำนวนเงิน"
+              placeholder={t("จำนวนเงิน ({0})", currencyUnit())}
+              aria-label={t("จำนวนเงิน")}
               className={cn(fieldClass, "num")}
             />
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={MAX_GOAL_NOTE}
-              placeholder="โน้ต (ไม่บังคับ)"
-              aria-label="โน้ต"
+              placeholder={t("โน้ต (ไม่บังคับ)")}
+              aria-label={t("โน้ต")}
               className={fieldClass}
             />
             {error ? (
@@ -466,16 +478,16 @@ function DepositSheet({
               disabled={saving}
               className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
             >
-              {saving ? "กำลังบันทึก..." : "บันทึก"}
+              {saving ? t("กำลังบันทึก...") : t("บันทึก")}
             </button>
           </form>
         )}
 
-        <h3 className="pt-1 text-sm font-semibold">ประวัติ</h3>
+        <h3 className="pt-1 text-sm font-semibold">{t("ประวัติ")}</h3>
         {deposits.loading ? (
           <LoadingBlock rows={1} />
         ) : history.length === 0 ? (
-          <p className="text-sm text-muted">ยังไม่มีการหยอดกระปุก</p>
+          <p className="text-sm text-muted">{t("ยังไม่มีการหยอดกระปุก")}</p>
         ) : (
           <ul className="divide-y divide-border">
             {history.slice(0, 20).map((d) => (
@@ -497,7 +509,7 @@ function DepositSheet({
                 </div>
                 <button
                   type="button"
-                  aria-label={`ยกเลิกรายการ ${money(Math.abs(d.amountSatang))}`}
+                  aria-label={t("ยกเลิกรายการ {0}", money(Math.abs(d.amountSatang)))}
                   onClick={() => void undo(d)}
                   className="flex h-11 w-11 items-center justify-center text-muted"
                 >

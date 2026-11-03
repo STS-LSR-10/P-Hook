@@ -1,4 +1,5 @@
-import { bangkokParts, fromBangkok } from "@/lib/thai-date";
+import { bangkokParts, fromBangkok, monthName, yearOf } from "@/lib/thai-date";
+import { t } from "@/lib/i18n";
 
 /** A calendar day (Bangkok time). */
 export interface Ymd {
@@ -8,33 +9,19 @@ export interface Ymd {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const MONTHS = [
-  "ม.ค.",
-  "ก.พ.",
-  "มี.ค.",
-  "เม.ย.",
-  "พ.ค.",
-  "มิ.ย.",
-  "ก.ค.",
-  "ส.ค.",
-  "ก.ย.",
-  "ต.ค.",
-  "พ.ย.",
-  "ธ.ค.",
-];
 export const MONTHS_FULL = [
-  "มกราคม",
-  "กุมภาพันธ์",
-  "มีนาคม",
-  "เมษายน",
-  "พฤษภาคม",
-  "มิถุนายน",
-  "กรกฎาคม",
-  "สิงหาคม",
-  "กันยายน",
-  "ตุลาคม",
-  "พฤศจิกายน",
-  "ธันวาคม",
+  t("มกราคม"),
+  t("กุมภาพันธ์"),
+  t("มีนาคม"),
+  t("เมษายน"),
+  t("พฤษภาคม"),
+  t("มิถุนายน"),
+  t("กรกฎาคม"),
+  t("สิงหาคม"),
+  t("กันยายน"),
+  t("ตุลาคม"),
+  t("พฤศจิกายน"),
+  t("ธันวาคม"),
 ];
 
 /** "2026-10-05": a day as a key (sorts and compares as text). */
@@ -91,7 +78,7 @@ export function presetRange(preset: Preset, now: Date): { start: Ymd; end: Ymd }
   return { start, end };
 }
 
-const fmt = (d: Ymd) => `${d.day} ${MONTHS[d.month - 1]} ${d.year + 543}`;
+const fmt = (d: Ymd) => `${d.day} ${monthName(d.month)} ${yearOf(d.year)}`;
 
 /** "1 ต.ค. 2569 — 31 ต.ค. 2569" */
 export const formatRange = (start: Ymd, end: Ymd): string => `${fmt(start)} — ${fmt(end)}`;

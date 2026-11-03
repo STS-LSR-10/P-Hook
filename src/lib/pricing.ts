@@ -1,4 +1,5 @@
 import { FAIR_USE, type Feature, type Plan } from "@/lib/plan";
+import { t } from "@/lib/i18n";
 
 export type Period = "monthly" | "yearly";
 export type PaidPlan = Exclude<Plan, "free">;
@@ -68,7 +69,12 @@ export function yearlySavingPercent(price: PlanPrice): number {
 export type Cell = boolean | string;
 
 /** Under the comparison table: what "ไม่จำกัด*" means. Built from the real ceilings so it cannot drift. */
-export const FAIR_USE_NOTE = `*ไม่จำกัดสำหรับการใช้งานตามปกติ: สูงสุดราว ${FAIR_USE.slips} ใบ/เดือน (อ่านสลิป), ${FAIR_USE.voice} ครั้ง/เดือน (จดด้วยเสียง), ${FAIR_USE.smartParse} ครั้ง/เดือน (AI อ่านประโยคยาว) ครบแล้วพิมพ์จดได้ตามปกติ และใช้ได้ใหม่ต้นเดือนหน้า`;
+export const FAIR_USE_NOTE = t(
+  "*ไม่จำกัดสำหรับการใช้งานตามปกติ: สูงสุดราว {0} ใบ/เดือน (อ่านสลิป), {1} ครั้ง/เดือน (จดด้วยเสียง), {2} ครั้ง/เดือน (AI อ่านประโยคยาว) ครบแล้วพิมพ์จดได้ตามปกติ และใช้ได้ใหม่ต้นเดือนหน้า",
+  FAIR_USE.slips,
+  FAIR_USE.voice,
+  FAIR_USE.smartParse,
+);
 
 export interface FeatureRow {
   /** Short, one line. */
@@ -128,69 +134,69 @@ export interface FeatureGroup {
 
 export const FEATURE_GROUPS: FeatureGroup[] = [
   {
-    title: "จดรายการ",
+    title: t("จดรายการ"),
     rows: [
-      { label: "จดด้วยข้อความ", icon: "text", cells: [true, true, true] },
-      { label: "บอทจัดหมวดให้อัตโนมัติ", icon: "shapes", cells: [true, true, true] },
-      { label: "ลบ / แก้ล่าสุด", icon: "undo", cells: [true, true, true] },
+      { label: t("จดด้วยข้อความ"), icon: "text", cells: [true, true, true] },
+      { label: t("บอทจัดหมวดให้อัตโนมัติ"), icon: "shapes", cells: [true, true, true] },
+      { label: t("ลบ / แก้ล่าสุด"), icon: "undo", cells: [true, true, true] },
       {
-        label: "อ่านสลิปอัตโนมัติ",
+        label: t("อ่านสลิปอัตโนมัติ"),
         icon: "slip",
-        cells: ["ลองฟรี 1 ใบ", "30 ใบ/เดือน", "ไม่จำกัด*"],
+        cells: [t("ลองฟรี 1 ใบ"), t("30 ใบ/เดือน"), t("ไม่จำกัด*")],
       },
-      { label: "จดย้อนหลัง", icon: "calendar", cells: [false, true, true], feature: "backdate" },
+      { label: t("จดย้อนหลัง"), icon: "calendar", cells: [false, true, true], feature: "backdate" },
       {
-        label: "จดหลายรายการในข้อความเดียว",
+        label: t("จดหลายรายการในข้อความเดียว"),
         icon: "list",
         cells: [false, true, true],
         feature: "multiEntry",
       },
-      { label: "ติดแท็ก #Tag", icon: "tag", cells: [false, true, true], feature: "tags" },
+      { label: t("ติดแท็ก #Tag"), icon: "tag", cells: [false, true, true], feature: "tags" },
       {
-        label: "แนบรูปประกอบรายการ",
+        label: t("แนบรูปประกอบรายการ"),
         icon: "image",
         cells: [false, true, true],
         feature: "entryPhoto",
       },
-      { label: "แยกรายการจากใบเสร็จ", icon: "receipt", cells: [false, false, true] },
+      { label: t("แยกรายการจากใบเสร็จ"), icon: "receipt", cells: [false, false, true] },
       {
-        label: "ให้ AI อ่านประโยคยาวๆ",
+        label: t("ให้ AI อ่านประโยคยาวๆ"),
         icon: "sparkles",
-        cells: [false, false, "ไม่จำกัด*"],
+        cells: [false, false, t("ไม่จำกัด*")],
         feature: "smartParse",
       },
       {
-        label: "จดด้วยเสียง",
+        label: t("จดด้วยเสียง"),
         icon: "mic",
-        cells: ["ลองฟรี 1 ครั้ง", "20 ครั้ง/เดือน", "ไม่จำกัด*"],
+        cells: [t("ลองฟรี 1 ครั้ง"), t("20 ครั้ง/เดือน"), t("ไม่จำกัด*")],
         feature: "voiceLog",
       },
       {
-        label: "จดเงินต่างสกุล",
+        label: t("จดเงินต่างสกุล"),
         icon: "globe",
         cells: [false, false, true],
         feature: "foreignCurrency",
       },
       {
-        label: "ตั้งรายการจดอัตโนมัติ",
+        label: t("ตั้งรายการจดอัตโนมัติ"),
         icon: "repeat",
-        cells: [false, "20 รายการ", "100 รายการ"],
+        cells: [false, t("20 รายการ"), t("100 รายการ")],
         feature: "recurring",
       },
       {
-        label: "เตือนจดประจำวัน",
+        label: t("เตือนจดประจำวัน"),
         icon: "bell",
         cells: [false, true, true],
         feature: "dailyReminder",
       },
       {
-        label: "บอทจำร้านค้า → หมวด",
+        label: t("บอทจำร้านค้า → หมวด"),
         icon: "store",
         cells: [false, true, true],
         feature: "merchantMemory",
       },
       {
-        label: "สร้างหมวดของตัวเอง",
+        label: t("สร้างหมวดของตัวเอง"),
         icon: "shapes",
         cells: [false, true, true],
         feature: "customCategory",
@@ -198,35 +204,40 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     ],
   },
   {
-    title: "กระเป๋าและหนี้",
+    title: t("กระเป๋าและหนี้"),
     rows: [
       {
-        label: "กระเป๋าเงินหลายใบ",
+        label: t("กระเป๋าเงินหลายใบ"),
         icon: "wallet",
-        cells: ["1 ใบ", "5 ใบ", "ไม่จำกัด"],
+        cells: [t("1 ใบ"), t("5 ใบ"), t("ไม่จำกัด")],
         feature: "multiAccount",
       },
       {
-        label: "โอนระหว่างกระเป๋า",
+        label: t("โอนระหว่างกระเป๋า"),
         icon: "transfer",
         cells: [false, true, true],
         feature: "transfer",
       },
       {
-        label: "บัตรเครดิต วงเงิน/ยอดตามรอบบิล",
+        label: t("บัตรเครดิต วงเงิน/ยอดตามรอบบิล"),
         icon: "card",
         cells: [false, true, true],
         feature: "creditCard",
       },
       {
-        label: "กระเป๋าร่วมแฟน/ครอบครัว",
+        label: t("กระเป๋าร่วมแฟน/ครอบครัว"),
         icon: "users",
-        cells: [false, "2 คน", "10 คน"],
+        cells: [false, t("2 คน"), t("10 คน")],
         feature: "sharedWallet",
       },
-      { label: "จดหนี้ ให้ยืม/ยืม", icon: "debt", cells: [false, false, true], feature: "debts" },
       {
-        label: "เตือนจ่ายบิล",
+        label: t("จดหนี้ ให้ยืม/ยืม"),
+        icon: "debt",
+        cells: [false, false, true],
+        feature: "debts",
+      },
+      {
+        label: t("เตือนจ่ายบิล"),
         icon: "bellring",
         cells: [false, false, true],
         feature: "billReminder",
@@ -234,36 +245,36 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     ],
   },
   {
-    title: "งบและเป้าหมาย",
+    title: t("งบและเป้าหมาย"),
     rows: [
-      { label: "ตั้งงบรวม", icon: "target", cells: [true, true, true] },
+      { label: t("ตั้งงบรวม"), icon: "target", cells: [true, true, true] },
       {
-        label: "งบแยกตามหมวด",
+        label: t("งบแยกตามหมวด"),
         icon: "target",
         cells: [false, true, true],
         feature: "categoryBudget",
       },
       {
-        label: "เตือนเมื่อใช้งบ 80% / 100%",
+        label: t("เตือนเมื่อใช้งบ 80% / 100%"),
         icon: "bellring",
         cells: [false, true, true],
         feature: "budgetAlert",
       },
       {
-        label: "งบรายวัน + เตือนทันที",
+        label: t("งบรายวัน + เตือนทันที"),
         icon: "calendar",
         cells: [false, true, true],
         feature: "dailyBudget",
       },
       {
-        label: "เป้าหมายการออม",
+        label: t("เป้าหมายการออม"),
         icon: "piggy",
-        cells: [false, "5 ใบ", "20 ใบ"],
+        cells: [false, t("5 ใบ"), t("20 ใบ")],
         feature: "savingsGoal",
       },
-      { label: "หารค่าใช้จ่ายทริป", icon: "plane", cells: [false, false, true] },
+      { label: t("หารค่าใช้จ่ายทริป"), icon: "plane", cells: [false, false, true] },
       {
-        label: "สมุดกลุ่ม LINE",
+        label: t("สมุดกลุ่ม LINE"),
         icon: "group",
         cells: [false, false, true],
         feature: "groupLedger",
@@ -271,56 +282,66 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     ],
   },
   {
-    title: "รายงาน",
+    title: t("รายงาน"),
     rows: [
-      { label: "สรุปวัน / เดือน / หมวด", icon: "chart", cells: [true, true, true] },
+      { label: t("สรุปวัน / เดือน / หมวด"), icon: "chart", cells: [true, true, true] },
       {
-        label: "สรุปช่วงวันเอง",
+        label: t("สรุปช่วงวันเอง"),
         icon: "range",
         cells: [false, true, true],
         feature: "customRange",
       },
       {
-        label: "ค้นหาพร้อมยอดรวม",
+        label: t("ค้นหาพร้อมยอดรวม"),
         icon: "search",
         cells: [false, true, true],
         feature: "searchTotals",
       },
-      { label: "สรุปรายปี", icon: "calendar", cells: [false, true, true], feature: "yearSummary" },
       {
-        label: "เทียบเดือนต่อเดือน",
+        label: t("สรุปรายปี"),
+        icon: "calendar",
+        cells: [false, true, true],
+        feature: "yearSummary",
+      },
+      {
+        label: t("เทียบเดือนต่อเดือน"),
         icon: "compare",
         cells: [false, true, true],
         feature: "categoryCompare",
       },
       {
-        label: "หน้าวิเคราะห์ กราฟแท่ง/โดนัท",
+        label: t("หน้าวิเคราะห์ กราฟแท่ง/โดนัท"),
         icon: "dashboard",
         cells: [false, true, true],
         feature: "dashboard",
       },
-      { label: "กราฟเก็บออม", icon: "trend", cells: [false, true, true], feature: "savingsChart" },
       {
-        label: "สรุปส่งในแชทอัตโนมัติ",
+        label: t("กราฟเก็บออม"),
+        icon: "trend",
+        cells: [false, true, true],
+        feature: "savingsChart",
+      },
+      {
+        label: t("สรุปส่งในแชทอัตโนมัติ"),
         icon: "mail",
         cells: [false, true, true],
         feature: "autoSummary",
       },
-      { label: "ส่งออก CSV", icon: "download", cells: [false, true, true], feature: "export" },
+      { label: t("ส่งออก CSV"), icon: "download", cells: [false, true, true], feature: "export" },
       {
-        label: "ส่งออก Excel พร้อมชีตสรุป",
+        label: t("ส่งออก Excel พร้อมชีตสรุป"),
         icon: "sheet",
         cells: [false, true, true],
         feature: "advancedExport",
       },
       {
-        label: "พยากรณ์เงินปลายเดือน",
+        label: t("พยากรณ์เงินปลายเดือน"),
         icon: "trend",
         cells: [false, false, true],
         feature: "forecast",
       },
       {
-        label: "AI Insight วิเคราะห์การใช้จ่าย",
+        label: t("AI Insight วิเคราะห์การใช้จ่าย"),
         icon: "sparkles",
         cells: [false, false, true],
         feature: "insight",
@@ -328,35 +349,35 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     ],
   },
   {
-    title: "ส่วนตัวและรางวัล",
+    title: t("ส่วนตัวและรางวัล"),
     rows: [
       {
-        label: "ธีมการ์ดและนิสัยบอท",
+        label: t("ธีมการ์ดและนิสัยบอท"),
         icon: "palette",
         cells: [false, true, true],
         feature: "personalize",
       },
-      { label: "ล้างข้อมูล / ลบบัญชี", icon: "trash", cells: [true, true, true] },
-      { label: "เหรียญสะสมและชวนเพื่อน", icon: "gift", cells: [true, true, true] },
+      { label: t("ล้างข้อมูล / ลบบัญชี"), icon: "trash", cells: [true, true, true] },
+      { label: t("เหรียญสะสมและชวนเพื่อน"), icon: "gift", cells: [true, true, true] },
     ],
   },
 ];
 
 /** Short selling points shown on each plan card. */
 export const PLAN_HIGHLIGHTS: Record<Plan, string[]> = {
-  free: ["จดด้วยข้อความ", "ตั้งหมวดและงบรวม"],
+  free: [t("จดด้วยข้อความ"), t("ตั้งหมวดและงบรวม")],
   plus: [
-    "อ่านสลิป 30 ใบ/เดือน + จดด้วยเสียง 20 ครั้ง + จดย้อนหลัง",
-    "รายการจดอัตโนมัติ + เตือนประจำวัน",
-    "ส่งออก CSV/Excel + กราฟวิเคราะห์",
-    "กราฟเก็บออม + สรุปในแชท",
+    t("อ่านสลิป 30 ใบ/เดือน + จดด้วยเสียง 20 ครั้ง + จดย้อนหลัง"),
+    t("รายการจดอัตโนมัติ + เตือนประจำวัน"),
+    t("ส่งออก CSV/Excel + กราฟวิเคราะห์"),
+    t("กราฟเก็บออม + สรุปในแชท"),
   ],
   ultimate: [
-    "ทุกอย่างใน Pro",
-    "อ่านสลิปไม่จำกัด + แยกรายการจากใบเสร็จ",
-    "พิมพ์ประโยคยาวๆ ให้ AI ช่วยอ่าน + จดด้วยเสียง",
-    "หลายกระเป๋าไม่จำกัด · สมุดกลุ่ม LINE แยกคนจ่าย",
-    "พยากรณ์เงินปลายเดือน + AI Insight · กระเป๋าร่วมสูงสุด 10 คน",
+    t("ทุกอย่างใน Pro"),
+    t("อ่านสลิปไม่จำกัด + แยกรายการจากใบเสร็จ"),
+    t("พิมพ์ประโยคยาวๆ ให้ AI ช่วยอ่าน + จดด้วยเสียง"),
+    t("หลายกระเป๋าไม่จำกัด · สมุดกลุ่ม LINE แยกคนจ่าย"),
+    t("พยากรณ์เงินปลายเดือน + AI Insight · กระเป๋าร่วมสูงสุด 10 คน"),
   ],
 };
 

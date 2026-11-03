@@ -1,3 +1,4 @@
+import { currentLocale } from "@/lib/i18n";
 // Wall-clock times are read and written in the person's time zone: Bangkok unless they chose another
 // (see setZoneSource). Bangkok has a fixed UTC+7 offset (no DST), so it keeps a fast path; any other
 // zone is looked up through Intl, daylight saving included. The "bangkok" names are older than zones.
@@ -121,6 +122,25 @@ const MONTHS = [
   "ธ.ค.",
 ];
 
+const EN_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+/** The short month name and the year as the person reads them (Buddhist year in Thai). */
+export const monthName = (month: number) =>
+  (currentLocale() === "en" ? EN_MONTHS : MONTHS)[month - 1] ?? "";
+export const yearOf = (year: number) => (currentLocale() === "en" ? year : year + 543);
+
 const two = (n: number) => String(n).padStart(2, "0");
 
 /** Value for `<input type="datetime-local">`: "2026-10-15T14:30" in Bangkok time. */
@@ -148,24 +168,24 @@ export function fromBangkokInputValue(value: string): Date | null {
 export function thaiMonthYear(monthKey: string): string {
   const m = /^(\d{4})-(\d{2})$/.exec(monthKey);
   if (!m) return monthKey;
-  return `${MONTHS[Number(m[2]) - 1] ?? ""} ${Number(m[1]) + 543}`;
+  return `${monthName(Number(m[2]))} ${yearOf(Number(m[1]))}`;
 }
 
 /** "ต.ค." */
 export function formatThaiMonthShort(date: Date): string {
-  return MONTHS[bangkokParts(date).month - 1] ?? "";
+  return monthName(bangkokParts(date).month);
 }
 
 /** "15 ต.ค." */
 export function formatThaiDayMonth(date: Date): string {
   const p = bangkokParts(date);
-  return `${p.day} ${MONTHS[p.month - 1]}`;
+  return `${p.day} ${monthName(p.month)}`;
 }
 
 /** "15 ต.ค. 2569" or "15 ต.ค. 2569 14:30" (Buddhist year, Bangkok time). */
 export function formatThaiDate(date: Date, withTime = false): string {
   const p = bangkokParts(date);
-  const base = `${p.day} ${MONTHS[p.month - 1]} ${p.year + 543}`;
+  const base = `${p.day} ${monthName(p.month)} ${yearOf(p.year)}`;
   if (!withTime) return base;
   const hh = String(p.hour).padStart(2, "0");
   const mm = String(p.minute).padStart(2, "0");

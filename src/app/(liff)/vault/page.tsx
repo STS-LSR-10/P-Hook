@@ -29,6 +29,7 @@ import { firstUrl, MAX_NOTE_LENGTH, noteTitle, type NoteDto } from "@/lib/note";
 import { looksSecret } from "@/lib/secret-text";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
+import { t as tr } from "@/lib/i18n";
 
 /** In a group, `mine` says whether this person may change or remove it (always so for their own). */
 type VaultNote = NoteDto & { mine?: boolean };
@@ -75,37 +76,42 @@ const mayChange = (item: { mine?: boolean }) => item.mine !== false;
 
 type Tab = "all" | "note" | "link" | "image" | "file";
 const TABS: { key: Tab; label: string }[] = [
-  { key: "all", label: "ทั้งหมด" },
-  { key: "note", label: "โน้ต" },
-  { key: "link", label: "ลิงก์" },
-  { key: "image", label: "รูป" },
-  { key: "file", label: "ไฟล์" },
+  { key: "all", label: tr("ทั้งหมด") },
+  { key: "note", label: tr("โน้ต") },
+  { key: "link", label: tr("ลิงก์") },
+  { key: "image", label: tr("รูป") },
+  { key: "file", label: tr("ไฟล์") },
 ];
 const EMPTY: Record<Tab, { title: string; hint: string }> = {
   all: {
-    title: "ยังไม่มีอะไรในคลังเลยครับ",
-    hint: "ส่งรูป ไฟล์ หรือพิมพ์คุยกับพี่ฮูกในแชทได้เลยนะครับ เดี๋ยวพี่ฮูกจะเก็บรวบรวมไว้ที่นี่เอง!",
+    title: tr("ยังไม่มีอะไรในคลังเลยครับ"),
+    hint: tr(
+      "ส่งรูป ไฟล์ หรือพิมพ์คุยกับพี่ฮูกในแชทได้เลยนะครับ เดี๋ยวพี่ฮูกจะเก็บรวบรวมไว้ที่นี่เอง!",
+    ),
   },
-  note: { title: "ยังไม่มีโน้ต", hint: 'กดปุ่ม + หรือพิมพ์ในแชท เช่น "โน้ต ซื้อนม"' },
-  link: { title: "ยังไม่มีลิงก์", hint: "จดโน้ตที่มีลิงก์ แล้วจะขึ้นที่นี่ครับ" },
-  image: { title: "ยังไม่มีรูป", hint: 'ส่งรูปในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"' },
-  file: { title: "ยังไม่มีไฟล์", hint: 'ส่งไฟล์ในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"' },
+  note: { title: tr("ยังไม่มีโน้ต"), hint: tr('กดปุ่ม + หรือพิมพ์ในแชท เช่น "โน้ต ซื้อนม"') },
+  link: { title: tr("ยังไม่มีลิงก์"), hint: tr("จดโน้ตที่มีลิงก์ แล้วจะขึ้นที่นี่ครับ") },
+  image: { title: tr("ยังไม่มีรูป"), hint: tr('ส่งรูปในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"') },
+  file: { title: tr("ยังไม่มีไฟล์"), hint: tr('ส่งไฟล์ในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"') },
 };
 
 const GROUP_EMPTY: Record<Tab, { title: string; hint: string }> = {
   all: {
-    title: "กลุ่มนี้ยังไม่มีอะไรในคลัง",
-    hint: 'พิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง" หรือ "เก็บไฟล์" แล้วส่งไฟล์มา',
+    title: tr("กลุ่มนี้ยังไม่มีอะไรในคลัง"),
+    hint: tr('พิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง" หรือ "เก็บไฟล์" แล้วส่งไฟล์มา'),
   },
   note: {
-    title: "กลุ่มนี้ยังไม่มีโน้ต",
-    hint: 'กดปุ่ม + หรือพิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง"',
+    title: tr("กลุ่มนี้ยังไม่มีโน้ต"),
+    hint: tr('กดปุ่ม + หรือพิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง"'),
   },
-  link: { title: "กลุ่มนี้ยังไม่มีลิงก์", hint: "จดโน้ตที่มีลิงก์ แล้วจะขึ้นที่นี่ครับ" },
-  image: { title: "กลุ่มนี้ยังไม่มีรูป", hint: 'พิมพ์ "เก็บรูป" ในกลุ่ม แล้วส่งรูปมาภายใน 5 นาที' },
+  link: { title: tr("กลุ่มนี้ยังไม่มีลิงก์"), hint: tr("จดโน้ตที่มีลิงก์ แล้วจะขึ้นที่นี่ครับ") },
+  image: {
+    title: tr("กลุ่มนี้ยังไม่มีรูป"),
+    hint: tr('พิมพ์ "เก็บรูป" ในกลุ่ม แล้วส่งรูปมาภายใน 5 นาที'),
+  },
   file: {
-    title: "กลุ่มนี้ยังไม่มีไฟล์",
-    hint: 'พิมพ์ "เก็บไฟล์" ในกลุ่ม แล้วส่งไฟล์มาภายใน 5 นาที',
+    title: tr("กลุ่มนี้ยังไม่มีไฟล์"),
+    hint: tr('พิมพ์ "เก็บไฟล์" ในกลุ่ม แล้วส่งไฟล์มาภายใน 5 นาที'),
   },
 };
 
@@ -167,7 +173,7 @@ function Vault() {
         });
         await openExternal(url);
       } catch (err) {
-        setNotice(err instanceof Error ? err.message : "เปิดไฟล์ไม่สำเร็จ");
+        setNotice(err instanceof Error ? err.message : tr("เปิดไฟล์ไม่สำเร็จ"));
       }
     },
     [api, openExternal, space.files],
@@ -215,24 +221,24 @@ function Vault() {
     usage === null
       ? ""
       : usage === "failed"
-        ? "โหลดไม่สำเร็จ"
+        ? tr("โหลดไม่สำเร็จ")
         : bar
           ? `${formatBytes(bar.usedBytes)} / ${formatBytes(bar.capacityBytes)}`
           : usage.spaceLow
-            ? "ของเจ้าของสมุดใกล้เต็มแล้ว"
-            : "ใช้พื้นที่ของเจ้าของสมุด";
+            ? tr("ของเจ้าของสมุดใกล้เต็มแล้ว")
+            : tr("ใช้พื้นที่ของเจ้าของสมุด");
 
   return (
     <main className="-mb-24 flex min-h-screen flex-col bg-[#FAF7F2] pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800">
       <header className="flex items-center justify-between gap-2 px-4 pb-3 pt-5">
-        <h1 className="text-xl font-bold text-stone-900">คลัง | พี่ฮูก</h1>
+        <h1 className="text-xl font-bold text-stone-900">{tr("คลัง | พี่ฮูก")}</h1>
         <SpaceSwitch groupId={groupId} onChange={switchSpace} />
       </header>
 
       <div className="space-y-2 px-4">
         <form onSubmit={submitSearch} role="search" className="flex gap-2">
           <label htmlFor="vault-search" className="sr-only">
-            ค้นหาในคลัง
+            {tr("ค้นหาในคลัง")}
           </label>
           <input
             id="vault-search"
@@ -240,12 +246,14 @@ function Vault() {
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             maxLength={100}
-            placeholder={groupId ? "รหัสไวไฟ, เมนูร้าน, สัญญา" : "บิลค่าไฟ, รหัสคอม, ใบเสนอราคา"}
+            placeholder={
+              groupId ? tr("รหัสไวไฟ, เมนูร้าน, สัญญา") : tr("บิลค่าไฟ, รหัสคอม, ใบเสนอราคา")
+            }
             className="h-11 min-w-0 flex-1 rounded-xl bg-[#EFEBE3] px-4 text-sm text-stone-800 placeholder:text-stone-500"
           />
           <button
             type="submit"
-            aria-label="ค้นหา"
+            aria-label={tr("ค้นหา")}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2D7347] text-white"
           >
             <Search className="h-5 w-5" aria-hidden />
@@ -253,7 +261,8 @@ function Vault() {
         </form>
         {search ? (
           <p className="flex items-center gap-2 text-sm text-stone-600">
-            ค้นหา “{search}”
+            {tr("ค้นหา “")}
+            {search}”
             <button
               type="button"
               onClick={() => {
@@ -262,14 +271,14 @@ function Vault() {
               }}
               className="flex items-center gap-1 font-semibold text-[#2D7347]"
             >
-              <X className="h-4 w-4" aria-hidden /> ล้าง
+              <X className="h-4 w-4" aria-hidden /> {tr("ล้าง")}
             </button>
           </p>
         ) : null}
       </div>
 
       <nav
-        aria-label="หมวดในคลัง"
+        aria-label={tr("หมวดในคลัง")}
         className="mt-1 flex justify-between border-b border-stone-200 px-4"
       >
         {TABS.map(({ key, label }) => (
@@ -313,12 +322,12 @@ function Vault() {
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-stone-200 bg-[#FAF7F2] px-4 py-2.5">
         <div className="flex items-center justify-between gap-2">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-900">
-            <Archive className="h-4 w-4" aria-hidden /> พื้นที่เก็บไฟล์
+            <Archive className="h-4 w-4" aria-hidden /> {tr("พื้นที่เก็บไฟล์")}
           </p>
           <p className="num text-xs text-stone-700">{spaceText}</p>
           <button
             type="button"
-            aria-label={groupId ? "เพิ่มโน้ตของกลุ่ม" : "เพิ่มโน้ต"}
+            aria-label={groupId ? tr("เพิ่มโน้ตของกลุ่ม") : tr("เพิ่มโน้ต")}
             onClick={() => setAdding(true)}
             className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2D7347] text-white"
           >
@@ -328,7 +337,7 @@ function Vault() {
         {!groupId || bar ? (
           <div
             role="progressbar"
-            aria-label="พื้นที่ที่ใช้ไป"
+            aria-label={tr("พื้นที่ที่ใช้ไป")}
             aria-valuenow={percent}
             aria-valuemin={0}
             aria-valuemax={100}
@@ -339,7 +348,8 @@ function Vault() {
         ) : null}
         {groupId && bar ? (
           <p className="num mt-1 text-xs text-stone-600">
-            ไฟล์ในกลุ่มของคุณ {formatBytes(bar.groupBytes)} · ใช้พื้นที่เดียวกับไฟล์ส่วนตัว
+            {tr("ไฟล์ในกลุ่มของคุณ")} {formatBytes(bar.groupBytes)}{" "}
+            {tr("· ใช้พื้นที่เดียวกับไฟล์ส่วนตัว")}
           </p>
         ) : null}
       </div>
@@ -349,7 +359,7 @@ function Vault() {
           space={space}
           room={room}
           onClose={() => setAdding(false)}
-          onSaved={() => done("จดแล้ว")}
+          onSaved={() => done(tr("จดแล้ว"))}
         />
       ) : null}
     </main>
@@ -463,7 +473,7 @@ function VaultList({
         setFilesHaveMore(page.hasMore);
       }
     } catch (err) {
-      setMoreFailed(err instanceof Error ? err.message : "โหลดเพิ่มไม่สำเร็จ");
+      setMoreFailed(err instanceof Error ? err.message : tr("โหลดเพิ่มไม่สำเร็จ"));
     } finally {
       setLoadingMore(false);
     }
@@ -477,9 +487,9 @@ function VaultList({
   const partial = failure
     ? null
     : notesFailed
-      ? "โหลดโน้ตไม่สำเร็จ"
+      ? tr("โหลดโน้ตไม่สำเร็จ")
       : filesFailed
-        ? "โหลดไฟล์ไม่สำเร็จ"
+        ? tr("โหลดไฟล์ไม่สำเร็จ")
         : null;
   const empty = (space.group ? GROUP_EMPTY : EMPTY)[tab];
 
@@ -489,7 +499,7 @@ function VaultList({
         <div className="flex items-center justify-between gap-2 rounded-2xl bg-amber-100 px-4 py-2 text-sm text-amber-900">
           <span>{partial}</span>
           <button type="button" onClick={reload} className="font-semibold">
-            ลองอีกครั้ง
+            {tr("ลองอีกครั้ง")}
           </button>
         </div>
       ) : null}
@@ -498,8 +508,8 @@ function VaultList({
         <div className="flex justify-end">
           <div className="flex rounded-lg bg-[#EAE3D6] p-0.5 text-xs">
             {[
-              { on: false, label: "รายการ", Icon: List },
-              { on: true, label: "รูปเล็ก", Icon: LayoutGrid },
+              { on: false, label: tr("รายการ"), Icon: List },
+              { on: true, label: tr("รูปเล็ก"), Icon: LayoutGrid },
             ].map(({ on, label, Icon }) => (
               <button
                 key={label}
@@ -527,12 +537,14 @@ function VaultList({
         <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
           <Logo size={140} />
           <h2 className="mt-2 text-lg font-bold text-stone-950">
-            {search ? "ไม่พบรายการที่ค้นหา" : empty.title}
+            {search ? tr("ไม่พบรายการที่ค้นหา") : empty.title}
           </h2>
-          <p className="text-sm text-stone-700">{search ? "ลองเปลี่ยนคำค้นนะครับ" : empty.hint}</p>
+          <p className="text-sm text-stone-700">
+            {search ? tr("ลองเปลี่ยนคำค้นนะครับ") : empty.hint}
+          </p>
         </div>
       ) : tab === "image" && grid ? (
-        <ul aria-label="รูปเล็ก" className="grid grid-cols-3 gap-2">
+        <ul aria-label={tr("รูปเล็ก")} className="grid grid-cols-3 gap-2">
           {fileItems.map((file) => (
             <li key={file.id}>
               <button
@@ -547,7 +559,7 @@ function VaultList({
           ))}
         </ul>
       ) : (
-        <ul aria-label="รายการในคลัง" className="space-y-2.5">
+        <ul aria-label={tr("รายการในคลัง")} className="space-y-2.5">
           {entries.map(({ note, file }) =>
             note ? (
               <li key={`n-${note.id}`}>
@@ -574,7 +586,7 @@ function VaultList({
           onClick={() => void loadMore()}
           className="h-11 w-full rounded-2xl border border-stone-300 text-sm font-semibold text-[#2D7347] disabled:opacity-60"
         >
-          {loadingMore ? "กำลังโหลด…" : "ดูเพิ่ม"}
+          {loadingMore ? tr("กำลังโหลด…") : tr("ดูเพิ่ม")}
         </button>
       ) : null}
 
@@ -627,10 +639,10 @@ function NoteRow({ note, onOpen }: { note: NoteDto; onOpen: () => void }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold text-stone-900">
-          {secret ? "ซ่อนเนื้อหาไว้ กดเพื่อดู" : noteTitle(note.body)}
+          {secret ? tr("ซ่อนเนื้อหาไว้ กดเพื่อดู") : noteTitle(note.body)}
         </span>
         <span className="mt-0.5 block text-xs text-stone-600">
-          {url ? "ลิงก์" : "โน้ต"} · {formatThaiDate(new Date(note.createdAt))}
+          {url ? tr("ลิงก์") : tr("โน้ต")} · {formatThaiDate(new Date(note.createdAt))}
         </span>
       </span>
     </button>
@@ -702,17 +714,17 @@ function AddNoteSheet({
       await api(space.notes, { method: "POST", body: JSON.stringify({ body }) });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "จดไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("จดไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Sheet title={space.group ? "เพิ่มโน้ตของกลุ่ม" : "เพิ่มโน้ต"} onClose={onClose}>
+    <Sheet title={space.group ? tr("เพิ่มโน้ตของกลุ่ม") : tr("เพิ่มโน้ต")} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         <label htmlFor="vault-new-note" className="sr-only">
-          โน้ตใหม่
+          {tr("โน้ตใหม่")}
         </label>
         <textarea
           id="vault-new-note"
@@ -720,19 +732,24 @@ function AddNoteSheet({
           onChange={(e) => setBody(e.target.value)}
           maxLength={MAX_NOTE_LENGTH}
           rows={5}
-          placeholder="จดอะไรไว้ดี เช่น รายการซื้อของ ลิงก์ ที่อยู่"
+          placeholder={tr("จดอะไรไว้ดี เช่น รายการซื้อของ ลิงก์ ที่อยู่")}
           className={`${fieldClass} h-auto resize-none py-3`}
         />
         {space.group ? (
-          <p className="text-xs text-stone-600">ทุกคนในกลุ่มเห็นโน้ตนี้ ไม่ควรจดรหัสผ่านสำคัญไว้</p>
+          <p className="text-xs text-stone-600">
+            {tr("ทุกคนในกลุ่มเห็นโน้ตนี้ ไม่ควรจดรหัสผ่านสำคัญไว้")}
+          </p>
         ) : null}
         {!room.canAdd ? (
           <p className="text-sm text-warn">
             {space.group
-              ? "จดเพิ่มไม่ได้ตอนนี้ โน้ตของเจ้าของสมุดอาจเต็ม หรือสมุดกลุ่มปิดอยู่"
+              ? tr("จดเพิ่มไม่ได้ตอนนี้ โน้ตของเจ้าของสมุดอาจเต็ม หรือสมุดกลุ่มปิดอยู่")
               : room.inGroups > 0
-                ? `โน้ตเต็มแล้ว (นับรวมโน้ตในกลุ่มของคุณ ${room.inGroups} รายการ) ลบอันเก่าในคลังส่วนตัวหรือของกลุ่ม หรืออัปเกรดแผนเพื่อเก็บเพิ่ม`
-                : "โน้ตเต็มแล้ว ลบอันเก่าหรืออัปเกรดแผนเพื่อเก็บเพิ่ม"}
+                ? tr(
+                    "โน้ตเต็มแล้ว (นับรวมโน้ตในกลุ่มของคุณ {0} รายการ) ลบอันเก่าในคลังส่วนตัวหรือของกลุ่ม หรืออัปเกรดแผนเพื่อเก็บเพิ่ม",
+                    room.inGroups,
+                  )
+                : tr("โน้ตเต็มแล้ว ลบอันเก่าหรืออัปเกรดแผนเพื่อเก็บเพิ่ม")}
           </p>
         ) : null}
         {error ? (
@@ -745,7 +762,7 @@ function AddNoteSheet({
           disabled={busy || !room.canAdd || !body.trim()}
           className="h-12 w-full rounded-2xl bg-primary font-semibold text-surface disabled:opacity-60"
         >
-          {busy ? "กำลังจด…" : "จดโน้ต"}
+          {busy ? tr("กำลังจด…") : tr("จดโน้ต")}
         </button>
       </form>
     </Sheet>
@@ -788,21 +805,25 @@ function NoteSheet({
     e.preventDefault();
     void run(
       () => api(`${space.notes}/${note.id}`, { method: "PATCH", body: JSON.stringify({ body }) }),
-      "แก้ไขแล้ว",
-      "บันทึกไม่สำเร็จ",
+      tr("แก้ไขแล้ว"),
+      tr("บันทึกไม่สำเร็จ"),
     );
   };
   const remove = () => {
-    if (!window.confirm("ลบโน้ตนี้ใช่ไหม?")) return;
-    void run(() => api(`${space.notes}/${note.id}`, { method: "DELETE" }), "ลบแล้ว", "ลบไม่สำเร็จ");
+    if (!window.confirm(tr("ลบโน้ตนี้ใช่ไหม?"))) return;
+    void run(
+      () => api(`${space.notes}/${note.id}`, { method: "DELETE" }),
+      tr("ลบแล้ว"),
+      tr("ลบไม่สำเร็จ"),
+    );
   };
   const editable = mayChange(note);
 
   return (
-    <Sheet title={space.group ? "โน้ตของกลุ่ม" : "โน้ต"} onClose={onClose}>
+    <Sheet title={space.group ? tr("โน้ตของกลุ่ม") : tr("โน้ต")} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         <label htmlFor="vault-note" className="sr-only">
-          เนื้อหาโน้ต
+          {tr("เนื้อหาโน้ต")}
         </label>
         <textarea
           id="vault-note"
@@ -824,7 +845,7 @@ function NoteSheet({
             onClick={() => onOpenLink(url)}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-border font-semibold text-primary"
           >
-            <ExternalLink className="h-4 w-4" aria-hidden /> เปิดลิงก์
+            <ExternalLink className="h-4 w-4" aria-hidden /> {tr("เปิดลิงก์")}
           </button>
         ) : null}
         {editable ? (
@@ -834,7 +855,7 @@ function NoteSheet({
               disabled={busy || !body.trim()}
               className="h-12 w-full rounded-2xl bg-primary font-semibold text-surface disabled:opacity-60"
             >
-              {busy ? "กำลังบันทึก…" : "บันทึก"}
+              {busy ? tr("กำลังบันทึก…") : tr("บันทึก")}
             </button>
             <button
               type="button"
@@ -842,11 +863,13 @@ function NoteSheet({
               disabled={busy}
               className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-semibold text-expense"
             >
-              <Trash2 className="h-4 w-4" aria-hidden /> ลบโน้ต
+              <Trash2 className="h-4 w-4" aria-hidden /> {tr("ลบโน้ต")}
             </button>
           </>
         ) : (
-          <p className="text-xs text-stone-600">แก้หรือลบได้เฉพาะคนที่จดโน้ตนี้ หรือเจ้าของสมุด</p>
+          <p className="text-xs text-stone-600">
+            {tr("แก้หรือลบได้เฉพาะคนที่จดโน้ตนี้ หรือเจ้าของสมุด")}
+          </p>
         )}
       </form>
     </Sheet>
@@ -888,17 +911,21 @@ function FileSheet({
     e.preventDefault();
     void run(
       () => api(`${space.files}/${file.id}`, { method: "PATCH", body: JSON.stringify({ name }) }),
-      "เปลี่ยนชื่อแล้ว",
-      "บันทึกไม่สำเร็จ",
+      tr("เปลี่ยนชื่อแล้ว"),
+      tr("บันทึกไม่สำเร็จ"),
     );
   };
   const remove = () => {
-    if (!window.confirm(`ลบไฟล์ "${file.name}" ใช่ไหม? ลบแล้วกู้คืนไม่ได้`)) return;
-    void run(() => api(`${space.files}/${file.id}`, { method: "DELETE" }), "ลบแล้ว", "ลบไม่สำเร็จ");
+    if (!window.confirm(tr('ลบไฟล์ "{0}" ใช่ไหม? ลบแล้วกู้คืนไม่ได้', file.name))) return;
+    void run(
+      () => api(`${space.files}/${file.id}`, { method: "DELETE" }),
+      tr("ลบแล้ว"),
+      tr("ลบไม่สำเร็จ"),
+    );
   };
 
   return (
-    <Sheet title={space.group ? "ไฟล์ของกลุ่ม" : "ไฟล์"} onClose={onClose}>
+    <Sheet title={space.group ? tr("ไฟล์ของกลุ่ม") : tr("ไฟล์")} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         <p className="num text-xs text-muted">
           {formatBytes(file.sizeBytes)} · {formatThaiDate(new Date(file.createdAt), true)}
@@ -908,13 +935,13 @@ function FileSheet({
           onClick={onDownload}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-surface"
         >
-          <Download className="h-4 w-4" aria-hidden /> เปิดไฟล์
+          <Download className="h-4 w-4" aria-hidden /> {tr("เปิดไฟล์")}
         </button>
         {/* a group's file keeps the name it was kept with */}
         {!space.group ? (
           <>
             <label htmlFor="vault-file-name" className="block text-sm font-semibold">
-              ชื่อไฟล์
+              {tr("ชื่อไฟล์")}
             </label>
             <input
               id="vault-file-name"
@@ -938,7 +965,7 @@ function FileSheet({
             disabled={busy || !name.trim()}
             className="h-11 w-full rounded-2xl border border-border font-semibold text-primary disabled:opacity-60"
           >
-            {busy ? "กำลังบันทึก…" : "บันทึกชื่อ"}
+            {busy ? tr("กำลังบันทึก…") : tr("บันทึกชื่อ")}
           </button>
         ) : null}
         {mayChange(file) ? (
@@ -948,10 +975,12 @@ function FileSheet({
             disabled={busy}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl font-semibold text-expense"
           >
-            <Trash2 className="h-4 w-4" aria-hidden /> ลบไฟล์
+            <Trash2 className="h-4 w-4" aria-hidden /> {tr("ลบไฟล์")}
           </button>
         ) : (
-          <p className="text-xs text-stone-600">ลบได้เฉพาะคนที่เก็บไฟล์นี้ หรือเจ้าของสมุด</p>
+          <p className="text-xs text-stone-600">
+            {tr("ลบได้เฉพาะคนที่เก็บไฟล์นี้ หรือเจ้าของสมุด")}
+          </p>
         )}
       </form>
     </Sheet>
@@ -1002,7 +1031,7 @@ function Lightbox({
           <button
             type="button"
             onClick={onClose}
-            aria-label="ปิด"
+            aria-label={tr("ปิด")}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-stone-700"
           >
             <X className="h-4 w-4" aria-hidden />
@@ -1010,7 +1039,7 @@ function Lightbox({
         </div>
         <div className="flex min-h-64 items-center justify-center bg-stone-950 p-3">
           {failed ? (
-            <p className="text-sm text-stone-200">โหลดรูปไม่สำเร็จ ลองดาวน์โหลดแทนนะครับ</p>
+            <p className="text-sm text-stone-200">{tr("โหลดรูปไม่สำเร็จ ลองดาวน์โหลดแทนนะครับ")}</p>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -1027,14 +1056,14 @@ function Lightbox({
             onClick={onDownload}
             className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#2D7347] text-sm font-semibold text-white"
           >
-            <Download className="h-4 w-4" aria-hidden /> ดาวน์โหลด
+            <Download className="h-4 w-4" aria-hidden /> {tr("ดาวน์โหลด")}
           </button>
           <button
             type="button"
             onClick={onMore}
             className="h-11 rounded-xl bg-stone-200 px-4 text-sm font-semibold text-stone-800"
           >
-            ชื่อ/ลบ
+            {tr("ชื่อ/ลบ")}
           </button>
         </div>
       </div>

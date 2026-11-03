@@ -17,7 +17,9 @@ import {
   bangkokParts,
   formatThaiDayMonth,
   formatThaiMonthShort,
+  yearOf,
 } from "@/lib/thai-date";
+import { t } from "@/lib/i18n";
 
 type View = "month" | "week" | "day";
 type Scope = "cycle" | "all";
@@ -38,12 +40,12 @@ interface AnalyticsResponse {
 }
 
 const VIEWS: { value: View; label: string }[] = [
-  { value: "month", label: "6 เดือน" },
-  { value: "week", label: "รายสัปดาห์" },
-  { value: "day", label: "รายวัน" },
+  { value: "month", label: t("6 เดือน") },
+  { value: "week", label: t("รายสัปดาห์") },
+  { value: "day", label: t("รายวัน") },
 ];
 /** "average per …" in the unit of one bar. */
-const PER: Record<View, string> = { month: "เดือน", week: "สัปดาห์", day: "วัน" };
+const PER: Record<View, string> = { month: t("เดือน"), week: t("สัปดาห์"), day: t("วัน") };
 const MAX_BACK = 12;
 
 /** "พ.ค. – ต.ค. 2569" / "6 ต.ค. – 26 ต.ค. 2569": the stretch of time the bars cover. */
@@ -53,7 +55,7 @@ function rangeLabel(series: SeriesPoint[], view: View): string | null {
   if (!first || !last) return null;
   const a = new Date(first.start);
   const b = new Date(last.start);
-  const year = bangkokParts(b).year + 543;
+  const year = yearOf(bangkokParts(b).year);
   if (view === "month") return `${formatThaiMonthShort(a)} – ${formatThaiMonthShort(b)} ${year}`;
   const end = view === "week" ? addLocalDays(b, 6) : b;
   return `${formatThaiDayMonth(a)} – ${formatThaiDayMonth(end)} ${year}`;
@@ -97,19 +99,19 @@ export default function AnalyticsPage() {
 
   return (
     <main>
-      <PageHeader title="วิเคราะห์" />
+      <PageHeader title={t("วิเคราะห์")} />
       <div className="space-y-4 px-4 pb-4">
         <Segmented
-          label="หมวดวิเคราะห์"
+          label={t("หมวดวิเคราะห์")}
           value={tab}
           onChange={setTab}
           options={[
-            { value: "flow", label: "รายรับรายจ่าย" },
+            { value: "flow", label: t("รายรับรายจ่าย") },
             {
               value: "saving",
               label: (
                 <span className="inline-flex items-center justify-center gap-1.5">
-                  เก็บออม
+                  {t("เก็บออม")}
                   <span className="rounded-full border border-warn/30 bg-warn-soft px-1.5 text-[10px] font-bold text-warn">
                     ★ PRO
                   </span>
@@ -134,7 +136,7 @@ export default function AnalyticsPage() {
         ) : (
           <>
             <Segmented
-              label="ช่วงเวลา"
+              label={t("ช่วงเวลา")}
               value={view}
               onChange={(v) => {
                 setView(v);
@@ -150,18 +152,18 @@ export default function AnalyticsPage() {
             ) : data.data ? (
               <>
                 <section
-                  aria-label="กราฟรายรับรายจ่าย"
+                  aria-label={t("กราฟรายรับรายจ่าย")}
                   className="space-y-3 rounded-3xl border border-border bg-surface p-4 shadow-card"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <h2 className="text-sm font-bold">ประวัติรายรับรายจ่าย</h2>
-                      <p className="text-[11px] text-muted">เปรียบเทียบกระแสเงินเข้า-ออก</p>
+                      <h2 className="text-sm font-bold">{t("ประวัติรายรับรายจ่าย")}</h2>
+                      <p className="text-[11px] text-muted">{t("เปรียบเทียบกระแสเงินเข้า-ออก")}</p>
                     </div>
                     <div className="flex shrink-0 items-center rounded-xl border border-border bg-background text-xs">
                       <button
                         type="button"
-                        aria-label="ช่วงก่อนหน้า"
+                        aria-label={t("ช่วงก่อนหน้า")}
                         disabled={offset <= -MAX_BACK}
                         onClick={() => setOffset((o) => o - 1)}
                         className="flex h-9 w-8 items-center justify-center text-muted disabled:opacity-30"
@@ -173,7 +175,7 @@ export default function AnalyticsPage() {
                       </span>
                       <button
                         type="button"
-                        aria-label="ช่วงถัดไป"
+                        aria-label={t("ช่วงถัดไป")}
                         disabled={offset >= 0}
                         onClick={() => setOffset((o) => o + 1)}
                         className="flex h-9 w-8 items-center justify-center text-muted disabled:opacity-30"
@@ -186,12 +188,12 @@ export default function AnalyticsPage() {
                   <div className="flex items-center justify-between border-b border-border pb-2 text-xs">
                     <span className="flex items-center gap-1.5">
                       <span className="h-2.5 w-2.5 rounded-full bg-income" aria-hidden />
-                      <span className="text-muted">รายรับ:</span>
+                      <span className="text-muted">{t("รายรับ:")}</span>
                       <span className="num font-bold text-income">{money(totalIncome)}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="h-2.5 w-2.5 rounded-full bg-expense" aria-hidden />
-                      <span className="text-muted">รายจ่าย:</span>
+                      <span className="text-muted">{t("รายจ่าย:")}</span>
                       <span className="num font-bold text-expense">{money(totalExpense)}</span>
                     </span>
                   </div>
@@ -201,26 +203,26 @@ export default function AnalyticsPage() {
                       <FlowBarChart data={chartData} />
                       <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted">
                         <Hand className="h-3.5 w-3.5 text-primary" aria-hidden />
-                        แตะที่แท่งกราฟเพื่อดูรายละเอียดยอดเงินของแต่ละช่วง
+                        {t("แตะที่แท่งกราฟเพื่อดูรายละเอียดยอดเงินของแต่ละช่วง")}
                       </p>
                     </>
                   ) : (
                     <EmptyState
-                      title="ยังไม่มีรายการในช่วงนี้"
-                      hint={'ลองจดรายการสักอัน เช่น "กาแฟ 30" แล้วกราฟจะขึ้นมา'}
+                      title={t("ยังไม่มีรายการในช่วงนี้")}
+                      hint={t('ลองจดรายการสักอัน เช่น "กาแฟ 30" แล้วกราฟจะขึ้นมา')}
                     />
                   )}
 
                   <div className="grid grid-cols-2 gap-2.5 border-t border-border pt-3">
                     <div className="rounded-2xl border border-income/30 bg-income/10 p-3">
                       <p className="text-[11px] font-medium text-muted">
-                        รายรับเฉลี่ย / {PER[view]}
+                        {t("รายรับเฉลี่ย /")} {PER[view]}
                       </p>
                       <p className="num text-base font-bold text-income">{money(avgIncome)}</p>
                     </div>
                     <div className="rounded-2xl border border-expense/30 bg-expense/10 p-3">
                       <p className="text-[11px] font-medium text-muted">
-                        รายจ่ายเฉลี่ย / {PER[view]}
+                        {t("รายจ่ายเฉลี่ย /")} {PER[view]}
                       </p>
                       <p className="num text-base font-bold text-expense">{money(avgExpense)}</p>
                     </div>
@@ -228,35 +230,37 @@ export default function AnalyticsPage() {
                 </section>
 
                 <section
-                  aria-label="สัดส่วนรายจ่ายตามหมวด"
+                  aria-label={t("สัดส่วนรายจ่ายตามหมวด")}
                   className="space-y-4 rounded-3xl border border-border bg-surface p-4 shadow-card"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <h2 className="text-sm font-bold">รายจ่ายตามหมวด</h2>
-                      <p className="text-[11px] text-muted">สัดส่วนค่าใช้จ่ายทั้งหมด</p>
+                      <h2 className="text-sm font-bold">{t("รายจ่ายตามหมวด")}</h2>
+                      <p className="text-[11px] text-muted">{t("สัดส่วนค่าใช้จ่ายทั้งหมด")}</p>
                     </div>
                   </div>
                   <Segmented
-                    label="ขอบเขต"
+                    label={t("ขอบเขต")}
                     value={scope}
                     onChange={setScope}
                     options={[
-                      { value: "cycle", label: "รอบนี้" },
-                      { value: "all", label: "สะสมทั้งหมด" },
+                      { value: "cycle", label: t("รอบนี้") },
+                      { value: "all", label: t("สะสมทั้งหมด") },
                     ]}
                   />
                   {cats.length === 0 ? (
-                    <EmptyState title="ยังไม่มีรายจ่าย" />
+                    <EmptyState title={t("ยังไม่มีรายจ่าย")} />
                   ) : (
                     <>
                       <div className="relative mx-auto h-44 w-44">
                         <CategoryDonutChart slices={slices} />
                         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-[11px] font-medium text-muted">รวมรายจ่าย</span>
+                          <span className="text-[11px] font-medium text-muted">
+                            {t("รวมรายจ่าย")}
+                          </span>
                           <span className="num mt-0.5 text-lg font-bold">{money(catTotal)}</span>
                           <span className="mt-0.5 rounded-full border border-primary/20 bg-primary-soft px-2 py-0.5 text-[10px] font-medium text-primary">
-                            {cats.length} หมวดหมู่
+                            {cats.length} {t("หมวดหมู่")}
                           </span>
                         </div>
                       </div>
@@ -321,7 +325,7 @@ export default function AnalyticsPage() {
 /** The cards while the numbers load. */
 function AnalyticsSkeleton() {
   return (
-    <div role="status" aria-label="กำลังโหลด" className="space-y-4">
+    <div role="status" aria-label={t("กำลังโหลด")} className="space-y-4">
       <div className="space-y-3 rounded-3xl border border-border bg-surface p-4 shadow-card">
         <Skeleton className="h-4 w-40 rounded-lg" />
         <Skeleton className="h-52 w-full" />

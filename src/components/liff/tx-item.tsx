@@ -5,6 +5,7 @@ import { money } from "@/lib/money";
 import { formatThaiDate } from "@/lib/thai-date";
 import { categoryLabel } from "@/lib/category-emoji";
 import { cn } from "@/lib/utils";
+import { t as tr } from "@/lib/i18n";
 
 export function TxItem({
   tx,
@@ -25,10 +26,10 @@ export function TxItem({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{tx.title}</p>
         <p className="truncate text-xs text-muted">
-          {tx.categoryName ? categoryLabel(tx.categoryName, tx.categoryIcon) : "ไม่ระบุหมวด"} ·{" "}
+          {tx.categoryName ? categoryLabel(tx.categoryName, tx.categoryIcon) : tr("ไม่ระบุหมวด")} ·{" "}
           {formatThaiDate(new Date(tx.occurredAt))}
           {tx.accountShared
-            ? ` · ${tx.mine === false ? (tx.writerName ?? "สมาชิก") : "คุณ"} · ${tx.accountName ?? ""}`
+            ? ` · ${tx.mine === false ? (tx.writerName ?? tr("สมาชิก")) : tr("คุณ")} · ${tx.accountName ?? ""}`
             : ""}
         </p>
         {tx.origCurrency && tx.origAmountMinor ? (
@@ -61,7 +62,7 @@ export function TxItem({
         <button
           type="button"
           onClick={onOpen}
-          aria-label={`แก้ไข ${tx.title}`}
+          aria-label={tr("แก้ไข {0}", tx.title)}
           className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left"
         >
           {body}

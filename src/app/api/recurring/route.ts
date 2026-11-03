@@ -11,6 +11,7 @@ import { countRules, insertRule, listRules } from "@/lib/recurring-repo";
 import { loadCategories } from "@/lib/repo";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,7 +104,7 @@ export async function POST(request: Request): Promise<Response> {
     const { plan } = await getPlanInfo(db, auth.userId, new Date());
     const max = recurringLimit(plan);
     if ((await countRules(db, auth.userId)) >= max) {
-      return apiError(`ตั้งรายการประจำได้สูงสุด ${max} รายการนะ`, 400);
+      return apiError(t("ตั้งรายการประจำได้สูงสุด {0} รายการนะ", max), 400);
     }
 
     const categories = await loadCategories(db, auth.userId);

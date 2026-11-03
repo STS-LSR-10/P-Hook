@@ -1,24 +1,25 @@
 import { Check, Crown, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { priceFor } from "@/lib/pricing";
+import { t as tr } from "@/lib/i18n";
 
 const COPY = {
   flow: {
-    title: 'ปลดล็อกกราฟ "วิเคราะห์รายรับรายจ่าย"',
-    text: "ดูภาพรวมเงินเข้า-ออกย้อนหลังและสัดส่วนรายจ่ายตามหมวดแบบเห็นภาพ",
+    title: tr('ปลดล็อกกราฟ "วิเคราะห์รายรับรายจ่าย"'),
+    text: tr("ดูภาพรวมเงินเข้า-ออกย้อนหลังและสัดส่วนรายจ่ายตามหมวดแบบเห็นภาพ"),
     points: [
-      "กราฟรายรับรายจ่าย 6 เดือน รายสัปดาห์ และรายวัน",
-      "ย้อนดูช่วงเวลาก่อนหน้าได้ พร้อมค่าเฉลี่ย",
-      "สัดส่วนรายจ่ายตามหมวด ทั้งรอบนี้และสะสมทั้งหมด",
+      tr("กราฟรายรับรายจ่าย 6 เดือน รายสัปดาห์ และรายวัน"),
+      tr("ย้อนดูช่วงเวลาก่อนหน้าได้ พร้อมค่าเฉลี่ย"),
+      tr("สัดส่วนรายจ่ายตามหมวด ทั้งรอบนี้และสะสมทั้งหมด"),
     ],
   },
   saving: {
-    title: 'ปลดล็อกระบบ "วางแผนเก็บออม"',
-    text: "ดูเงินเก็บสะสมและอัตราการออมของคุณ เพื่อสร้างวินัยเงินออมอย่างต่อเนื่อง",
+    title: tr('ปลดล็อกระบบ "วางแผนเก็บออม"'),
+    text: tr("ดูเงินเก็บสะสมและอัตราการออมของคุณ เพื่อสร้างวินัยเงินออมอย่างต่อเนื่อง"),
     points: [
-      "กราฟเงินเก็บสะสมรายเดือน",
-      "อัตราการออมเทียบกับรายรับ",
-      "ใช้คู่กับเป้าหมายเก็บออมแยกกระปุกในหน้าเป้าหมาย",
+      tr("กราฟเงินเก็บสะสมรายเดือน"),
+      tr("อัตราการออมเทียบกับรายรับ"),
+      tr("ใช้คู่กับเป้าหมายเก็บออมแยกกระปุกในหน้าเป้าหมาย"),
     ],
   },
 } as const;
@@ -58,7 +59,7 @@ export function ProTeaser({ variant }: { variant: keyof typeof COPY }) {
       </div>
 
       <section
-        aria-label="ฟีเจอร์ของแผน Pro"
+        aria-label={tr("ฟีเจอร์ของแผน Pro")}
         className="relative z-10 w-full space-y-4 rounded-3xl border border-warn/30 bg-surface/95 p-6 text-center shadow-card backdrop-blur"
       >
         <div className="inline-flex rounded-2xl border border-warn/30 bg-warn-soft p-3 text-warn">
@@ -66,7 +67,7 @@ export function ProTeaser({ variant }: { variant: keyof typeof COPY }) {
         </div>
         <div className="space-y-1">
           <span className="inline-block rounded-full border border-warn/30 bg-warn-soft px-2.5 py-0.5 text-[11px] font-bold text-warn">
-            สำหรับแผน Pro
+            {tr("สำหรับแผน Pro")}
           </span>
           <h2 className="text-base font-bold">{copy.title}</h2>
           <p className="text-xs text-muted">{copy.text}</p>
@@ -87,9 +88,11 @@ export function ProTeaser({ variant }: { variant: keyof typeof COPY }) {
             className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-surface"
           >
             <Sparkles className="h-4 w-4" aria-hidden />
-            อัปเกรดเป็น Pro เริ่มต้น ฿{monthly}/เดือน
+            {tr("อัปเกรดเป็น Pro เริ่มต้น ฿")}
+            {monthly}
+            {tr("/เดือน")}
           </Link>
-          <p className="text-[11px] text-muted">ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด</p>
+          <p className="text-[11px] text-muted">{tr("ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด")}</p>
         </div>
       </section>
     </div>

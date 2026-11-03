@@ -27,7 +27,12 @@ import {
   ymdOf,
   type DayEntry,
 } from "@/lib/reminder-calendar";
-import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
+import {
+  formatThaiDate,
+  fromBangkokInputValue,
+  toBangkokInputValue,
+  yearOf,
+} from "@/lib/thai-date";
 import {
   CATEGORY_INFO,
   MAX_REMINDER_TEXT,
@@ -40,6 +45,7 @@ import {
   type Repeat,
 } from "@/lib/user-reminder";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface RemindersResponse {
   items: ReminderDto[];
@@ -61,27 +67,27 @@ type Period = "day" | "week" | "month";
 type Filter = "all" | "active" | "done";
 
 const MONTHS = [
-  "มกราคม",
-  "กุมภาพันธ์",
-  "มีนาคม",
-  "เมษายน",
-  "พฤษภาคม",
-  "มิถุนายน",
-  "กรกฎาคม",
-  "สิงหาคม",
-  "กันยายน",
-  "ตุลาคม",
-  "พฤศจิกายน",
-  "ธันวาคม",
+  t("มกราคม"),
+  t("กุมภาพันธ์"),
+  t("มีนาคม"),
+  t("เมษายน"),
+  t("พฤษภาคม"),
+  t("มิถุนายน"),
+  t("กรกฎาคม"),
+  t("สิงหาคม"),
+  t("กันยายน"),
+  t("ตุลาคม"),
+  t("พฤศจิกายน"),
+  t("ธันวาคม"),
 ];
-const WEEKDAYS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+const WEEKDAYS = [t("อา"), t("จ"), t("อ"), t("พ"), t("พฤ"), t("ศ"), t("ส")];
 const OWL_WORDS = [
-  "อย่าลืมทำตามเวลาที่ตั้งไว้นะฮูก!",
-  "วันนี้มีภารกิจอะไรให้พี่ฮูกช่วยเตือนไหมครับ?",
-  "ตรวจเช็กเวลาให้ตรง แล้วจะไม่พลาดนัดสำคัญเลย!",
-  "ฮูกก! บันทึกเตือนในปฏิทินแล้ว สบายใจได้เลย",
+  t("อย่าลืมทำตามเวลาที่ตั้งไว้นะฮูก!"),
+  t("วันนี้มีภารกิจอะไรให้พี่ฮูกช่วยเตือนไหมครับ?"),
+  t("ตรวจเช็กเวลาให้ตรง แล้วจะไม่พลาดนัดสำคัญเลย!"),
+  t("ฮูกก! บันทึกเตือนในปฏิทินแล้ว สบายใจได้เลย"),
 ];
-const FIRST_WORD = "แตะพี่ฮูกเพื่อฟังคำทักทาย หรือกดปุ่ม + สีส้มเพื่อตั้งเตือนใหม่ได้เลยครับ!";
+const FIRST_WORD = t("แตะพี่ฮูกเพื่อฟังคำทักทาย หรือกดปุ่ม + สีส้มเพื่อตั้งเตือนใหม่ได้เลยครับ!");
 const CONFETTI = ["#FF8800", "#5F9E6B", "#FFD180", "#4B8154"];
 
 const dayDate = (ymd: string) => new Date(`${ymd}T05:00:00Z`);
@@ -92,7 +98,7 @@ const monthOf = (ymd: string) => ({
   year: Number(ymd.slice(0, 4)),
   month: Number(ymd.slice(5, 7)),
 });
-const monthLabel = (year: number, month: number) => `${MONTHS[month - 1]} ${year + 543}`;
+const monthLabel = (year: number, month: number) => `${MONTHS[month - 1]} ${yearOf(year)}`;
 
 /** A time still ahead today, so saving a new reminder does not fail on the default. */
 function nextHour(): string {
@@ -119,7 +125,7 @@ function Reminders() {
   return (
     <main className="-mb-24 min-h-screen bg-[#FAF8F3] pb-44 text-slate-800">
       <header className="flex items-center justify-between gap-2 bg-[#82C392] px-4 py-3">
-        <h1 className="text-lg font-bold text-slate-900">เตือน | พี่ฮูก</h1>
+        <h1 className="text-lg font-bold text-slate-900">{t("เตือน | พี่ฮูก")}</h1>
         <SpaceSwitch
           groupId={groupId}
           onChange={(next) => router.replace(next ? `/reminders?g=${next}` : "/reminders")}
@@ -203,14 +209,14 @@ function PersonalReminders() {
       });
       setNotice(
         action === "undo"
-          ? "กลับมารอเตือนแล้ว"
+          ? t("กลับมารอเตือนแล้ว")
           : result.skipped
-            ? "ข้ามรอบนี้แล้ว รอบถัดไปยังเตือนตามเดิม"
-            : "เสร็จแล้ว เก่งมากครับ!",
+            ? t("ข้ามรอบนี้แล้ว รอบถัดไปยังเตือนตามเดิม")
+            : t("เสร็จแล้ว เก่งมากครับ!"),
       );
       if (action === "done") cheer();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "เปลี่ยนสถานะไม่สำเร็จ");
+      setNotice(err instanceof Error ? err.message : t("เปลี่ยนสถานะไม่สำเร็จ"));
     } finally {
       ticking.current.delete(reminder.id);
       reminders.reload();
@@ -219,15 +225,15 @@ function PersonalReminders() {
 
   async function remove(reminder: ReminderDto) {
     const question = reminder.repeat
-      ? `ลบเตือน "${reminder.body}" ทุกรอบใช่ไหม?`
-      : `ลบเตือน "${reminder.body}" ใช่ไหม?`;
+      ? t('ลบเตือน "{0}" ทุกรอบใช่ไหม?', reminder.body)
+      : t('ลบเตือน "{0}" ใช่ไหม?', reminder.body);
     if (!window.confirm(question)) return;
     setNotice(null);
     try {
       await api(`/api/reminders/${reminder.id}`, { method: "DELETE" });
-      setNotice("ลบแล้ว");
+      setNotice(t("ลบแล้ว"));
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+      setNotice(err instanceof Error ? err.message : t("ลบไม่สำเร็จ"));
     } finally {
       reminders.reload();
     }
@@ -255,8 +261,8 @@ function PersonalReminders() {
       <div className="px-4 pb-1 pt-3">
         <div className="flex rounded-2xl bg-[#EBE7DC] p-1">
           {[
-            { key: "calendar" as const, text: "แสดงเป็นปฏิทิน", Icon: CalendarDays },
-            { key: "all" as const, text: "รายการทั้งหมด", Icon: ListChecks },
+            { key: "calendar" as const, text: t("แสดงเป็นปฏิทิน"), Icon: CalendarDays },
+            { key: "all" as const, text: t("รายการทั้งหมด"), Icon: ListChecks },
           ].map(({ key, text, Icon }) => (
             <button
               key={key}
@@ -287,12 +293,12 @@ function PersonalReminders() {
       ) : reminders.error && !data ? (
         <ErrorState message={reminders.error} onRetry={reminders.reload} />
       ) : view === "all" ? (
-        <section className="space-y-2.5 px-4 py-2" aria-label="รายการทั้งหมด">
+        <section className="space-y-2.5 px-4 py-2" aria-label={t("รายการทั้งหมด")}>
           <div className="flex gap-2 overflow-x-auto py-1.5">
             {[
-              { key: "all" as const, text: `ทั้งหมด (${counts.all})` },
-              { key: "active" as const, text: "ยังไม่เตือน" },
-              { key: "done" as const, text: "เสร็จสิ้นแล้ว" },
+              { key: "all" as const, text: t("ทั้งหมด ({0})", counts.all) },
+              { key: "active" as const, text: t("ยังไม่เตือน") },
+              { key: "done" as const, text: t("เสร็จสิ้นแล้ว") },
             ].map(({ key, text }) => (
               <button
                 key={key}
@@ -317,9 +323,9 @@ function PersonalReminders() {
           <div className="flex items-center justify-between px-4 py-2">
             <div className="inline-flex rounded-xl bg-[#EBE7DC] p-0.5">
               {[
-                { key: "day" as const, text: "วัน" },
-                { key: "week" as const, text: "สัปดาห์" },
-                { key: "month" as const, text: "เดือน" },
+                { key: "day" as const, text: t("วัน") },
+                { key: "week" as const, text: t("สัปดาห์") },
+                { key: "month" as const, text: t("เดือน") },
               ].map(({ key, text }) => (
                 <button
                   key={key}
@@ -343,14 +349,14 @@ function PersonalReminders() {
               onClick={() => pick(today)}
               className="h-9 rounded-xl border border-emerald-200 bg-emerald-100 px-3 text-xs font-semibold text-emerald-900"
             >
-              วันนี้
+              {t("วันนี้")}
             </button>
           </div>
 
           <div className="flex items-center gap-2 px-4 py-1">
             <button
               type="button"
-              aria-label="ก่อนหน้า"
+              aria-label={t("ก่อนหน้า")}
               onClick={() => step(-1)}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700"
             >
@@ -359,7 +365,7 @@ function PersonalReminders() {
             <p className="min-w-0 flex-1 text-center text-base font-bold text-slate-800">{label}</p>
             <button
               type="button"
-              aria-label="ถัดไป"
+              aria-label={t("ถัดไป")}
               onClick={() => step(1)}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700"
             >
@@ -422,7 +428,7 @@ function PersonalReminders() {
           <div className="mx-3.5 mt-3 flex items-center justify-between gap-2 rounded-3xl border border-emerald-200 bg-gradient-to-r from-[#D9EFE0] via-[#EEF6EF] to-[#FEF5E7] p-3">
             <div className="min-w-0 flex-1">
               <p className="mb-1 inline-block rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-900">
-                พี่ฮูกพร้อมเตือนทุกเรื่อง
+                {t("พี่ฮูกพร้อมเตือนทุกเรื่อง")}
               </p>
               <p data-testid="owl-word" aria-live="polite" className="text-xs text-slate-700">
                 {word}
@@ -430,7 +436,7 @@ function PersonalReminders() {
             </div>
             <button
               type="button"
-              aria-label="แตะพี่ฮูก"
+              aria-label={t("แตะพี่ฮูก")}
               onClick={cheer}
               className="relative shrink-0 rounded-2xl"
             >
@@ -439,24 +445,26 @@ function PersonalReminders() {
             </button>
           </div>
 
-          <section className="mt-3.5 px-4" aria-label="รายการเตือนของวันที่เลือก">
+          <section className="mt-3.5 px-4" aria-label={t("รายการเตือนของวันที่เลือก")}>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-800">
-                รายการเตือน: {dayLabel(selected)}
+                {t("รายการเตือน:")} {dayLabel(selected)}
               </h2>
               <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
-                {entries.length} รายการ
+                {entries.length} {t("รายการ")}
               </span>
             </div>
             {entries.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-5 text-center">
-                <p className="text-sm font-bold text-slate-700">ไม่มีรายการเตือนในวันที่เลือก</p>
+                <p className="text-sm font-bold text-slate-700">
+                  {t("ไม่มีรายการเตือนในวันที่เลือก")}
+                </p>
                 <p className="mt-0.5 text-xs text-slate-600">
-                  กดปุ่ม + เพื่อเพิ่มการแจ้งเตือนได้เลยครับ
+                  {t("กดปุ่ม + เพื่อเพิ่มการแจ้งเตือนได้เลยครับ")}
                 </p>
               </div>
             ) : (
-              <ul aria-label="รายการเตือน" className="space-y-2">
+              <ul aria-label={t("รายการเตือน")} className="space-y-2">
                 {entries.map(({ reminder, at, next }) => (
                   <ReminderRow
                     key={`${reminder.id}-${at.getTime()}`}
@@ -487,7 +495,7 @@ function PersonalReminders() {
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 mx-auto flex max-w-md justify-end px-4">
         <button
           type="button"
-          aria-label="เพิ่มการเตือนใหม่"
+          aria-label={t("เพิ่มการเตือนใหม่")}
           onClick={() => setForm({ reminder: null })}
           className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#D65F00] text-white shadow-lg"
         >
@@ -537,7 +545,7 @@ function DayCell({
   return (
     <button
       type="button"
-      aria-label={`${dayLabel(ymd)}${entries ? ", มีเตือน" : ""}`}
+      aria-label={`${dayLabel(ymd)}${entries ? t(", มีเตือน") : ""}`}
       aria-pressed={selected}
       aria-current={ymd === today ? "date" : undefined}
       onClick={() => onPick(ymd)}
@@ -616,7 +624,8 @@ function ReminderRow({
           </span>
           <span className="flex shrink-0 items-center gap-1.5">
             <span className="whitespace-nowrap rounded-md border border-emerald-200 bg-[#E1EFE3] px-1.5 py-0.5 text-[11px] font-bold text-emerald-900">
-              {showDay ? `${shortDay(at)} · ` : ""}เวลา {clock(at)} น.
+              {showDay ? `${shortDay(at)} · ` : ""}
+              {t("เวลา")} {clock(at)} {t("น.")}
             </span>
             {reminder.repeat ? (
               <span className="text-slate-500">
@@ -630,7 +639,7 @@ function ReminderRow({
       {canTick ? (
         <button
           type="button"
-          aria-label={`${done ? "ยกเลิกเสร็จ" : "ทำเสร็จ"} ${reminder.body}`}
+          aria-label={`${done ? t("ยกเลิกเสร็จ") : t("ทำเสร็จ")} ${reminder.body}`}
           onClick={() => onTick(reminder)}
           className="flex h-10 w-9 shrink-0 items-center justify-center"
         >
@@ -646,7 +655,7 @@ function ReminderRow({
       ) : null}
       <button
         type="button"
-        aria-label={`ลบ ${reminder.body}`}
+        aria-label={t("ลบ {0}", reminder.body)}
         onClick={() => onDelete(reminder)}
         className="flex h-10 w-9 shrink-0 items-center justify-center text-slate-500"
       >
@@ -682,12 +691,12 @@ function AllList({
   if (shown.length === 0) {
     return (
       <p className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">
-        ไม่มีรายการเตือนในหมวดนี้
+        {t("ไม่มีรายการเตือนในหมวดนี้")}
       </p>
     );
   }
   return (
-    <ul aria-label="รายการเตือน" className="space-y-2">
+    <ul aria-label={t("รายการเตือน")} className="space-y-2">
       {shown.map((reminder) => (
         <ReminderRow
           key={reminder.id}
@@ -777,7 +786,7 @@ function ReminderSheet({
     e.preventDefault();
     const at = fromBangkokInputValue(`${date}T${time}`);
     if (!at) {
-      setError("เลือกวันเวลาให้ถูกต้องนะ");
+      setError(t("เลือกวันเวลาให้ถูกต้องนะ"));
       return;
     }
     setBusy(true);
@@ -792,39 +801,39 @@ function ReminderSheet({
           category,
         }),
       });
-      onSaved(reminder ? "แก้ไขแล้ว" : "พี่ฮูกบันทึกการเตือนให้แล้วครับ!", date);
+      onSaved(reminder ? t("แก้ไขแล้ว") : t("พี่ฮูกบันทึกการเตือนให้แล้วครับ!"), date);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Sheet title={reminder ? "แก้การเตือน" : "ตั้งเตือนใหม่กับพี่ฮูก"} onClose={onClose}>
+    <Sheet title={reminder ? t("แก้การเตือน") : t("ตั้งเตือนใหม่กับพี่ฮูก")} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         {series ? (
           <p className="rounded-xl bg-amber-100 px-3 py-2 text-sm text-amber-900">
-            แก้ทุกรอบ · รอบถัดไป {formatThaiDate(new Date(series.remindAt))}
+            {t("แก้ทุกรอบ · รอบถัดไป")} {formatThaiDate(new Date(series.remindAt))}
           </p>
         ) : null}
         <div>
           <label htmlFor="reminder-body" className="mb-1 block text-xs font-semibold">
-            ชื่อรายการเตือน
+            {t("ชื่อรายการเตือน")}
           </label>
           <input
             id="reminder-body"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             maxLength={MAX_REMINDER_TEXT}
-            placeholder="เช่น เตือนจ่ายค่าเน็ต, นัดส่งงาน"
+            placeholder={t("เช่น เตือนจ่ายค่าเน็ต, นัดส่งงาน")}
             className={fieldClass}
           />
         </div>
         <div className="grid grid-cols-2 gap-2.5">
           <div>
             <label htmlFor="reminder-date" className="mb-1 block text-xs font-semibold">
-              {series ? "วันที่รอบถัดไป" : "วันที่เตือน"}
+              {series ? t("วันที่รอบถัดไป") : t("วันที่เตือน")}
             </label>
             <input
               id="reminder-date"
@@ -836,7 +845,7 @@ function ReminderSheet({
           </div>
           <div>
             <label htmlFor="reminder-time" className="mb-1 block text-xs font-semibold">
-              เวลา
+              {t("เวลา")}
             </label>
             <input
               id="reminder-time"
@@ -848,7 +857,7 @@ function ReminderSheet({
           </div>
         </div>
         <fieldset>
-          <legend className="mb-1 text-xs font-semibold">หมวดหมู่</legend>
+          <legend className="mb-1 text-xs font-semibold">{t("หมวดหมู่")}</legend>
           <div className="grid grid-cols-4 gap-1.5">
             {REMINDER_CATEGORIES.map((key) => (
               <button
@@ -870,7 +879,7 @@ function ReminderSheet({
         </fieldset>
         <div>
           <label htmlFor="reminder-repeat" className="mb-1 block text-xs font-semibold">
-            ทำซ้ำ
+            {t("ทำซ้ำ")}
           </label>
           <select
             id="reminder-repeat"
@@ -878,7 +887,7 @@ function ReminderSheet({
             onChange={(e) => setRepeat(e.target.value as Repeat | "")}
             className={fieldClass}
           >
-            <option value="">ครั้งเดียว</option>
+            <option value="">{t("ครั้งเดียว")}</option>
             {(Object.keys(REPEAT_LABEL) as Repeat[]).map((key) => (
               <option key={key} value={key}>
                 {REPEAT_LABEL[key]}
@@ -889,8 +898,14 @@ function ReminderSheet({
         {full ? (
           <p className="text-sm text-warn">
             {kind === "repeat"
-              ? `มีเตือนประจำ (เตือนซ้ำ) ครบ ${limit} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`
-              : `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`}
+              ? t(
+                  'มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ',
+                  limit,
+                )
+              : t(
+                  "มีเตือนที่รออยู่ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ",
+                  limit,
+                )}
           </p>
         ) : null}
         {error ? (
@@ -903,7 +918,7 @@ function ReminderSheet({
           disabled={busy || full || !body.trim() || !date || !time}
           className="h-12 w-full rounded-2xl bg-[#3F7A4B] font-semibold text-white disabled:opacity-60"
         >
-          {busy ? "กำลังบันทึก…" : "บันทึกการเตือน"}
+          {busy ? t("กำลังบันทึก…") : t("บันทึกการเตือน")}
         </button>
       </form>
     </Sheet>

@@ -30,6 +30,7 @@ import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { currencySymbol, currencyUnit, formatBaht, money } from "@/lib/money";
 import { formatThaiMonthShort } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
+import { t as tr } from "@/lib/i18n";
 
 type Kind = "expense" | "income";
 
@@ -118,7 +119,7 @@ function Tile({ c, index }: { c: CategoryItem; index: number }) {
 
 function QuickAmounts({ onAdd }: { onAdd: (amount: number) => void }) {
   return (
-    <div className="flex gap-1.5" aria-label="เพิ่มยอดอย่างเร็ว" role="group">
+    <div className="flex gap-1.5" aria-label={tr("เพิ่มยอดอย่างเร็ว")} role="group">
       {QUICK_ADD.map((n) => (
         <button
           key={n}
@@ -144,18 +145,20 @@ function addToAmount(text: string, add: number): string {
 /** What Free sees instead of the add form: the feature is Pro and above. */
 function CustomCategoryLockedSheet({ onClose }: { onClose: () => void }) {
   return (
-    <Sheet title="หมวดของตัวเอง" onClose={onClose}>
+    <Sheet title={tr("หมวดของตัวเอง")} onClose={onClose}>
       <div className="space-y-3 text-center">
-        <p className="text-base font-semibold">สร้างหมวดของตัวเองสำหรับแผน Pro</p>
+        <p className="text-base font-semibold">{tr("สร้างหมวดของตัวเองสำหรับแผน Pro")}</p>
         <p className="text-sm text-muted">
-          เพิ่มหมวดเฉพาะตัว เช่น “ค่าอาหารแมว” พร้อมเลือกอีโมจิ ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด
-          ตอนนี้ใช้หมวดมาตรฐานและปรับคำค้นได้ตามเดิม
+          {tr(
+            "เพิ่มหมวดเฉพาะตัว เช่น “ค่าอาหารแมว” พร้อมเลือกอีโมจิ ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด",
+          )}
+          {tr("ตอนนี้ใช้หมวดมาตรฐานและปรับคำค้นได้ตามเดิม")}
         </p>
         <Link
           href="/upgrade"
           className="inline-flex h-11 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-semibold text-surface"
         >
-          ดูแผน Pro
+          {tr("ดูแผน Pro")}
         </Link>
       </div>
     </Sheet>
@@ -167,15 +170,15 @@ function EmojiPicker({ value, onChange }: { value: string; onChange: (e: string)
   const valid = value === "" || isSingleEmoji(value);
   return (
     <div className="space-y-2">
-      <p className="text-sm font-semibold">อีโมจิ (ไม่บังคับ)</p>
-      <div className="grid grid-cols-8 gap-1" role="radiogroup" aria-label="เลือกอีโมจิ">
+      <p className="text-sm font-semibold">{tr("อีโมจิ (ไม่บังคับ)")}</p>
+      <div className="grid grid-cols-8 gap-1" role="radiogroup" aria-label={tr("เลือกอีโมจิ")}>
         {EMOJI_CHOICES.map((e) => (
           <button
             key={e}
             type="button"
             role="radio"
             aria-checked={value === e}
-            aria-label={`อีโมจิ ${e}`}
+            aria-label={tr("อีโมจิ {0}", e)}
             onClick={() => onChange(value === e ? "" : e)}
             className={cn(
               "flex h-10 items-center justify-center rounded-xl border text-xl",
@@ -191,8 +194,8 @@ function EmojiPicker({ value, onChange }: { value: string; onChange: (e: string)
           value={value}
           onChange={(e) => onChange(e.target.value)}
           maxLength={16}
-          placeholder="หรือพิมพ์อีโมจิเอง"
-          aria-label="อีโมจิ (พิมพ์เอง)"
+          placeholder={tr("หรือพิมพ์อีโมจิเอง")}
+          aria-label={tr("อีโมจิ (พิมพ์เอง)")}
           aria-invalid={!valid}
           className="h-11 w-full rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary"
         />
@@ -202,11 +205,13 @@ function EmojiPicker({ value, onChange }: { value: string; onChange: (e: string)
             onClick={() => onChange("")}
             className="h-11 shrink-0 rounded-2xl border border-border px-3 text-sm text-muted"
           >
-            ล้าง
+            {tr("ล้าง")}
           </button>
         ) : null}
       </div>
-      {!valid ? <p className="text-xs text-expense">ใส่ได้เป็นอีโมจิตัวเดียวเท่านั้นนะ</p> : null}
+      {!valid ? (
+        <p className="text-xs text-expense">{tr("ใส่ได้เป็นอีโมจิตัวเดียวเท่านั้นนะ")}</p>
+      ) : null}
     </div>
   );
 }
@@ -226,19 +231,19 @@ function DailyBudgetCard({
 
   function save() {
     const parsed = parseAmount(text);
-    if (!parsed.ok) return setError("จำนวนเงินไม่ถูกต้อง (เช่น 500 หรือ 500.50)");
+    if (!parsed.ok) return setError(tr("จำนวนเงินไม่ถูกต้อง (เช่น 500 หรือ 500.50)"));
     setError(null);
     onSave(parsed.value);
   }
 
   return (
     <section
-      aria-label="งบรายวัน"
+      aria-label={tr("งบรายวัน")}
       className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card"
     >
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold">งบรายวัน</h2>
-        <span className="text-xs text-muted">ทุกหมวดรวมกัน</span>
+        <h2 className="font-semibold">{tr("งบรายวัน")}</h2>
+        <span className="text-xs text-muted">{tr("ทุกหมวดรวมกัน")}</span>
       </div>
       <div className="flex gap-2">
         <input
@@ -246,8 +251,8 @@ function DailyBudgetCard({
           onChange={(e) => setText(e.target.value)}
           disabled={locked}
           inputMode="decimal"
-          placeholder={`วันหนึ่งใช้ไม่เกิน (${currencyUnit()})`}
-          aria-label="งบรายวัน"
+          placeholder={tr("วันหนึ่งใช้ไม่เกิน ({0})", currencyUnit())}
+          aria-label={tr("งบรายวัน")}
           className="num h-11 min-w-0 flex-1 rounded-2xl border border-border bg-background px-4 outline-none focus:border-primary disabled:opacity-60"
         />
         <button
@@ -256,7 +261,7 @@ function DailyBudgetCard({
           disabled={locked}
           className="h-11 rounded-2xl bg-primary px-4 text-sm font-semibold text-surface disabled:opacity-40"
         >
-          บันทึก
+          {tr("บันทึก")}
         </button>
       </div>
       {error ? (
@@ -266,22 +271,24 @@ function DailyBudgetCard({
       ) : null}
       {daily.amountSatang ? (
         <>
-          <p className="text-xs text-muted">วันนี้</p>
+          <p className="text-xs text-muted">{tr("วันนี้")}</p>
           <ProgressBar
             spentSatang={daily.spentSatang}
             limitSatang={daily.amountSatang}
-            label="การใช้งบวันนี้"
+            label={tr("การใช้งบวันนี้")}
           />
         </>
       ) : (
         <p className="text-xs text-muted">
-          ยังไม่ได้ตั้งงบรายวัน วันนี้ใช้ไปแล้ว {money(daily.spentSatang)}
+          {tr("ยังไม่ได้ตั้งงบรายวัน วันนี้ใช้ไปแล้ว")} {money(daily.spentSatang)}
         </p>
       )}
       {locked ? (
-        <PlusLock>บอทเตือนทันทีเมื่อวันนี้ใช้เกินวงเงินที่ตั้งไว้</PlusLock>
+        <PlusLock>{tr("บอทเตือนทันทีเมื่อวันนี้ใช้เกินวงเงินที่ตั้งไว้")}</PlusLock>
       ) : (
-        <p className="text-xs text-muted">ถ้าวันนี้ใช้เกิน บอทจะเตือนในแชททันที เว้นว่างเพื่อปิด</p>
+        <p className="text-xs text-muted">
+          {tr("ถ้าวันนี้ใช้เกิน บอทจะเตือนในแชททันที เว้นว่างเพื่อปิด")}
+        </p>
       )}
     </section>
   );
@@ -289,7 +296,7 @@ function DailyBudgetCard({
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
-    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="สี">
+    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={tr("สี")}>
       {SWATCHES.map((c) => (
         <button
           key={c}
@@ -331,9 +338,9 @@ function AddSheet({
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return setError("ใส่ชื่อหมวดด้วยนะ");
+    if (!name.trim()) return setError(tr("ใส่ชื่อหมวดด้วยนะ"));
     if (emoji !== "" && !isSingleEmoji(emoji))
-      return setError("ใส่ได้เป็นอีโมจิตัวเดียวเท่านั้นนะ");
+      return setError(tr("ใส่ได้เป็นอีโมจิตัวเดียวเท่านั้นนะ"));
     setSaving(true);
     setError(null);
     try {
@@ -349,27 +356,30 @@ function AddSheet({
       });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   return (
-    <Sheet title={`เพิ่มหมวด${kind === "expense" ? "รายจ่าย" : "รายรับ"}`} onClose={onClose}>
+    <Sheet
+      title={tr("เพิ่มหมวด{0}", kind === "expense" ? tr("รายจ่าย") : tr("รายรับ"))}
+      onClose={onClose}
+    >
       <form onSubmit={submit} className="space-y-3">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
-          placeholder="ชื่อหมวด เช่น สัตว์เลี้ยง"
-          aria-label="ชื่อหมวด"
+          placeholder={tr("ชื่อหมวด เช่น สัตว์เลี้ยง")}
+          aria-label={tr("ชื่อหมวด")}
           className={fieldClass}
         />
         <textarea
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
-          placeholder="คำค้นสำหรับจัดหมวดอัตโนมัติ คั่นด้วยคอมมา เช่น อาหารแมว, ทราย"
-          aria-label="คำค้น"
+          placeholder={tr("คำค้นสำหรับจัดหมวดอัตโนมัติ คั่นด้วยคอมมา เช่น อาหารแมว, ทราย")}
+          aria-label={tr("คำค้น")}
           rows={3}
           className="w-full rounded-2xl border border-border bg-background p-4 outline-none focus:border-primary"
         />
@@ -385,7 +395,7 @@ function AddSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก..." : "เพิ่มหมวด"}
+          {saving ? tr("กำลังบันทึก...") : tr("เพิ่มหมวด")}
         </button>
       </form>
     </Sheet>
@@ -450,7 +460,7 @@ export default function BudgetsPage() {
       if (done) setNotice(done);
       refresh();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : tr("ทำรายการไม่สำเร็จ"));
     }
   }
 
@@ -480,12 +490,12 @@ export default function BudgetsPage() {
 
   return (
     <main>
-      <PageHeader title="จัดการหมวดและงบ" />
+      <PageHeader title={tr("จัดการหมวดและงบ")} />
 
       <div className="space-y-4 px-4 pb-4">
         <div
           role="tablist"
-          aria-label="ประเภทหมวด"
+          aria-label={tr("ประเภทหมวด")}
           className="flex rounded-2xl border border-border bg-background p-1"
         >
           {(["expense", "income"] as const).map((k) => (
@@ -511,7 +521,7 @@ export default function BudgetsPage() {
                   k === "expense" ? "bg-expense" : "bg-primary",
                 )}
               />
-              {k === "expense" ? "หมวดรายจ่าย" : "หมวดรายรับ"}
+              {k === "expense" ? tr("หมวดรายจ่าย") : tr("หมวดรายรับ")}
             </button>
           ))}
         </div>
@@ -543,26 +553,31 @@ export default function BudgetsPage() {
                     daily={budgets.data.daily}
                     locked={dailyLocked}
                     onSave={(value) =>
-                      putBudget({ daily: value }, value ? "ตั้งงบรายวันแล้ว" : "ล้างงบรายวันแล้ว")
+                      putBudget(
+                        { daily: value },
+                        value ? tr("ตั้งงบรายวันแล้ว") : tr("ล้างงบรายวันแล้ว"),
+                      )
                     }
                   />
                 ) : null}
                 {tipOff ? null : (
                   <section
-                    aria-label="คำแนะนำการตั้งงบ"
+                    aria-label={tr("คำแนะนำการตั้งงบ")}
                     className="relative flex items-start gap-3 rounded-2xl border border-border bg-primary-soft p-3.5"
                   >
                     <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
                     <div className="flex-1 pr-6">
-                      <p className="text-xs font-bold">คำแนะนำการตั้งงบ 50-30-20</p>
+                      <p className="text-xs font-bold">{tr("คำแนะนำการตั้งงบ 50-30-20")}</p>
                       <p className="mt-0.5 text-[11px] leading-relaxed text-primary">
-                        ลองจัดงบ 50% สำหรับของจำเป็น (ที่พัก อาหาร) 30% สำหรับความสุข และ 20%
-                        สำหรับเงินออม ช่วยให้คุมค่าใช้จ่ายได้สบายใจขึ้น
+                        {tr(
+                          "ลองจัดงบ 50% สำหรับของจำเป็น (ที่พัก อาหาร) 30% สำหรับความสุข และ 20%",
+                        )}
+                        {tr("สำหรับเงินออม ช่วยให้คุมค่าใช้จ่ายได้สบายใจขึ้น")}
                       </p>
                     </div>
                     <button
                       type="button"
-                      aria-label="ปิดคำแนะนำ"
+                      aria-label={tr("ปิดคำแนะนำ")}
                       onClick={() => {
                         setTipOff(true);
                         try {
@@ -580,7 +595,7 @@ export default function BudgetsPage() {
               </>
             ) : null}
 
-            <section aria-label="จัดการรายการหมวด" className="space-y-2.5">
+            <section aria-label={tr("จัดการรายการหมวด")} className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
                   <Search
@@ -591,8 +606,8 @@ export default function BudgetsPage() {
                     type="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="ค้นหาหมวดหมู่..."
-                    aria-label="ค้นหาหมวดหมู่"
+                    placeholder={tr("ค้นหาหมวดหมู่...")}
+                    aria-label={tr("ค้นหาหมวดหมู่")}
                     className="h-11 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -608,7 +623,7 @@ export default function BudgetsPage() {
                   )}
                 >
                   <ArrowUpDown className="h-3.5 w-3.5" aria-hidden />
-                  จัดเรียง
+                  {tr("จัดเรียง")}
                 </button>
                 <button
                   type="button"
@@ -620,15 +635,19 @@ export default function BudgetsPage() {
                   ) : (
                     <Plus className="h-3.5 w-3.5" aria-hidden />
                   )}
-                  เพิ่มหมวด
+                  {tr("เพิ่มหมวด")}
                 </button>
               </div>
               <div className="flex items-center justify-between px-1 text-[11px]">
                 <span className="text-muted">
-                  ทั้งหมด {all.length} หมวดหมู่{kind === "expense" ? "รายจ่าย" : "รายรับ"}
+                  {tr(
+                    "ทั้งหมด {0} หมวดหมู่{1}",
+                    all.length,
+                    kind === "expense" ? tr("รายจ่าย") : tr("รายรับ"),
+                  )}
                 </span>
                 <span className="font-medium text-primary">
-                  {ordering ? "กดลูกศรเพื่อเลื่อนลำดับ" : "แตะหมวดหมู่เพื่อแก้ไขหรือตั้งงบ"}
+                  {ordering ? tr("กดลูกศรเพื่อเลื่อนลำดับ") : tr("แตะหมวดหมู่เพื่อแก้ไขหรือตั้งงบ")}
                 </span>
               </div>
             </section>
@@ -636,8 +655,10 @@ export default function BudgetsPage() {
             {list.length === 0 ? (
               <div className="rounded-2xl border border-border bg-surface shadow-card">
                 <EmptyState
-                  title={term ? "ไม่พบหมวดที่ค้นหา" : "ยังไม่มีหมวด"}
-                  hint={term ? "ลองใช้คำอื่นดูนะ" : "กด “เพิ่มหมวด” เพื่อสร้างหมวดของคุณเอง"}
+                  title={term ? tr("ไม่พบหมวดที่ค้นหา") : tr("ยังไม่มีหมวด")}
+                  hint={
+                    term ? tr("ลองใช้คำอื่นดูนะ") : tr("กด “เพิ่มหมวด” เพื่อสร้างหมวดของคุณเอง")
+                  }
                 />
               </div>
             ) : (
@@ -658,7 +679,7 @@ export default function BudgetsPage() {
                       <div className="flex items-center">
                         <button
                           type="button"
-                          aria-label={`แก้ไข ${c.name}`}
+                          aria-label={tr("แก้ไข {0}", c.name)}
                           disabled={ordering}
                           onClick={() => setEditing(c)}
                           className="min-w-0 flex-1 p-3.5 text-left"
@@ -670,16 +691,16 @@ export default function BudgetsPage() {
                                 {c.name}
                                 {c.own ? (
                                   <span className="ml-2 rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-semibold text-primary">
-                                    ของฉัน
+                                    {tr("ของฉัน")}
                                   </span>
                                 ) : null}
                               </span>
                               <span className="block truncate text-[11px] text-muted">
                                 {c.isHidden
-                                  ? "ซ่อนอยู่"
+                                  ? tr("ซ่อนอยู่")
                                   : c.keywords.length
                                     ? c.keywords.join(", ")
-                                    : "ยังไม่มีคำค้น"}
+                                    : tr("ยังไม่มีคำค้น")}
                               </span>
                             </span>
                             <CategoryAmount
@@ -700,14 +721,14 @@ export default function BudgetsPage() {
                         {ordering ? (
                           <div className="flex shrink-0 pr-1.5">
                             <IconButton
-                              label={`เลื่อน ${c.name} ขึ้น`}
+                              label={tr("เลื่อน {0} ขึ้น", c.name)}
                               onClick={() => move(c.id, -1)}
                               disabled={index === 0 || term !== ""}
                             >
                               <ArrowUp className="h-4 w-4" aria-hidden />
                             </IconButton>
                             <IconButton
-                              label={`เลื่อน ${c.name} ลง`}
+                              label={tr("เลื่อน {0} ลง", c.name)}
                               onClick={() => move(c.id, 1)}
                               disabled={index === all.length - 1 || term !== ""}
                             >
@@ -751,7 +772,7 @@ export default function BudgetsPage() {
           onClose={() => setTotalOpen(false)}
           onSave={(value) => {
             setTotalOpen(false);
-            void putBudget({ overall: value }, value ? "ตั้งงบแล้ว" : "ล้างงบแล้ว");
+            void putBudget({ overall: value }, value ? tr("ตั้งงบแล้ว") : tr("ล้างงบแล้ว"));
           }}
         />
       ) : null}
@@ -762,7 +783,7 @@ export default function BudgetsPage() {
           onClose={() => setCycleOpen(false)}
           onSaved={() => {
             setCycleOpen(false);
-            setNotice("บันทึกรอบงบแล้ว");
+            setNotice(tr("บันทึกรอบงบแล้ว"));
             refresh();
           }}
         />
@@ -774,7 +795,7 @@ export default function BudgetsPage() {
           onClose={() => setAdding(false)}
           onSaved={() => {
             setAdding(false);
-            setNotice("เพิ่มหมวดแล้ว");
+            setNotice(tr("เพิ่มหมวดแล้ว"));
             refresh();
           }}
         />
@@ -808,12 +829,12 @@ function BudgetHero({
   const pct = total ? percentUsed(spent, total) : 0;
   const state = total ? budgetState(spent, total) : "ok";
   const remaining = total ? total - spent : null;
-  const per = data.cycle === "weekly" ? "สัปดาห์" : "เดือน";
-  const modeText = data.mode === "overall" ? "รวมก้อนเดียว" : "แยกตามหมวด";
+  const per = data.cycle === "weekly" ? tr("สัปดาห์") : tr("เดือน");
+  const modeText = data.mode === "overall" ? tr("รวมก้อนเดียว") : tr("แยกตามหมวด");
 
   return (
     <section
-      aria-label="งบประมาณ"
+      aria-label={tr("งบประมาณ")}
       className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--hero-from)] to-[var(--hero-to)] p-5 text-[var(--hero-ink)] shadow-card"
     >
       <div
@@ -822,7 +843,9 @@ function BudgetHero({
       />
       <div className="relative space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium text-[var(--hero-ink-soft)]">งบประมาณประจำ{per}</p>
+          <p className="text-xs font-medium text-[var(--hero-ink-soft)]">
+            {tr("งบประมาณประจำ{0}", per)}
+          </p>
           <div className="relative">
             <button
               type="button"
@@ -837,13 +860,13 @@ function BudgetHero({
             {menu ? (
               <div
                 role="menu"
-                aria-label="รูปแบบงบ"
+                aria-label={tr("รูปแบบงบ")}
                 className="absolute right-0 z-20 mt-1.5 w-40 overflow-hidden rounded-xl border border-border bg-surface py-1 text-xs text-foreground shadow-card"
               >
                 {(
                   [
-                    ["category", "แยกตามหมวด"],
-                    ["overall", "รวมก้อนเดียว"],
+                    ["category", tr("แยกตามหมวด")],
+                    ["overall", tr("รวมก้อนเดียว")],
                   ] as const
                 ).map(([value, label]) => (
                   <button
@@ -871,9 +894,9 @@ function BudgetHero({
 
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-xs text-[var(--hero-ink-soft)]">ยอดงบที่ตั้งไว้ทั้งหมด</p>
+            <p className="text-xs text-[var(--hero-ink-soft)]">{tr("ยอดงบที่ตั้งไว้ทั้งหมด")}</p>
             <p className="num mt-0.5 truncate text-2xl font-bold">
-              {total ? `${money(total)}` : "ยังไม่ตั้ง"}
+              {total ? `${money(total)}` : tr("ยังไม่ตั้ง")}
               {total ? (
                 <span className="ml-1.5 text-xs font-normal text-[var(--hero-ink-soft)]">
                   / {per}
@@ -887,7 +910,7 @@ function BudgetHero({
               onClick={onAdjust}
               className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-surface"
             >
-              {total ? "ปรับงบ" : "ตั้งงบ"}
+              {total ? tr("ปรับงบ") : tr("ตั้งงบ")}
             </button>
           ) : null}
         </div>
@@ -896,17 +919,17 @@ function BudgetHero({
           <div className="space-y-1.5">
             <div className="flex justify-between gap-2 text-[11px] text-[var(--hero-ink-soft)]">
               <span className="num">
-                ใช้ไปแล้ว {money(spent)} ({pct}%)
+                {tr("ใช้ไปแล้ว")} {money(spent)} ({pct}%)
               </span>
               <span className="num font-semibold text-[var(--hero-ink)]">
                 {remaining !== null && remaining < 0
-                  ? `เกินงบ ${money(-remaining)}`
-                  : `เหลือ ${money(remaining ?? 0)}`}
+                  ? tr("เกินงบ {0}", money(-remaining))
+                  : tr("เหลือ {0}", money(remaining ?? 0))}
               </span>
             </div>
             <div
               role="progressbar"
-              aria-label="การใช้งบ"
+              aria-label={tr("การใช้งบ")}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.min(pct, 100)}
@@ -919,34 +942,38 @@ function BudgetHero({
             </div>
             {state !== "ok" ? (
               <p className="text-[11px] font-semibold text-[var(--hero-ink)]">
-                {state === "over" ? "ครบงบแล้ว" : "ใกล้ครบงบ"}
+                {state === "over" ? tr("ครบงบแล้ว") : tr("ใกล้ครบงบ")}
               </p>
             ) : null}
           </div>
         ) : (
           <p className="text-xs text-[var(--hero-ink-soft)]">
             {data.mode === "overall"
-              ? `ยังไม่ได้ตั้งงบ ใช้ไปแล้ว ${money(spent)} ในรอบนี้`
-              : "ตั้งงบของแต่ละหมวดได้ที่การ์ดด้านล่าง เว้นว่างไว้ถ้าไม่ต้องการจำกัด"}
+              ? tr("ยังไม่ได้ตั้งงบ ใช้ไปแล้ว {0} ในรอบนี้", money(spent))
+              : tr("ตั้งงบของแต่ละหมวดได้ที่การ์ดด้านล่าง เว้นว่างไว้ถ้าไม่ต้องการจำกัด")}
           </p>
         )}
 
         <div className="flex items-center justify-between gap-2 border-t border-white/70 pt-2 text-xs text-[var(--hero-ink-soft)]">
           <span>
-            รอบงบ:{" "}
+            {tr("รอบงบ:")}{" "}
             <strong className="font-semibold text-[var(--hero-ink)]">
               {data.cycle === "weekly"
-                ? "ทุกวันจันทร์"
-                : `ทุกวันที่ ${data.cycleStartDay ?? 1} ของเดือน${(data.cycleStartDay ?? 1) > 28 ? " (หรือวันสุดท้าย)" : ""}`}
+                ? tr("ทุกวันจันทร์")
+                : tr(
+                    "ทุกวันที่ {0} ของเดือน{1}",
+                    data.cycleStartDay ?? 1,
+                    (data.cycleStartDay ?? 1) > 28 ? tr(" (หรือวันสุดท้าย)") : "",
+                  )}
             </strong>
           </span>
           <button
             type="button"
             onClick={onCycle}
-            aria-label="ตั้งค่ารอบงบ"
+            aria-label={tr("ตั้งค่ารอบงบ")}
             className="flex h-8 items-center gap-1 font-semibold text-[var(--hero-ink)] underline underline-offset-2"
           >
-            ตั้งค่า
+            {tr("ตั้งค่า")}
             <Settings2 className="h-3 w-3" aria-hidden />
           </button>
         </div>
@@ -954,13 +981,13 @@ function BudgetHero({
         {alertsOff || categoryLocked ? (
           <div className="rounded-2xl bg-surface text-foreground">
             <PlusLock>
-              งบแยกหมวดและการแจ้งเตือนในแชทเมื่อใช้ถึง 80% / เกินงบ
-              {data.mode === "category" ? " (งบที่เคยตั้งไว้ยังอยู่ แก้ไขได้เมื่ออัปเกรด)" : ""}
+              {tr("งบแยกหมวดและการแจ้งเตือนในแชทเมื่อใช้ถึง 80% / เกินงบ")}
+              {data.mode === "category" ? tr(" (งบที่เคยตั้งไว้ยังอยู่ แก้ไขได้เมื่ออัปเกรด)") : ""}
             </PlusLock>
           </div>
         ) : (
           <p className="text-[11px] text-[var(--hero-ink-soft)]">
-            จะแจ้งเตือนในแชทเมื่อใช้ถึง 80% และเมื่อเกินงบ
+            {tr("จะแจ้งเตือนในแชทเมื่อใช้ถึง 80% และเมื่อเกินงบ")}
           </p>
         )}
       </div>
@@ -986,10 +1013,10 @@ function CategoryAmount({
     return received > 0 ? (
       <span className="shrink-0 text-right">
         <span className="num block text-xs font-bold text-income">+{money(received)}</span>
-        <span className="block text-[10px] text-muted">รอบนี้</span>
+        <span className="block text-[10px] text-muted">{tr("รอบนี้")}</span>
       </span>
     ) : (
-      <span className="shrink-0 text-[10px] text-muted">ยังไม่มีรายรับ</span>
+      <span className="shrink-0 text-[10px] text-muted">{tr("ยังไม่มีรายรับ")}</span>
     );
   }
   if (showBudget && budget?.amountSatang) {
@@ -998,11 +1025,11 @@ function CategoryAmount({
     const state = budgetState(spent, limit);
     const chip =
       left < 0
-        ? { text: `เกินงบ ${money(-left)}`, cls: "bg-expense/10 text-expense" }
+        ? { text: tr("เกินงบ {0}", money(-left)), cls: "bg-expense/10 text-expense" }
         : left === 0
-          ? { text: "เต็มงบแล้ว", cls: "bg-expense/10 text-expense" }
+          ? { text: tr("เต็มงบแล้ว"), cls: "bg-expense/10 text-expense" }
           : {
-              text: `เหลือ ${money(left)}`,
+              text: tr("เหลือ {0}", money(left)),
               cls: state === "warn" ? "bg-warn-soft text-warn" : "bg-primary-soft text-primary",
             };
     return (
@@ -1022,7 +1049,9 @@ function CategoryAmount({
   return (
     <span className="shrink-0 text-right">
       <span className="num block text-xs font-semibold">{money(spent)}</span>
-      <span className="block text-[10px] text-muted">{showBudget ? "ไม่ได้ตั้งงบ" : "รอบนี้"}</span>
+      <span className="block text-[10px] text-muted">
+        {showBudget ? tr("ไม่ได้ตั้งงบ") : tr("รอบนี้")}
+      </span>
     </span>
   );
 }
@@ -1033,7 +1062,7 @@ function MiniBar({ spent, limit, name }: { spent: number; limit: number; name: s
   return (
     <span
       role="progressbar"
-      aria-label={`การใช้งบหมวด ${name}`}
+      aria-label={tr("การใช้งบหมวด {0}", name)}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={pct}
@@ -1077,7 +1106,7 @@ function IconButton({
 /** What the page looks like while its numbers load. */
 function BudgetsSkeleton() {
   return (
-    <div role="status" aria-label="กำลังโหลด" className="space-y-4">
+    <div role="status" aria-label={tr("กำลังโหลด")} className="space-y-4">
       <Skeleton className="h-52 w-full rounded-3xl" />
       <Skeleton className="h-11 w-full" />
       {[0, 1, 2, 3].map((i) => (
@@ -1103,12 +1132,12 @@ function TotalBudgetSheet({
   function submit(e: FormEvent) {
     e.preventDefault();
     const parsed = parseAmount(text);
-    if (!parsed.ok) return setError("จำนวนเงินไม่ถูกต้อง (เช่น 5000 หรือ 5000.50)");
+    if (!parsed.ok) return setError(tr("จำนวนเงินไม่ถูกต้อง (เช่น 5000 หรือ 5000.50)"));
     onSave(parsed.value);
   }
 
   return (
-    <Sheet title="งบรวมต่อรอบ" onClose={onClose}>
+    <Sheet title={tr("งบรวมต่อรอบ")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
         <div className="relative">
           <span
@@ -1121,12 +1150,12 @@ function TotalBudgetSheet({
             value={text}
             onChange={(e) => setText(e.target.value)}
             inputMode="decimal"
-            placeholder="ไม่ตั้งงบประมาณ"
-            aria-label="งบรวมต่อรอบ"
+            placeholder={tr("ไม่ตั้งงบประมาณ")}
+            aria-label={tr("งบรวมต่อรอบ")}
             className="num h-12 w-full rounded-2xl border border-border bg-background pl-9 pr-4 text-sm font-bold outline-none focus:border-primary"
           />
         </div>
-        <p className="text-[11px] text-muted">ปล่อยว่างไว้ถ้าไม่ต้องการจำกัดงบ</p>
+        <p className="text-[11px] text-muted">{tr("ปล่อยว่างไว้ถ้าไม่ต้องการจำกัดงบ")}</p>
         <QuickAmounts onAdd={(n) => setText((t) => addToAmount(t, n))} />
         {error ? (
           <p role="alert" className="text-sm text-expense">
@@ -1137,7 +1166,7 @@ function TotalBudgetSheet({
           type="submit"
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface"
         >
-          บันทึก
+          {tr("บันทึก")}
         </button>
       </form>
     </Sheet>
@@ -1145,8 +1174,8 @@ function TotalBudgetSheet({
 }
 
 const CYCLE_CHOICES = [
-  { value: "weekly", label: "รายสัปดาห์" },
-  { value: "monthly", label: "รายเดือน" },
+  { value: "weekly", label: tr("รายสัปดาห์") },
+  { value: "monthly", label: tr("รายเดือน") },
 ] as const;
 const START_DAYS = Array.from({ length: MAX_START_DAY }, (_, i) => i + 1);
 
@@ -1179,15 +1208,15 @@ function CycleSheet({
       });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   return (
-    <Sheet title="รอบงบ" onClose={onClose}>
+    <Sheet title={tr("รอบงบ")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
-        <div role="radiogroup" aria-label="ชนิดรอบงบ" className="space-y-2">
+        <div role="radiogroup" aria-label={tr("ชนิดรอบงบ")} className="space-y-2">
           {CYCLE_CHOICES.map((o) => (
             <button
               key={o.value}
@@ -1210,11 +1239,12 @@ function CycleSheet({
         {value === "monthly" ? (
           <div className="space-y-1.5">
             <label htmlFor="cycle-start-day" className="block text-base font-bold">
-              วันที่เริ่มต้นงบประมาณ
+              {tr("วันที่เริ่มต้นงบประมาณ")}
             </label>
             <p className="text-xs text-muted">
-              ถ้าเดือนนั้นไม่มีวันที่เลือก จะเริ่มวันสุดท้ายของเดือนแทน เช่น เลือก 31
-              เดือนเมษายนจะเริ่มวันที่ 30
+              {tr(
+                "ถ้าเดือนนั้นไม่มีวันที่เลือก จะเริ่มวันสุดท้ายของเดือนแทน เช่น เลือก 31 เดือนเมษายนจะเริ่มวันที่ 30",
+              )}
             </p>
             <div className="relative">
               <select
@@ -1225,7 +1255,7 @@ function CycleSheet({
               >
                 {START_DAYS.map((d) => (
                   <option key={d} value={d}>
-                    {d === 1 ? "วันแรกของเดือน" : `วันที่ ${d}`}
+                    {d === 1 ? tr("วันแรกของเดือน") : tr("วันที่ {0}", d)}
                   </option>
                 ))}
               </select>
@@ -1236,7 +1266,7 @@ function CycleSheet({
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted">รอบสัปดาห์เริ่มทุกวันจันทร์</p>
+          <p className="text-sm text-muted">{tr("รอบสัปดาห์เริ่มทุกวันจันทร์")}</p>
         )}
         {error ? (
           <p role="alert" className="text-sm text-expense">
@@ -1248,7 +1278,7 @@ function CycleSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก…" : "บันทึก"}
+          {saving ? tr("กำลังบันทึก…") : tr("บันทึก")}
         </button>
       </form>
     </Sheet>
@@ -1297,12 +1327,12 @@ function CategorySheet({
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (category.own && !name.trim()) return setError("ใส่ชื่อหมวดด้วยนะ");
+    if (category.own && !name.trim()) return setError(tr("ใส่ชื่อหมวดด้วยนะ"));
     if (category.own && emoji !== "" && !isSingleEmoji(emoji)) {
-      return setError("ใส่ได้เป็นอีโมจิตัวเดียวเท่านั้นนะ");
+      return setError(tr("ใส่ได้เป็นอีโมจิตัวเดียวเท่านั้นนะ"));
     }
     const parsed = parseAmount(budgetText);
-    if (budget && !budget.locked && !parsed.ok) return setError("จำนวนเงินไม่ถูกต้อง");
+    if (budget && !budget.locked && !parsed.ok) return setError(tr("จำนวนเงินไม่ถูกต้อง"));
     setBusy(true);
     setError(null);
     try {
@@ -1320,23 +1350,25 @@ function CategorySheet({
           body: JSON.stringify({ categories: [{ categoryId: category.id, amount: parsed.value }] }),
         });
       }
-      onSaved("บันทึกแล้ว");
+      onSaved(tr("บันทึกแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
       setBusy(false);
     }
   }
 
   async function remove() {
-    if (!window.confirm(`ลบหมวด "${category.name}" ใช่ไหม? รายการในหมวดนี้จะย้ายไปหมวด "อื่นๆ"`)) {
+    if (
+      !window.confirm(tr('ลบหมวด "{0}" ใช่ไหม? รายการในหมวดนี้จะย้ายไปหมวด "อื่นๆ"', category.name))
+    ) {
       return;
     }
     setBusy(true);
     try {
       await api(`/api/categories/${category.id}`, { method: "DELETE" });
-      onSaved("ลบหมวดแล้ว");
+      onSaved(tr("ลบหมวดแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : tr("ลบไม่สำเร็จ"));
       setBusy(false);
     }
   }
@@ -1347,10 +1379,10 @@ function CategorySheet({
   }));
 
   return (
-    <Sheet title="แก้ไขหมวด" onClose={onClose}>
+    <Sheet title={tr("แก้ไขหมวด")} onClose={onClose}>
       <form onSubmit={save} className="space-y-4">
         <div className="space-y-1.5">
-          <p className="text-xs font-semibold">ชื่อหมวดหมู่</p>
+          <p className="text-xs font-semibold">{tr("ชื่อหมวดหมู่")}</p>
           <div className="flex gap-2">
             <Tile
               c={{ ...category, emoji: category.own ? emoji || null : category.emoji }}
@@ -1361,21 +1393,21 @@ function CategorySheet({
               onChange={(e) => setName(e.target.value)}
               disabled={!category.own || frozen}
               maxLength={30}
-              aria-label="ชื่อหมวด"
+              aria-label={tr("ชื่อหมวด")}
               className={cn(fieldClass, "h-10 text-sm", (!category.own || frozen) && "opacity-60")}
             />
           </div>
           {frozen ? (
             <p className="text-xs text-muted">
-              แก้หมวดของตัวเองได้ในแผน Pro ขึ้นไป{" "}
+              {tr("แก้หมวดของตัวเองได้ในแผน Pro ขึ้นไป")}{" "}
               <Link href="/upgrade" className="font-semibold text-primary underline">
-                ดูแผน
+                {tr("ดูแผน")}
               </Link>{" "}
-              (ลบหมวดนี้ได้ตามปกติ)
+              {tr("(ลบหมวดนี้ได้ตามปกติ)")}
             </p>
           ) : null}
           {!category.own ? (
-            <p className="text-xs text-muted">หมวดมาตรฐานแก้ชื่อไม่ได้ แต่ปรับคำค้นได้นะ</p>
+            <p className="text-xs text-muted">{tr("หมวดมาตรฐานแก้ชื่อไม่ได้ แต่ปรับคำค้นได้นะ")}</p>
           ) : null}
         </div>
 
@@ -1383,7 +1415,7 @@ function CategorySheet({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label htmlFor="cat-budget" className="text-xs font-semibold">
-                งบประมาณประจำ{cycle === "weekly" ? "สัปดาห์" : "เดือน"}
+                {tr("งบประมาณประจำ{0}", cycle === "weekly" ? tr("สัปดาห์") : tr("เดือน"))}
               </label>
             </div>
             <div className="relative">
@@ -1399,17 +1431,17 @@ function CategorySheet({
                 onChange={(e) => setBudgetText(e.target.value)}
                 disabled={budget.locked}
                 inputMode="decimal"
-                placeholder="ไม่ตั้งงบประมาณ"
-                aria-label={`งบหมวด ${category.name}`}
+                placeholder={tr("ไม่ตั้งงบประมาณ")}
+                aria-label={tr("งบหมวด {0}", category.name)}
                 className="num h-12 w-full rounded-2xl border border-border bg-background pl-9 pr-4 text-sm font-bold outline-none focus:border-primary disabled:opacity-60"
               />
             </div>
             {budget.locked ? (
-              <PlusLock>งบแยกหมวดและการแจ้งเตือนเมื่อใช้ถึง 80% / เกินงบ</PlusLock>
+              <PlusLock>{tr("งบแยกหมวดและการแจ้งเตือนเมื่อใช้ถึง 80% / เกินงบ")}</PlusLock>
             ) : (
               <>
                 <p className="text-[11px] text-muted">
-                  ปล่อยว่างไว้หากไม่ต้องการจำกัดงบสำหรับหมวดหมู่นี้
+                  {tr("ปล่อยว่างไว้หากไม่ต้องการจำกัดงบสำหรับหมวดหมู่นี้")}
                 </p>
                 <QuickAmounts onAdd={(n) => setBudgetText((t) => addToAmount(t, n))} />
               </>
@@ -1420,10 +1452,11 @@ function CategorySheet({
         {historyOn ? (
           <div className="space-y-2 rounded-2xl border border-border bg-background p-3.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium">ประวัติใช้จ่ายย้อนหลัง 6 เดือน</span>
+              <span className="font-medium">{tr("ประวัติใช้จ่ายย้อนหลัง 6 เดือน")}</span>
               {history.data ? (
                 <span className="num text-[11px] font-semibold text-primary">
-                  เฉลี่ย {money(history.data.averageSatang)}/ด.
+                  {tr("เฉลี่ย")} {money(history.data.averageSatang)}
+                  {tr("/ด.")}
                 </span>
               ) : null}
             </div>
@@ -1431,7 +1464,7 @@ function CategorySheet({
               {history.loading ? (
                 <Skeleton className="h-full w-full" />
               ) : history.error ? (
-                <p className="text-xs text-muted">โหลดประวัติไม่สำเร็จ</p>
+                <p className="text-xs text-muted">{tr("โหลดประวัติไม่สำเร็จ")}</p>
               ) : (
                 <MiniBarChart points={points} />
               )}
@@ -1441,14 +1474,14 @@ function CategorySheet({
 
         <div className="space-y-1.5">
           <label htmlFor="cat-keywords" className="text-xs font-semibold">
-            คำค้นสำหรับจัดหมวดอัตโนมัติ
+            {tr("คำค้นสำหรับจัดหมวดอัตโนมัติ")}
           </label>
           <textarea
             id="cat-keywords"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
-            placeholder="คำค้น คั่นด้วยคอมมา"
-            aria-label="คำค้น"
+            placeholder={tr("คำค้น คั่นด้วยคอมมา")}
+            aria-label={tr("คำค้น")}
             rows={3}
             disabled={frozen}
             className="w-full rounded-2xl border border-border bg-background p-4 outline-none focus:border-primary disabled:opacity-60"
@@ -1465,7 +1498,7 @@ function CategorySheet({
             onClick={() => setHidden((v) => !v)}
             className="flex h-12 w-full items-center justify-between rounded-2xl border border-border px-4 text-sm"
           >
-            <span>ซ่อนหมวดนี้จากรายการเลือก</span>
+            <span>{tr("ซ่อนหมวดนี้จากรายการเลือก")}</span>
             <span
               aria-hidden
               className={cn(
@@ -1494,7 +1527,7 @@ function CategorySheet({
             disabled={busy}
             className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
           >
-            บันทึก
+            {tr("บันทึก")}
           </button>
         )}
         {category.own ? (
@@ -1504,7 +1537,7 @@ function CategorySheet({
             disabled={busy}
             className="h-12 w-full rounded-2xl border border-expense text-base font-semibold text-expense disabled:opacity-60"
           >
-            ลบหมวดนี้
+            {tr("ลบหมวดนี้")}
           </button>
         ) : null}
       </form>

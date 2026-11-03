@@ -5,6 +5,7 @@ import { cleanNoteBody, MAX_NOTE_LENGTH } from "@/lib/note";
 import { deleteNote, updateNote } from "@/lib/note-repo";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
     const parsed = bodySchema.safeParse(await request.json().catch(() => null));
     const body = parsed.success ? cleanNoteBody(parsed.data.body) : "";
     if (!body || body.length > MAX_NOTE_LENGTH) {
-      return apiError(`เขียนโน้ตให้ไม่ว่างและไม่เกิน ${MAX_NOTE_LENGTH} ตัวอักษรนะ`, 400);
+      return apiError(t("เขียนโน้ตให้ไม่ว่างและไม่เกิน {0} ตัวอักษรนะ", MAX_NOTE_LENGTH), 400);
     }
     return (await updateNote(db, auth.userId, id, body))
       ? json({ ok: true })

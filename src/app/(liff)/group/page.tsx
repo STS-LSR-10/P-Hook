@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { EmptyState, LoadingBlock } from "@/components/liff/states";
+import { t } from "@/lib/i18n";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
@@ -38,8 +39,8 @@ function ToGroupSpace() {
   return (
     <main className="min-h-screen bg-[#FAF7F2] px-4 pt-10">
       <EmptyState
-        title="ไม่พบกลุ่มนี้"
-        hint='เปิดหน้านี้จากการ์ดในกลุ่ม LINE เช่น พิมพ์ "ไฟล์กลุ่ม" ในกลุ่ม'
+        title={t("ไม่พบกลุ่มนี้")}
+        hint={t('เปิดหน้านี้จากการ์ดในกลุ่ม LINE เช่น พิมพ์ "ไฟล์กลุ่ม" ในกลุ่ม')}
       />
     </main>
   );

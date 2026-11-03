@@ -1,4 +1,5 @@
 import { headers } from "./rows";
+import { t } from "@/lib/i18n";
 
 /** What a person ticks in the export sheet; each group is one or more columns of the file. */
 export const COLUMN_GROUPS = [
@@ -14,14 +15,14 @@ export const COLUMN_GROUPS = [
 export type ColumnGroup = (typeof COLUMN_GROUPS)[number];
 
 export const GROUP_LABEL: Record<ColumnGroup, string> = {
-  date: "วันที่ & เวลา",
-  title: "ชื่อรายการ",
-  amount: "จำนวนเงิน",
-  type: "ประเภท (รับ/จ่าย)",
-  category: "หมวดหมู่",
-  wallet: "กระเป๋า",
-  source: "ที่มา (ข้อความ/สลิป)",
-  fx: "สกุลเงินเดิม",
+  date: t("วันที่ & เวลา"),
+  title: t("ชื่อรายการ"),
+  amount: t("จำนวนเงิน"),
+  type: t("ประเภท (รับ/จ่าย)"),
+  category: t("หมวดหมู่"),
+  wallet: t("กระเป๋า"),
+  source: t("ที่มา (ข้อความ/สลิป)"),
+  fx: t("สกุลเงินเดิม"),
 };
 
 /** The group each column of HEADERS (same order) belongs to. */

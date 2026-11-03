@@ -20,6 +20,7 @@ import { createSharedWallet, membersOfMany, ownedSharedCount } from "@/lib/share
 import { requireFeature } from "@/lib/plan-server";
 import { loadCardStatuses } from "@/lib/card-repo";
 import { can } from "@/lib/plan";
+import { t } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,7 +90,10 @@ export async function POST(request: Request): Promise<Response> {
 
     const parsed = createSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
-      return apiError(`ตั้งชื่อกระเป๋าให้ถูกต้องนะ (ไม่เกิน ${MAX_WALLET_NAME} ตัวอักษร)`, 400);
+      return apiError(
+        t("ตั้งชื่อกระเป๋าให้ถูกต้องนะ (ไม่เกิน {0} ตัวอักษร)", MAX_WALLET_NAME),
+        400,
+      );
     }
     const opening = parseOpeningBalance(parsed.data.openingBalance);
     if (opening === null) return apiError("ยอดตั้งต้นไม่ถูกต้อง", 400);

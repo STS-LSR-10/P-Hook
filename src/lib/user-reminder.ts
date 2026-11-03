@@ -1,6 +1,7 @@
 import type { Plan } from "@/lib/plan";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { bangkokParts, formatThaiDate, fromBangkok, isValidYmd } from "@/lib/thai-date";
+import { t } from "@/lib/i18n";
 
 export type Repeat = "daily" | "weekly" | "monthly";
 
@@ -40,16 +41,16 @@ export type ReminderStatus = "active" | "done";
 export const REMINDER_CATEGORIES = ["bill", "work", "health", "family"] as const;
 export type ReminderCategory = (typeof REMINDER_CATEGORIES)[number];
 export const CATEGORY_INFO: Record<ReminderCategory, { icon: string; label: string }> = {
-  bill: { icon: "💳", label: "บิล" },
-  work: { icon: "💼", label: "งาน" },
-  health: { icon: "🩺", label: "สุขภาพ" },
-  family: { icon: "📞", label: "ครอบครัว" },
+  bill: { icon: "💳", label: t("บิล") },
+  work: { icon: "💼", label: t("งาน") },
+  health: { icon: "🩺", label: t("สุขภาพ") },
+  family: { icon: "📞", label: t("ครอบครัว") },
 };
 
 export const REPEAT_LABEL: Record<Repeat, string> = {
-  daily: "ทุกวัน",
-  weekly: "ทุกสัปดาห์",
-  monthly: "ทุกเดือน",
+  daily: t("ทุกวัน"),
+  weekly: t("ทุกสัปดาห์"),
+  monthly: t("ทุกเดือน"),
 };
 
 export type ReminderParse =

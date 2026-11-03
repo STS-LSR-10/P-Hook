@@ -1,18 +1,19 @@
 import { budgetState, percentUsed } from "@/lib/budget";
 import { money } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const STATE_STYLE = {
   ok: { bar: "bg-primary", text: "text-muted", label: "" },
-  warn: { bar: "bg-accent", text: "text-foreground", label: "ใกล้ครบงบ" },
-  over: { bar: "bg-expense", text: "text-expense", label: "เกินงบ" },
+  warn: { bar: "bg-accent", text: "text-foreground", label: t("ใกล้ครบงบ") },
+  over: { bar: "bg-expense", text: "text-expense", label: t("เกินงบ") },
 } as const;
 
 /** Spending vs budget. Color is never the only signal: the % and a label are always shown. */
 export function ProgressBar({
   spentSatang,
   limitSatang,
-  label = "การใช้งบ",
+  label = t("การใช้งบ"),
 }: {
   spentSatang: number;
   limitSatang: number;
@@ -38,7 +39,7 @@ export function ProgressBar({
         />
       </div>
       <p className={cn("num mt-1 text-xs", style.text)}>
-        ใช้ไป {money(spentSatang)} จาก {money(limitSatang)} ({pct}%)
+        {t("ใช้ไป")} {money(spentSatang)} {t("จาก")} {money(limitSatang)} ({pct}%)
         {style.label ? ` · ${style.label}` : ""}
       </p>
     </div>

@@ -7,6 +7,7 @@ import { formatForeign, formatRate } from "@/lib/fx";
 import { money } from "@/lib/money";
 import { bangkokParts, formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
+import { t as tr } from "@/lib/i18n";
 
 /** The tile colour of an income entry (the page theme's --income, as a plain colour for the alpha tint). */
 const INCOME_TINT = "#2a7a52";
@@ -22,7 +23,7 @@ function paletteIndex(tx: TxDto): number {
 /** "14:08 น." */
 function timeOf(iso: string): string {
   const p = bangkokParts(new Date(iso));
-  return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")} น.`;
+  return tr("{0}:{1} น.", String(p.hour).padStart(2, "0"), String(p.minute).padStart(2, "0"));
 }
 
 /**
@@ -67,7 +68,7 @@ export function TxCard({
             {timeOf(tx.occurredAt)}
           </span>
           <span className="rounded bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted">
-            {tx.categoryName ?? "ไม่ระบุหมวด"}
+            {tx.categoryName ?? tr("ไม่ระบุหมวด")}
           </span>
           {tx.accountName ? (
             <span className="rounded bg-warn-soft px-1.5 py-0.5 text-[9px] text-warn">
@@ -75,15 +76,15 @@ export function TxCard({
             </span>
           ) : null}
           {tx.hasPhoto ? (
-            <ImageIcon className="h-3 w-3 text-primary" aria-label="มีรูปแนบ" role="img" />
+            <ImageIcon className="h-3 w-3 text-primary" aria-label={tr("มีรูปแนบ")} role="img" />
           ) : null}
           {tx.hasSlip ? (
-            <Receipt className="h-3 w-3 text-primary" aria-label="มีสลิป" role="img" />
+            <Receipt className="h-3 w-3 text-primary" aria-label={tr("มีสลิป")} role="img" />
           ) : null}
         </span>
         {tx.accountShared ? (
           <span className="block truncate text-[10px] text-muted">
-            {tx.mine === false ? (tx.writerName ?? "สมาชิก") : "คุณ"}
+            {tx.mine === false ? (tx.writerName ?? tr("สมาชิก")) : tr("คุณ")}
           </span>
         ) : null}
         {tx.origCurrency && tx.origAmountMinor ? (
@@ -114,7 +115,7 @@ export function TxCard({
         <button
           type="button"
           onClick={onOpen}
-          aria-label={`แก้ไข ${tx.title}`}
+          aria-label={tr("แก้ไข {0}", tx.title)}
           className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left"
         >
           {body}

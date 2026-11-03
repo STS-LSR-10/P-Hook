@@ -1,14 +1,15 @@
 import { toSatang } from "@/lib/money";
+import { t } from "@/lib/i18n";
 
 export const WALLET_KINDS = ["cash", "bank", "card", "savings", "ewallet"] as const;
 export type WalletKind = (typeof WALLET_KINDS)[number];
 
 export const WALLET_KIND_LABEL: Record<WalletKind, string> = {
-  cash: "เงินสด",
-  bank: "บัญชีธนาคาร",
-  card: "บัตรเครดิต",
-  savings: "เงินเก็บ",
-  ewallet: "อีวอลเล็ต",
+  cash: t("เงินสด"),
+  bank: t("บัญชีธนาคาร"),
+  card: t("บัตรเครดิต"),
+  savings: t("เงินเก็บ"),
+  ewallet: t("อีวอลเล็ต"),
 };
 
 export const WALLET_KIND_EMOJI: Record<WalletKind, string> = {

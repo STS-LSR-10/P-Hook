@@ -13,6 +13,7 @@ import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { formatThaiDate, fromBangkokInputValue, toBangkokInputValue } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 import { WALLET_KIND_EMOJI, type WalletKind } from "@/lib/wallet";
+import { t } from "@/lib/i18n";
 
 interface DebtsResponse {
   items: DebtDto[];
@@ -54,7 +55,7 @@ export default function DebtsPage() {
   async function remove(d: DebtDto) {
     if (
       !window.confirm(
-        `ลบหนี้ของ "${d.person}" ใช่ไหม? ยอดกระเป๋าจะกลับเป็นเหมือนไม่เคยมีหนี้ก้อนนี้`,
+        t('ลบหนี้ของ "{0}" ใช่ไหม? ยอดกระเป๋าจะกลับเป็นเหมือนไม่เคยมีหนี้ก้อนนี้', d.person),
       )
     ) {
       return;
@@ -62,10 +63,10 @@ export default function DebtsPage() {
     setNotice(null);
     try {
       await api(`/api/debts/${d.id}`, { method: "DELETE" });
-      setNotice("ลบแล้ว");
+      setNotice(t("ลบแล้ว"));
       reloadAll();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ลบไม่สำเร็จ"));
     }
   }
 
@@ -97,11 +98,11 @@ export default function DebtsPage() {
   return (
     <main>
       <PageHeader
-        title="หนี้สิน"
+        title={t("หนี้สิน")}
         right={
           <Link
             href="/wallets"
-            aria-label="กลับไปกระเป๋าเงิน"
+            aria-label={t("กลับไปกระเป๋าเงิน")}
             className="flex h-11 w-11 items-center justify-center text-muted"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -112,57 +113,60 @@ export default function DebtsPage() {
         {debts.loading || me.loading ? (
           <LoadingBlock rows={3} />
         ) : debts.error || !debts.data ? (
-          <ErrorState message={debts.error ?? "โหลดไม่สำเร็จ"} onRetry={debts.reload} />
+          <ErrorState message={debts.error ?? t("โหลดไม่สำเร็จ")} onRetry={debts.reload} />
         ) : (
           <>
             {locked ? (
               <div className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                <span className="font-semibold">สำหรับแผน Elite</span> · จดให้ยืม/ยืม
-                และตัดยอดกระเป๋าให้อัตโนมัติ{" "}
+                <span className="font-semibold">{t("สำหรับแผน Elite")}</span> {t("· จดให้ยืม/ยืม")}
+                {t("และตัดยอดกระเป๋าให้อัตโนมัติ")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
-                  ดูแผนอัปเกรด
+                  {t("ดูแผนอัปเกรด")}
                 </Link>
               </div>
             ) : null}
 
-            <section className={cn(cardClass, "grid grid-cols-2 gap-3")} aria-label="สรุปหนี้">
+            <section className={cn(cardClass, "grid grid-cols-2 gap-3")} aria-label={t("สรุปหนี้")}>
               <div>
-                <p className="text-xs text-muted">คนที่ติดเรา</p>
+                <p className="text-xs text-muted">{t("คนที่ติดเรา")}</p>
                 <p className="num text-lg font-bold text-income">{money(debts.data.lentSatang)}</p>
               </div>
               <div>
-                <p className="text-xs text-muted">เราติดใคร</p>
+                <p className="text-xs text-muted">{t("เราติดใคร")}</p>
                 <p className="num text-lg font-bold text-expense">
                   {money(debts.data.borrowedSatang)}
                 </p>
               </div>
               <p className="col-span-2 text-xs text-muted">
-                ไม่นับเป็นรายรับ/รายจ่าย · ให้ยืมหรือยืมแล้วยอดกระเป๋าเปลี่ยนทันที
+                {t("ไม่นับเป็นรายรับ/รายจ่าย · ให้ยืมหรือยืมแล้วยอดกระเป๋าเปลี่ยนทันที")}
               </p>
             </section>
 
             {open.length === 0 ? (
               <EmptyState
-                title="ยังไม่มีหนี้ค้าง"
-                hint='เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "ให้ยืม สมชาย 500"'
+                title={t("ยังไม่มีหนี้ค้าง")}
+                hint={t('เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "ให้ยืม สมชาย 500"')}
               />
             ) : (
               <>
-                {list("lent", "คนที่ติดเรา", debts.data.lentSatang, "text-income")}
-                {list("borrowed", "เราติดใคร", debts.data.borrowedSatang, "text-expense")}
+                {list("lent", t("คนที่ติดเรา"), debts.data.lentSatang, "text-income")}
+                {list("borrowed", t("เราติดใคร"), debts.data.borrowedSatang, "text-expense")}
               </>
             )}
 
             {settled.length > 0 ? (
-              <section className={cardClass} aria-label="หนี้ที่ปิดแล้ว">
+              <section className={cardClass} aria-label={t("หนี้ที่ปิดแล้ว")}>
                 <button
                   type="button"
                   onClick={() => setShowSettled((v) => !v)}
                   aria-expanded={showSettled}
                   className="flex h-11 w-full items-center justify-between text-sm font-semibold"
                 >
-                  <span>ปิดแล้ว ({settled.length})</span>
-                  <span className="text-muted">{showSettled ? "ซ่อน" : "แสดง"}</span>
+                  <span>
+                    {t("ปิดแล้ว (")}
+                    {settled.length})
+                  </span>
+                  <span className="text-muted">{showSettled ? t("ซ่อน") : t("แสดง")}</span>
                 </button>
                 {showSettled ? (
                   <ul className="divide-y divide-border">
@@ -196,7 +200,7 @@ export default function DebtsPage() {
               onClick={() => setEditing("new")}
               className="flex h-12 w-full items-center justify-center gap-1 rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-40"
             >
-              <Plus className="h-5 w-5" aria-hidden /> เพิ่มหนี้
+              <Plus className="h-5 w-5" aria-hidden /> {t("เพิ่มหนี้")}
             </button>
           </>
         )}
@@ -251,7 +255,7 @@ function DebtRow({
         <div className="min-w-0">
           <p className="truncate font-semibold">{debt.person}</p>
           <p className="text-xs text-muted">
-            ทั้งหมด {money(debt.amountSatang)} · ชำระแล้ว {money(debt.paidSatang)} ·{" "}
+            {t("ทั้งหมด")} {money(debt.amountSatang)} {t("· ชำระแล้ว")} {money(debt.paidSatang)} ·{" "}
             {debt.accountName}
           </p>
           {debt.dueAt ? (
@@ -261,7 +265,7 @@ function DebtRow({
                 state === "overdue" ? "font-semibold text-expense" : "text-muted",
               )}
             >
-              {state === "overdue" ? "เลยกำหนด " : "กำหนดคืน "}
+              {state === "overdue" ? t("เลยกำหนด ") : t("กำหนดคืน ")}
               {formatThaiDate(new Date(debt.dueAt))}
             </p>
           ) : null}
@@ -273,7 +277,7 @@ function DebtRow({
             debt.remainingSatang > 0 ? "" : "text-muted",
           )}
         >
-          {debt.remainingSatang > 0 ? money(debt.remainingSatang) : "ครบแล้ว"}
+          {debt.remainingSatang > 0 ? money(debt.remainingSatang) : t("ครบแล้ว")}
         </p>
       </div>
       <div className="flex gap-2">
@@ -281,21 +285,21 @@ function DebtRow({
           type="button"
           onClick={onPay}
           disabled={locked && debt.remainingSatang > 0}
-          aria-label={`${debt.remainingSatang > 0 ? (debt.direction === "lent" ? "รับคืน" : "คืนเงิน") : "ดูการชำระ"} ${debt.person}`}
+          aria-label={`${debt.remainingSatang > 0 ? (debt.direction === "lent" ? t("รับคืน") : t("คืนเงิน")) : t("ดูการชำระ")} ${debt.person}`}
           className="flex h-11 flex-1 items-center justify-center gap-1 rounded-2xl border border-border text-sm font-semibold disabled:opacity-40"
         >
           <Banknote className="h-4 w-4" aria-hidden />
           {debt.remainingSatang > 0
             ? debt.direction === "lent"
-              ? "รับคืน"
-              : "คืนเงิน"
-            : "ประวัติ"}
+              ? t("รับคืน")
+              : t("คืนเงิน")
+            : t("ประวัติ")}
         </button>
         <button
           type="button"
           onClick={onEdit}
           disabled={locked}
-          aria-label={`แก้ไข ${debt.person}`}
+          aria-label={t("แก้ไข {0}", debt.person)}
           className="flex h-11 w-11 items-center justify-center text-muted disabled:opacity-40"
         >
           <Pencil className="h-4 w-4" aria-hidden />
@@ -303,7 +307,7 @@ function DebtRow({
         <button
           type="button"
           onClick={onDelete}
-          aria-label={`ลบ ${debt.person}`}
+          aria-label={t("ลบ {0}", debt.person)}
           className="flex h-11 w-11 items-center justify-center text-muted"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
@@ -352,12 +356,12 @@ function DebtSheet({
   async function submit(e: FormEvent) {
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
-    if (!person.trim()) return setError("ใส่ชื่อคนด้วยนะ");
+    if (!person.trim()) return setError(t("ใส่ชื่อคนด้วยนะ"));
     if (!AMOUNT_PATTERN.test(normalized) || Number(normalized) <= 0) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 500 หรือ 500.50)");
+      return setError(t("จำนวนเงินไม่ถูกต้อง (เช่น 500 หรือ 500.50)"));
     }
     const dueAt = due ? fromBangkokInputValue(`${due}T12:00`) : null;
-    if (due && !dueAt) return setError("วันครบกำหนดไม่ถูกต้อง");
+    if (due && !dueAt) return setError(t("วันครบกำหนดไม่ถูกต้อง"));
     setSaving(true);
     setError(null);
     try {
@@ -376,18 +380,18 @@ function DebtSheet({
       } else {
         await api("/api/debts", { method: "POST", body: JSON.stringify({ ...body, direction }) });
       }
-      onSaved(debt ? "บันทึกแล้ว" : "เพิ่มหนี้แล้ว");
+      onSaved(debt ? t("บันทึกแล้ว") : t("เพิ่มหนี้แล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   return (
-    <Sheet title={debt ? "แก้ไขหนี้" : "เพิ่มหนี้"} onClose={onClose}>
+    <Sheet title={debt ? t("แก้ไขหนี้") : t("เพิ่มหนี้")} onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
         {debt ? null : (
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="ประเภทหนี้">
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("ประเภทหนี้")}>
             {(["lent", "borrowed"] as const).map((d) => (
               <button
                 key={d}
@@ -404,7 +408,7 @@ function DebtSheet({
                     : "border-border text-muted",
                 )}
               >
-                {d === "lent" ? "ให้ยืม" : "ยืมมา"}
+                {d === "lent" ? t("ให้ยืม") : t("ยืมมา")}
               </button>
             ))}
           </div>
@@ -413,33 +417,33 @@ function DebtSheet({
           value={person}
           onChange={(e) => setPerson(e.target.value)}
           maxLength={MAX_PERSON}
-          placeholder="ชื่อคน เช่น สมชาย"
-          aria-label="ชื่อคน"
+          placeholder={t("ชื่อคน เช่น สมชาย")}
+          aria-label={t("ชื่อคน")}
           className={fieldClass}
         />
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder={`จำนวนเงิน (${currencyUnit()})`}
-          aria-label="จำนวนเงิน"
+          placeholder={t("จำนวนเงิน ({0})", currencyUnit())}
+          aria-label={t("จำนวนเงิน")}
           className={cn(fieldClass, "num")}
         />
         <select
           value={walletId}
           onChange={(e) => setWalletId(e.target.value)}
-          aria-label="กระเป๋า"
+          aria-label={t("กระเป๋า")}
           className={fieldClass}
         >
           <WalletOptions wallets={wallets} />
         </select>
         <label className="block text-sm text-muted">
-          วันครบกำหนด (ไม่บังคับ)
+          {t("วันครบกำหนด (ไม่บังคับ)")}
           <input
             type="date"
             value={due}
             onChange={(e) => setDue(e.target.value)}
-            aria-label="วันครบกำหนด"
+            aria-label={t("วันครบกำหนด")}
             className={cn(fieldClass, "mt-1")}
           />
         </label>
@@ -447,14 +451,14 @@ function DebtSheet({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={MAX_DEBT_NOTE}
-          placeholder="โน้ต (ไม่บังคับ)"
-          aria-label="โน้ต"
+          placeholder={t("โน้ต (ไม่บังคับ)")}
+          aria-label={t("โน้ต")}
           className={fieldClass}
         />
         <p className="text-xs text-muted">
           {direction === "lent"
-            ? "ให้ยืม: เงินออกจากกระเป๋าที่เลือกทันที"
-            : "ยืมมา: เงินเข้ากระเป๋าที่เลือกทันที"}
+            ? t("ให้ยืม: เงินออกจากกระเป๋าที่เลือกทันที")
+            : t("ยืมมา: เงินเข้ากระเป๋าที่เลือกทันที")}
         </p>
         {error ? (
           <p role="alert" className="text-sm text-expense">
@@ -466,7 +470,7 @@ function DebtSheet({
           disabled={saving}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
-          {saving ? "กำลังบันทึก..." : "บันทึก"}
+          {saving ? t("กำลังบันทึก...") : t("บันทึก")}
         </button>
       </form>
     </Sheet>
@@ -502,7 +506,7 @@ function PaySheet({
     e.preventDefault();
     const normalized = normalizeThaiDigits(amount).replace(/,/g, "").trim();
     if (!AMOUNT_PATTERN.test(normalized) || Number(normalized) <= 0) {
-      return setError("จำนวนเงินไม่ถูกต้อง (เช่น 200 หรือ 200.50)");
+      return setError(t("จำนวนเงินไม่ถูกต้อง (เช่น 200 หรือ 200.50)"));
     }
     setSaving(true);
     setError(null);
@@ -511,30 +515,31 @@ function PaySheet({
         method: "POST",
         body: JSON.stringify({ amount: normalized, accountId: walletId || null }),
       });
-      onChanged(incoming ? "บันทึกรับคืนแล้ว" : "บันทึกการคืนเงินแล้ว");
+      onChanged(incoming ? t("บันทึกรับคืนแล้ว") : t("บันทึกการคืนเงินแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
       setSaving(false);
     }
   }
 
   async function cancel(p: PaymentItem) {
-    if (!window.confirm("ยกเลิกรายการชำระนี้ใช่ไหม? ยอดหนี้และกระเป๋าจะกลับเป็นเหมือนเดิม")) return;
+    if (!window.confirm(t("ยกเลิกรายการชำระนี้ใช่ไหม? ยอดหนี้และกระเป๋าจะกลับเป็นเหมือนเดิม")))
+      return;
     try {
       await api(`/api/debts/${debt.id}/payments/${p.id}`, { method: "DELETE" });
-      onChanged("ยกเลิกรายการชำระแล้ว");
+      onChanged(t("ยกเลิกรายการชำระแล้ว"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("ยกเลิกไม่สำเร็จ"));
     }
   }
 
   return (
-    <Sheet title={`${incoming ? "รับคืนจาก" : "คืนเงิน"} ${debt.person}`} onClose={onClose}>
+    <Sheet title={`${incoming ? t("รับคืนจาก") : t("คืนเงิน")} ${debt.person}`} onClose={onClose}>
       <div className="space-y-3">
         <p className="text-sm text-muted">
-          เหลือ{" "}
+          {t("เหลือ")}{" "}
           <span className="num font-semibold text-foreground">{money(debt.remainingSatang)}</span>{" "}
-          จาก {money(debt.amountSatang)}
+          {t("จาก")} {money(debt.amountSatang)}
         </p>
         {debt.remainingSatang > 0 && !locked ? (
           <form onSubmit={submit} className="space-y-3">
@@ -542,14 +547,14 @@ function PaySheet({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               inputMode="decimal"
-              placeholder={`จำนวนเงิน (${currencyUnit()})`}
-              aria-label="จำนวนเงินที่ชำระ"
+              placeholder={t("จำนวนเงิน ({0})", currencyUnit())}
+              aria-label={t("จำนวนเงินที่ชำระ")}
               className={cn(fieldClass, "num")}
             />
             <select
               value={walletId}
               onChange={(e) => setWalletId(e.target.value)}
-              aria-label={incoming ? "รับเข้ากระเป๋า" : "จ่ายจากกระเป๋า"}
+              aria-label={incoming ? t("รับเข้ากระเป๋า") : t("จ่ายจากกระเป๋า")}
               className={fieldClass}
             >
               <WalletOptions wallets={wallets} />
@@ -564,16 +569,16 @@ function PaySheet({
               disabled={saving}
               className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
             >
-              {saving ? "กำลังบันทึก..." : incoming ? "บันทึกรับคืน" : "บันทึกการคืนเงิน"}
+              {saving ? t("กำลังบันทึก...") : incoming ? t("บันทึกรับคืน") : t("บันทึกการคืนเงิน")}
             </button>
           </form>
         ) : null}
 
-        <h3 className="pt-1 text-sm font-semibold">ประวัติการชำระ</h3>
+        <h3 className="pt-1 text-sm font-semibold">{t("ประวัติการชำระ")}</h3>
         {payments.loading ? (
           <LoadingBlock rows={1} />
         ) : (payments.data?.items.length ?? 0) === 0 ? (
-          <p className="text-sm text-muted">ยังไม่มีการชำระ</p>
+          <p className="text-sm text-muted">{t("ยังไม่มีการชำระ")}</p>
         ) : (
           <ul className="divide-y divide-border">
             {payments.data?.items.map((p) => (
@@ -584,7 +589,7 @@ function PaySheet({
                 </div>
                 <button
                   type="button"
-                  aria-label={`ยกเลิกการชำระ ${money(p.amountSatang)}`}
+                  aria-label={t("ยกเลิกการชำระ {0}", money(p.amountSatang))}
                   onClick={() => void cancel(p)}
                   className="flex h-11 w-11 items-center justify-center text-muted"
                 >

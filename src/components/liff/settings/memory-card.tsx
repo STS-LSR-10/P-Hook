@@ -6,6 +6,7 @@ import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { LoadingBlock } from "@/components/liff/states";
 import { PlusLock } from "./plus-lock";
 import { cardClass, type Me } from "./types";
+import { t } from "@/lib/i18n";
 
 interface MemoryItem {
   id: string;
@@ -27,29 +28,29 @@ export function MemoryCard({ me, embedded = false }: { me: Me; embedded?: boolea
     setNotice(null);
     try {
       await api(`/api/memory/${item.id}`, { method: "DELETE" });
-      setNotice("ลืมแล้ว");
+      setNotice(t("ลืมแล้ว"));
       memory.reload();
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
+      setNotice(e instanceof Error ? e.message : t("ลบไม่สำเร็จ"));
     }
   }
 
   return (
-    <section className={embedded ? "space-y-3" : cardClass} aria-label="จัดหมวดด้วยความจำ">
+    <section className={embedded ? "space-y-3" : cardClass} aria-label={t("จัดหมวดด้วยความจำ")}>
       <div>
-        {embedded ? null : <h2 className="font-semibold">จัดหมวดด้วยความจำ</h2>}
+        {embedded ? null : <h2 className="font-semibold">{t("จัดหมวดด้วยความจำ")}</h2>}
         <p className="text-xs text-muted">
-          เมื่อคุณแก้หมวดของสลิป บอทจะจำ &quot;ผู้รับ → หมวด&quot; ไว้ใช้ครั้งต่อไป
+          {t('เมื่อคุณแก้หมวดของสลิป บอทจะจำ "ผู้รับ → หมวด" ไว้ใช้ครั้งต่อไป')}
         </p>
       </div>
 
       {locked ? (
-        <PlusLock>ให้บอทจำผู้รับ/ร้านค้ากับหมวดที่คุณเลือก</PlusLock>
+        <PlusLock>{t("ให้บอทจำผู้รับ/ร้านค้ากับหมวดที่คุณเลือก")}</PlusLock>
       ) : memory.loading ? (
         <LoadingBlock rows={1} />
       ) : items.length === 0 ? (
         <p className="text-sm text-muted">
-          ยังไม่มีที่จำไว้ ลองส่งสลิปแล้วกด &quot;แก้ไขหมวด&quot; ดูนะ
+          {t('ยังไม่มีที่จำไว้ ลองส่งสลิปแล้วกด "แก้ไขหมวด" ดูนะ')}
         </p>
       ) : (
         <ul className="divide-y divide-border">
@@ -58,12 +59,12 @@ export function MemoryCard({ me, embedded = false }: { me: Me; embedded?: boolea
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{m.text}</p>
                 <p className="truncate text-xs text-muted">
-                  → {m.categoryName ?? "หมวดที่ถูกลบ"} · ใช้ {m.hits} ครั้ง
+                  → {m.categoryName ?? t("หมวดที่ถูกลบ")} {t("· ใช้")} {m.hits} {t("ครั้ง")}
                 </p>
               </div>
               <button
                 type="button"
-                aria-label={`ลืม ${m.text}`}
+                aria-label={t("ลืม {0}", m.text)}
                 onClick={() => forget(m)}
                 className="flex h-11 w-11 shrink-0 items-center justify-center text-muted"
               >
