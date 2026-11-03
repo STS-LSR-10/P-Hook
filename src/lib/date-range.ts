@@ -1,4 +1,5 @@
 import { bangkokParts, fromBangkok } from "@/lib/thai-date";
+import { t } from "@/lib/i18n";
 
 /** A calendar day (Bangkok time). */
 export interface Ymd {
@@ -23,18 +24,18 @@ const MONTHS = [
   "ธ.ค.",
 ];
 export const MONTHS_FULL = [
-  "มกราคม",
-  "กุมภาพันธ์",
-  "มีนาคม",
-  "เมษายน",
-  "พฤษภาคม",
-  "มิถุนายน",
-  "กรกฎาคม",
-  "สิงหาคม",
-  "กันยายน",
-  "ตุลาคม",
-  "พฤศจิกายน",
-  "ธันวาคม",
+  t("มกราคม"),
+  t("กุมภาพันธ์"),
+  t("มีนาคม"),
+  t("เมษายน"),
+  t("พฤษภาคม"),
+  t("มิถุนายน"),
+  t("กรกฎาคม"),
+  t("สิงหาคม"),
+  t("กันยายน"),
+  t("ตุลาคม"),
+  t("พฤศจิกายน"),
+  t("ธันวาคม"),
 ];
 
 /** "2026-10-05": a day as a key (sorts and compares as text). */

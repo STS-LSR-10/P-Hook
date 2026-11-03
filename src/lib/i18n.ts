@@ -8,7 +8,27 @@ export const DEFAULT_LOCALE: Locale = "th";
 export const isLocale = (v: unknown): v is Locale =>
   typeof v === "string" && (LOCALES as readonly string[]).includes(v);
 
-let localeSource: (() => string | null | undefined) | null = null;
+/** Where the browser remembers the person's language (see liff-provider). */
+export const LOCALE_KEY = "phook-locale";
+
+/**
+ * In the browser, the language remembered from the last sign-in, read before any page code runs:
+ * every file that has words imports this one first, so words made when a file loads are right too.
+ */
+function rememberedLocale(): string | null {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage.getItem(LOCALE_KEY);
+  } catch {
+    return null;
+  }
+}
+const remembered = rememberedLocale();
+/** The language this page was loaded in (Thai unless the browser remembered another). */
+export const loadedLocale = (): Locale => (isLocale(remembered) ? remembered : DEFAULT_LOCALE);
+
+let localeSource: (() => string | null | undefined) | null = isLocale(remembered)
+  ? () => remembered
+  : null;
 
 /** Where the language comes from: the request on the server, the signed-in person in the page. */
 export function setLocaleSource(source: (() => string | null | undefined) | null): void {

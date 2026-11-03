@@ -1,5 +1,6 @@
 import { can, type Plan } from "@/lib/plan";
 import { currencySymbol } from "@/lib/money";
+import { t } from "@/lib/i18n";
 
 // ───────────────────────── card colour themes ─────────────────────────
 
@@ -49,9 +50,9 @@ export const BASE_PALETTE: Palette = {
 };
 
 export const THEMES: Record<ThemeId, { label: string; palette: Palette }> = {
-  mint: { label: "เขียวมิ้นต์", palette: BASE_PALETTE },
+  mint: { label: t("เขียวมิ้นต์"), palette: BASE_PALETTE },
   ocean: {
-    label: "ฟ้าทะเล",
+    label: t("ฟ้าทะเล"),
     palette: {
       primary: "#0369A1",
       soft: "#E0F2FE",
@@ -65,7 +66,7 @@ export const THEMES: Record<ThemeId, { label: string; palette: Palette }> = {
     },
   },
   rose: {
-    label: "ชมพูพีช",
+    label: t("ชมพูพีช"),
     palette: {
       primary: "#BE185D",
       soft: "#FCE7F3",
@@ -79,7 +80,7 @@ export const THEMES: Record<ThemeId, { label: string; palette: Palette }> = {
     },
   },
   lavender: {
-    label: "ม่วงลาเวนเดอร์",
+    label: t("ม่วงลาเวนเดอร์"),
     palette: {
       primary: "#6D28D9",
       soft: "#EDE9FE",
@@ -93,7 +94,7 @@ export const THEMES: Record<ThemeId, { label: string; palette: Palette }> = {
     },
   },
   night: {
-    label: "ดำกลางคืน",
+    label: t("ดำกลางคืน"),
     palette: {
       primary: "#1E293B",
       soft: "#1E293B",
@@ -164,10 +165,10 @@ export function applyTheme<T extends { type: string }>(messages: T[], theme: The
 // ───────────────────────── bot persona ─────────────────────────
 
 export const PERSONAS: Record<PersonaId, { label: string; sample: string }> = {
-  polite: { label: "สุภาพ", sample: "บันทึกให้เรียบร้อยแล้วค่ะ" },
-  friendly: { label: "เพื่อนสนิท", sample: "จดให้แล้วจ้า เดี๋ยวเค้าจำให้เอง" },
-  strict: { label: "ดุหน่อย", sample: "เกินงบอีกแล้วนะ! ใจเย็น ๆ ก่อน" },
-  cheer: { label: "ชมเยอะ", sample: "เก่งมากเลย จดครบทุกบาท!" },
+  polite: { label: t("สุภาพ"), sample: t("บันทึกให้เรียบร้อยแล้วค่ะ") },
+  friendly: { label: t("เพื่อนสนิท"), sample: t("จดให้แล้วจ้า เดี๋ยวเค้าจำให้เอง") },
+  strict: { label: t("ดุหน่อย"), sample: t("เกินงบอีกแล้วนะ! ใจเย็น ๆ ก่อน") },
+  cheer: { label: t("ชมเยอะ"), sample: t("เก่งมากเลย จดครบทุกบาท!") },
 };
 
 const pickOf = <T>(list: readonly T[], pick: number | undefined): T => {

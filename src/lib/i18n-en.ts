@@ -25,8 +25,6 @@ export const EN: Record<string, string> = {
   แตะที่แท่งกราฟเพื่อดูรายละเอียดยอดเงินของแต่ละช่วง:
     "Tap a bar to see the amounts for that period",
   ยังไม่มีรายการในช่วงนี้: "No entries in this period yet",
-  'ลองจดรายการสักอัน เช่น "กาแฟ 30" แล้วกราฟจะขึ้นมา':
-    'Try recording one, like "coffee 30", and the chart will appear',
   "รายรับเฉลี่ย /": "Average income /",
   "รายจ่ายเฉลี่ย /": "Average expense /",
   สัดส่วนรายจ่ายตามหมวด: "Expenses by category",
@@ -56,7 +54,6 @@ export const EN: Record<string, string> = {
   ธันวาคม: "December",
   ในวันนั้น: "On the day",
   "ก่อน {0} วัน": "{0} days before",
-  'ลบบิล "{0}" ใช่ไหม? จะไม่เตือนอีก': 'Delete the bill "{0}"? You won\'t be reminded again',
   ลบแล้ว: "Deleted",
   ลบไม่สำเร็จ: "Couldn't delete",
   บิลที่ต้องจ่าย: "Bills to pay",
@@ -66,8 +63,6 @@ export const EN: Record<string, string> = {
   บอทเตือนล่วงหน้าก่อนวันครบกำหนดจ่ายบิล: "The bot reminds you before a bill is due",
   ดูแผนอัปเกรด: "See upgrade plans",
   ยังไม่มีบิลที่ตั้งเตือน: "No bill reminders yet",
-  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15"':
-    'Add one with the button below, or type in the chat, e.g. "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15"',
   รายการบิล: "Bills",
   " · จากวันชำระของบัตร": " · from the card's payment day",
   " · เตือน {0} เวลา {1}": " · remind {0} at {1}",
@@ -118,8 +113,6 @@ export const EN: Record<string, string> = {
   เพิ่มยอดอย่างเร็ว: "Quick add",
   หมวดของตัวเอง: "My own categories",
   "สร้างหมวดของตัวเองสำหรับแผน Pro": "Create your own categories with the Pro plan",
-  "เพิ่มหมวดเฉพาะตัว เช่น “ค่าอาหารแมว” พร้อมเลือกอีโมจิ ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด":
-    'Add your own categories, like "cat food", with an emoji. Try it free for 7 days on the upgrade page',
   ตอนนี้ใช้หมวดมาตรฐานและปรับคำค้นได้ตามเดิม:
     "For now you can use the standard categories and adjust their keywords as before",
   "ดูแผน Pro": "See the Pro plan",
@@ -176,7 +169,6 @@ export const EN: Record<string, string> = {
   ไม่พบหมวดที่ค้นหา: "No matching categories",
   ยังไม่มีหมวด: "No categories yet",
   ลองใช้คำอื่นดูนะ: "Try another word",
-  "กด “เพิ่มหมวด” เพื่อสร้างหมวดของคุณเอง": 'Tap "Add category" to create your own',
   ของฉัน: "Mine",
   ซ่อนอยู่: "Hidden",
   ยังไม่มีคำค้น: "No keywords yet",
@@ -236,8 +228,6 @@ export const EN: Record<string, string> = {
   รอบสัปดาห์เริ่มทุกวันจันทร์: "Weekly cycles start every Monday",
   "กำลังบันทึก…": "Saving…",
   จำนวนเงินไม่ถูกต้อง: "Invalid amount",
-  'ลบหมวด "{0}" ใช่ไหม? รายการในหมวดนี้จะย้ายไปหมวด "อื่นๆ"':
-    'Delete the category "{0}"? Its entries will move to "Other"',
   ลบหมวดแล้ว: "Category deleted",
   แก้ไขหมวด: "Edit category",
   ชื่อหมวดหมู่: "Category name",
@@ -259,8 +249,6 @@ export const EN: Record<string, string> = {
   "คำค้น คั่นด้วยคอมมา": "Keywords, separated by commas",
   ซ่อนหมวดนี้จากรายการเลือก: "Hide this category from the pick list",
   ลบหมวดนี้: "Delete this category",
-  'ลบหนี้ของ "{0}" ใช่ไหม? ยอดกระเป๋าจะกลับเป็นเหมือนไม่เคยมีหนี้ก้อนนี้':
-    'Delete the debt with "{0}"? The wallet balance goes back as if this debt never existed',
   หนี้สิน: "Debts",
   กลับไปกระเป๋าเงิน: "Back to wallets",
   "· จดให้ยืม/ยืม": "· record lending/borrowing",
@@ -271,8 +259,6 @@ export const EN: Record<string, string> = {
   "ไม่นับเป็นรายรับ/รายจ่าย · ให้ยืมหรือยืมแล้วยอดกระเป๋าเปลี่ยนทันที":
     "Not counted as income/expense · lending or borrowing changes the wallet balance right away",
   ยังไม่มีหนี้ค้าง: "No open debts",
-  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "ให้ยืม สมชาย 500"':
-    'Add one with the button below, or type in the chat, e.g. "ให้ยืม สมชาย 500"',
   หนี้ที่ปิดแล้ว: "Settled debts",
   "ปิดแล้ว (": "Settled (",
   ซ่อน: "Hide",
@@ -319,14 +305,11 @@ export const EN: Record<string, string> = {
   ยังไม่มีการชำระ: "No payments yet",
   "ยกเลิกการชำระ {0}": "Cancel payment {0}",
   " ยอดที่ออมไว้ {0} จะหายไปด้วย": " The {0} saved will be lost too",
-  'ลบเป้าหมาย "{0}" ใช่ไหม?{1}': 'Delete the goal "{0}"?{1}',
   เป้าหมายการออม: "Savings goals",
   "สำหรับแผน Pro": "For the Pro plan",
   "· สร้างกระปุกออมสิน": "· create savings jars",
   ตั้งเป้าและดูความคืบหน้า: "set targets and track progress",
   ยังไม่มีเป้าหมายการออม: "No savings goals yet",
-  'เพิ่มที่ปุ่มด้านล่าง หรือพิมพ์ในแชท เช่น "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000"':
-    'Add one with the button below, or type in the chat, e.g. "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000"',
   "ครบแล้ว 🎉": "Done 🎉",
   "ความคืบหน้า {0}": "Progress of {0}",
   "ออมแล้ว {0}%": "{0}% saved",
@@ -366,8 +349,6 @@ export const EN: Record<string, string> = {
   คุณยังไม่ได้เพิ่มพี่ฮูกเป็นเพื่อน: "You haven't added P'Hook as a friend yet",
   "บอทต้องเป็นเพื่อนกับคุณก่อน ถึงจะรู้ว่าใครเป็นคนเปิดสมุดกลุ่ม":
     "The bot needs to be your friend first to know who opened the group ledger",
-  "เพิ่มเพื่อนแล้วกลับไปกดปุ่ม “เปิดสมุดกลุ่ม” ในกลุ่มอีกครั้งนะ":
-    'Add it as a friend, then go back and tap "Open group ledger" in the group again',
   เพิ่มเพื่อน: "Add friend",
   "ผู้เปิดสมุดกลุ่มต้องเป็นแผน Elite": "The person opening the group ledger needs the Elite plan",
   "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Elite ทดลองใช้ฟรี 7 วันได้":
@@ -384,19 +365,14 @@ export const EN: Record<string, string> = {
     "Couldn't send from this page. Go back to the group and type",
   ได้เลย: "OK",
   ไม่พบกลุ่มนี้: "Group not found",
-  'เปิดหน้านี้จากการ์ดในกลุ่ม LINE เช่น พิมพ์ "ไฟล์กลุ่ม" ในกลุ่ม':
-    'Open this page from a card in the LINE group, e.g. type "ไฟล์กลุ่ม" in the group',
   ส่งคำชวนให้เพื่อน: "Send an invite to a friend",
   "กดแชร์ผ่าน LINE": "Tap share via LINE",
   เพื่อนเพิ่มเพื่อน: "Your friend adds the bot",
-  "แล้วพิมพ์ “ใช้รหัส” ของคุณ": 'and types your "ใช้รหัส" code',
   รับเหรียญสะสมทั้งคู่: "You both get coins",
   เมื่อเพื่อนจดรายการแรก: "when your friend records their first entry",
   กลับไปหน้าตั้งค่า: "Back to settings",
   ชวนเพื่อนมาจดใช้งาน: "Invite friends",
   "รับเหรียญสะสมฟรี!": "Get free coins!",
-  'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสเหรียญสะสม':
-    "Let's track income and expenses easily in LINE with P'Hook! Add the bot and type \"ใช้รหัส {0}\" and we both get bonus coins",
   "คัดลอกอัตโนมัติไม่ได้ ลองกดค้างที่ข้อความเพื่อคัดลอกนะ":
     "Couldn't copy automatically. Press and hold the text to copy it",
   ใช้รหัสไม่สำเร็จ: "Couldn't use the code",
@@ -446,8 +422,6 @@ export const EN: Record<string, string> = {
     "Skipped this round. The next one still reminds you as usual",
   "เสร็จแล้ว เก่งมากครับ!": "Done, well done!",
   เปลี่ยนสถานะไม่สำเร็จ: "Couldn't change the status",
-  'ลบเตือน "{0}" ทุกรอบใช่ไหม?': 'Delete the reminder "{0}" for every round?',
-  'ลบเตือน "{0}" ใช่ไหม?': 'Delete the reminder "{0}"?',
   แสดงเป็นปฏิทิน: "Show as a calendar",
   รายการทั้งหมด: "All reminders",
   "ทั้งหมด ({0})": "All ({0})",
@@ -480,8 +454,6 @@ export const EN: Record<string, string> = {
   วันที่รอบถัดไป: "Next round's date",
   วันที่เตือน: "Reminder date",
   ทำซ้ำ: "Repeat",
-  'มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ':
-    'You already have {0} repeating reminders. Choose "Once", delete ones you don\'t use, or upgrade to set more',
   "มีเตือนที่รออยู่ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ":
     "You already have {0} reminders waiting. Delete ones you don't use or upgrade to set more",
   บันทึกการเตือน: "Save reminder",
@@ -536,8 +508,6 @@ export const EN: Record<string, string> = {
     "Recorded for you automatically, e.g. internet, rent, salary",
   เพิ่ม: "Add",
   จัดหมวดด้วยความจำ: "Categorise from memory",
-  'เมื่อแก้หมวดสลิป บอทจะจำคู่ "ผู้รับ → หมวด" ไว้ใช้ครั้งต่อไป':
-    'When you change a slip\'s category, the bot remembers "payee → category" for next time',
   สมาชิก: "Membership",
   อัปเกรด: "Upgrade",
   "อัปเกรด / ต่ออายุ": "Upgrade / renew",
@@ -564,7 +534,6 @@ export const EN: Record<string, string> = {
   ย่อทั้งหมด: "Collapse all",
   เปิดทั้งหมด: "Expand all",
   ไม่พบการตั้งค่า: "No settings found",
-  'ไม่มีหมวดที่ตรงกับ "{0}"': 'No section matches "{0}"',
   "นับทั้งหมดที่มีอยู่ตอนนี้ ลบออกแล้วได้ที่คืน":
     "Counts everything you have now; deleting frees space",
   นับใหม่ทุกวัน: "Resets every day",
@@ -613,7 +582,6 @@ export const EN: Record<string, string> = {
   "ส่งเข้ากลุ่มแล้ว บอทกำลังส่ง QR ให้ทุกคน กลับไปที่แชทได้เลย":
     "Sent to the group. The bot is sending everyone their QR. You can go back to the chat",
   "กลับไปที่กลุ่ม แล้วกดปุ่ม": "Go back to the group and tap",
-  "“📣 ส่ง QR เข้ากลุ่ม”": '"📣 ส่ง QR เข้ากลุ่ม"',
   ที่การ์ดบิล: "on the bill card",
   "บอทจะส่ง QR ให้ทุกคน": "and the bot sends everyone their QR",
   เลือกคนหารไปแล้ว: "Already chosen",
@@ -635,12 +603,6 @@ export const EN: Record<string, string> = {
   เลือก: "Choose",
   "· คนละ ≈": "· about",
   "ยืนยัน และส่ง QR เข้ากลุ่ม": "Confirm and send the QR to the group",
-  'พิมพ์ "กาแฟ 60" ในแชท บอทจะจดและจัดหมวดให้ทันที':
-    'Type "กาแฟ 60" in the chat and the bot records and categorises it right away',
-  'พิมพ์ "เมื่อวาน ข้าว 80" เพื่อจดย้อนหลัง (Pro ขึ้นไป)':
-    'Type "เมื่อวาน ข้าว 80" to record a past entry (Pro and above)',
-  'พิมพ์ "สรุปเดือนนี้" ในแชท เพื่อดูภาพรวมได้ทุกเมื่อ':
-    'Type "สรุปเดือนนี้" in the chat to see the overview any time',
   "ส่งรูปสลิปโอนเงินในแชท บอทอ่านยอดให้โดยไม่ต้องพิมพ์":
     "Send a transfer slip photo in the chat and the bot reads the amount for you",
   สรุปภาพรวม: "Overview",
@@ -650,8 +612,6 @@ export const EN: Record<string, string> = {
   รายการล่าสุด: "Latest entries",
   ดูทั้งหมด: "See all",
   ยังไม่มีรายการเลย: "No entries yet",
-  'ลองพิมพ์ "กาแฟ 30" ในแชท หรือกดเพิ่มที่หน้ารายการได้เลย':
-    'Try typing "กาแฟ 30" in the chat, or add one on the entries page',
   ทิป: "Tip",
   ทิปน่ารู้: "Good to know",
   ภาพรวม: "Overview",
@@ -687,8 +647,6 @@ export const EN: Record<string, string> = {
   "✅ แก้ไขรายการสำเร็จ": "✅ Entry updated",
   "บอทส่งการ์ดสรุปรายการเข้าแชทให้แล้ว กลับไปที่แชทได้เลย":
     "The bot sent the entry's card to the chat. You can go back to the chat",
-  '{0} กด "ส่งการ์ดเข้าแชท" อีกครั้ง หรือพิมพ์ "แก้ไขเสร็จแล้ว" ในแชทก็ได้':
-    '{0} Tap "Send card to chat" again, or type "แก้ไขเสร็จแล้ว" in the chat',
   ส่งการ์ดเข้าแชท: "Send card to chat",
   ดูรายการทั้งหมด: "See all entries",
   บันทึกรายการสำเร็จ: "Entry saved",
@@ -699,7 +657,6 @@ export const EN: Record<string, string> = {
   "ลบ {0} รายการที่เลือกใช่ไหม?": "Delete the {0} selected entries?",
   ย้ายหมวดแล้ว: "Category changed",
   ย้ายหมวดไม่สำเร็จ: "Couldn't change the category",
-  'ลบ "{0}" ใช่ไหม?': 'Delete "{0}"?',
   รายการบันทึก: "Entries",
   ช่วงเวลาที่เลือก: "Selected period",
   ทุกช่วงเวลา: "All time",
@@ -725,8 +682,6 @@ export const EN: Record<string, string> = {
   ไม่พบรายการที่ค้นหา: "No matching entries",
   ยังไม่มีรายการ: "No entries yet",
   ลองเปลี่ยนตัวกรองหรือคำค้นหาดูนะ: "Try other filters or search words",
-  'พิมพ์ "กาแฟ 30" ในแชท หรือกดปุ่ม + เพื่อเพิ่มได้เลย':
-    'Type "กาแฟ 30" in the chat or tap + to add one',
   เมื่อวาน: "Yesterday",
   "รวม:": "Total:",
   "เลือก {0}": "Select {0}",
@@ -858,28 +813,15 @@ export const EN: Record<string, string> = {
   "ส่งรูป ไฟล์ หรือพิมพ์คุยกับพี่ฮูกในแชทได้เลยนะครับ เดี๋ยวพี่ฮูกจะเก็บรวบรวมไว้ที่นี่เอง!":
     "Send photos, files or chat with P'Hook and they'll be gathered here for you!",
   ยังไม่มีโน้ต: "No notes yet",
-  'กดปุ่ม + หรือพิมพ์ในแชท เช่น "โน้ต ซื้อนม"': 'Tap + or type in the chat, e.g. "โน้ต ซื้อนม"',
   ยังไม่มีลิงก์: "No links yet",
   "จดโน้ตที่มีลิงก์ แล้วจะขึ้นที่นี่ครับ": "Notes with links show up here",
   ยังไม่มีรูป: "No photos yet",
-  'ส่งรูปในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"':
-    'Send a photo in the chat, then type "เก็บไว้ให้หน่อย"',
   ยังไม่มีไฟล์: "No files yet",
-  'ส่งไฟล์ในแชท แล้วพิมพ์ "เก็บไว้ให้หน่อย"':
-    'Send a file in the chat, then type "เก็บไว้ให้หน่อย"',
   กลุ่มนี้ยังไม่มีอะไรในคลัง: "This group's vault is empty",
-  'พิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง" หรือ "เก็บไฟล์" แล้วส่งไฟล์มา':
-    'Type in the group, e.g. "โน้ต ซื้อน้ำแข็ง", or "เก็บไฟล์" and then send the file',
   กลุ่มนี้ยังไม่มีโน้ต: "This group has no notes yet",
-  'กดปุ่ม + หรือพิมพ์ในกลุ่ม เช่น "โน้ต ซื้อน้ำแข็ง"':
-    'Tap + or type in the group, e.g. "โน้ต ซื้อน้ำแข็ง"',
   กลุ่มนี้ยังไม่มีลิงก์: "This group has no links yet",
   กลุ่มนี้ยังไม่มีรูป: "This group has no photos yet",
-  'พิมพ์ "เก็บรูป" ในกลุ่ม แล้วส่งรูปมาภายใน 5 นาที':
-    'Type "เก็บรูป" in the group, then send the photo within 5 minutes',
   กลุ่มนี้ยังไม่มีไฟล์: "This group has no files yet",
-  'พิมพ์ "เก็บไฟล์" ในกลุ่ม แล้วส่งไฟล์มาภายใน 5 นาที':
-    'Type "เก็บไฟล์" in the group, then send the file within 5 minutes',
   เปิดไฟล์ไม่สำเร็จ: "Couldn't open the file",
   ของเจ้าของสมุดใกล้เต็มแล้ว: "The ledger owner's storage is nearly full",
   ใช้พื้นที่ของเจ้าของสมุด: "Uses the ledger owner's storage",
@@ -888,7 +830,6 @@ export const EN: Record<string, string> = {
   "รหัสไวไฟ, เมนูร้าน, สัญญา": "Wi-Fi password, shop menu, contract",
   "บิลค่าไฟ, รหัสคอม, ใบเสนอราคา": "Electricity bill, computer password, quotation",
   ค้นหา: "Search",
-  "ค้นหา “": 'Search "',
   หมวดในคลัง: "Vault sections",
   พื้นที่เก็บไฟล์: "File storage",
   เพิ่มโน้ตของกลุ่ม: "Add a group note",
@@ -927,7 +868,6 @@ export const EN: Record<string, string> = {
   "แก้หรือลบได้เฉพาะคนที่จดโน้ตนี้ หรือเจ้าของสมุด":
     "Only the person who wrote this note or the ledger owner can edit or delete it",
   เปลี่ยนชื่อแล้ว: "Renamed",
-  'ลบไฟล์ "{0}" ใช่ไหม? ลบแล้วกู้คืนไม่ได้': 'Delete the file "{0}"? This can\'t be undone',
   ไฟล์ของกลุ่ม: "Group file",
   เปิดไฟล์: "Open file",
   ชื่อไฟล์: "File name",
@@ -942,15 +882,11 @@ export const EN: Record<string, string> = {
   ร่วมกระเป๋าแล้ว: "Joined the wallet",
   ยอดรวม: "Total balance",
   รวมทุกกระเป๋า: "All wallets",
-  'ยอดคงเหลือ = ยอดตั้งต้น + รายรับ − รายจ่าย · จดลงกระเป๋าอื่นในแชทโดยใส่ @ชื่อ เช่น "กาแฟ 45 @บัตร"':
-    'Balance = starting balance + income − expenses · Record into another wallet in the chat with @name, e.g. "กาแฟ 45 @บัตร"',
   รายการกระเป๋า: "Wallets",
   หลัก: "Main",
   "👥 ร่วมกัน": "👥 Shared",
   "ตั้ง {0} เป็นกระเป๋าหลัก": "Make {0} the main wallet",
   "ตั้ง {0} เป็นกระเป๋าหลักแล้ว": "{0} is now the main wallet",
-  'ลบกระเป๋า "{0}" ใช่ไหม? รายการในกระเป๋านี้ไม่หาย แต่จะย้ายไปกระเป๋าหลัก':
-    'Delete the wallet "{0}"? Its entries aren\'t lost; they move to the main wallet',
   ลบกระเป๋าแล้ว: "Wallet deleted",
   โอนระหว่างกระเป๋า: "Transfer between wallets",
   ไม่นับเป็นรายรับหรือรายจ่าย: "Not counted as income or expense",
@@ -1023,10 +959,6 @@ export const EN: Record<string, string> = {
   จำนวนเงินที่โอน: "Amount to transfer",
   โน้ตการโอน: "Transfer note",
   "กำลังโอน...": "Transferring...",
-  'ออกจากกระเป๋า "{0}" ใช่ไหม? รายการที่เคยจดไว้ยังอยู่ในกระเป๋านั้น':
-    'Leave the wallet "{0}"? Entries you recorded stay in that wallet',
-  'เอา {0} ออกจากกระเป๋า "{1}" ใช่ไหม? รายการที่เขาเคยจดยังอยู่':
-    'Remove {0} from the wallet "{1}"? Entries they recorded stay',
   ออกจากกระเป๋าแล้ว: "Left the wallet",
   เอาออกแล้ว: "Removed",
   "คนที่ร่วม: เห็นและจดรายการที่ลงกระเป๋านี้ได้ทุกคน แต่แก้/ลบได้เฉพาะของตัวเอง":
@@ -1057,14 +989,11 @@ export const EN: Record<string, string> = {
   เก็บสะสม: "Total saved",
   กราฟยอดออมสะสม: "Savings chart",
   ออมสะสม: "Total saved",
-  'ยกเลิกเตือน "{0}" ของกลุ่มใช่ไหม?': 'Cancel the group\'s reminder "{0}"?',
   ยกเลิกแล้ว: "Cancelled",
   โหลดเตือนไม่สำเร็จ: "Couldn't load reminders",
   "เตือนของกลุ่มส่งเข้ากลุ่มตามเวลา และนับรวมกับเตือนส่วนตัวของเจ้าของสมุด":
     "Group reminders are sent to the group on time and count toward the ledger owner's own reminders",
   กลุ่มนี้ยังไม่มีเตือน: "This group has no reminders yet",
-  'พิมพ์ในกลุ่ม เช่น "เตือน พรุ่งนี้ 9 โมง ประชุม"':
-    'Type in the group, e.g. "เตือน พรุ่งนี้ 9 โมง ประชุม"',
   "ยกเลิกเตือน {0}": "Cancel reminder {0}",
   "เข้าสู่ระบบไม่สำเร็จ ลองปิดแล้วเปิดใหม่อีกครั้งนะ (ถ้ายังไม่ได้ แจ้งผู้ดูแล)":
     "Couldn't sign in. Close and open again (if it still fails, contact support)",
@@ -1073,14 +1002,12 @@ export const EN: Record<string, string> = {
   เข้าสู่ระบบไม่สำเร็จ: "Couldn't sign in",
   "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ": "Something went wrong. Please try again",
   เกิดข้อผิดพลาด: "Something went wrong",
-  'ปลดล็อกกราฟ "วิเคราะห์รายรับรายจ่าย"': 'Unlock the "Income & expense analytics" charts',
   "ดูภาพรวมเงินเข้า-ออกย้อนหลังและสัดส่วนรายจ่ายตามหมวดแบบเห็นภาพ":
     "See money in and out over time and your spending by category at a glance",
   "กราฟรายรับรายจ่าย 6 เดือน รายสัปดาห์ และรายวัน":
     "Income and expense charts for 6 months, weeks and days",
   "ย้อนดูช่วงเวลาก่อนหน้าได้ พร้อมค่าเฉลี่ย": "Look back at earlier periods, with averages",
   "สัดส่วนรายจ่ายตามหมวด ทั้งรอบนี้และสะสมทั้งหมด": "Spending by category, this cycle and all time",
-  'ปลดล็อกระบบ "วางแผนเก็บออม"': 'Unlock "Savings planning"',
   "ดูเงินเก็บสะสมและอัตราการออมของคุณ เพื่อสร้างวินัยเงินออมอย่างต่อเนื่อง":
     "See your total savings and saving rate to build a steady saving habit",
   กราฟเงินเก็บสะสมรายเดือน: "Monthly total savings chart",
@@ -1118,7 +1045,6 @@ export const EN: Record<string, string> = {
   กราฟเงินเก็บออม: "Savings chart",
   "แท่ง = เก็บได้ในแต่ละช่วง (รายรับ − รายจ่าย) · เส้น = เก็บสะสม":
     "Bars = saved each period (income − expenses) · line = total saved",
-  'ใส่หมวด "{0}" ในรอบงบนี้': 'Category "{0}" this cycle',
   "บันทึกไม่สำเร็จ ลองใหม่อีกครั้งนะ": "Couldn't save. Please try again",
   ค้นหาสกุลเงิน: "Search currencies",
   "เปลี่ยนแล้วตัวเลขของรายการเดิมจะเหมือนเดิม เปลี่ยนแค่สัญลักษณ์":
@@ -1141,8 +1067,6 @@ export const EN: Record<string, string> = {
     "all your entries, categories, budgets, recurring entries, slips (with images), points and settings",
   ของคุณอย่างถาวร: "permanently.",
   กู้คืนไม่ได้: "It can't be undone.",
-  'ถ้าอยากเก็บสำเนาไว้ ให้ส่งออกไฟล์ก่อนที่หน้า "รายการ" (ไอคอนดาวน์โหลด)':
-    'To keep a copy, export a file first on the "Entries" page (download icon)',
   ดำเนินการต่อ: "Continue",
   ยืนยันอีกครั้ง: "Confirm again",
   พิมพ์: "Type",
@@ -1152,12 +1076,8 @@ export const EN: Record<string, string> = {
   "ตอนนี้เปลี่ยนภาษาของหน้าเว็บ ข้อความในแชทยังเป็นภาษาไทย":
     "This changes the web pages' language; chat messages stay in Thai for now",
   ลืมแล้ว: "Forgotten",
-  'เมื่อคุณแก้หมวดของสลิป บอทจะจำ "ผู้รับ → หมวด" ไว้ใช้ครั้งต่อไป':
-    'When you change a slip\'s category, the bot remembers "payee → category" for next time',
   "ให้บอทจำผู้รับ/ร้านค้ากับหมวดที่คุณเลือก":
     "Let the bot remember payees/shops with the category you chose",
-  'ยังไม่มีที่จำไว้ ลองส่งสลิปแล้วกด "แก้ไขหมวด" ดูนะ':
-    'Nothing remembered yet. Try sending a slip and tapping "แก้ไขหมวด"',
   หมวดที่ถูกลบ: "Deleted category",
   "· ใช้": "· used",
   ครั้ง: "times",
@@ -1194,8 +1114,6 @@ export const EN: Record<string, string> = {
   ธีมสีการ์ด: "Card colour theme",
   นิสัยบอท: "Bot manner",
   ปุ่มแนบรูปบนการ์ด: "Attach-photo button on the card",
-  "การ์ดจดสำเร็จมีปุ่ม “แนบรูป” เล็ก ๆ มุมซ้ายล่าง":
-    'The saved-entry card has a small "Attach photo" button at the bottom left',
   กดแล้วถ่ายรูปหรือเลือกจากอัลบั้มเพื่อแนบใบเสร็จหรือสินค้า:
     "Tap it to take a photo or pick one from your album to attach a receipt or product",
   แนบรูปใบเสร็จหรือสินค้ากับรายการ: "Attach receipt or product photos to entries",
@@ -1223,8 +1141,6 @@ export const EN: Record<string, string> = {
   "เริ่มต่อ {0}": "Resume {0}",
   หยุดแล้ว: "Paused",
   เริ่มต่อแล้ว: "Resumed",
-  'ลบรายการประจำ "{0}" ใช่ไหม? (รายการที่จดไปแล้วไม่หาย)':
-    'Delete the recurring entry "{0}"? (entries already recorded stay)',
   เพิ่มรายการประจำแล้ว: "Recurring entry added",
   "จำนวนเงินไม่ถูกต้อง (เช่น 350 หรือ 350.50)": "Invalid amount (e.g. 350 or 350.50)",
   เพิ่มรายการประจำ: "Add recurring entry",
@@ -1306,10 +1222,122 @@ export const EN: Record<string, string> = {
     "Download your entries to keep your books on a computer or in Google Sheets. Try it free for 7 days on the upgrade page",
   "ถ้าเดือนนั้นไม่มีวันที่เลือก จะเริ่มวันสุดท้ายของเดือนแทน เช่น เลือก 31 เดือนเมษายนจะเริ่มวันที่ 30":
     "If a month doesn't have the chosen day, it starts on its last day instead. E.g. choosing 31, April starts on the 30th",
-  "บอทต้องเป็นเพื่อนกับคุณก่อน ถึงจะรู้ว่าใครเป็นคนเปิดสมุดกลุ่ม เพิ่มเพื่อนแล้วกลับไปกดปุ่ม “เปิดสมุดกลุ่ม” ในกลุ่มอีกครั้งนะ":
-    'The bot needs to be your friend first to know who opened the group ledger. Add it as a friend, then go back and tap "Open group ledger" in the group again',
   "เปลี่ยนแล้วตัวเลขของรายการเดิมจะเหมือนเดิม เปลี่ยนแค่สัญลักษณ์ ส่วนเงินสกุลอื่นที่จดหลังจากนี้จะแปลงเป็นสกุลนี้ให้":
     "After a change, existing entries keep their numbers; only the sign changes. Other currencies recorded from now on are converted into this one",
+  "วันที่ & เวลา": "Date & time",
+  "ประเภท (รับ/จ่าย)": "Type (income/expense)",
+  "ที่มา (ข้อความ/สลิป)": "Source (message/slip)",
+  สกุลเงินเดิม: "Original currency",
+  คุณใช้แผนที่สูงกว่านี้อยู่แล้ว: "You already have a higher plan",
+  "คุณใช้แผนนี้อยู่แล้ว (ต่ออายุอัตโนมัติ)": "You already have this plan (renews automatically)",
+  "คุณมีแผนแบบพร้อมเพย์ที่ยังไม่หมดอายุ ต่ออายุด้วยพร้อมเพย์ได้เลย หรือรอให้หมดอายุก่อนจึงสมัครแบบบัตร":
+    "You have a PromptPay plan that hasn't expired. Renew with PromptPay, or wait until it expires before subscribing by card",
+  เขียวมิ้นต์: "Mint green",
+  ฟ้าทะเล: "Ocean blue",
+  ชมพูพีช: "Peach pink",
+  ม่วงลาเวนเดอร์: "Lavender",
+  ดำกลางคืน: "Midnight",
+  สุภาพ: "Polite",
+  บันทึกให้เรียบร้อยแล้วค่ะ: "All recorded for you.",
+  เพื่อนสนิท: "Best friend",
+  "จดให้แล้วจ้า เดี๋ยวเค้าจำให้เอง": "Got it, I'll remember it for you!",
+  ดุหน่อย: "Strict",
+  "เกินงบอีกแล้วนะ! ใจเย็น ๆ ก่อน": "Over budget again! Slow down",
+  ชมเยอะ: "Cheerleader",
+  "เก่งมากเลย จดครบทุกบาท!": "Amazing, you recorded every last baht!",
+  "*ไม่จำกัดสำหรับการใช้งานตามปกติ: สูงสุดราว {0} ใบ/เดือน (อ่านสลิป), {1} ครั้ง/เดือน (จดด้วยเสียง), {2} ครั้ง/เดือน (AI อ่านประโยคยาว) ครบแล้วพิมพ์จดได้ตามปกติ และใช้ได้ใหม่ต้นเดือนหน้า":
+    "*Unlimited for normal use: up to about {0} slips/month (slip reading), {1} times/month (voice), {2} times/month (AI reading long sentences). After that you can still type entries as usual, and it resets at the start of next month",
+  จดรายการ: "Recording",
+  จดด้วยข้อความ: "Record by text",
+  บอทจัดหมวดให้อัตโนมัติ: "The bot categorises for you",
+  "ลบ / แก้ล่าสุด": "Delete / edit the latest",
+  อ่านสลิปอัตโนมัติ: "Automatic slip reading",
+  "ลองฟรี 1 ใบ": "Try 1 free",
+  "30 ใบ/เดือน": "30/month",
+  "ไม่จำกัด*": "Unlimited*",
+  จดย้อนหลัง: "Record past days",
+  จดหลายรายการในข้อความเดียว: "Several entries in one message",
+  "ติดแท็ก #Tag": "#Tags",
+  แนบรูปประกอบรายการ: "Attach photos to entries",
+  แยกรายการจากใบเสร็จ: "Split a receipt into entries",
+  "ให้ AI อ่านประโยคยาวๆ": "AI reads long sentences",
+  จดด้วยเสียง: "Record by voice",
+  "ลองฟรี 1 ครั้ง": "Try once free",
+  "20 ครั้ง/เดือน": "20/month",
+  จดเงินต่างสกุล: "Foreign currency entries",
+  ตั้งรายการจดอัตโนมัติ: "Automatic recurring entries",
+  "20 รายการ": "20 entries",
+  "100 รายการ": "100 entries",
+  "บอทจำร้านค้า → หมวด": "The bot remembers shop → category",
+  สร้างหมวดของตัวเอง: "Your own categories",
+  กระเป๋าและหนี้: "Wallets and debts",
+  กระเป๋าเงินหลายใบ: "Several wallets",
+  "1 ใบ": "1 wallet",
+  "5 ใบ": "5 wallets",
+  "บัตรเครดิต วงเงิน/ยอดตามรอบบิล": "Credit cards: limit/spending per billing cycle",
+  "กระเป๋าร่วมแฟน/ครอบครัว": "Shared wallets with a partner/family",
+  "2 คน": "2 people",
+  "10 คน": "10 people",
+  "จดหนี้ ให้ยืม/ยืม": "Record debts, lending/borrowing",
+  งบและเป้าหมาย: "Budgets and goals",
+  ตั้งงบรวม: "Overall budget",
+  งบแยกตามหมวด: "Budgets by category",
+  "เตือนเมื่อใช้งบ 80% / 100%": "Alerts at 80% / 100% of the budget",
+  "งบรายวัน + เตือนทันที": "Daily budget + instant alerts",
+  "20 ใบ": "20 goals",
+  หารค่าใช้จ่ายทริป: "Split trip costs",
+  "สมุดกลุ่ม LINE": "LINE group ledger",
+  รายงาน: "Reports",
+  "สรุปวัน / เดือน / หมวด": "Daily / monthly / category summaries",
+  สรุปช่วงวันเอง: "Custom date-range summaries",
+  ค้นหาพร้อมยอดรวม: "Search with totals",
+  สรุปรายปี: "Yearly summary",
+  เทียบเดือนต่อเดือน: "Month-on-month comparison",
+  "หน้าวิเคราะห์ กราฟแท่ง/โดนัท": "Analytics page with bar/donut charts",
+  กราฟเก็บออม: "Savings chart",
+  สรุปส่งในแชทอัตโนมัติ: "Automatic summaries in the chat",
+  "ส่งออก CSV": "CSV export",
+  "ส่งออก Excel พร้อมชีตสรุป": "Excel export with summary sheets",
+  พยากรณ์เงินปลายเดือน: "End-of-month money forecast",
+  "AI Insight วิเคราะห์การใช้จ่าย": "AI Insight on your spending",
+  ส่วนตัวและรางวัล: "Personal and rewards",
+  "ล้างข้อมูล / ลบบัญชี": "Clear data / delete account",
+  เหรียญสะสมและชวนเพื่อน: "Coins and invites",
+  ตั้งหมวดและงบรวม: "Categories and an overall budget",
+  "อ่านสลิป 30 ใบ/เดือน + จดด้วยเสียง 20 ครั้ง + จดย้อนหลัง":
+    "30 slips/month + 20 voice entries + past-day entries",
+  "รายการจดอัตโนมัติ + เตือนประจำวัน": "Automatic recurring entries + daily reminders",
+  "ส่งออก CSV/Excel + กราฟวิเคราะห์": "CSV/Excel export + analytics charts",
+  "กราฟเก็บออม + สรุปในแชท": "Savings chart + summaries in the chat",
+  "ทุกอย่างใน Pro": "Everything in Pro",
+  "อ่านสลิปไม่จำกัด + แยกรายการจากใบเสร็จ": "Unlimited slips + split receipts into entries",
+  "พิมพ์ประโยคยาวๆ ให้ AI ช่วยอ่าน + จดด้วยเสียง":
+    "Type long sentences for the AI to read + voice entries",
+  "หลายกระเป๋าไม่จำกัด · สมุดกลุ่ม LINE แยกคนจ่าย":
+    "Unlimited wallets · LINE group ledger with payers",
+  "พยากรณ์เงินปลายเดือน + AI Insight · กระเป๋าร่วมสูงสุด 10 คน":
+    "End-of-month forecast + AI Insight · shared wallets up to 10 people",
+  บิล: "Bills",
+  งาน: "Work",
+  สุขภาพ: "Health",
+  ครอบครัว: "Family",
+  เงินสด: "Cash",
+  บัญชีธนาคาร: "Bank account",
+  บัตรเครดิต: "Credit card",
+  เงินเก็บ: "Savings",
+  อีวอลเล็ต: "E-wallet",
+  "เพิ่มหมวดเฉพาะตัว เช่น “ค่าอาหารแมว” พร้อมเลือกอีโมจิ ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด":
+    'Add your own categories, like "cat food", with an emoji. Try it free for 7 days on the upgrade page',
+  "กด “เพิ่มหมวด” เพื่อสร้างหมวดของคุณเอง": 'Tap "Add category" to create your own',
+  "บอทต้องเป็นเพื่อนกับคุณก่อน ถึงจะรู้ว่าใครเป็นคนเปิดสมุดกลุ่ม เพิ่มเพื่อนแล้วกลับไปกดปุ่ม “เปิดสมุดกลุ่ม” ในกลุ่มอีกครั้งนะ":
+    'The bot needs to be your friend first to know who opened the group ledger. Add it as a friend, then go back and tap "Open group ledger" in the group again',
+  "แล้วพิมพ์ “ใช้รหัส” ของคุณ": 'and types your "ใช้รหัส" code',
+  "“📣 ส่ง QR เข้ากลุ่ม”": '"📣 ส่ง QR เข้ากลุ่ม"',
+  "ค้นหา “": 'Search "',
   "การ์ดจดสำเร็จมีปุ่ม “แนบรูป” เล็ก ๆ มุมซ้ายล่าง กดแล้วถ่ายรูปหรือเลือกจากอัลบั้มเพื่อแนบใบเสร็จหรือสินค้า":
     'The saved-entry card has a small "Attach photo" button at the bottom left. Tap it to take a photo or pick one from your album to attach a receipt or product',
+  "คุณมีแผนแบบต่ออายุอัตโนมัติด้วยบัตรอยู่ การจ่ายเพิ่มด้วยพร้อมเพย์จะทำให้จ่ายซ้ำ เลือกอัปเกรดด้วยบัตรแทน หรือจัดการที่ปุ่ม “จัดการการชำระเงิน”":
+    'You have a plan that renews automatically by card. Paying more with PromptPay would charge you twice. Upgrade by card instead, or manage it with the "Manage payments" button',
+  "เปลี่ยนจากรายปีเป็นรายเดือนไม่ได้ระหว่างรอบ ยกเลิกต่ออายุที่ปุ่ม “จัดการการชำระเงิน” แล้วสมัครใหม่เมื่อครบรอบ":
+    'You can\'t switch from yearly to monthly mid-period. Cancel renewal with the "Manage payments" button, then subscribe again when the period ends',
 };

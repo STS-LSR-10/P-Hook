@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  bangkokParts,
-  currentZone,
-  formatThaiDate,
-  fromBangkok,
-  setZoneSource,
-} from "./thai-date";
+import { bangkokParts, currentZone, formatThaiDate, fromBangkok, setZoneSource } from "./thai-date";
 import { isZone, utcOffsetLabel, ZONES } from "./zone";
 
 afterEach(() => setZoneSource(null));
@@ -50,8 +44,6 @@ describe("the zones to pick from", () => {
   it("say their offset from UTC now", () => {
     expect(utcOffsetLabel("Asia/Bangkok", new Date("2026-11-03T00:00:00Z"))).toBe("UTC+07:00");
     expect(utcOffsetLabel("Asia/Kolkata", new Date("2026-11-03T00:00:00Z"))).toBe("UTC+05:30");
-    expect(utcOffsetLabel("America/New_York", new Date("2026-11-03T00:00:00Z"))).toBe(
-      "UTC-05:00",
-    );
+    expect(utcOffsetLabel("America/New_York", new Date("2026-11-03T00:00:00Z"))).toBe("UTC-05:00");
   });
 });

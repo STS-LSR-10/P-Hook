@@ -1,6 +1,7 @@
 import { effectivePlan, type Plan } from "@/lib/plan";
 import { prepaidUpgradeQuote, type Period, type UpgradeQuote } from "@/lib/pricing";
 import type { PaymentMethod } from "./provider";
+import { t } from "@/lib/i18n";
 
 /** What a person is currently paying with, worked out from their user row and payment history. */
 export interface BillingState {
@@ -86,13 +87,15 @@ const blocked = (message: string, manage = false): PlanAction => ({
  */
 export function planAction(state: BillingState, request: PlanRequest): PlanAction {
   if (RANK[request.plan] < RANK[state.plan]) {
-    return blocked("คุณใช้แผนที่สูงกว่านี้อยู่แล้ว");
+    return blocked(t("คุณใช้แผนที่สูงกว่านี้อยู่แล้ว"));
   }
 
   if (state.subscriptionRunning) {
     if (request.method !== "card") {
       return blocked(
-        "คุณมีแผนแบบต่ออายุอัตโนมัติด้วยบัตรอยู่ การจ่ายเพิ่มด้วยพร้อมเพย์จะทำให้จ่ายซ้ำ เลือกอัปเกรดด้วยบัตรแทน หรือจัดการที่ปุ่ม “จัดการการชำระเงิน”",
+        t(
+          "คุณมีแผนแบบต่ออายุอัตโนมัติด้วยบัตรอยู่ การจ่ายเพิ่มด้วยพร้อมเพย์จะทำให้จ่ายซ้ำ เลือกอัปเกรดด้วยบัตรแทน หรือจัดการที่ปุ่ม “จัดการการชำระเงิน”",
+        ),
         true,
       );
     }
@@ -101,17 +104,21 @@ export function planAction(state: BillingState, request: PlanRequest): PlanActio
       request.plan === state.plan && state.period === "monthly" && request.period === "yearly";
     if (higherTier || toYearly) return { kind: "change" };
     if (request.plan === state.plan && request.period === state.period) {
-      return blocked("คุณใช้แผนนี้อยู่แล้ว (ต่ออายุอัตโนมัติ)", true);
+      return blocked(t("คุณใช้แผนนี้อยู่แล้ว (ต่ออายุอัตโนมัติ)"), true);
     }
     return blocked(
-      "เปลี่ยนจากรายปีเป็นรายเดือนไม่ได้ระหว่างรอบ ยกเลิกต่ออายุที่ปุ่ม “จัดการการชำระเงิน” แล้วสมัครใหม่เมื่อครบรอบ",
+      t(
+        "เปลี่ยนจากรายปีเป็นรายเดือนไม่ได้ระหว่างรอบ ยกเลิกต่ออายุที่ปุ่ม “จัดการการชำระเงิน” แล้วสมัครใหม่เมื่อครบรอบ",
+      ),
       true,
     );
   }
 
   if (state.prepaidRunning && request.method === "card") {
     return blocked(
-      "คุณมีแผนแบบพร้อมเพย์ที่ยังไม่หมดอายุ ต่ออายุด้วยพร้อมเพย์ได้เลย หรือรอให้หมดอายุก่อนจึงสมัครแบบบัตร",
+      t(
+        "คุณมีแผนแบบพร้อมเพย์ที่ยังไม่หมดอายุ ต่ออายุด้วยพร้อมเพย์ได้เลย หรือรอให้หมดอายุก่อนจึงสมัครแบบบัตร",
+      ),
     );
   }
   return { kind: "checkout" };

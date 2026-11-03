@@ -5,7 +5,7 @@ import { setZoneSource } from "@/lib/thai-date";
 import { isZone } from "@/lib/zone";
 import { isHomeCurrency } from "@/lib/currency";
 import { setCurrencySource } from "@/lib/money";
-import { isLocale, setLocaleSource, t } from "@/lib/i18n";
+import { isLocale, loadedLocale, LOCALE_KEY, setLocaleSource, t } from "@/lib/i18n";
 import {
   createContext,
   useCallback,
@@ -43,23 +43,6 @@ const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID;
 
 const RELOGIN_KEY = "jodtang-liff-login-at";
 /**
- * The person's language, remembered in this browser so the words are right from the first paint
- * (some are made when the page's code loads, before sign-in). Sign-in tells the real one: when it
- * differs, it is remembered and the page loads once more.
- */
-const LOCALE_KEY = "phook-locale";
-
-function rememberedLocale(): string | null {
-  try {
-    return typeof window === "undefined" ? null : window.localStorage.getItem(LOCALE_KEY);
-  } catch {
-    return null;
-  }
-}
-const startLocale = rememberedLocale();
-if (isLocale(startLocale)) setLocaleSource(() => startLocale);
-
-/**
  * Remember the language and load the page in it (after sign-in told another, or a change). A browser
  * that keeps nothing is not reloaded (it would load in the old language again, for ever): its page
  * follows the sign-in instead, words made at load staying Thai.
@@ -67,10 +50,10 @@ if (isLocale(startLocale)) setLocaleSource(() => startLocale);
 export function switchLocale(locale: string): void {
   try {
     window.localStorage.setItem(LOCALE_KEY, locale);
+    if (window.localStorage.getItem(LOCALE_KEY) === locale) window.location.reload();
   } catch {
-    /* kept nothing */
+    /* kept nothing: no reload */
   }
-  if (rememberedLocale() === locale) window.location.reload();
 }
 const RELOGIN_WINDOW_MS = 30_000;
 
@@ -159,7 +142,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       const loc = body.loc;
       if (isLocale(loc)) {
         setLocaleSource(() => loc);
-        if (loc !== (isLocale(startLocale) ? startLocale : "th")) switchLocale(loc);
+        if (loc !== loadedLocale()) switchLocale(loc);
       }
       try {
         window.sessionStorage.removeItem(RELOGIN_KEY);
