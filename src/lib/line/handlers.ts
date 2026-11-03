@@ -342,7 +342,8 @@ import { log, safeMessage } from "@/lib/log";
 import type { Transcriber } from "@/lib/voice/transcribe";
 import { handleVoiceMessage, type VoiceDeps } from "./voice";
 import { enterCurrency, enterLocale, enterZone } from "@/lib/zone-scope";
-import { t as tr } from "@/lib/i18n";
+import { currentLocale, t as tr } from "@/lib/i18n";
+import { englishToThai } from "@/lib/parse/english";
 
 export interface LineEvent {
   type: string;
@@ -476,7 +477,10 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
       return;
     case "message":
       if (event.message?.type === "text" && event.message.text !== undefined) {
-        await reply(await handleText(event.message.text, user, deps));
+        // someone who chose English may type English: read as the Thai the bot understands
+        const typed =
+          currentLocale() === "en" ? englishToThai(event.message.text) : event.message.text;
+        await reply(await handleText(typed, user, deps));
       } else if (event.message?.type === "image") {
         const { slip } = deps;
         const files = fileChatDeps(deps);
@@ -1107,7 +1111,7 @@ async function runGoal(
         [
           tr("สร้างเป้าหมายแล้ว: {0} {1}", command.name, money(command.targetSatang)),
           dueOn ? `ภายใน ${dueOn.split("-").reverse().join("/")}` : "",
-          tr("หยอดกระปุกด้วย \"ออม {0} 1000\" ได้เลย", command.name),
+          tr('หยอดกระปุกด้วย "ออม {0} 1000" ได้เลย', command.name),
         ]
           .filter(Boolean)
           .join("\n"),
@@ -1285,7 +1289,13 @@ async function runTransfer(
       text: [
         tr("โอนแล้ว {0}", money(command.amountSatang)),
         `${walletLabel(from.wallet)} → ${walletLabel(to.wallet)}`,
-        tr("คงเหลือ: {0} {1} · {2} {3}", from.wallet.name, balance(from.wallet.id), to.wallet.name, balance(to.wallet.id)),
+        tr(
+          "คงเหลือ: {0} {1} · {2} {3}",
+          from.wallet.name,
+          balance(from.wallet.id),
+          to.wallet.name,
+          balance(to.wallet.id),
+        ),
         tr("(ไม่นับเป็นรายรับ/รายจ่าย)"),
       ].join("\n"),
     }),
@@ -1337,7 +1347,12 @@ async function summaryForRange(
       ),
     ];
   }
-  const subtitle = tr("{0} – {1} ({2} วัน)", formatThaiDate(result.range.from), formatThaiDate(result.lastDay), result.days);
+  const subtitle = tr(
+    "{0} – {1} ({2} วัน)",
+    formatThaiDate(result.range.from),
+    formatThaiDate(result.lastDay),
+    result.days,
+  );
   const data = await loadSummaryData(deps.db, user.id, result.range, result.previous);
   if (data.current.count === 0) return [text(tr("{0}\n{1}\nยังไม่มีรายการเลย", title, subtitle))];
   const base = process.env.APP_BASE_URL?.replace(/\/$/, "");
@@ -2012,7 +2027,8 @@ async function runCommand(
           range,
         );
         const subtitle = formatThaiDate(now);
-        if (data.current.count === 0) return [text(tr("สรุปวันนี้ ({0})\nยังไม่มีรายการเลย", subtitle))];
+        if (data.current.count === 0)
+          return [text(tr("สรุปวันนี้ ({0})\nยังไม่มีรายการเลย", subtitle))];
         // with a daily limit set (Pro and above) the card says how much of it is used
         const limit = await dailyLimitOf(user, deps);
         return [
@@ -2041,7 +2057,8 @@ async function runCommand(
       );
       const last = new Date(range.to.getTime() - 1);
       const subtitle = `${formatThaiDate(range.from)} – ${formatThaiDate(last)}`;
-      if (data.current.count === 0) return [text(tr("สรุปเดือนนี้ ({0})\nยังไม่มีรายการเลย", subtitle))];
+      if (data.current.count === 0)
+        return [text(tr("สรุปเดือนนี้ ({0})\nยังไม่มีรายการเลย", subtitle))];
       return [
         withSummaryShortcuts(
           buildSummaryCard({
@@ -2385,7 +2402,11 @@ async function runCommand(
       const url = pageUrl("/reminders");
       return [
         text(
-          [tr("เตือนที่รออยู่ ⏰"), ...lines, ...(url ? [tr("ดู แก้ไข หรือลบ: {0}", url)] : [])].join("\n"),
+          [
+            tr("เตือนที่รออยู่ ⏰"),
+            ...lines,
+            ...(url ? [tr("ดู แก้ไข หรือลบ: {0}", url)] : []),
+          ].join("\n"),
         ),
       ];
     }
@@ -2439,7 +2460,7 @@ async function runCommand(
       const { items, hasMore } = await listNotes(db, user.id, { q: command.term, limit: 5 });
       if (items.length === 0) return [text(noteNotFoundText(command.term))];
       const url = pageUrl(`/notes?q=${encodeURIComponent(command.term)}`);
-      return [text(noteListText(tr("โน้ตที่มี \"{0}\"", command.term), items, url, hasMore))];
+      return [text(noteListText(tr('โน้ตที่มี "{0}"', command.term), items, url, hasMore))];
     }
 
     case "search": {
@@ -2482,7 +2503,12 @@ async function runCommand(
       await updateTransaction(db, user.id, latest.id, { amountSatang: command.amountSatang });
       return [
         text(
-          tr("แก้แล้ว: {0} {1} → {2}", latest.title, money(txAmountSatang(latest)), money(command.amountSatang)),
+          tr(
+            "แก้แล้ว: {0} {1} → {2}",
+            latest.title,
+            money(txAmountSatang(latest)),
+            money(command.amountSatang),
+          ),
         ),
       ];
     }
