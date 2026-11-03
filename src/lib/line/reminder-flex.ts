@@ -17,6 +17,8 @@ export interface ReminderCardInput {
   cancelData?: string;
   /** The card's title (a group's reminder says so). */
   title?: string;
+  /** "Add to calendar" links (a group's reminder): Google Calendar, and an .ics for the phone. */
+  calendar?: { google: string; ics: string };
 }
 
 /** "Reminder set" card: what, when, and a button to cancel it. */
@@ -103,6 +105,37 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
                   height: "sm",
                   color: COLOR.primary,
                   action: { type: "uri", label: "ดูเตือนทั้งหมด", uri: input.listUrl },
+                },
+              ]
+            : []),
+          ...(input.calendar
+            ? [
+                {
+                  type: "box",
+                  layout: "horizontal",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "button",
+                      style: "secondary",
+                      height: "sm",
+                      action: { type: "uri", label: "📅 Google", uri: input.calendar.google },
+                    },
+                    {
+                      type: "button",
+                      style: "secondary",
+                      height: "sm",
+                      action: { type: "uri", label: "📅 iPhone", uri: input.calendar.ics },
+                    },
+                  ],
+                },
+                {
+                  type: "text",
+                  text: "เพิ่มลงปฏิทินในมือถือ ให้มือถือเตือนเองตรงเวลา",
+                  size: "xxs",
+                  color: COLOR.muted,
+                  wrap: true,
+                  align: "center",
                 },
               ]
             : []),

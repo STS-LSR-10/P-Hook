@@ -10,7 +10,8 @@ export type UsageKind =
   | "owl"
   | "router"
   | "file_save"
-  | "group_remind";
+  | "group_remind"
+  | "group_push";
 
 /** The "lifetime" bucket: a counter that never rolls over. */
 export const LIFETIME = "2000-01-01";
@@ -46,6 +47,46 @@ export async function takeUsage(
   });
   if (error) throw new Error(`take usage: ${error.message}`);
   return data === true;
+}
+
+/**
+ * Use `amount` of `limit` at once (a push to a group of 20 uses 20). False when it would not fit.
+ * Throws when the counter cannot be reached.
+ */
+export async function takeUsageAmount(
+  db: SupabaseClient,
+  userId: string,
+  kind: UsageKind,
+  amount: number,
+  limit: number,
+  month: string,
+): Promise<boolean> {
+  const { data, error } = await db.rpc("take_usage_amount", {
+    p_user: userId,
+    p_kind: kind,
+    p_month: month,
+    p_amount: amount,
+    p_limit: limit,
+  });
+  if (error) throw new Error(`take usage amount: ${error.message}`);
+  return data === true;
+}
+
+/** Give `amount` back because the work failed. */
+export async function refundUsageAmount(
+  db: SupabaseClient,
+  userId: string,
+  kind: UsageKind,
+  amount: number,
+  month: string,
+): Promise<void> {
+  const { error } = await db.rpc("refund_usage_amount", {
+    p_user: userId,
+    p_kind: kind,
+    p_month: month,
+    p_amount: amount,
+  });
+  if (error) throw new Error(`refund usage amount: ${error.message}`);
 }
 
 /** Give one back because the work failed. Best effort. */

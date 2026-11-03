@@ -9,6 +9,7 @@ import {
 } from "@/lib/file-repo";
 import { saveFile, type FileOwner, type SaveFailure } from "@/lib/file-save";
 import type { GroupRow } from "@/lib/group";
+import type { Mention } from "@/lib/group-mention";
 import { loadGroupOwlFacts, renderGroupOwlContext } from "@/lib/group-owl-context";
 import { log, safeMessage } from "@/lib/log";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
@@ -92,6 +93,8 @@ export interface GroupExtraContext {
   isOwner: boolean;
   /** A page of the app through LIFF. */
   pageUrl: (path: string) => string | undefined;
+  /** Who the message tags (not พี่ฮูก), for a reminder to tag them again. */
+  mentions?: Mention[];
 }
 
 /** The owner as the one whose space, limits and quota a group uses. */
@@ -246,7 +249,17 @@ export async function addGroupReminder(
     repeat: parsed.repeat,
     groupId: ctx.group.id,
     createdBy: ctx.userId,
+    // only the tags still in what it will say (one in the time part, "@แอน 9 โมง", is gone)
+    mentions: (ctx.mentions ?? []).filter((m) => parsed.body.includes(m.label)),
   });
+  // the phone's own calendar reminds for free; opened outside LINE, which cannot add it
+  const link = await ctx.deps.calendarLink?.(made.id).catch(() => undefined);
+  const calendar = link
+    ? {
+        google: `${link}&to=google&openExternalBrowser=1`,
+        ics: `${link}&to=ics&openExternalBrowser=1`,
+      }
+    : undefined;
   return [
     buildReminderCard({
       id: made.id,
@@ -258,6 +271,7 @@ export async function addGroupReminder(
       title: "ตั้งเตือนกลุ่มแล้ว ⏰",
       cancelData: `a=grmx&id=${made.id}`,
       listUrl: ctx.pageUrl(groupRemindersPath(ctx)),
+      calendar,
     }),
   ];
 }

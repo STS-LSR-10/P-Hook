@@ -3,6 +3,7 @@ import { buildSlipReader } from "@/lib/ocr/factory";
 import { rateLimit } from "@/lib/rate-limit";
 import { buildInsightWriter } from "@/lib/ai/insight-writer";
 import { buildOwl } from "@/lib/ai/owl";
+import { signCalendarToken } from "@/lib/auth/calendar-token";
 import { buildPdfReader } from "@/lib/ai/pdf-reader";
 import { buildIntentRouter } from "@/lib/ai/intent-router";
 import { buildTextStructurer } from "@/lib/ai/text-structurer";
@@ -86,6 +87,11 @@ export async function processEvents(rawEvents: unknown[]): Promise<void> {
   if (insightWriter) deps.insightWriter = insightWriter;
 
   // พี่ฮูก (questions about the person's own money) uses the same AI provider; without a key it is "not available".
+  const base = process.env.APP_BASE_URL?.replace(/\/$/, "");
+  if (base) {
+    deps.calendarLink = async (id) =>
+      `${base}/api/calendar/${id}?t=${await signCalendarToken(id, env.SESSION_JWT_SECRET)}`;
+  }
   const owl = buildOwl(env);
   if (owl) deps.owl = owl;
 

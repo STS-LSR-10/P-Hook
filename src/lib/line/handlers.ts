@@ -1,3 +1,4 @@
+import type { LineMentionee } from "@/lib/group-mention";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   budgetAlertsFor,
@@ -344,6 +345,8 @@ export interface LineEvent {
     fileSize?: number;
     /** Video messages: "line" when LINE holds the content, "external" when it is elsewhere. */
     contentProvider?: { type: string };
+    /** Text messages: the people it tags ("@แอน"), where each tag stands in the text. */
+    mention?: { mentionees?: LineMentionee[] };
   };
   postback?: {
     data: string;
@@ -362,6 +365,11 @@ export interface HandlerDeps {
     lineUserId: string,
   ) => Promise<{ displayName?: string; pictureUrl?: string } | null>;
   now: () => Date;
+  /**
+   * The "add to calendar" link of a reminder (without the `to=`), opened in the phone's browser.
+   * Absent -> the card has no calendar buttons.
+   */
+  calendarLink?: (reminderId: string) => Promise<string | undefined>;
   /** Per-user rate limiter (absent in tests -> no limiting). */
   limit?: (bucket: string, subject: string, rule: LimitRule) => Promise<RateLimitResult>;
   /** Slip reading (Phase 4). Absent -> image messages get a "coming soon" reply. */
