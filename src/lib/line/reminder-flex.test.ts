@@ -23,6 +23,12 @@ const json = (over: Partial<Parameters<typeof buildReminderCard>[0]> = {}) =>
   JSON.stringify(card(over));
 
 describe("reminder card", () => {
+  it("is a narrow card: what it holds is short", () => {
+    expect(
+      (buildReminderCard(base) as unknown as { contents: { size: string } }).contents.size,
+    ).toBe("kilo");
+  });
+
   it("says it is set and how often in the header, in the app's green", () => {
     const head = card().contents.header.contents.map((c) => c.text);
     expect(head).toEqual(["ตั้งเตือนแล้ว", "ครั้งเดียว"]);
