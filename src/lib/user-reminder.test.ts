@@ -115,6 +115,25 @@ describe("how often", () => {
     expect(bkk(r.remindAt)).toBe(at);
   });
 
+  // what a voice message is heard as: the words of the repeat come apart
+  it.each([
+    ["ทำ weekly ทุก วัน พฤหัสบดี 15:00 น.", "weekly", "2026-10-29 15:00", "ทำ weekly"],
+    ["ทุก วัน จันทร์ 8 โมง ประชุมทีม", "weekly", "2026-11-02 08:00", "ประชุมทีม"],
+    ["ทุก พฤหัส 9 โมง ส่งงาน", "weekly", "2026-10-29 09:00", "ส่งงาน"],
+    ["ทุก สัปดาห์ 9 โมง ซักผ้า", "weekly", "2026-10-29 09:00", "ซักผ้า"],
+    ["ทุก วัน ที่ 1 จ่ายค่าเช่า", "monthly", "2026-11-01 09:00", "จ่ายค่าเช่า"],
+    ["ทุก เดือน 9 โมง จ่ายค่าเน็ต", "monthly", "2026-10-29 09:00", "จ่ายค่าเน็ต"],
+    ["ทุก วัน 8 โมง กินยา", "daily", "2026-10-29 08:00", "กินยา"],
+  ])("spoken with spaces: %s", (input, repeat, at, body) => {
+    const r = ok(input);
+    expect([r.repeat, bkk(r.remindAt), r.body]).toEqual([repeat, at, body]);
+    expect(r.rolledToTomorrow).toBeFalsy();
+  });
+
+  it("a day said with a space is that day", () => {
+    expect(bkk(ok("วัน ศุกร์ 9 โมง ประชุม").remindAt)).toBe("2026-10-30 09:00");
+  });
+
   it("a one-off has no repeat", () => {
     expect(ok("พรุ่งนี้ 9 โมง ประชุม").repeat).toBeNull();
   });

@@ -251,9 +251,19 @@ function numberWordsToDigits(s: string): string {
     );
 }
 
+/**
+ * A voice message is heard with the words of a day apart: "ทุก วัน พฤหัสบดี", "ทุก เดือน", "วัน ที่ 1".
+ * Joined again, they read as typed ("ทุกวันพฤหัสบดี"); only these pairs, so other words keep their spaces.
+ */
+function joinDayWords(s: string): string {
+  return s
+    .replace(new RegExp(`ทุก\\s+(?=วัน|สัปดาห์|อาทิตย์|เดือน|${WEEKDAY_RE})`, "g"), "ทุก")
+    .replace(new RegExp(`วัน\\s+(?=ที่\\s*\\d|${WEEKDAY_RE})`, "g"), "วัน");
+}
+
 /** Parse what follows "เตือน": when, how often and what about. Times are Asia/Bangkok. */
 export function parseReminder(input: string, now: Date): ReminderParse {
-  let s = ` ${numberWordsToDigits(normalizeThaiDigits(input).replace(/\s+/g, " ").trim())} `;
+  let s = ` ${joinDayWords(numberWordsToDigits(normalizeThaiDigits(input).replace(/\s+/g, " ").trim()))} `;
 
   // how often
   let repeat: Repeat | null = null;
@@ -399,7 +409,7 @@ export function parseReminder(input: string, now: Date): ReminderParse {
 export function moveReminderTime(when: string, current: Date, now: Date): ReminderParse {
   const parsed = parseReminder(`${when} x`, now);
   if (!parsed.ok || parsed.repeat) return parsed;
-  const typed = numberWordsToDigits(normalizeThaiDigits(when));
+  const typed = joinDayWords(numberWordsToDigits(normalizeThaiDigits(when)));
   if (/อีก\s*\d/.test(typed)) return parsed;
   const { clock, rest } = takeTime(typed);
   const { date } = takeDate(rest);
