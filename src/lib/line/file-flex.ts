@@ -2,6 +2,7 @@ import type { FileDto } from "@/lib/file";
 import { formatBytes } from "@/lib/file";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
+import { compactFooter, compactHeader } from "./card-style";
 import { COLOR } from "./flex";
 import { t } from "@/lib/i18n";
 
@@ -70,16 +71,33 @@ function card(input: {
   };
 }
 
-/** "ไฟล์ของฉัน": no list, one button to the files page. */
+/** "ไฟล์ของฉัน": no list, a short card with one button to the files page. */
 export function buildFilesPageCard(filesUrl: string | undefined): LineMessage {
-  return card({
+  const footer = compactFooter(t("เปิดหน้าไฟล์"), filesUrl);
+  return {
+    type: "flex",
     altText: t("ไฟล์ของฉัน"),
-    title: t("ไฟล์ของฉัน 📁"),
-    lines: [t("ดู ค้นหา และจัดการไฟล์ที่เก็บไว้ได้ที่หน้าไฟล์")],
-    button: filesUrl?.startsWith("https://")
-      ? { label: t("เปิดหน้าไฟล์"), uri: filesUrl }
-      : undefined,
-  });
+    contents: {
+      type: "bubble",
+      size: "kilo",
+      header: compactHeader(t("ไฟล์ของฉัน")),
+      body: {
+        type: "box",
+        layout: "vertical",
+        paddingAll: "12px",
+        contents: [
+          {
+            type: "text",
+            text: t("ดู ค้นหา และจัดการไฟล์ที่เก็บไว้ได้ที่หน้าไฟล์"),
+            size: "sm",
+            color: COLOR.text,
+            wrap: true,
+          },
+        ],
+      },
+      ...(footer ? { footer } : {}),
+    },
+  };
 }
 
 /** Found files, one card each. The card opens the file through the signed-in page. */

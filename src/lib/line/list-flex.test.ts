@@ -8,6 +8,9 @@ import {
 } from "./list-flex";
 
 const json = (m: unknown) => JSON.stringify(m);
+const bubble = (m: unknown) =>
+  (m as { contents: Record<string, unknown> & { header: { contents: { text?: string }[] } } })
+    .contents;
 const note = (n: number, body: string) => ({
   id: `n${n}`,
   body,
@@ -107,5 +110,54 @@ describe("group cards", () => {
     expect(out).toContain('"text":"ทริปเชียงใหม่"');
     expect(out).toContain("20 ต.ค. 2569");
     expect(out).toContain("฿12,500");
+  });
+});
+
+describe("the list cards are as narrow and as plain as the reminder card", () => {
+  const cards = {
+    notes: buildNoteListCard({
+      title: "โน้ตล่าสุด",
+      items: [note(1, "ซื้อนม")],
+      url: "https://liff.line.me/x/notes",
+    }),
+    files: buildFilesPageCard("https://liff.line.me/x/files"),
+    groupReminders: buildGroupRemindersCard({
+      items: [{ id: "a", body: "ประชุม", remindAt: "2026-10-29T02:00:00Z", repeat: null }],
+    }),
+    groupRecent: buildGroupRecentCard([{ title: "ข้าว", amountSatang: 12000, payer: "แอน" }]),
+    groupTrips: buildGroupTripsCard([{ name: "ทริป", closedAt: null, totalSatang: 100 }]),
+  };
+
+  it.each(Object.entries(cards))(
+    "%s: kilo, a one-line header, no big filled button",
+    (_n, card) => {
+      expect(bubble(card).size).toBe("kilo");
+      // title (and a short count on the right), no emoji as big as the title
+      const head = bubble(card).header.contents;
+      expect(head.length).toBeLessThanOrEqual(2);
+      expect(json(card)).not.toContain('"style":"primary"');
+      expect(json(card)).not.toContain('cornerRadius":"26px');
+    },
+  );
+
+  it("the reminder list card too", async () => {
+    const { buildReminderListCard } = await import("./reminder-flex");
+    const card = buildReminderListCard({
+      items: [
+        {
+          id: "a",
+          body: "x",
+          remindAt: "2026-10-29T02:00:00Z",
+          repeat: null,
+          status: "active",
+          category: null,
+        },
+      ],
+      total: 1,
+      listUrl: "https://liff.line.me/x/reminders",
+    });
+    expect(bubble(card).size).toBe("kilo");
+    expect(bubble(card).header.contents.length).toBeLessThanOrEqual(2);
+    expect(json(card)).not.toContain('"style":"primary"');
   });
 });
