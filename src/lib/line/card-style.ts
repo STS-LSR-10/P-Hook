@@ -67,6 +67,76 @@ export function cardHeader(title: string, subtitles: string[], icon: string) {
   };
 }
 
+/**
+ * The short card's header, as the reminder card has it: one row, the title and a few words at the
+ * right. These cards are narrow (kilo): a title, a few rows and a small button.
+ */
+export function compactHeader(title: string, right?: string) {
+  return {
+    type: "box",
+    layout: "horizontal",
+    backgroundColor: TINT.header,
+    paddingAll: "12px",
+    contents: [
+      {
+        type: "text",
+        text: title,
+        weight: "bold",
+        size: "md",
+        color: TINT.headerTitle,
+        wrap: true,
+        flex: 1,
+      },
+      ...(right
+        ? [
+            {
+              type: "text",
+              text: right,
+              size: "sm",
+              color: TINT.headerTitle,
+              align: "end",
+              gravity: "center",
+              flex: 0,
+            },
+          ]
+        : []),
+    ],
+  };
+}
+
+/** An outlined, rounded button. */
+export function outlinePill(label: string, action: Record<string, unknown>, color = "#334155") {
+  return {
+    type: "box",
+    layout: "vertical",
+    flex: 1,
+    cornerRadius: "20px",
+    borderWidth: "1px",
+    borderColor: "#CBD5E1",
+    paddingAll: "8px",
+    action,
+    contents: [{ type: "text", text: label, align: "center", size: "sm", weight: "bold", color }],
+  };
+}
+
+/** The one outlined button along the foot of a short card; left out unless the link is https. */
+export function compactFooter(label: string, uri: string | undefined) {
+  if (!uri?.startsWith("https://")) return undefined;
+  return {
+    type: "box",
+    layout: "vertical",
+    paddingAll: "12px",
+    paddingTop: "0px",
+    contents: [
+      {
+        type: "box",
+        layout: "horizontal",
+        contents: [outlinePill(label, { type: "uri", label: actionLabel(label), uri })],
+      },
+    ],
+  };
+}
+
 /** The button's label without the emoji at its end (LINE shows it in some places, 20 characters at most). */
 const actionLabel = (label: string) =>
   label.replace(/[\s\p{Extended_Pictographic}\u{FE0F}➡→]+$/u, "").slice(0, 20) ||

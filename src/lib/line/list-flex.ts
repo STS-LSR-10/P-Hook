@@ -3,27 +3,27 @@ import { noteTitle, type NoteDto } from "@/lib/note";
 import { bangkokParts, formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import type { Repeat } from "@/lib/user-reminder";
-import { cardHeader, pillFooter } from "./card-style";
+import { compactFooter, compactHeader } from "./card-style";
 import { COLOR } from "./flex";
 import { dayLabel } from "./reminder-flex";
 import { t } from "@/lib/i18n";
 
-/** A card with the shared header, rows in its body and (with a link) a button along its foot. */
+/** A narrow card: the one-row header, rows in its body and (with a link) a small button at the foot. */
 function listCard(input: {
   title: string;
-  subtitle: string;
-  icon: string;
+  /** A few words at the right of the title ("3 โน้ต"). */
+  right: string;
   altText: string;
   rows: unknown[];
   button?: { label: string; uri: string | undefined };
 }): LineMessage {
   const bubble: Record<string, unknown> = {
     type: "bubble",
-    size: "mega",
-    header: cardHeader(input.title, [input.subtitle], input.icon),
+    size: "kilo",
+    header: compactHeader(input.title, input.right),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: input.rows },
   };
-  const footer = input.button ? pillFooter(input.button.label, input.button.uri) : undefined;
+  const footer = input.button ? compactFooter(input.button.label, input.button.uri) : undefined;
   if (footer) bubble.footer = footer;
   return { type: "flex", altText: input.altText, contents: bubble };
 }
@@ -65,8 +65,7 @@ export function buildNoteListCard(input: {
   if (input.more) body.push(muted(t("ยังมีอีก ดูทั้งหมดได้ในแอป"), { margin: "lg" }));
   return listCard({
     title: input.title,
-    subtitle: t("{0} โน้ต", input.items.length),
-    icon: "📝",
+    right: t("{0} โน้ต", input.items.length),
     altText: `${input.title}: ${input.items.length}`,
     rows: body,
     button: { label: t("ดูโน้ตทั้งหมด"), uri: input.url },
@@ -139,8 +138,7 @@ export function buildGroupRemindersCard(input: {
   );
   return listCard({
     title: t("เตือนของกลุ่ม"),
-    subtitle: t("{0} รายการที่รออยู่", input.items.length),
-    icon: "⏰",
+    right: t("{0} รายการ", input.items.length),
     altText: t("เตือนของกลุ่ม {0} รายการ", input.items.length),
     rows: body,
   });
@@ -180,8 +178,7 @@ export function buildGroupRecentCard(
   ]);
   return listCard({
     title: t("รายการล่าสุดของกลุ่ม"),
-    subtitle: t("{0} รายการล่าสุด", items.length),
-    icon: "🧾",
+    right: t("{0} รายการ", items.length),
     altText: t("รายการล่าสุดของกลุ่ม {0} รายการ", items.length),
     rows: separated(rows),
   });
@@ -221,8 +218,7 @@ export function buildGroupTripsCard(
   ]);
   return listCard({
     title: t("ทริปที่จบแล้ว"),
-    subtitle: t("{0} ทริป", trips.length),
-    icon: "🧳",
+    right: t("{0} ทริป", trips.length),
     altText: t("ทริปที่จบแล้ว {0} ทริป", trips.length),
     rows: separated(rows),
   });

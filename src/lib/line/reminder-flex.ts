@@ -2,7 +2,7 @@ import type { LineMessage } from "@/lib/types";
 import type { ReminderDto } from "@/lib/user-reminder";
 import { REPEAT_LABEL, type Repeat } from "@/lib/user-reminder";
 import { bangkokParts, formatThaiDate, fromBangkok } from "@/lib/thai-date";
-import { cardHeader, pillFooter } from "./card-style";
+import { compactFooter, compactHeader, outlinePill } from "./card-style";
 import { COLOR } from "./flex";
 import { t } from "@/lib/i18n";
 
@@ -30,7 +30,6 @@ export interface ReminderCardInput {
 }
 
 const INK = "#0B5D4F";
-const LINE = "#CBD5E1";
 
 /** "Reminder set" card: what, the time large with its day, and buttons to change the time or cancel. */
 export function buildReminderCard(input: ReminderCardInput): LineMessage {
@@ -278,11 +277,11 @@ export function buildReminderListCard(input: {
   }
   const bubble: Record<string, unknown> = {
     type: "bubble",
-    size: "mega",
-    header: cardHeader(t("เตือนที่รออยู่"), [t("{0} รายการที่จะถึงก่อน", shown.length)], "⏰"),
+    size: "kilo",
+    header: compactHeader(t("เตือนที่รออยู่"), t("{0} รายการ", input.total)),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
-  const footer = pillFooter(t("ดูเตือนทั้งหมด"), input.listUrl);
+  const footer = compactFooter(t("ดูเตือนทั้งหมด"), input.listUrl);
   if (footer) bubble.footer = footer;
   return {
     type: "flex",
@@ -291,20 +290,7 @@ export function buildReminderListCard(input: {
   };
 }
 
-/** An outlined, rounded button. */
-function pill(label: string, action: Record<string, unknown>, color = "#334155") {
-  return {
-    type: "box",
-    layout: "vertical",
-    flex: 1,
-    cornerRadius: "20px",
-    borderWidth: "1px",
-    borderColor: LINE,
-    paddingAll: "8px",
-    action,
-    contents: [{ type: "text", text: label, align: "center", size: "sm", weight: "bold", color }],
-  };
-}
+const pill = outlinePill;
 
 const WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 
