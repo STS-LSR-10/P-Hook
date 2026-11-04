@@ -38,7 +38,7 @@ export function clockIsTheAmount(input: string, entries: ParsedEntry[]): boolean
  * the end, so "ผ้าไหม 500" stays an entry.
  */
 const ASKS_RE =
-  /(?:ไหม|มั้ย|หรือยัง|หรือเปล่า|รึเปล่า|รึยัง)\s*\??\s*$|\?\s*$|เท่าไร|เท่าไหร่|กี่บาท|กี่รายการ|กี่ครั้ง/;
+  /(?:(?<!ผ้า)ไหม|มั้ย|หรือยัง|หรือเปล่า|รึเปล่า|รึยัง)\s*\??\s*$|\?\s*$|เท่าไร|เท่าไหร่|กี่บาท|กี่รายการ|กี่ครั้ง/;
 
 /** Three lines or more, most with no number: a list of things, not a list of entries. */
 function isPlainList(input: string): boolean {

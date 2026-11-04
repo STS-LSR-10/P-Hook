@@ -14,28 +14,14 @@ describe("queryCommand", () => {
     expect(ask("this_month")).toEqual({ kind: "summary", scope: "month" });
   });
 
+  it("days with a summary of their own get it, with its own title", () => {
+    expect(ask("yesterday")).toEqual({ kind: "summary-preset", preset: "yesterday" });
+    expect(ask("this_week")).toEqual({ kind: "summary-preset", preset: "this-week" });
+    expect(ask("last_week")).toEqual({ kind: "summary-preset", preset: "last-week" });
+    expect(ask("last_month")).toEqual({ kind: "summary-preset", preset: "last-month" });
+  });
+
   it("other days are a range, worked out here and not by the AI", () => {
-    expect(ask("yesterday")).toEqual({
-      kind: "summary-range",
-      start: { year: 2026, month: 11, day: 3 },
-      end: { year: 2026, month: 11, day: 3 },
-    });
-    expect(ask("last_month")).toEqual({
-      kind: "summary-range",
-      start: { year: 2026, month: 10, day: 1 },
-      end: { year: 2026, month: 10, day: 31 },
-    });
-    // weeks start on Monday
-    expect(ask("this_week")).toEqual({
-      kind: "summary-range",
-      start: { year: 2026, month: 11, day: 2 },
-      end: "today",
-    });
-    expect(ask("last_week")).toEqual({
-      kind: "summary-range",
-      start: { year: 2026, month: 10, day: 26 },
-      end: { year: 2026, month: 11, day: 1 },
-    });
     expect(ask("last_7_days")).toMatchObject({ start: { month: 10, day: 29 }, end: "today" });
     expect(ask("this_year")).toMatchObject({ start: { year: 2026, month: 1, day: 1 } });
     expect(ask("last_year")).toMatchObject({
@@ -45,6 +31,19 @@ describe("queryCommand", () => {
   });
 
   it("one thing asked about is a search over those days", () => {
+    // weeks start on Monday
+    expect(ask("this_week", "กาแฟ")).toMatchObject({
+      start: { year: 2026, month: 11, day: 2 },
+      end: "today",
+    });
+    expect(ask("last_week", "กาแฟ")).toMatchObject({
+      start: { year: 2026, month: 10, day: 26 },
+      end: { year: 2026, month: 11, day: 1 },
+    });
+    expect(ask("yesterday", "กาแฟ")).toMatchObject({
+      start: { year: 2026, month: 11, day: 3 },
+      end: { year: 2026, month: 11, day: 3 },
+    });
     expect(ask("last_month", "กาแฟ")).toEqual({
       kind: "search",
       term: "กาแฟ",

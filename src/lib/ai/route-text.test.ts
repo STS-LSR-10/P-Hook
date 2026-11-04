@@ -56,8 +56,9 @@ describe("needsRouter", () => {
     expect(needsRouter(t, read(t))).toBe(true),
   );
 
-  it.each(["ผ้าไหม 500", "ไหมพรม 120"])("an entry about silk stays one: %s", (t) =>
-    expect(needsRouter(t, read(t))).toBe(false),
+  it.each(["ผ้าไหม 500", "ไหมพรม 120", "1200 ผ้าไหม", "ค่าผ้า 500 ผ้าไหม"])(
+    "an entry about silk stays one: %s",
+    (t) => expect(needsRouter(t, read(t))).toBe(false),
   );
 
   it("keeps a typed list of entries with the rules", () => {

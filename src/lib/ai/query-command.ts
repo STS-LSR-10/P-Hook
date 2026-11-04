@@ -1,5 +1,6 @@
 import type { Command } from "@/lib/commands";
 import type { DaySpec } from "@/lib/summary-range";
+import type { SummaryPreset } from "@/lib/summary-range-text";
 import { addLocalDays, bangkokParts, fromBangkok, isValidYmd } from "@/lib/thai-date";
 
 /**
@@ -41,6 +42,14 @@ function isoDay(value: string | null): DaySpec | null {
   const spec = { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
   return isValidYmd(spec.year, spec.month, spec.day) ? spec : null;
 }
+
+/** Days that have a summary of their own, with its own title ("สรุปเมื่อวาน"). */
+const PRESETS: Partial<Record<QueryPeriod, SummaryPreset>> = {
+  yesterday: "yesterday",
+  this_week: "this-week",
+  last_week: "last-week",
+  last_month: "last-month",
+};
 
 /** First and last day asked about ("today" when it runs up to now). Null when it cannot be told. */
 function daysOf(q: MoneyQuery, now: Date): { start: DaySpec; end: DaySpec | "today" } | null {
@@ -91,6 +100,8 @@ export function queryCommand(q: MoneyQuery, now: Date): Command | null {
   const term = q.searchTerm?.trim() || null;
   if (!term && q.period === "today") return { kind: "summary", scope: "today" };
   if (!term && q.period === "this_month") return { kind: "summary", scope: "month" };
+  const preset = term ? undefined : PRESETS[q.period];
+  if (preset) return { kind: "summary-preset", preset };
   const days = daysOf(q, now);
   if (!days) return null;
   return term ? { kind: "search", term, ...days } : { kind: "summary-range", ...days };
