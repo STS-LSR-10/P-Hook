@@ -57,8 +57,8 @@ describe("the cards' one scale", () => {
           WIDTHS.has(v) ||
           PICTURE.has(v) ||
           /^\d+px$/.test(v) ||
-          // the group welcome: small cards to swipe through
-          (v === "kilo" && file === "help-flex.ts"),
+          // the group welcome (small cards to swipe through) and the reminder card (short)
+          (v === "kilo" && (file === "help-flex.ts" || file === "reminder-flex.ts")),
       ),
     ).toEqual([]);
   });

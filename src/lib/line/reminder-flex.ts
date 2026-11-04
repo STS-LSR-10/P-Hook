@@ -53,7 +53,8 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
     altText: t("ตั้งเตือนแล้ว: {0}", input.body),
     contents: {
       type: "bubble",
-      size: "mega",
+      // narrow: a title, a time and two short buttons side by side fit
+      size: "kilo",
       header: {
         type: "box",
         layout: "horizontal",
