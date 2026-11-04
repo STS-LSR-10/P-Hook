@@ -2456,4 +2456,5 @@ export const EN: Record<string, string> = {
   พรุ่งนี้: "Tomorrow",
   ตั้งเตือนกลุ่มแล้ว: "Group reminder set",
   แก้ไขเตือนแล้ว: "Reminder updated",
+  ดูยอดเงิน: "See totals",
 };

@@ -277,6 +277,90 @@ function parseLine(segment: string, now: Date, currencies: boolean): ParsedEntry
   };
 }
 
+/** Words that count things: "2 จาน 100" is one entry of two dishes, not two entries. */
+const UNIT_WORDS = new Set([
+  "จาน",
+  "แก้ว",
+  "ชิ้น",
+  "ตัว",
+  "อัน",
+  "ลูก",
+  "ขวด",
+  "ถุง",
+  "กล่อง",
+  "ห่อ",
+  "คน",
+  "ที่",
+  "ใบ",
+  "เม็ด",
+  "ครั้ง",
+  "วัน",
+  "คืน",
+  "ชม",
+  "ชม.",
+  "ชั่วโมง",
+  "นาที",
+  "กิโล",
+  "กก",
+  "กก.",
+  "โล",
+  "ลิตร",
+  "เมตร",
+  "โมง",
+  "ปี",
+  "เดือน",
+  "คัน",
+  "เล่ม",
+  "ชุด",
+  "คู่",
+  "แพ็ค",
+  "แพค",
+  "ซอง",
+  "กระป๋อง",
+  "ถ้วย",
+  "ชาม",
+  "ไม้",
+  "หัว",
+  "ดอก",
+  "ต้น",
+  "แผ่น",
+  "ม้วน",
+  "หลอด",
+  "บาท",
+  "บ.",
+]);
+const RUN_NUMBER =
+  /\d(?:[\d,]*\d)?(?:\.\d+)?\s*(?:k(?![a-z])|พัน|หมื่น|แสน|ล้าน)?\s*(?:บาท|บ\.|฿)?/gi;
+const LETTER = /[a-zA-Z\u0E00-\u0E7F]/;
+
+/**
+ * "ข้าวเช้า16 น้ำ14 กาแฟ30": names each followed by their own amount, typed one after another with no
+ * comma, are several entries. Each piece must be a name (not a counting word: "2 จาน 100" stays one)
+ * then its amount, with nothing after the last. Null when the segment is not such a run. A day said
+ * first ("เมื่อวาน …") is returned apart, for all of them.
+ */
+function splitRun(segment: string, now: Date): { pieces: string[]; date: Date | null } | null {
+  const text = normalizeThaiDigits(segment).trim();
+  if (/[@#/:]|https?:/i.test(text)) return null;
+  const dated = extractDate(text, now);
+  const body = dated.text;
+  const numbers = [...body.matchAll(RUN_NUMBER)];
+  if (numbers.length < 2) return null;
+  const pieces: string[] = [];
+  let from = 0;
+  for (const m of numbers) {
+    const end = m.index + m[0].length;
+    const name = body.slice(from, m.index).trim();
+    // a name of its own: letters, and not a word that counts what came before
+    if (!LETTER.test(name) || UNIT_WORDS.has(name.split(/\s+/)[0] ?? "")) return null;
+    // the name ends where the number starts ("น้ำ14") or before a space; a sign belongs to the amount
+    pieces.push(body.slice(from, end).trim());
+    from = end;
+  }
+  if (body.slice(from).trim()) return null;
+  return { pieces, date: dated.date };
+}
+
 /** Parse a chat message into zero or more transaction entries. */
 export function parseMessage(
   input: string,
@@ -287,6 +371,17 @@ export function parseMessage(
   const unparsed: string[] = [];
   for (const segment of input.split(SPLIT_RE)) {
     if (!segment.trim()) continue;
+    const run = splitRun(segment, now);
+    if (run) {
+      for (const piece of run.pieces) {
+        const entry = parseLine(piece, now, options.currencies === true);
+        if (!entry) continue;
+        entries.push(
+          run.date ? { ...entry, occurredAt: run.date, backdated: run.date !== now } : entry,
+        );
+      }
+      continue;
+    }
     const entry = parseLine(segment, now, options.currencies === true);
     if (entry) entries.push(entry);
     else unparsed.push(segment.trim());

@@ -370,3 +370,38 @@ describe("@wallet", () => {
     expect(one("ค่าเมล a@b 30").walletHint).toBeNull();
   });
 });
+
+describe("several entries typed one after another, with no comma between", () => {
+  const now = new Date("2026-11-04T03:00:00Z");
+  const read = (s: string) =>
+    parseMessage(s, now).entries.map((e) => [e.title, e.amountSatang / 100, e.type]);
+
+  it("each name with its own amount is an entry", () => {
+    expect(read("ข้าวเช้า16 น้ำ14 กาแฟ30")).toEqual([
+      ["ข้าวเช้า", 16, "expense"],
+      ["น้ำ", 14, "expense"],
+      ["กาแฟ", 30, "expense"],
+    ]);
+    expect(read("ข้าวเช้า 16 น้ำ 14 กาแฟ 30")).toHaveLength(3);
+  });
+
+  it("each knows whether it is money in or out", () => {
+    expect(read("ได้เงินเดือน 30000 จ่ายค่าห้อง 5000")).toEqual([
+      ["ได้เงินเดือน", 30000, "income"],
+      ["จ่ายค่าห้อง", 5000, "expense"],
+    ]);
+  });
+
+  it("a day said first is the day of them all", () => {
+    const entries = parseMessage("เมื่อวาน ข้าว 50 กาแฟ 30", now).entries;
+    expect(entries.map((e) => e.title)).toEqual(["ข้าว", "กาแฟ"]);
+    expect(entries.every((e) => e.backdated)).toBe(true);
+  });
+
+  it("a count with its unit stays one entry", () => {
+    expect(read("ข้าวมันไก่ 2 จาน 100")).toEqual([["ข้าวมันไก่ 2 จาน", 100, "expense"]]);
+    expect(read("กาแฟ 2 แก้ว 90")).toEqual([["กาแฟ 2 แก้ว", 90, "expense"]]);
+    expect(read("7-11 50")).toEqual([["7-11", 50, "expense"]]);
+    expect(read("ค่าไฟ 1200")).toEqual([["ค่าไฟ", 1200, "expense"]]);
+  });
+});

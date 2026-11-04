@@ -52,6 +52,40 @@ describe("sanitizeDecision", () => {
     expect(d?.searchTerm).toHaveLength(100);
   });
 
+  it("reads a question about money over some days", () => {
+    const d = sanitizeDecision({
+      intent: "query",
+      confidence: 0.9,
+      period: "last_month",
+      searchTerm: "กาแฟ",
+    });
+    expect(d?.intent).toBe("query");
+    expect(d?.period).toBe("last_month");
+    expect(d?.searchTerm).toBe("กาแฟ");
+  });
+
+  it("a question with no days said is about this month", () => {
+    expect(sanitizeDecision({ intent: "query", confidence: 0.9 })?.period).toBe("this_month");
+  });
+
+  it("days of its own need both ends as real dates", () => {
+    const ok = sanitizeDecision({
+      intent: "query",
+      confidence: 0.9,
+      period: "custom",
+      fromDate: "2026-10-01",
+      toDate: "2026-10-15",
+    });
+    expect([ok?.intent, ok?.fromDate, ok?.toDate]).toEqual(["query", "2026-10-01", "2026-10-15"]);
+    const bad = sanitizeDecision({
+      intent: "query",
+      confidence: 0.9,
+      period: "custom",
+      fromDate: "last tuesday",
+    });
+    expect(bad?.intent).toBe("unclear");
+  });
+
   it("returns null for junk", () => {
     expect(sanitizeDecision("hello")).toBeNull();
   });

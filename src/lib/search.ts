@@ -35,11 +35,13 @@ export async function loadSearchTotals(
   db: SupabaseClient,
   userId: string,
   target: SearchTarget,
+  range?: { from: Date; to: Date },
 ): Promise<SearchTotals> {
   const { data, error } = await db.rpc("search_totals", {
     p_user: userId,
     p_q: target.q,
     p_tag: target.tag,
+    ...(range ? { p_from: range.from.toISOString(), p_to: range.to.toISOString() } : {}),
   });
   if (error) throw new Error(`search totals: ${error.message}`);
   const row = (Array.isArray(data) ? data[0] : data) as
@@ -57,10 +59,16 @@ export async function loadSearchItems(
   userId: string,
   target: SearchTarget,
   limit: number,
+  range?: { from: Date; to: Date },
 ): Promise<TxDto[]> {
   const { data, error } = await applyTxFilters(
     db.from("transactions").select(TX_SELECT).eq("user_id", userId).eq("status", "confirmed"),
-    { q: target.q ?? undefined, tag: target.tag ?? undefined },
+    {
+      q: target.q ?? undefined,
+      tag: target.tag ?? undefined,
+      from: range?.from.toISOString(),
+      to: range?.to.toISOString(),
+    },
   )
     .order("occurred_at", { ascending: false })
     .limit(limit);

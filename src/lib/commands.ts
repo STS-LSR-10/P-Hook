@@ -14,7 +14,8 @@ export type Command =
   | { kind: "summary-range-pick" }
   | { kind: "summary-menu" }
   | { kind: "summary-preset"; preset: SummaryPreset }
-  | { kind: "search"; term: string }
+  /** `start`: only these days (from a question the AI sorted). */
+  | { kind: "search"; term: string; start?: DaySpec; end?: DaySpec | "today" }
   | { kind: "search-usage" }
   | { kind: "note-add"; body: string }
   | { kind: "file-save"; name: string | null }

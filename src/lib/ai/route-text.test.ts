@@ -47,6 +47,19 @@ describe("needsRouter", () => {
     "เล่นเกมตอน 19.13 น.",
   ])("sends %s to the router", (t) => expect(needsRouter(t, read(t))).toBe(true));
 
+  it.each([
+    "เดือนนี้ใช้ไปเกิน 5000 หรือยัง",
+    "ค่าไฟ 2000 แพงไหม",
+    "เดือนนี้ค่ากาแฟรวมเท่าไหร่ 50 ไหม",
+    "อาทิตย์นี้จ่ายไป 3000 แล้วใช่ไหม?",
+  ])("a question with a number in it is not an entry: %s goes to the router", (t) =>
+    expect(needsRouter(t, read(t))).toBe(true),
+  );
+
+  it.each(["ผ้าไหม 500", "ไหมพรม 120"])("an entry about silk stays one: %s", (t) =>
+    expect(needsRouter(t, read(t))).toBe(false),
+  );
+
   it("keeps a typed list of entries with the rules", () => {
     const t = "กาแฟ 50\nข้าว 60\nน้ำ 20";
     expect(needsRouter(t, read(t))).toBe(false);
