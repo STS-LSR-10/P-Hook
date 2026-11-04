@@ -336,3 +336,31 @@ describe("someone who chose English", () => {
     expect(created).toHaveLength(1);
   });
 });
+
+describe("after a reminder was changed on its page", () => {
+  it("the chat gets its card, saying it was changed", async () => {
+    listed = [
+      {
+        id: ID,
+        body: "ไปทำงาน",
+        remindAt: "2026-10-29T03:10:00Z",
+        repeat: null,
+        status: "active",
+        category: null,
+      },
+    ];
+    const { deps, reply } = setup();
+    await handleEvent(say(`แก้ไขเตือนเสร็จแล้ว #${ID.slice(0, 8)}`), deps);
+    expect(sent(reply)[0]?.type).toBe("flex");
+    expect(said(reply)).toContain("แก้ไขเตือนแล้ว");
+    expect(said(reply)).toContain('"text":"10:10"');
+    expect(said(reply)).toContain('"text":"ไปทำงาน"');
+  });
+
+  it("one that is gone says so", async () => {
+    listed = [];
+    const { deps, reply } = setup();
+    await handleEvent(say("แก้ไขเตือนเสร็จแล้ว #deadbeef"), deps);
+    expect(said(reply)).toBe(REMINDER_GONE_TEXT);
+  });
+});

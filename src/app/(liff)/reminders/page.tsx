@@ -46,6 +46,38 @@ import {
 } from "@/lib/user-reminder";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
+import { canSendToChat } from "@/lib/liff-chat";
+
+/** How long "แก้ไขแล้ว" shows before the page closes back to the chat. */
+const CLOSE_AFTER_MS = 900;
+
+/**
+ * After a reminder opened from its card in the chat was changed: say so in the chat as the person's own
+ * message (the bot answers it with the reminder's card, a free reply) and close, back to the chat.
+ * False when LINE does not let this page write in the chat (opened outside it).
+ */
+async function backToChat(reminderId: string): Promise<boolean> {
+  try {
+    const liff = (await import("@line/liff")).default;
+    if (!canSendToChat(liff)) return false;
+    try {
+      if ((await liff.permission.query("chat_message.write")).state === "prompt") {
+        await liff.permission.requestAll();
+      }
+    } catch {
+      /* sending below tells whether it worked */
+    }
+    // a command the bot reads: stays Thai
+    await liff.sendMessages([
+      { type: "text", text: `แก้ไขเตือนเสร็จแล้ว #${reminderId.slice(0, 8)}` },
+    ]);
+    await new Promise((r) => setTimeout(r, CLOSE_AFTER_MS));
+    liff.closeWindow();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface RemindersResponse {
   items: ReminderDto[];
@@ -145,6 +177,9 @@ function Reminders() {
 
 function PersonalReminders() {
   const { api } = useLiff();
+  // "?edit=<id>": opened from a reminder's card in the chat, on that reminder, ready to change
+  const editId = useSearchParams().get("edit");
+  const opened = useRef(false);
   const reminders = useApi<RemindersResponse>("/api/reminders");
   const data = reminders.data;
   const items = useMemo(() => data?.items ?? [], [data]);
@@ -160,6 +195,18 @@ function PersonalReminders() {
   const ticking = useRef(new Set<string>());
   const [word, setWord] = useState(FIRST_WORD);
   const [cheers, setCheers] = useState(0);
+
+  useEffect(() => {
+    if (!editId || opened.current || !data) return;
+    opened.current = true;
+    const reminder = data.items.find((r) => r.id === editId);
+    if (!reminder) {
+      setNotice(t("ไม่พบเตือนนี้แล้ว (อาจส่งไปแล้วหรือถูกยกเลิก)"));
+      return;
+    }
+    pick(ymdOf(new Date(reminder.remindAt)));
+    setForm({ reminder });
+  }, [editId, data]);
 
   const cells = useMemo(() => monthGrid(shown.year, shown.month), [shown]);
   const week = weekStart(selected);
@@ -514,8 +561,11 @@ function PersonalReminders() {
           }}
           onClose={() => setForm(null)}
           onSaved={(message, ymd) => {
+            const fromChat = form.reminder !== null && form.reminder.id === editId;
             setForm(null);
             setNotice(message);
+            // changed from its card: back to the chat, where its new card arrives
+            if (fromChat && form.reminder) void backToChat(form.reminder.id);
             // a repeat stays on the day in view: it still has rounds there
             if (!form.reminder?.repeat) pick(ymd);
             cheer();

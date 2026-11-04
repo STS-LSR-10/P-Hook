@@ -52,6 +52,7 @@ export type Command =
   | { kind: "edit-latest"; amountSatang: number }
   | { kind: "edit-latest-usage" }
   | { kind: "edit-done" }
+  | { kind: "reminder-edited"; idStart: string }
   | { kind: "points" }
   | { kind: "my-code" }
   | { kind: "use-code"; code: string }
@@ -240,6 +241,9 @@ export function parseCommand(input: string): Command | null {
 
   // sent by the LIFF edit page after a save: the bot answers with the card of what was edited
   if (text === "แก้ไขเสร็จแล้ว") return { kind: "edit-done" };
+  // the reminders page, after a reminder opened from its card was changed: answer with its card
+  const reminderEdited = /^แก้ไขเตือนเสร็จแล้ว #([0-9a-f]{8})$/.exec(text);
+  if (reminderEdited?.[1]) return { kind: "reminder-edited", idStart: reminderEdited[1] };
   if (text.startsWith("แก้ล่าสุด")) {
     const rest = text.slice("แก้ล่าสุด".length).trim();
     const m = /^(\d(?:[\d,]*\d)?(?:\.\d+)?)\s*(k|พัน|หมื่น|แสน|ล้าน)?\s*(?:บาท)?$/.exec(rest);

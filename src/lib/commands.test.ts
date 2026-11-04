@@ -433,3 +433,13 @@ describe("kept files", () => {
     expect(parseCommand("เก็บไว้กินเย็น 80")).toBeNull();
   });
 });
+
+describe("the reminders page tells the chat a reminder was changed", () => {
+  it("names it by the start of its id", () => {
+    expect(parseCommand("แก้ไขเตือนเสร็จแล้ว #1a2b3c4d")).toEqual({
+      kind: "reminder-edited",
+      idStart: "1a2b3c4d",
+    });
+    expect(parseCommand("แก้ไขเตือนเสร็จแล้ว")).toBeNull();
+  });
+});

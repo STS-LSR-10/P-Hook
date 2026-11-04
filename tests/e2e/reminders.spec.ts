@@ -225,6 +225,35 @@ test.describe("reminders page (360px)", () => {
     });
   });
 
+  test("opened from a reminder's card (?edit=), its sheet is already open; saving says so", async ({
+    page,
+  }) => {
+    let patched: unknown = null;
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST(THREE),
+      [`PATCH /api/reminders/${ID(3)}`]: (route: Route) => {
+        patched = JSON.parse(route.request().postData() ?? "{}");
+        return { reminder: {} };
+      },
+    });
+    // a reminder on another day: the page opens on it
+    await page.goto(`/reminders?edit=${ID(3)}`);
+    await expect(page.getByLabel("ชื่อรายการเตือน")).toHaveValue("ส่งรายงาน");
+    await expect(page.getByLabel("วันที่เตือน")).toHaveValue("2026-11-20");
+    await page.getByLabel("เวลา").fill("11:00");
+    await page.getByRole("button", { name: "บันทึกการเตือน" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "แก้ไขแล้ว" })).toBeVisible();
+    expect(patched).toMatchObject({ body: "ส่งรายงาน", remindAt: "2026-11-20T04:00:00.000Z" });
+    await expectNoHorizontalScroll(page);
+  });
+
+  test("?edit= of a reminder that is gone says so", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
+    await page.goto(`/reminders?edit=${ID(9)}`);
+    await expect(page.getByText("ไม่พบเตือนนี้แล้ว", { exact: false })).toBeVisible();
+  });
+
   test("ticking a one-off marks it done", async ({ page }) => {
     let sent: unknown;
     await mockApi(page, {

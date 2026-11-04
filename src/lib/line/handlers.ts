@@ -2519,6 +2519,26 @@ async function runCommand(
       ];
     }
 
+    case "reminder-edited": {
+      // the reminders page changed one opened from its card: its card again, saying so
+      const reminder = (await listReminders(db, user.id)).find((r) =>
+        r.id.startsWith(command.idStart),
+      );
+      if (!reminder) return [text(REMINDER_GONE_TEXT)];
+      return [
+        buildReminderCard({
+          id: reminder.id,
+          body: reminder.body,
+          remindAt: new Date(reminder.remindAt),
+          repeat: reminder.repeat,
+          timeDefaulted: false,
+          listUrl: pageUrl("/reminders"),
+          now: deps.now(),
+          edited: true,
+        }),
+      ];
+    }
+
     case "edit-done": {
       // the LIFF editor sends this after a save: show what was just edited (nothing if nothing was)
       const card = await editedCardFor(user, deps);
