@@ -74,7 +74,7 @@ import { generateInsight, type InsightWriter } from "@/lib/ai/insight-writer";
 import { forecastCycle } from "@/lib/forecast";
 import { hasSomethingToSay } from "@/lib/insight";
 import { resolveYear } from "@/lib/year-summary";
-import { daySpecFromIso, resolveRange, type DaySpec } from "@/lib/summary-range";
+import { daySpecFromIso, resolveRange, type DaySpec, type RangeResult } from "@/lib/summary-range";
 import {
   buildSummaryCard,
   expenseChangePercent,
@@ -1333,6 +1333,13 @@ function listUrl(term: string): string | undefined {
 }
 
 /** The card for a custom range (typed or picked), or the text that says what is wrong with it. */
+/** Why the days asked for cannot be summed up. */
+function rangeErrorText(reason: "invalid" | "order" | "too_long"): string {
+  if (reason === "order") return SUMMARY_RANGE_ORDER_TEXT;
+  if (reason === "too_long") return SUMMARY_RANGE_TOO_LONG_TEXT;
+  return SUMMARY_RANGE_BAD_DATE_TEXT;
+}
+
 async function summaryForRange(
   user: UserRow,
   deps: HandlerDeps,
@@ -1341,17 +1348,7 @@ async function summaryForRange(
   title = tr("สรุปช่วงที่เลือก"),
 ): Promise<LineMessage[]> {
   const result = resolveRange(start, end, deps.now());
-  if (!result.ok) {
-    return [
-      text(
-        result.reason === "order"
-          ? SUMMARY_RANGE_ORDER_TEXT
-          : result.reason === "too_long"
-            ? SUMMARY_RANGE_TOO_LONG_TEXT
-            : SUMMARY_RANGE_BAD_DATE_TEXT,
-      ),
-    ];
-  }
+  if (!result.ok) return [text(rangeErrorText(result.reason))];
   const subtitle = tr(
     "{0} – {1} ({2} วัน)",
     formatThaiDate(result.range.from),
@@ -2476,12 +2473,28 @@ async function runCommand(
       const target = parseSearchTerm(command.term);
       if (!target) return [text(SEARCH_USAGE_TEXT)];
       const term = target.tag ? `#${target.tag}` : (target.q ?? "");
+      // a question the AI sorted ("กาแฟเดือนที่แล้ว") is about those days only
+      let days: RangeResult | null = null;
+      if (command.start) {
+        days = resolveRange(
+          command.start,
+          !command.end || command.end === "today" ? null : command.end,
+          deps.now(),
+        );
+        if (!days.ok) return [text(rangeErrorText(days.reason))];
+      }
+      const range = days?.ok ? days.range : undefined;
       const [totals, items] = await Promise.all([
-        loadSearchTotals(db, user.id, target),
-        loadSearchItems(db, user.id, target, 5),
+        loadSearchTotals(db, user.id, target, range),
+        loadSearchItems(db, user.id, target, 5, range),
       ]);
-      if (totals.count === 0) return [text(searchEmptyText(term))];
-      return [buildSearchCard({ term, totals, items, moreUrl: listUrl(term) })];
+      const subtitle = days?.ok
+        ? tr("{0} – {1}", formatThaiDate(days.range.from), formatThaiDate(days.lastDay))
+        : undefined;
+      if (totals.count === 0) {
+        return [text(subtitle ? `${searchEmptyText(term)}\n${subtitle}` : searchEmptyText(term))];
+      }
+      return [buildSearchCard({ term, totals, items, moreUrl: listUrl(term), subtitle })];
     }
 
     case "summary-range": {

@@ -97,7 +97,7 @@ export function buildGoalsCard(input: { goals: GoalDto[]; manageUrl?: string }):
   }
   body.push({
     type: "text",
-    text: t("หยอดกระปุกด้วย \"ออม ชื่อเป้าหมาย 2000\" ถอนด้วย \"ถอน ชื่อเป้าหมาย 500\""),
+    text: t('หยอดกระปุกด้วย "ออม ชื่อเป้าหมาย 2000" ถอนด้วย "ถอน ชื่อเป้าหมาย 500"'),
     size: "xs",
     color: COLOR.muted,
     wrap: true,
@@ -165,7 +165,11 @@ export function buildGoalReachedCard(goal: GoalDto): LineMessage {
           { type: "text", text: label(goal), weight: "bold", size: "md", wrap: true },
           {
             type: "text",
-            text: t("ออมครบ {0} จากเป้า {1} เก่งมาก!", baht(goal.savedSatang), baht(goal.targetSatang)),
+            text: t(
+              "ออมครบ {0} จากเป้า {1} เก่งมาก!",
+              baht(goal.savedSatang),
+              baht(goal.targetSatang),
+            ),
             size: "sm",
             color: COLOR.muted,
             wrap: true,

@@ -370,3 +370,110 @@ describe("@wallet", () => {
     expect(one("ค่าเมล a@b 30").walletHint).toBeNull();
   });
 });
+
+describe("several entries typed one after another, with no comma between", () => {
+  const now = new Date("2026-11-04T03:00:00Z");
+  const read = (s: string) =>
+    parseMessage(s, now).entries.map((e) => [e.title, e.amountSatang / 100, e.type]);
+
+  it("each name with its own amount is an entry", () => {
+    expect(read("ข้าวเช้า16 น้ำ14 กาแฟ30")).toEqual([
+      ["ข้าวเช้า", 16, "expense"],
+      ["น้ำ", 14, "expense"],
+      ["กาแฟ", 30, "expense"],
+    ]);
+    expect(read("ข้าวเช้า 16 น้ำ 14 กาแฟ 30")).toHaveLength(3);
+  });
+
+  it("each knows whether it is money in or out", () => {
+    expect(read("ได้เงินเดือน 30000 จ่ายค่าห้อง 5000")).toEqual([
+      ["ได้เงินเดือน", 30000, "income"],
+      ["จ่ายค่าห้อง", 5000, "expense"],
+    ]);
+  });
+
+  it("a day said first is the day of them all", () => {
+    const entries = parseMessage("เมื่อวาน ข้าว 50 กาแฟ 30", now).entries;
+    expect(entries.map((e) => e.title)).toEqual(["ข้าว", "กาแฟ"]);
+    expect(entries.every((e) => e.backdated)).toBe(true);
+  });
+
+  it("a count with its unit stays one entry", () => {
+    expect(read("ข้าวมันไก่ 2 จาน 100")).toEqual([["ข้าวมันไก่ 2 จาน", 100, "expense"]]);
+    expect(read("กาแฟ 2 แก้ว 90")).toEqual([["กาแฟ 2 แก้ว", 90, "expense"]]);
+    expect(read("7-11 50")).toEqual([["7-11", 50, "expense"]]);
+    expect(read("ค่าไฟ 1200")).toEqual([["ค่าไฟ", 1200, "expense"]]);
+  });
+});
+
+describe("one entry with numbers in its name is not split", () => {
+  const now = new Date("2026-11-04T03:00:00Z");
+  const count = (s: string) => parseMessage(s, now, { currencies: true }).entries.length;
+  it.each([
+    "ทีวี 55 นิ้ว 15900",
+    "แอร์ 12000 BTU 15000",
+    "ซื้อ iPhone 15 Pro 39900",
+    "ค่าเน็ต 5G 599",
+    "ค่าเน็ต 100Mbps 590",
+    "Honda Click 125 เติมน้ำมัน 100",
+    "ห้อง 1205 ค่าน้ำ 150",
+    "ห้อง 305 ค่าเช่า 4500",
+    "คอนโด ชั้น 8 ค่าส่วนกลาง 1200",
+    "ซอย 7 ข้าว 50",
+    "ร้านป้า 7 แยก 50",
+    "ถนน 3 ร้าน หมูกระทะ 400",
+    "ม.4 ค่าหนังสือ 500",
+    "ป.6 ค่าเทอม 8000",
+    "ทะเบียน กข 1234 เติมน้ำมัน 500",
+    "ไข่ 30 ฟอง 120",
+    "ยาง 4 เส้น 8000",
+    "ซื้อของ 3 อย่าง 500",
+    "กาแฟ 50 x2",
+    "ข้าว 60 จ่ายไป 100 ทอน 40",
+    "โอนให้แม่ 5000 เหลือ 2000",
+    "เสื้อ 500 ลด 100",
+    "แท็กซี่ 8.30 น. 120",
+    "ค่ารถ 8.30 แท็กซี่ 120",
+  ])("%s", (s) => expect(count(s)).toBe(1));
+
+  it("a day said by number is the day, not an entry", () => {
+    const entries = parseMessage("วันที่ 3 ข้าว 50 กาแฟ 30", now).entries;
+    expect(entries.some((e) => e.amountSatang === 300)).toBe(false);
+  });
+
+  it("a piece the rules cannot read keeps the whole message unread, never half saved", () => {
+    const long = "ค่าข้าวเที่ยงกับเพื่อนที่ทำงานร้านอาหารญี่ปุ่นแถวสยามสแควร์ซอยสามตรงข้ามสยามพารากอน 500 น้ำ 20";
+    const result = parseMessage(long, now);
+    expect(result.entries.map((e) => e.amountSatang)).not.toEqual([2000]);
+  });
+
+  it("a foreign amount keeps its currency", () => {
+    const entries = parseMessage("ราเมง 1500 JPY รถไฟ 300", now, { currencies: true }).entries;
+    expect(entries[0]?.foreign?.currency).toBe("JPY");
+  });
+
+  it("a day said in the middle is only for what follows it", () => {
+    const entries = parseMessage("ข้าว 50 เมื่อวาน กาแฟ 30", now).entries;
+    expect(entries.map((e) => [e.title, e.backdated])).toEqual([
+      ["ข้าว", false],
+      ["กาแฟ", true],
+    ]);
+  });
+
+  it("joining words are not part of the name", () => {
+    expect(parseMessage("ข้าว 50 กับ กาแฟ 30", now).entries.map((e) => e.title)).toEqual([
+      "ข้าว",
+      "กาแฟ",
+    ]);
+  });
+
+  it("names that only start like a unit are names", () => {
+    expect(parseMessage("กาแฟ 50 ตรวจสุขภาพ 1500", now).entries).toHaveLength(2);
+    expect(parseMessage("ข้าว 60 วันเกิดแม่ 500", now).entries).toHaveLength(2);
+    expect(parseMessage("ทีวี 55นิ้ว 15900", now).entries).toHaveLength(1);
+  });
+
+  it("an English run splits too", () => {
+    expect(parseMessage("coffee 30 taxi 120", now).entries).toHaveLength(2);
+  });
+});

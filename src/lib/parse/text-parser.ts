@@ -277,6 +277,248 @@ function parseLine(segment: string, now: Date, currencies: boolean): ParsedEntry
   };
 }
 
+/**
+ * Words that count or measure what came before: "2 จาน 100", "ไข่ 30 ฟอง 120" and "ทีวี 55 นิ้ว 15900"
+ * are one entry each. A name starting with one of these is never an entry of its own.
+ */
+const UNIT_WORDS = new Set([
+  "จาน",
+  "แก้ว",
+  "ชิ้น",
+  "ตัว",
+  "อัน",
+  "ลูก",
+  "ขวด",
+  "ถุง",
+  "กล่อง",
+  "ห่อ",
+  "คน",
+  "ที่",
+  "ใบ",
+  "เม็ด",
+  "ครั้ง",
+  "วัน",
+  "คืน",
+  "ชม",
+  "ชั่วโมง",
+  "นาที",
+  "กิโล",
+  "กก",
+  "โล",
+  "ลิตร",
+  "เมตร",
+  "โมง",
+  "ปี",
+  "เดือน",
+  "คัน",
+  "เล่ม",
+  "ชุด",
+  "คู่",
+  "แพ็ค",
+  "แพค",
+  "ซอง",
+  "กระป๋อง",
+  "ถ้วย",
+  "ชาม",
+  "ไม้",
+  "หัว",
+  "ดอก",
+  "ต้น",
+  "แผ่น",
+  "ม้วน",
+  "หลอด",
+  "บาท",
+  "บ.",
+  "ฟอง",
+  "แผง",
+  "แถว",
+  "ลัง",
+  "ด้าม",
+  "หลา",
+  "ต่อ",
+  "เครื่อง",
+  "เส้น",
+  "อย่าง",
+  "นิ้ว",
+  "เที่ยว",
+  "รีม",
+  "ฟุต",
+  "โหล",
+  "ก้อน",
+  "แยก",
+  "สาย",
+  "ห้อง",
+  "หลัง",
+  "เท่า",
+  "รอบ",
+  "ท่าน",
+  "องค์",
+  "รูป",
+  "ช่อ",
+  "พวง",
+  "มัด",
+  "กำ",
+  "ตลับ",
+  "กระปุก",
+  "แท่ง",
+  "ปอนด์",
+  "ออนซ์",
+  "ซม",
+  "มม",
+  "กรัม",
+  "ไร่",
+  "งาน",
+  "วา",
+  "ตร",
+]);
+/** After an amount, these say what happened to it, not a new entry: "เสื้อ 500 ลด 100". */
+const FLOW_WORDS = new Set([
+  "เหลือ",
+  "ทอน",
+  "เงินทอน",
+  "ลด",
+  "ส่วนลด",
+  "รวม",
+  "รวมเป็น",
+  "คูณ",
+  "แถม",
+  "คืน",
+  "ได้คืน",
+  "มัดจำ",
+  "จ่ายไป",
+  "ให้ไป",
+  "ยื่น",
+  "ยื่นไป",
+  "เหลืออีก",
+  "ค้าง",
+  "ค้างอีก",
+  "เกิน",
+  "ขาด",
+  "บวก",
+  "ลบ",
+  "เพิ่ม",
+  "หัก",
+  "ภาษี",
+  "vat",
+]);
+/** A number after these is part of a name or an address: "ห้อง 1205", "ซอย 7", "วันที่ 3". */
+const PLACE_WORDS = new Set([
+  "ซอย",
+  "ซ",
+  "ชั้น",
+  "ห้อง",
+  "ถนน",
+  "ถ",
+  "ทะเบียน",
+  "วันที่",
+  "ที่",
+  "ครั้งที่",
+  "งวด",
+  "งวดที่",
+  "ข้อ",
+  "เบอร์",
+  "เลข",
+  "เลขที่",
+  "หมายเลข",
+  "ตึก",
+  "อาคาร",
+  "โซน",
+  "บ้านเลขที่",
+  "รุ่น",
+  "ไซส์",
+  "ไซซ์",
+  "หมู่",
+  "หมู่ที่",
+  "ม",
+  "ป",
+  "ชั้นปี",
+  "สาขา",
+  "ประตู",
+  "ช่อง",
+  "โต๊ะ",
+  "เตียง",
+  "แถวที่",
+  "สาย",
+  "เกรด",
+  "ปีที่",
+  "ภาค",
+  "เทอม",
+  "รหัส",
+  "คิว",
+  "ล็อต",
+  "ล็อค",
+  "ชุดที่",
+  "ตอน",
+  "ep",
+  "no",
+]);
+const RUN_NUMBER = /\d(?:[\d,]*\d)?\s*(?:k(?![a-z])|พัน|หมื่น|แสน|ล้าน)?\s*(?:บาท|บ\.|฿)?/gi;
+const JOINER_RE = /^(?:และ|กับ|แล้วก็|แล้ว|ต่อด้วย|ก็)\s+/;
+const THAI = /[\u0E01-\u0E4E]/;
+const LATIN = /[a-z]/i;
+const NAME_CHARS = /[\u0E01-\u0E4E]|[a-z]/gi;
+
+/** Is `name` the name of an entry of its own (and not a count, an address, or what became of an amount)? */
+function ownName(name: string): boolean {
+  if (/\d/.test(name) || /\.$/.test(name)) return false; // "ม.4", "น. 120"
+  if ((name.match(NAME_CHARS) ?? []).length < 2) return false; // "x2", "5G"
+  const words = name.toLowerCase().split(/\s+/);
+  const first = words[0] ?? "";
+  // the unit alone, or with a word that only qualifies it ("ฟองละ", "กิโลครึ่ง", "จานใหญ่")
+  const unit = first.replace(/(?:ละ|ครึ่ง|ใหญ่|เล็ก|กลาง)$/, "");
+  if (UNIT_WORDS.has(unit)) return false;
+  if (FLOW_WORDS.has(first)) return false;
+  return !words.some((w) => PLACE_WORDS.has(w.replace(/\.$/, "")));
+}
+
+/**
+ * "ข้าวเช้า16 น้ำ14 กาแฟ30": names each followed by their own amount, typed one after another with no
+ * comma, are several entries. Careful, because a wrong split loses money silently: each piece must be
+ * a plain name (see `ownName`) then a whole amount, nothing may follow the last one, and all the names
+ * are in one script ("ซื้อ iPhone 15 Pro 39900" is one thing). Null keeps the segment as one entry.
+ * A day said first ("เมื่อวาน …") is for all of them; one said later is for the piece it is in.
+ */
+function splitRun(segment: string, now: Date): ParsedEntry[] | null {
+  const text = normalizeThaiDigits(segment).replace(/\s+/g, " ").trim();
+  // an address, a link, a time, a decimal or a foreign amount: too easy to cut in the wrong place
+  if (/[@#/:.]|https?:/i.test(text.replace(/บ\./g, ""))) return null;
+  if (parseLine(segment, now, true)?.foreign) return null;
+
+  const dated = extractDate(text, now);
+  const rest = dated.text.trim();
+  const leading = rest !== text && text.endsWith(rest);
+  const body = leading ? rest : text;
+
+  const numbers = [...body.matchAll(RUN_NUMBER)];
+  if (numbers.length < 2) return null;
+  const pieces: string[] = [];
+  let from = 0;
+  for (const m of numbers) {
+    const end = m.index + m[0].length;
+    const piece = body.slice(from, end).trim().replace(JOINER_RE, "");
+    const name = piece.slice(0, piece.length - m[0].trim().length).trim();
+    if (!ownName(name)) return null;
+    pieces.push(piece);
+    from = end;
+  }
+  if (body.slice(from).trim()) return null;
+  const names = pieces.map((p) => p.replace(RUN_NUMBER, ""));
+  if (names.some((n) => LATIN.test(n)) && names.some((n) => THAI.test(n))) return null;
+
+  const entries: ParsedEntry[] = [];
+  for (const piece of pieces) {
+    const entry = parseLine(piece, now, false);
+    // a piece the rules cannot read: keep the whole segment together rather than lose part of it
+    if (!entry) return null;
+    entries.push(
+      leading && dated.date
+        ? { ...entry, occurredAt: dated.date, backdated: dated.date !== now }
+        : entry,
+    );
+  }
+  return entries;
+}
+
 /** Parse a chat message into zero or more transaction entries. */
 export function parseMessage(
   input: string,
@@ -287,6 +529,11 @@ export function parseMessage(
   const unparsed: string[] = [];
   for (const segment of input.split(SPLIT_RE)) {
     if (!segment.trim()) continue;
+    const run = splitRun(segment, now);
+    if (run) {
+      entries.push(...run);
+      continue;
+    }
     const entry = parseLine(segment, now, options.currencies === true);
     if (entry) entries.push(entry);
     else unparsed.push(segment.trim());

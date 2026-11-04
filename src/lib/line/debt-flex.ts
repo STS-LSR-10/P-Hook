@@ -99,7 +99,7 @@ export function buildDebtsCard(input: {
   }
   body.push({
     type: "text",
-    text: t("พิมพ์ \"สมชายคืน 200\" เมื่อได้เงินคืน หรือ \"คืนแม่ 1000\" เมื่อเราคืนเงิน"),
+    text: t('พิมพ์ "สมชายคืน 200" เมื่อได้เงินคืน หรือ "คืนแม่ 1000" เมื่อเราคืนเงิน'),
     size: "xs",
     color: COLOR.muted,
     wrap: true,

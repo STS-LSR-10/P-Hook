@@ -367,6 +367,15 @@ describe("a voice message that is not money", () => {
     expect(inserted[0]?.status).toBe("pending_confirm");
   });
 
+  it("a spoken question about money is sorted, and no entry is made", async () => {
+    const route = vi.fn(async () => [{ type: "text" as const, text: "สรุปเดือนนี้" }]);
+    await send(voiceDeps("เดือนนี้ใช้เงินไปเท่าไหร่", route));
+    expect(route).toHaveBeenCalledOnce();
+    await send(voiceDeps("เดือนนี้ใช้ไปเกิน 5000 หรือยัง", route));
+    expect(route).toHaveBeenCalledTimes(2);
+    expect(inserted).toEqual([]);
+  });
+
   it("clear money does not spend a sorter use", async () => {
     const route = vi.fn(async () => null);
     await send(voiceDeps("กาแฟ 50", route));

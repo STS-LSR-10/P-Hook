@@ -12,7 +12,9 @@ import {
   REMINDER_NOT_MATCHED_TEXT,
   REMINDER_WHICH_MORE_TEXT,
   ROUTER_REMINDER_HINT_TEXT,
+  SEARCH_LOCKED_TEXT,
   SECRET_ASK_TEXT,
+  SUMMARY_RANGE_LOCKED_TEXT,
 } from "./messages";
 
 const ID = "11111111-1111-4111-8111-111111111111";
@@ -234,6 +236,23 @@ describe("plain messages", () => {
     const { deps } = setup();
     await handleEvent(say("ทำไมฟ้าสีฟ้า"), deps);
     expect(asked).toHaveBeenCalledWith("ทำไมฟ้าสีฟ้า");
+  });
+
+  it("a question about spending gets the summary, not the owl", async () => {
+    route.mockResolvedValue(decision({ intent: "query", period: "last_month" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("เดือนที่แล้วใช้เงินไปเท่าไร"), deps);
+    expect(asked).not.toHaveBeenCalled();
+    // free: the range summary is a Plus feature
+    expect(said(reply)).toBe(SUMMARY_RANGE_LOCKED_TEXT);
+  });
+
+  it("a question about one thing searches it", async () => {
+    route.mockResolvedValue(decision({ intent: "query", period: "this_week", searchTerm: "กาแฟ" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("อาทิตย์นี้กินกาแฟไปกี่บาท"), deps);
+    expect(asked).not.toHaveBeenCalled();
+    expect(said(reply)).toBe(SEARCH_LOCKED_TEXT);
   });
 
   it("asks first when unsure", async () => {

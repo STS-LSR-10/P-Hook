@@ -75,7 +75,10 @@ export function buildPdfCard(input: PdfCardInput): LineMessage {
     ...(input.skippedDuplicates > 0
       ? [
           note(
-            t("ข้าม {0} รายการที่ตรงกับรายการที่จดไว้แล้ว (วันที่ ยอด ประเภทเท่ากัน) ถ้าไม่ซ้ำจริง พิมพ์จดเองได้เลย", input.skippedDuplicates),
+            t(
+              "ข้าม {0} รายการที่ตรงกับรายการที่จดไว้แล้ว (วันที่ ยอด ประเภทเท่ากัน) ถ้าไม่ซ้ำจริง พิมพ์จดเองได้เลย",
+              input.skippedDuplicates,
+            ),
           ),
         ]
       : []),

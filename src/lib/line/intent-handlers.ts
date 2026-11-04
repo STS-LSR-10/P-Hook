@@ -5,6 +5,7 @@ import {
   type IntentRouter,
   type RoutedIntent,
 } from "@/lib/ai/intent-router";
+import { queryCommand } from "@/lib/ai/query-command";
 import { clockIsTheAmount, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
@@ -52,6 +53,7 @@ const CONFIRM_LABEL: Record<RoutedIntent, string> = {
   reminder_edit: t("เลื่อนเตือน"),
   note_add: t("จดเป็นโน้ต"),
   search: t("ค้นหาไฟล์และโน้ต"),
+  query: t("ดูยอดเงิน"),
   file_save: t("เก็บไฟล์"),
   ask: t("ให้พี่ฮูกตอบ"),
   unclear: t("จัดการข้อความนี้"),
@@ -168,6 +170,18 @@ function execute(
       return deps.run({ kind: "note-add", body: input });
     case "search":
       return deps.run({ kind: "kept-search", term: decision.searchTerm ?? input });
+    case "query": {
+      const command = queryCommand(
+        {
+          period: decision.period ?? "this_month",
+          fromDate: decision.fromDate ?? null,
+          toDate: decision.toDate ?? null,
+          searchTerm: decision.searchTerm,
+        },
+        deps.now(),
+      );
+      return command ? deps.run(command) : deps.ask(input);
+    }
     case "file_save":
       return deps.run({ kind: "file-save", name: decision.fileName });
     case "ask":

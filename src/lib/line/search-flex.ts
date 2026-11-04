@@ -25,6 +25,8 @@ export function buildSearchCard(input: {
   items: TxDto[];
   /** Opens the entries list with the same search (omitted when unknown). */
   moreUrl?: string;
+  /** The days searched ("1 ต.ค. 2569 – 31 ต.ค. 2569"), when not all of them. */
+  subtitle?: string;
 }): LineMessage {
   const { term, totals, items } = input;
   const net = totals.incomeSatang - totals.expenseSatang;
@@ -100,6 +102,9 @@ export function buildSearchCard(input: {
       contents: [
         { type: "text", text: "ผลการค้นหา", weight: "bold", size: "lg", color: "#0B5D4F" },
         { type: "text", text: term, size: "sm", color: "#3F6B63", margin: "xs", wrap: true },
+        ...(input.subtitle
+          ? [{ type: "text", text: input.subtitle, size: "xs", color: "#3F6B63", wrap: true }]
+          : []),
       ],
     },
     body: { type: "box", layout: "vertical", paddingAll: "12px", spacing: "sm", contents: body },
@@ -121,7 +126,12 @@ export function buildSearchCard(input: {
   }
   return {
     type: "flex",
-    altText: t("ค้นหา {0}: พบ {1} รายการ รายจ่าย {2}", term, totals.count, money(totals.expenseSatang)),
+    altText: t(
+      "ค้นหา {0}: พบ {1} รายการ รายจ่าย {2}",
+      term,
+      totals.count,
+      money(totals.expenseSatang),
+    ),
     contents: bubble,
   };
 }
