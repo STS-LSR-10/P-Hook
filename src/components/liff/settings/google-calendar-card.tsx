@@ -21,7 +21,8 @@ export function GoogleCalendarCard() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  if (status.loading || status.error || !status.data?.available) return null;
+  // kept while it reloads (after unlinking), so the card and its notice do not blink away
+  if (!status.data?.available) return null;
   const { linked, email } = status.data;
 
   async function unlink() {

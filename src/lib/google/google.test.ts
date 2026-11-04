@@ -87,6 +87,7 @@ describe("sign in with Google", () => {
       accessToken: "acc",
       refreshToken: "ref",
       email: "a@gmail.com",
+      calendarGranted: true,
     });
     const body = String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body);
     expect(body).toContain("grant_type=authorization_code");
@@ -136,5 +137,18 @@ describe("the event", () => {
   it("an event already gone is fine to remove", async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 410 }));
     await expect(deleteEvent("acc", "ev1", fetchImpl)).resolves.toBeUndefined();
+  });
+});
+
+describe("the event, in the person's language", () => {
+  it("says where it came from in English for English", async () => {
+    const { runInZone } = await import("@/lib/zone-scope");
+    const e = runInZone(
+      "Asia/Bangkok",
+      () => toGoogleEvent({ body: "x", at: new Date(), repeat: null, zone: "Asia/Bangkok" }),
+      null,
+      "en",
+    );
+    expect(e.description).toBe("From P'Hook");
   });
 });

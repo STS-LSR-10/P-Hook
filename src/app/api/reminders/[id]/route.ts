@@ -9,7 +9,12 @@ import {
   reminderSchema,
   reminderTimeProblem,
 } from "@/lib/reminder-input";
-import { googleEventOf, removeGoogleEvent, syncReminderToGoogle } from "@/lib/google/sync";
+import {
+  googleEventOf,
+  removeGoogleEvent,
+  skipGoogleRound,
+  syncReminderToGoogle,
+} from "@/lib/google/sync";
 import { getAdminClient } from "@/lib/supabase/admin";
 import {
   cancelReminder,
@@ -84,7 +89,15 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
         status: keepsDone ? "done" : "active",
       });
       if (!updated) return apiError(NOT_FOUND, 404);
-      await syncReminderToGoogle(db, auth.userId, updated);
+      // only the words changed: the event is renamed, so a series keeps its past rounds
+      const onlyText = sameTime && (edit.data.repeat ?? null) === reminder.repeat;
+      await syncReminderToGoogle(
+        db,
+        auth.userId,
+        updated,
+        undefined,
+        onlyText ? { onlyText: true } : {},
+      );
       return json({ reminder: updated });
     }
 
@@ -105,9 +118,11 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
     }
     if (reminder.repeat) {
       const next = roundAfter(new Date(reminder.remindAt), reminder.repeat, new Date());
-      return (await skipReminderRound(db, auth.userId, id, reminder.remindAt, next))
-        ? json({ ok: true, skipped: true })
-        : apiError(MOVED, 409);
+      if (!(await skipReminderRound(db, auth.userId, id, reminder.remindAt, next))) {
+        return apiError(MOVED, 409);
+      }
+      await skipGoogleRound(db, auth.userId, id, reminder.remindAt);
+      return json({ ok: true, skipped: true });
     }
     return (await setReminderDone(db, auth.userId, id)) ? json({ ok: true }) : apiError(MOVED, 409);
   });

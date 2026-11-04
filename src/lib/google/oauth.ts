@@ -4,8 +4,16 @@ const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 /** Only the events of their calendars, and which account it is. Nothing else of theirs. */
-const SCOPE = "openid email https://www.googleapis.com/auth/calendar.events";
+const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+const SCOPE = `openid email ${CALENDAR_SCOPE}`;
 const TIMEOUT_MS = 8_000;
+
+/** The person did not tick the calendar on Google's consent screen. */
+export class GoogleScopeError extends Error {
+  constructor() {
+    super("google calendar access not given");
+  }
+}
 
 /** The person took the access back (or it ran out): sign in again. */
 export class GoogleRevokedError extends Error {
@@ -63,7 +71,13 @@ export async function exchangeCode(
   cfg: GoogleConfig,
   code: string,
   fetchImpl: typeof fetch = fetch,
-): Promise<{ accessToken: string; refreshToken: string | null; email: string | null }> {
+): Promise<{
+  accessToken: string;
+  refreshToken: string | null;
+  email: string | null;
+  /** The person let พี่ฮูก write to their calendar (Google lets them untick it). */
+  calendarGranted: boolean;
+}> {
   const data = await tokenCall(
     {
       code,
@@ -79,6 +93,8 @@ export async function exchangeCode(
     accessToken: data.access_token,
     refreshToken: typeof data.refresh_token === "string" ? data.refresh_token : null,
     email: emailOf(data.id_token),
+    calendarGranted:
+      typeof data.scope !== "string" || data.scope.split(" ").includes(CALENDAR_SCOPE),
   };
 }
 

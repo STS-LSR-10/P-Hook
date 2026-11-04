@@ -2515,4 +2515,12 @@ export const EN: Record<string, string> = {
   กลับไปที่ไลน์: "Back to LINE",
   "📅 เพิ่มลงปฏิทิน": "📅 Add to calendar",
   "ไม่พบเตือนนี้ หรือเตือนไปแล้ว": "Reminder not found, or already sent",
+  "จาก พี่ฮูก": "From P'Hook",
+  "เชื่อม Google Calendar กับ {0} แล้ว ถ้าไม่ได้ทำเอง ยกเลิกการเชื่อมได้ในหน้าตั้งค่า":
+    "Google Calendar is now linked to {0}. If this was not you, unlink it in Settings",
+  ยังไม่ได้ให้สิทธิ์ปฏิทิน: "Calendar access not given",
+  "ตอนลงชื่อเข้าใช้ ต้องติ๊กช่องให้พี่ฮูกจัดการกิจกรรมในปฏิทินด้วย กลับไปกด เพิ่มลงปฏิทิน แล้วลองใหม่นะ":
+    "When signing in, tick the box that lets P'Hook manage calendar events. Go back, tap Add to calendar and try again",
+  "ถ้ามีคนอื่นส่งลิงก์นี้มาให้ อย่ากดต่อ ลิงก์นี้ใช้ได้เฉพาะเจ้าของบัญชีไลน์ที่กดปุ่ม เพิ่มลงปฏิทิน เอง":
+    "If someone else sent you this link, stop here. It is only for the LINE account owner who tapped Add to calendar",
 };

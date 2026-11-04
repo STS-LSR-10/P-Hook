@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasFiles } from "@/lib/file-repo";
 import type { FileStore } from "@/lib/file-store";
+import { unlinkGoogle } from "@/lib/google/sync";
 import { SLIP_BUCKET } from "@/lib/slip-repo";
 
 export { DELETE_CONFIRM_PHRASE, isDeleteConfirmed } from "@/lib/account-confirm";
@@ -37,6 +38,9 @@ export async function deleteAccountData(
     filesRemoved += names.length;
     if (names.length < PAGE) break;
   }
+
+  // the link row goes with the user, but Google would keep the access: give it back first
+  await unlinkGoogle(db, userId).catch(() => undefined);
 
   const { error } = await db.from("users").delete().eq("id", userId);
   if (error) throw new Error(`delete user: ${error.message}`);

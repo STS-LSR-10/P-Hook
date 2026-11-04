@@ -5,7 +5,7 @@ import { signGoogleLinkToken } from "@/lib/auth/google-token";
 import { requireUser } from "@/lib/auth/require-user";
 import { getServerEnv } from "@/lib/env";
 import { googleConfig } from "@/lib/google/config";
-import { getGoogleLink } from "@/lib/google/link-repo";
+import { getGoogleLink, maskEmail } from "@/lib/google/link-repo";
 import { addReminderToGoogle } from "@/lib/google/sync";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 const NOT_FOUND = "ไม่พบเตือนนี้ หรือเตือนไปแล้ว";
+/** A personal reminder's calendar link is opened at once: it need not last. */
+const PERSONAL_LINK_TTL_SECONDS = 15 * 60;
 const bodySchema = z.object({ to: z.enum(["google", "device"]) });
 
 const base = () => process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "";
@@ -40,10 +42,13 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
     const found = await findReminder(request, params);
     if (!found.ok) return found.response;
     const available = googleConfig() !== null;
-    const link = available ? await getGoogleLink(found.db, found.auth.userId) : null;
+    // before the migration the link cannot be read: the phone's calendar is still offered
+    const link = available
+      ? await getGoogleLink(found.db, found.auth.userId).catch(() => null)
+      : null;
     return json({
       reminder: found.reminder,
-      google: { available, linked: link !== null, email: link?.email ?? null },
+      google: { available, linked: link !== null, email: maskEmail(link?.email ?? null) },
     });
   });
 }
@@ -65,13 +70,13 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
 
     const secret = getServerEnv().SESSION_JWT_SECRET;
     const calendarLink = async (to: "ics" | "google") =>
-      `${base()}/api/calendar/${reminder.id}?t=${await signCalendarToken(reminder.id, secret)}&to=${to}`;
+      `${base()}/api/calendar/${reminder.id}?t=${await signCalendarToken(reminder.id, secret, PERSONAL_LINK_TTL_SECONDS)}&to=${to}`;
 
     if (parsed.data.to === "device") return json({ open: await calendarLink("ics") });
     if (!googleConfig()) return json({ open: await calendarLink("google") });
 
     const added = await addReminderToGoogle(db, auth.userId, reminder);
-    if (added.kind === "added") return json({ added: true, email: added.email });
+    if (added.kind === "added") return json({ added: true, email: maskEmail(added.email) });
     if (added.kind === "failed")
       return apiError("เพิ่มลง Google Calendar ไม่สำเร็จ ลองใหม่อีกครั้งนะ", 502);
     const token = await signGoogleLinkToken(

@@ -2,7 +2,7 @@
 
 import { CalendarDays, Smartphone } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ApiError, useApi, useLiff } from "@/components/liff/liff-provider";
 import { cardClass } from "@/components/liff/settings/types";
 import { EmptyState, ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
@@ -38,6 +38,16 @@ function CalendarChoice() {
   const [busy, setBusy] = useState<"google" | "device" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const { reload } = info;
+
+  // back from signing in with Google in the phone's browser: show the account as linked now
+  useEffect(() => {
+    const onShow = () => {
+      if (document.visibilityState === "visible") reload();
+    };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [reload]);
 
   async function add(to: "google" | "device") {
     if (!id) return;
@@ -86,9 +96,9 @@ function CalendarChoice() {
             title={t("ไม่พบเตือนนี้")}
             hint={t("กดปุ่ม เพิ่มลงปฏิทิน บนการ์ดเตือนในแชทอีกครั้งนะ")}
           />
-        ) : info.loading ? (
+        ) : info.loading && !info.data ? (
           <LoadingBlock rows={3} />
-        ) : info.error || !data ? (
+        ) : !data ? (
           <ErrorState message={info.error ?? t("โหลดไม่สำเร็จ")} onRetry={info.reload} />
         ) : (
           <>
@@ -155,10 +165,7 @@ function CalendarChoice() {
             </button>
 
             {problem ? (
-              <p
-                role="alert"
-                className="rounded-2xl bg-primary-soft px-4 py-2 text-sm text-primary"
-              >
+              <p role="alert" className="rounded-2xl bg-expense/10 px-4 py-2 text-sm text-expense">
                 {problem}
               </p>
             ) : null}

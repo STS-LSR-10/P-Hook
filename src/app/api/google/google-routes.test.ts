@@ -8,12 +8,17 @@ const KEY = Buffer.alloc(32, 3).toString("base64");
 let configured = true;
 let linked: { email: string | null } | null = { email: "a@gmail.com" };
 let addResult: { kind: string; email?: string | null } = { kind: "added", email: "a@gmail.com" };
+let linkFails = false;
+let claimed = new Set<string>();
+const pushed = vi.fn();
 let reminder: { id: string; body: string; remindAt: string; repeat: null; status: string } | null;
 const linkGoogle = vi.fn(async () => ({ email: "a@gmail.com" }));
 const addReminderToGoogle = vi.fn(async () => addResult);
 const unlinkGoogle = vi.fn(async () => undefined);
 
-vi.mock("@/lib/env", () => ({ getServerEnv: () => ({ SESSION_JWT_SECRET: SECRET }) }));
+vi.mock("@/lib/env", () => ({
+  getServerEnv: () => ({ SESSION_JWT_SECRET: SECRET, LINE_CHANNEL_ACCESS_TOKEN: "x" }),
+}));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
 vi.mock("@/lib/auth/require-user", () => ({
   requireUser: async () => ({ userId: "u1", lineUserId: "U1" }),
@@ -33,16 +38,28 @@ vi.mock("@/lib/google/config", () => ({
         }
       : null,
 }));
-vi.mock("@/lib/google/link-repo", () => ({
-  getGoogleLink: async () => (linked ? { email: linked.email, sealedToken: "v1.x.y" } : null),
+vi.mock("@/lib/google/link-repo", async (o) => ({
+  maskEmail: (await o<typeof import("@/lib/google/link-repo")>()).maskEmail,
+  getGoogleLink: async () => {
+    if (linkFails) throw new Error("relation does not exist");
+    return linked ? { email: linked.email, sealedToken: "v1.x.y" } : null;
+  },
   getUserBasics: async () => ({
     displayName: "<b>แอน</b>",
+    lineUserId: "U1",
     timezone: "Asia/Bangkok",
     currency: null,
     locale: null,
   }),
 }));
 vi.mock("@/lib/google/sync", () => ({ linkGoogle, addReminderToGoogle, unlinkGoogle }));
+vi.mock("@/lib/repo", () => ({
+  claimEvent: async (_db: unknown, id: string) =>
+    claimed.has(id) ? false : (claimed.add(id), true),
+}));
+vi.mock("@/lib/line/client", () => ({
+  createLineClient: () => ({ push: async (...a: unknown[]) => pushed(...a) }),
+}));
 vi.mock("@/lib/user-reminder-repo", () => ({
   getReminder: async (_db: unknown, userId: string, id: string) =>
     userId === "u1" && id === R ? reminder : null,
@@ -70,6 +87,8 @@ beforeEach(() => {
   configured = true;
   linked = { email: "a@gmail.com" };
   addResult = { kind: "added", email: "a@gmail.com" };
+  linkFails = false;
+  claimed = new Set();
   reminder = {
     id: R,
     body: "กินยา",
@@ -128,6 +147,56 @@ describe("back from Google", () => {
   });
 });
 
+describe("what the review found", () => {
+  it("the page outside LINE warns against a link someone else sent", async () => {
+    const res = await connect.GET(
+      new Request(`https://app.test/api/google/connect?t=${await token()}`),
+    );
+    expect(await res.text()).toContain("ถ้ามีคนอื่นส่งลิงก์นี้มาให้");
+  });
+
+  it("a sign-in link works once", async () => {
+    const t = await token();
+    await callback.GET(new Request(`https://app.test/api/google/callback?code=c&state=${t}`));
+    const again = await callback.GET(
+      new Request(`https://app.test/api/google/callback?code=c2&state=${t}`),
+    );
+    expect(linkGoogle).toHaveBeenCalledOnce();
+    expect(again.status).toBe(400);
+  });
+
+  it("the owner is told in LINE which Google account was linked", async () => {
+    await callback.GET(
+      new Request(`https://app.test/api/google/callback?code=c&state=${await token()}`),
+    );
+    expect(pushed).toHaveBeenCalledWith("U1", [
+      expect.objectContaining({ text: expect.stringContaining("a@gmail.com") }),
+    ]);
+  });
+
+  it("the app shows the account only partly", async () => {
+    const res = await status.GET(new Request("https://app.test/api/google"));
+    expect(((await res.json()) as { email: string }).email).toBe("a•••@gmail.com");
+  });
+
+  it("the phone's calendar link of a personal reminder runs out", async () => {
+    const { open } = (await (await post("device")).json()) as { open: string };
+    const t = new URL(open).searchParams.get("t") ?? "";
+    const claims = JSON.parse(Buffer.from(t.split(".")[1] ?? "", "base64url").toString());
+    expect(claims.exp - claims.iat).toBeLessThanOrEqual(15 * 60);
+  });
+
+  it("before the migration the page still offers the phone's calendar", async () => {
+    linkFails = true;
+    const res = await calendar.GET(
+      new Request(`https://app.test/api/reminders/${R}/calendar`),
+      params,
+    );
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { google: { linked: boolean } }).google.linked).toBe(false);
+  });
+});
+
 describe("POST /api/reminders/:id/calendar", () => {
   it("the phone's calendar gets a link to the .ics, opened outside LINE", async () => {
     const body = (await (await post("device")).json()) as { open: string };
@@ -135,7 +204,7 @@ describe("POST /api/reminders/:id/calendar", () => {
   });
 
   it("signed in: added straight away", async () => {
-    expect(await (await post("google")).json()).toEqual({ added: true, email: "a@gmail.com" });
+    expect(await (await post("google")).json()).toEqual({ added: true, email: "a•••@gmail.com" });
   });
 
   it("not signed in: the sign-in link, for the phone's own browser", async () => {
@@ -160,7 +229,7 @@ describe("POST /api/reminders/:id/calendar", () => {
 describe("/api/google", () => {
   it("says whether it is set up and which account is linked", async () => {
     const res = await status.GET(new Request("https://app.test/api/google"));
-    expect(await res.json()).toEqual({ available: true, email: "a@gmail.com", linked: true });
+    expect(await res.json()).toEqual({ available: true, email: "a•••@gmail.com", linked: true });
   });
 
   it("signs out", async () => {

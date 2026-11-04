@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GoogleConfig } from "./config";
 import {
   addReminderToGoogle,
+  skipGoogleRound,
   linkGoogle,
   removeGoogleEvent,
   syncReminderToGoogle,
@@ -154,12 +155,114 @@ describe("keeping the event in step", () => {
   });
 });
 
+describe("what the review found", () => {
+  it("the event id is the reminder's own, so two taps at once cannot make two events", async () => {
+    await addReminderToGoogle(fakeDb(tables), "u1", { ...reminder, id: "aaaa-bbbb" }, deps());
+    const body = JSON.parse(String((google.mock.calls[1] as [string, RequestInit])[1].body));
+    expect(body.id).toBe("aaaabbbb");
+  });
+
+  it("an event that is already there (409) is brought up to date, not refused", async () => {
+    google.mockImplementation(async (url: string, init: RequestInit) => {
+      if (url.includes("token")) return Response.json({ access_token: "acc" });
+      if (init.method === "POST") return Response.json({}, { status: 409 });
+      return Response.json({ id: "r1" });
+    });
+    expect((await addReminderToGoogle(fakeDb(tables), "u1", reminder, deps())).kind).toBe("added");
+    expect(tables.user_reminders?.[0]?.google_event_id).toBe("r1");
+  });
+
+  it("no access to the calendar (403) forgets the link and asks again", async () => {
+    google.mockImplementation(async (url: string) =>
+      url.includes("token")
+        ? Response.json({ access_token: "acc" })
+        : Response.json(
+            { error: { errors: [{ reason: "insufficientPermissions" }] } },
+            { status: 403 },
+          ),
+    );
+    expect((await addReminderToGoogle(fakeDb(tables), "u1", reminder, deps())).kind).toBe(
+      "not_linked",
+    );
+    expect(tables.google_calendar_links).toEqual([]);
+  });
+
+  it("a change of words only renames the event, so the series keeps its past rounds", async () => {
+    tables.user_reminders![0]!.google_event_id = "ev1";
+    await syncReminderToGoogle(fakeDb(tables), "u1", { ...reminder, repeat: "weekly" }, deps(), {
+      onlyText: true,
+    });
+    const body = JSON.parse(String((google.mock.calls[1] as [string, RequestInit])[1].body));
+    expect(body).toEqual({ summary: "กินยา" });
+  });
+
+  it("an event cancelled on Google counts as gone", async () => {
+    tables.user_reminders![0]!.google_event_id = "ev1";
+    google.mockImplementation(async (url: string) =>
+      url.includes("token")
+        ? Response.json({ access_token: "acc" })
+        : Response.json({ status: "cancelled" }),
+    );
+    await syncReminderToGoogle(fakeDb(tables), "u1", reminder, deps());
+    expect(tables.user_reminders?.[0]?.google_event_id).toBeNull();
+  });
+
+  it("a skipped round is taken off the calendar too", async () => {
+    tables.user_reminders![0]!.google_event_id = "ev1";
+    google.mockImplementation(async (url: string, init: RequestInit) => {
+      if (url.includes("token")) return Response.json({ access_token: "acc" });
+      if (url.includes("/instances"))
+        return Response.json({ items: [{ id: "ev1_20261105T020000Z" }] });
+      return new Response(null, { status: init.method === "DELETE" ? 204 : 200 });
+    });
+    await skipGoogleRound(fakeDb(tables), "u1", "r1", "2026-11-05T02:00:00.000Z", deps());
+    expect(calls()).toEqual([
+      "POST token",
+      expect.stringMatching(/^GET instances\?/),
+      "DELETE ev1_20261105T020000Z",
+    ]);
+  });
+
+  it("an account given without the calendar ticked is not kept", async () => {
+    tables.google_calendar_links = [];
+    google.mockImplementation(async () =>
+      Response.json({ access_token: "acc", refresh_token: "r", scope: "openid email" }),
+    );
+    await expect(linkGoogle(fakeDb(tables), "u1", "code", deps())).rejects.toThrow(/calendar/);
+    expect(tables.google_calendar_links).toEqual([]);
+  });
+
+  it("linking another account gives the first one's access back and forgets its events", async () => {
+    tables.user_reminders![0]!.google_event_id = "ev1";
+    const payload = Buffer.from(JSON.stringify({ email: "other@gmail.com" })).toString("base64url");
+    google.mockImplementation(async (url: string) =>
+      url.includes("revoke")
+        ? new Response(null)
+        : Response.json({
+            access_token: "acc",
+            refresh_token: "new",
+            id_token: `h.${payload}.s`,
+            scope: "openid email https://www.googleapis.com/auth/calendar.events",
+          }),
+    );
+    await linkGoogle(fakeDb(tables), "u1", "code", deps());
+    expect(calls()).toContain("POST revoke");
+    expect(tables.user_reminders?.[0]?.google_event_id).toBeNull();
+    expect(tables.google_calendar_links?.[0]?.email).toBe("other@gmail.com");
+  });
+});
+
 describe("the link", () => {
   it("signing in keeps the account, with the token sealed", async () => {
     tables.google_calendar_links = [];
     const payload = Buffer.from(JSON.stringify({ email: "b@gmail.com" })).toString("base64url");
     google.mockImplementation(async () =>
-      Response.json({ access_token: "acc", refresh_token: "new-ref", id_token: `h.${payload}.s` }),
+      Response.json({
+        access_token: "acc",
+        refresh_token: "new-ref",
+        id_token: `h.${payload}.s`,
+        scope: "openid email https://www.googleapis.com/auth/calendar.events",
+      }),
     );
     expect(await linkGoogle(fakeDb(tables), "u1", "code", deps())).toEqual({
       email: "b@gmail.com",

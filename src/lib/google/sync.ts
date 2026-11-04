@@ -3,8 +3,12 @@ import { log, safeMessage } from "@/lib/log";
 import { currentZone } from "@/lib/thai-date";
 import type { Repeat } from "@/lib/user-reminder";
 import {
+  cancelRound,
   deleteEvent,
+  eventIdOf,
+  GoogleEventExistsError,
   GoogleEventGoneError,
+  GoogleForbiddenError,
   insertEvent,
   patchEvent,
   toGoogleEvent,
@@ -17,7 +21,13 @@ import {
   saveGoogleLink,
   setGoogleEventId,
 } from "./link-repo";
-import { exchangeCode, GoogleRevokedError, refreshAccessToken, revokeToken } from "./oauth";
+import {
+  exchangeCode,
+  GoogleRevokedError,
+  GoogleScopeError,
+  refreshAccessToken,
+  revokeToken,
+} from "./oauth";
 import { decryptToken, encryptToken } from "./token-crypto";
 
 export interface ReminderEvent {
@@ -62,6 +72,17 @@ async function accessFor(
   }
 }
 
+/** The account no longer lets พี่ฮูก in: forget it, so the page asks to sign in again. */
+async function forgetIfForbidden(
+  db: SupabaseClient,
+  userId: string,
+  error: unknown,
+): Promise<boolean> {
+  if (!(error instanceof GoogleForbiddenError)) return false;
+  await deleteGoogleLink(db, userId).catch(() => undefined);
+  return true;
+}
+
 /** Keep the account they signed in with. A refresh token of an earlier sign-in is kept if none came. */
 export async function linkGoogle(
   db: SupabaseClient,
@@ -70,13 +91,26 @@ export async function linkGoogle(
   deps: Pick<GoogleDeps, "cfg" | "fetch"> & { cfg: GoogleConfig },
 ): Promise<{ email: string | null }> {
   const tokens = await exchangeCode(deps.cfg, code, deps.fetch);
+  if (!tokens.calendarGranted) {
+    // nothing kept: every add would be refused, and the page would never ask again
+    await revokeToken(tokens.accessToken, deps.fetch);
+    throw new GoogleScopeError();
+  }
+  const earlier = await getGoogleLink(db, userId);
+  const sameAccount = earlier !== null && earlier.email === tokens.email;
   let sealedToken: string;
   if (tokens.refreshToken) {
     sealedToken = await encryptToken(tokens.refreshToken, deps.cfg.tokenKey);
-  } else {
-    const earlier = await getGoogleLink(db, userId);
-    if (!earlier) throw new Error("google gave no refresh token");
+  } else if (earlier && sameAccount) {
     sealedToken = earlier.sealedToken;
+  } else {
+    throw new Error("google gave no refresh token");
+  }
+  if (earlier && !sameAccount) {
+    // another account: the first one's access goes back, and its events are no longer followed
+    const old = await decryptToken(earlier.sealedToken, deps.cfg.tokenKey).catch(() => null);
+    if (old) await revokeToken(old, deps.fetch);
+    await deleteGoogleLink(db, userId);
   }
   await saveGoogleLink(db, userId, { email: tokens.email, sealedToken });
   return { email: tokens.email };
@@ -99,22 +133,32 @@ export async function addReminderToGoogle(
     if (!access) return { kind: "not_linked" };
     const event = eventOf(reminder, deps.zone);
     const existing = await getGoogleEventId(db, userId, reminder.id);
-    let added = false;
+    const ownId = eventIdOf(reminder.id);
+    let eventId: string | null = null;
     if (existing) {
       try {
-        await patchEvent(access, existing, event, deps.fetch);
-        added = true;
+        // they asked to add it: one deleted on Google comes back
+        await patchEvent(access, existing, event, deps.fetch, { revive: true });
+        eventId = existing;
       } catch (error) {
         if (!(error instanceof GoogleEventGoneError)) throw error;
       }
     }
-    if (!added) {
-      const id = await insertEvent(access, event, deps.fetch);
-      await setGoogleEventId(db, userId, reminder.id, id);
+    if (!eventId) {
+      try {
+        eventId = await insertEvent(access, event, deps.fetch, ownId);
+      } catch (error) {
+        // added a moment ago (a second tap, or the page and the sign-in at once): bring it up to date
+        if (!(error instanceof GoogleEventExistsError)) throw error;
+        await patchEvent(access, ownId, event, deps.fetch, { revive: true });
+        eventId = ownId;
+      }
     }
+    if (eventId !== existing) await setGoogleEventId(db, userId, reminder.id, eventId);
     const link = await getGoogleLink(db, userId);
     return { kind: "added", email: link?.email ?? null };
   } catch (error) {
+    if (await forgetIfForbidden(db, userId, error)) return { kind: "not_linked" };
     log.warn("google_add_failed", { reason: safeMessage(error) });
     return { kind: "failed" };
   }
@@ -126,6 +170,8 @@ export async function syncReminderToGoogle(
   userId: string,
   reminder: ReminderEvent,
   deps: GoogleDeps = defaults(),
+  /** Only the words changed: rename the event and leave its times (a series keeps its past rounds). */
+  options: { onlyText?: boolean } = {},
 ): Promise<void> {
   const { cfg } = deps;
   if (!cfg) return;
@@ -135,14 +181,41 @@ export async function syncReminderToGoogle(
     const access = await accessFor(db, userId, cfg, deps.fetch);
     if (!access) return;
     try {
-      await patchEvent(access, eventId, eventOf(reminder, deps.zone), deps.fetch);
+      await patchEvent(
+        access,
+        eventId,
+        options.onlyText ? { summary: reminder.body } : eventOf(reminder, deps.zone),
+        deps.fetch,
+      );
     } catch (error) {
       // deleted on Google's side: they did not want it there, so it is not added back
       if (!(error instanceof GoogleEventGoneError)) throw error;
       await setGoogleEventId(db, userId, reminder.id, null);
     }
   } catch (error) {
+    if (await forgetIfForbidden(db, userId, error)) return;
     log.warn("google_sync_failed", { reason: safeMessage(error) });
+  }
+}
+
+/** A round of a repeat was skipped: it comes off the calendar too. Never throws. */
+export async function skipGoogleRound(
+  db: SupabaseClient,
+  userId: string,
+  reminderId: string,
+  roundAt: string,
+  deps: GoogleDeps = defaults(),
+): Promise<void> {
+  const { cfg } = deps;
+  if (!cfg) return;
+  try {
+    const eventId = await getGoogleEventId(db, userId, reminderId);
+    if (!eventId) return;
+    const access = await accessFor(db, userId, cfg, deps.fetch);
+    if (access) await cancelRound(access, eventId, new Date(roundAt), deps.fetch);
+  } catch (error) {
+    if (await forgetIfForbidden(db, userId, error)) return;
+    log.warn("google_skip_failed", { reason: safeMessage(error) });
   }
 }
 

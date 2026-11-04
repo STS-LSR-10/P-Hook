@@ -6,6 +6,9 @@ import { backToLine, googlePage } from "@/lib/google/pages";
 import { addReminderToGoogle, linkGoogle } from "@/lib/google/sync";
 import { t } from "@/lib/i18n";
 import { log, safeMessage } from "@/lib/log";
+import { createLineClient } from "@/lib/line/client";
+import { GoogleScopeError } from "@/lib/google/oauth";
+import { claimEvent } from "@/lib/repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getReminder } from "@/lib/user-reminder-repo";
 import { runInZone } from "@/lib/zone-scope";
@@ -27,7 +30,11 @@ export async function GET(request: Request): Promise<Response> {
       )
     : null;
   const db = getAdminClient();
-  const user = claims ? await getUserBasics(db, claims.userId) : null;
+  // one sign-in per link: a link that was used (or copied from a history) goes nowhere
+  const fresh = claims?.jti
+    ? await claimEvent(db, `google-link:${claims.jti}`).catch(() => false)
+    : false;
+  const user = claims && fresh ? await getUserBasics(db, claims.userId) : null;
 
   return runInZone(
     user?.timezone,
@@ -52,6 +59,20 @@ export async function GET(request: Request): Promise<Response> {
       }
       try {
         const { email } = await linkGoogle(db, claims.userId, code, { cfg, fetch });
+        // said in LINE too: someone who did not do this sees it, and can unlink in the settings
+        if (user.lineUserId) {
+          await createLineClient(getServerEnv().LINE_CHANNEL_ACCESS_TOKEN)
+            .push(user.lineUserId, [
+              {
+                type: "text",
+                text: t(
+                  "เชื่อม Google Calendar กับ {0} แล้ว ถ้าไม่ได้ทำเอง ยกเลิกการเชื่อมได้ในหน้าตั้งค่า",
+                  email ?? "Google",
+                ),
+              },
+            ])
+            .catch(() => undefined);
+        }
         const reminder = claims.reminderId
           ? await getReminder(db, claims.userId, claims.reminderId)
           : null;
@@ -82,6 +103,16 @@ export async function GET(request: Request): Promise<Response> {
           ok: added?.kind !== "failed",
         });
       } catch (error) {
+        if (error instanceof GoogleScopeError) {
+          return googlePage({
+            title: t("ยังไม่ได้ให้สิทธิ์ปฏิทิน"),
+            message: t(
+              "ตอนลงชื่อเข้าใช้ ต้องติ๊กช่องให้พี่ฮูกจัดการกิจกรรมในปฏิทินด้วย กลับไปกด เพิ่มลงปฏิทิน แล้วลองใหม่นะ",
+            ),
+            action: backToLine(),
+            ok: false,
+          });
+        }
         log.warn("google_link_failed", { reason: safeMessage(error) });
         return googlePage({
           title: t("เชื่อม Google Calendar ไม่สำเร็จ"),

@@ -16,6 +16,8 @@ const escape = (s: string) =>
 export function googlePage(input: {
   title: string;
   message: string;
+  /** Said apart, in a box above the button. */
+  warning?: string;
   /** The main button. */
   action: { label: string; href: string };
   ok?: boolean;
@@ -34,12 +36,14 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 main{max-width:420px;margin:0 auto;padding:48px 16px}
 section{background:var(--card);border-radius:24px;padding:24px 20px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .icon{font-size:40px}h1{font-size:20px;margin:12px 0 8px}p{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 20px}
+.warn{background:rgba(217,119,6,.12);color:var(--text);border-radius:12px;padding:10px 12px;font-size:14px;text-align:left}
 a.btn{display:block;background:var(--primary);color:#fff;text-decoration:none;font-weight:600;border-radius:16px;padding:14px}
 </style></head>
 <body><main><section>
 <div class="icon" aria-hidden="true">${icon}</div>
 <h1>${escape(input.title)}</h1>
 <p>${escape(input.message)}</p>
+${input.warning ? `<p class="warn">${escape(input.warning)}</p>` : ""}
 <a class="btn" href="${escape(input.action.href)}">${escape(input.action.label)}</a>
 </section></main></body></html>`;
   return new Response(html, {

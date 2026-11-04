@@ -3,12 +3,14 @@ import { jwtVerify, SignJWT } from "jose";
 const ISSUER = "phook";
 const AUDIENCE = "phook-google";
 /** Long enough to sign in with Google, short enough that a link someone else sends is soon useless. */
-export const GOOGLE_LINK_TTL_SECONDS = 15 * 60;
+export const GOOGLE_LINK_TTL_SECONDS = 10 * 60;
 
 const keyOf = (secret: string) => new TextEncoder().encode(secret);
 
 export interface GoogleLinkClaims {
   userId: string;
+  /** This link's own id: it is used up when Google sends the person back (one sign-in per link). */
+  jti?: string;
   /** The reminder to add once signed in (null: only sign in, from the settings). */
   reminderId: string | null;
 }
@@ -24,6 +26,7 @@ export async function signGoogleLinkToken(
 ): Promise<string> {
   const iat = Math.floor(now.getTime() / 1000);
   return new SignJWT({ rid: claims.reminderId })
+    .setJti(claims.jti ?? crypto.randomUUID())
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(claims.userId)
     .setIssuer(ISSUER)
@@ -45,7 +48,11 @@ export async function verifyGoogleLinkToken(
     });
     if (typeof payload.sub !== "string") return null;
     const rid = payload.rid;
-    return { userId: payload.sub, reminderId: typeof rid === "string" ? rid : null };
+    return {
+      userId: payload.sub,
+      reminderId: typeof rid === "string" ? rid : null,
+      jti: typeof payload.jti === "string" ? payload.jti : undefined,
+    };
   } catch {
     return null;
   }

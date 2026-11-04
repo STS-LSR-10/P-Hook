@@ -4,6 +4,13 @@ function fail(context: string, error: { message: string }): never {
   throw new Error(`${context}: ${error.message}`);
 }
 
+/** "a•••@gmail.com": enough for the owner to know it, little for anyone looking over a shoulder. */
+export function maskEmail(email: string | null): string | null {
+  if (!email) return null;
+  const at = email.indexOf("@");
+  return at < 1 ? email : `${email.slice(0, 1)}•••${email.slice(at)}`;
+}
+
 export interface GoogleLink {
   email: string | null;
   /** Sealed (see token-crypto): never the token itself. */
@@ -91,13 +98,14 @@ export async function getUserBasics(
   userId: string,
 ): Promise<{
   displayName: string | null;
+  lineUserId: string | null;
   timezone: string | null;
   currency: string | null;
   locale: string | null;
 } | null> {
   const { data, error } = await db
     .from("users")
-    .select("display_name,timezone,currency,locale")
+    .select("display_name,line_user_id,timezone,currency,locale")
     .eq("id", userId)
     .maybeSingle();
   if (error) fail("get user", error);
@@ -105,6 +113,7 @@ export async function getUserBasics(
   const r = data as Record<string, string | null>;
   return {
     displayName: r.display_name ?? null,
+    lineUserId: r.line_user_id ?? null,
     timezone: r.timezone ?? null,
     currency: r.currency ?? null,
     locale: r.locale ?? null,
