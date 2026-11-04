@@ -41,6 +41,7 @@ import { can, effectivePlan } from "@/lib/plan";
 import { LIMITS } from "@/lib/rate-limit";
 import { ensureUser } from "@/lib/repo";
 import { buildGroupHelpCard, buildGroupWelcomeCard } from "./help-flex";
+import { buildGroupRecentCard, buildGroupTripsCard } from "./list-flex";
 import { formatThaiDate } from "@/lib/thai-date";
 import type { LineMessage } from "@/lib/types";
 import { buildGroupSummaryCard, buildTripSummaryCard } from "./group-flex";
@@ -412,11 +413,15 @@ async function runGroupCommand(
         memberNames(db, group.id),
       ]);
       if (entries.length === 0) return reply([text(GROUP_RECENT_EMPTY_TEXT)]);
-      const lines = entries.map(
-        (e) =>
-          `• ${e.title} ฿${formatBaht(e.amountSatang)} · ${names.get(e.payerLineUserId)?.name ?? NAME_FALLBACK}`,
-      );
-      return reply([text(["รายการล่าสุดของกลุ่ม", ...lines].join("\n"))]);
+      return reply([
+        buildGroupRecentCard(
+          entries.map((e) => ({
+            title: e.title,
+            amountSatang: e.amountSatang,
+            payer: names.get(e.payerLineUserId)?.name ?? NAME_FALLBACK,
+          })),
+        ),
+      ]);
     }
 
     case "delete-last": {
@@ -714,13 +719,14 @@ async function runTripCommand(
     case "trip-old": {
       const old = await closedTrips(db, group.id, 5);
       if (old.length === 0) return reply([text(GROUP_TRIP_OLD_EMPTY_TEXT)]);
-      const lines = await Promise.all(
-        old.map(async (t) => {
-          const total = (await tripEntries(db, t.id)).reduce((s, e) => s + e.amountSatang, 0);
-          return `• ${t.name} · ${t.closedAt ? formatThaiDate(new Date(t.closedAt)) : ""} · ฿${formatBaht(total)}`;
-        }),
+      const trips = await Promise.all(
+        old.map(async (trip) => ({
+          name: trip.name,
+          closedAt: trip.closedAt,
+          totalSatang: (await tripEntries(db, trip.id)).reduce((s, e) => s + e.amountSatang, 0),
+        })),
       );
-      return reply([text(["ทริปที่จบแล้ว", ...lines].join("\n"))]);
+      return reply([buildGroupTripsCard(trips)]);
     }
   }
 }

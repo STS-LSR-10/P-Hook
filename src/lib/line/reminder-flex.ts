@@ -309,7 +309,7 @@ function pill(label: string, action: Record<string, unknown>, color = "#334155")
 const WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 
 /** Beside the time: "วันนี้", "พรุ่งนี้" or the date; for a repeating one, which days. */
-function dayLabel(at: Date, repeat: Repeat | null, now: Date): string {
+export function dayLabel(at: Date, repeat: Repeat | null, now: Date): string {
   const p = bangkokParts(at);
   if (repeat === "daily") return t("ทุกวัน");
   if (repeat === "weekly") return t("ทุกวัน{0}", t(WEEKDAYS[p.weekday] ?? ""));

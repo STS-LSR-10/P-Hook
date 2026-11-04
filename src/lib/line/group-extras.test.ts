@@ -429,8 +429,13 @@ describe("reminders in a group", () => {
     reminders = [waiting("r1", "Uanna", "ประชุม"), waiting("r2", "Ubob", "จ่ายค่าห้อง")];
     const { deps, reply } = setup();
     await handleEvent(say("Ubob", "เตือนกลุ่ม"), deps);
-    expect(said(reply)).toContain("1. ประชุม");
-    expect(said(reply)).toContain("2. จ่ายค่าห้อง");
+    // a card: numbered rows, and how to cancel by number
+    expect(said(reply)).toContain("เตือนของกลุ่ม");
+    expect(said(reply)).toContain('"text":"1"');
+    expect(said(reply)).toContain('"text":"ประชุม"');
+    expect(said(reply)).toContain('"text":"2"');
+    expect(said(reply)).toContain('"text":"จ่ายค่าห้อง"');
+    expect(said(reply)).toContain("ยกเลิกเตือน 1");
 
     const denied = setup();
     await handleEvent(say("Ubob", "ยกเลิกเตือน 1"), denied.deps);

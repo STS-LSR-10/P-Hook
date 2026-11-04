@@ -155,6 +155,7 @@ import {
   snoozeTime,
   whenFromNow,
 } from "@/lib/user-reminder";
+import { buildNoteListCard } from "./list-flex";
 import { buildReminderCard, buildReminderListCard } from "./reminder-flex";
 import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
 import { buildSummaryMenu } from "./summary-menu";
@@ -280,7 +281,6 @@ import {
   NOTE_SEARCH_USAGE_TEXT,
   NOTE_TOO_LONG_TEXT,
   NOTE_UNDONE_TEXT,
-  noteListText,
   noteNotFoundText,
   WALLET_MOVE_ASK_TEXT,
   WALLET_SLIP_ASK_TEXT,
@@ -2452,7 +2452,7 @@ async function runCommand(
     case "note-list": {
       const { items } = await listNotes(db, user.id, { limit: 5 });
       if (items.length === 0) return [text(NOTE_EMPTY_TEXT)];
-      return [text(noteListText("โน้ตล่าสุด", items, pageUrl("/notes")))];
+      return [buildNoteListCard({ title: tr("โน้ตล่าสุด"), items, url: pageUrl("/notes") })];
     }
 
     case "note-search": {
@@ -2460,7 +2460,14 @@ async function runCommand(
       const { items, hasMore } = await listNotes(db, user.id, { q: command.term, limit: 5 });
       if (items.length === 0) return [text(noteNotFoundText(command.term))];
       const url = pageUrl(`/notes?q=${encodeURIComponent(command.term)}`);
-      return [text(noteListText(tr('โน้ตที่มี "{0}"', command.term), items, url, hasMore))];
+      return [
+        buildNoteListCard({
+          title: tr('โน้ตที่มี "{0}"', command.term),
+          items,
+          url,
+          more: hasMore,
+        }),
+      ];
     }
 
     case "search": {
