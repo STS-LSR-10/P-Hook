@@ -67,6 +67,18 @@ describe("reminder card", () => {
     expect(json()).not.toContain("เปลี่ยนเวลา");
   });
 
+  it("a personal one can be added to a calendar, on a page that asks which", () => {
+    const out = json({ listUrl: "https://liff.line.me/x/reminders" });
+    expect(out).toContain(
+      `"label":"📅 เพิ่มลงปฏิทิน","uri":"https://liff.line.me/x/reminders/calendar?id=${base.id}"`,
+    );
+    // a group's keeps its own two calendar buttons
+    expect(
+      json({ listUrl: "https://liff.line.me/x/reminders?g=g1", cancelData: "a=grmx&id=1" }),
+    ).not.toContain("เพิ่มลงปฏิทิน");
+    expect(json()).not.toContain("เพิ่มลงปฏิทิน");
+  });
+
   it("still says when the time was not given, or had passed", () => {
     expect(json({ timeDefaulted: true })).toContain("ใช้ 09:00");
     expect(json({ rolledToTomorrow: true })).toContain("เลยตั้งเป็นพรุ่งนี้");

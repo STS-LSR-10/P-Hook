@@ -38,6 +38,11 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
     input.listUrl && !input.cancelData
       ? `${input.listUrl}${input.listUrl.includes("?") ? "&" : "?"}edit=${input.id}`
       : input.listUrl;
+  // a personal reminder: a page that asks which calendar (a group's has its own two buttons)
+  const calendarUrl =
+    input.listUrl && !input.cancelData && !input.calendar && !input.listUrl.includes("?")
+      ? `${input.listUrl}/calendar?id=${input.id}`
+      : null;
   const p = bangkokParts(input.remindAt);
   const clock = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
   const notes = [
@@ -156,6 +161,21 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
                   color: COLOR.muted,
                   wrap: true,
                   align: "center",
+                },
+              ]
+            : []),
+          ...(calendarUrl
+            ? [
+                {
+                  type: "box",
+                  layout: "horizontal",
+                  contents: [
+                    pill(t("📅 เพิ่มลงปฏิทิน"), {
+                      type: "uri",
+                      label: t("📅 เพิ่มลงปฏิทิน"),
+                      uri: calendarUrl,
+                    }),
+                  ],
                 },
               ]
             : []),

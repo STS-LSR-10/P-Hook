@@ -2457,4 +2457,70 @@ export const EN: Record<string, string> = {
   ตั้งเตือนกลุ่มแล้ว: "Group reminder set",
   แก้ไขเตือนแล้ว: "Reminder updated",
   ดูยอดเงิน: "See totals",
+  "เพิ่มลง Google Calendar แล้ว": "Added to Google Calendar",
+  "เปิดในเบราว์เซอร์แล้ว กด เพิ่มลงปฏิทิน ที่นั่น":
+    "Opened in your browser. Tap Add to Calendar there",
+  "ลงชื่อเข้าใช้ Google ในเบราว์เซอร์ที่เปิดขึ้น แล้วกลับมาที่ไลน์":
+    "Sign in with Google in the browser that opened, then come back to LINE",
+  "เปิด Google Calendar แล้ว กดบันทึกที่นั่น": "Google Calendar is open. Tap Save there",
+  เพิ่มลงปฏิทิน: "Add to calendar",
+  ไม่พบเตือนนี้: "Reminder not found",
+  "กดปุ่ม เพิ่มลงปฏิทิน บนการ์ดเตือนในแชทอีกครั้งนะ":
+    "Tap Add to calendar on the reminder card in the chat again",
+  จะเพิ่มลงปฏิทินไหน: "Which calendar?",
+  "กำลังเพิ่ม…": "Adding…",
+  "เปิดหน้า Google Calendar ที่กรอกไว้ให้แล้ว กดบันทึกได้เลย":
+    "Opens Google Calendar with it filled in. Just tap Save",
+  "เชื่อมกับ {0} แล้ว กดแล้วเพิ่มให้ทันที แก้หรือยกเลิกเตือน ปฏิทินก็เปลี่ยนตาม":
+    "Linked to {0}. Tap to add it now; change or cancel the reminder and the calendar follows",
+  "ลงชื่อเข้าใช้ด้วย Google ครั้งแรกครั้งเดียว แล้วพี่ฮูกเพิ่มให้ แก้หรือยกเลิกเตือน ปฏิทินก็เปลี่ยนตาม":
+    "Sign in with Google once and P'Hook adds it; change or cancel the reminder and the calendar follows",
+  "กำลังเปิด…": "Opening…",
+  ปฏิทินในเครื่อง: "Phone calendar",
+  "iPhone หรือ Android: เปิดไฟล์ให้แอปปฏิทินในมือถือเพิ่ม ถ้าแก้เตือนทีหลัง ต้องเพิ่มใหม่เอง":
+    "iPhone or Android: opens a file your calendar app adds. If you change the reminder later, add it again",
+  ลิงก์นี้ใช้ไม่ได้แล้ว: "This link no longer works",
+  "กลับไปที่ไลน์ แล้วกดปุ่ม เพิ่มลงปฏิทิน บนการ์ดเตือนอีกครั้งนะ":
+    "Go back to LINE and tap Add to calendar on the reminder card again",
+  "ยังไม่ได้เชื่อม Google Calendar": "Google Calendar not linked",
+  "ไม่ได้ให้สิทธิ์ ก็ไม่เป็นไร เพิ่มลงปฏิทินในเครื่องแทนได้จากปุ่มบนการ์ดเตือน":
+    "No problem. You can add it to your phone calendar instead from the reminder card",
+  "เชื่อม Google Calendar แล้ว": "Google Calendar linked",
+  "{0} อยู่ในปฏิทินของ {1} แล้ว ถ้าแก้หรือยกเลิกเตือน ปฏิทินจะเปลี่ยนตามให้":
+    "{0} is in the calendar of {1}. Change or cancel the reminder and the calendar follows",
+  "เชื่อมกับ {0} แล้ว แต่ยังเพิ่มเตือนไม่สำเร็จ กลับไปกด เพิ่มลงปฏิทิน อีกครั้งนะ":
+    "Linked to {0}, but the reminder could not be added. Tap Add to calendar again",
+  "เชื่อมกับ {0} แล้ว ครั้งต่อไปกด เพิ่มลงปฏิทิน แล้วเพิ่มได้ทันที":
+    "Linked to {0}. Next time, Add to calendar adds it straight away",
+  "เชื่อม Google Calendar ไม่สำเร็จ": "Could not link Google Calendar",
+  "ลองใหม่อีกครั้งจากปุ่ม เพิ่มลงปฏิทิน บนการ์ดเตือนนะ":
+    "Try again from Add to calendar on the reminder card",
+  "เชื่อม Google Calendar": "Link Google Calendar",
+  "เชื่อมปฏิทิน Google กับพี่ฮูกของ {0} พี่ฮูกจะเพิ่มเตือนที่คุณเลือกลงปฏิทิน และแก้หรือลบตามเมื่อเปลี่ยนเตือน ขอสิทธิ์แค่จัดการกิจกรรมในปฏิทินเท่านั้น":
+    "Link Google Calendar to the P'Hook of {0}. P'Hook adds the reminders you choose, and changes or removes them with the reminder. It only asks to manage calendar events",
+  "ลงชื่อเข้าใช้ด้วย Google": "Sign in with Google",
+  ส่งข้อมูลไม่ถูกต้อง: "Invalid request",
+  "เพิ่มลง Google Calendar ไม่สำเร็จ ลองใหม่อีกครั้งนะ":
+    "Could not add to Google Calendar. Please try again",
+  "ยกเลิกการเชื่อม Google Calendar? เตือนที่เพิ่มไปแล้วยังอยู่ในปฏิทิน แต่จะไม่เปลี่ยนตามอีก":
+    "Unlink Google Calendar? Reminders already added stay in the calendar but will no longer follow changes",
+  ยกเลิกการเชื่อมแล้ว: "Unlinked",
+  "ทำไม่สำเร็จ ลองใหม่อีกครั้งนะ": "That did not work. Please try again",
+  "เชื่อมกับ {0} เตือนที่เพิ่มลงปฏิทินจะเปลี่ยนตามเมื่อแก้หรือยกเลิก":
+    "Linked to {0}. Reminders added to the calendar follow when changed or cancelled",
+  "ยังไม่ได้เชื่อม กด เพิ่มลงปฏิทิน บนการ์ดเตือน เพื่อเชื่อม":
+    "Not linked. Tap Add to calendar on a reminder card to link",
+  "กำลังยกเลิก…": "Unlinking…",
+  ยกเลิกการเชื่อม: "Unlink",
+  กลับไปที่ไลน์: "Back to LINE",
+  "📅 เพิ่มลงปฏิทิน": "📅 Add to calendar",
+  "ไม่พบเตือนนี้ หรือเตือนไปแล้ว": "Reminder not found, or already sent",
+  "จาก พี่ฮูก": "From P'Hook",
+  "เชื่อม Google Calendar กับ {0} แล้ว ถ้าไม่ได้ทำเอง ยกเลิกการเชื่อมได้ในหน้าตั้งค่า":
+    "Google Calendar is now linked to {0}. If this was not you, unlink it in Settings",
+  ยังไม่ได้ให้สิทธิ์ปฏิทิน: "Calendar access not given",
+  "ตอนลงชื่อเข้าใช้ ต้องติ๊กช่องให้พี่ฮูกจัดการกิจกรรมในปฏิทินด้วย กลับไปกด เพิ่มลงปฏิทิน แล้วลองใหม่นะ":
+    "When signing in, tick the box that lets P'Hook manage calendar events. Go back, tap Add to calendar and try again",
+  "ถ้ามีคนอื่นส่งลิงก์นี้มาให้ อย่ากดต่อ ลิงก์นี้ใช้ได้เฉพาะเจ้าของบัญชีไลน์ที่กดปุ่ม เพิ่มลงปฏิทิน เอง":
+    "If someone else sent you this link, stop here. It is only for the LINE account owner who tapped Add to calendar",
 };

@@ -83,6 +83,7 @@ vi.mock("@/lib/user-reminder-repo", () => ({
   countActiveReminders: async (_db: unknown, _u: string, kind?: string) =>
     kind === "repeat" ? repeating : 0,
   listReminders: async () => reminders,
+  cancelReminder: async () => true,
   createReminder: async (_db: unknown, _u: string, i: { body: string; remindAt: Date }) => {
     madeReminders.push(i);
     return { id: ID, body: i.body, remindAt: i.remindAt.toISOString(), repeat: null };
@@ -96,6 +97,13 @@ vi.mock("@/lib/user-reminder-repo", () => ({
     moves.push({ id, ...i });
     return moved;
   },
+}));
+const synced = vi.fn();
+const removed = vi.fn();
+vi.mock("@/lib/google/sync", () => ({
+  syncReminderToGoogle: async (...a: unknown[]) => synced(...a),
+  googleEventOf: async () => "ev1",
+  removeGoogleEvent: async (...a: unknown[]) => removed(...a),
 }));
 vi.mock("@/lib/pending-intent-repo", () => ({
   putPendingIntent: async (...a: unknown[]) => {
@@ -553,6 +561,21 @@ describe("moving a reminder", () => {
     expect(moves).toHaveLength(1);
     expect(moves[0]).toMatchObject({ id: ID, repeat: "daily" });
     expect(moves[0]?.remindAt.toISOString()).toBe("2026-11-02T12:00:00.000Z");
+  });
+
+  it("a moved reminder moves its Google event too", async () => {
+    reminders = [reminder(ID, "กินยา", "daily")];
+    moved = reminder(ID, "กินยา", "daily");
+    route.mockResolvedValue(edit);
+    const { deps } = setup();
+    await handleEvent(say("เลื่อนเตือนกินยาเป็น 1 ทุ่ม"), deps);
+    expect(synced).toHaveBeenCalledWith(expect.anything(), "u1", moved);
+  });
+
+  it("a reminder cancelled from its card takes its Google event with it", async () => {
+    const { deps } = setup();
+    await handleEvent(tap(`a=rmx&id=${ID}`), deps);
+    expect(removed).toHaveBeenCalledWith(expect.anything(), "u1", "ev1");
   });
 
   it("ignores a time inside the reminder's own text", async () => {
