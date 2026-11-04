@@ -66,7 +66,7 @@ export function buildWalletsCard(input: {
   body.push({
     type: "text",
     text: input.canAdd
-      ? t("จดลงกระเป๋าอื่นได้โดยใส่ @ชื่อ เช่น \"กาแฟ 45 @บัตร\"")
+      ? t('จดลงกระเป๋าอื่นได้โดยใส่ @ชื่อ เช่น "กาแฟ 45 @บัตร"')
       : t("แผนนี้เพิ่มกระเป๋าไม่ได้แล้ว อัปเกรดเพื่อเพิ่มกระเป๋าได้นะ"),
     size: "xs",
     color: COLOR.muted,

@@ -42,7 +42,10 @@ export async function runPaymentCommand(
       await savePayment(db, user.id, { promptpayId: command.id });
       return [
         text(
-          t("ตั้งพร้อมเพย์ {0} แล้ว ตอนคุณหารบิลในกลุ่ม เพื่อนจะได้ QR ที่ใส่ยอดของแต่ละคนให้เลย (เพื่อนในกลุ่มจะเห็นเลขแบบปิดบางส่วน)", maskPromptPayId(command.id)),
+          t(
+            "ตั้งพร้อมเพย์ {0} แล้ว ตอนคุณหารบิลในกลุ่ม เพื่อนจะได้ QR ที่ใส่ยอดของแต่ละคนให้เลย (เพื่อนในกลุ่มจะเห็นเลขแบบปิดบางส่วน)",
+            maskPromptPayId(command.id),
+          ),
         ),
       ];
 

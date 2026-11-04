@@ -84,7 +84,13 @@ export function row(label: string, value: string) {
 
 export function shareText(input: ConfirmCardInput): string {
   const sign = input.type === "income" ? "+" : "-";
-  return tr("{0} {1}{2} ({3}) · จดด้วยพี่ฮูก", input.title, sign, money(input.amountSatang), formatThaiDate(input.occurredAt));
+  return tr(
+    "{0} {1}{2} ({3}) · จดด้วยพี่ฮูก",
+    input.title,
+    sign,
+    money(input.amountSatang),
+    formatThaiDate(input.occurredAt),
+  );
 }
 
 // colours below are the base palette's, so the chosen card theme still recolours them
@@ -736,7 +742,11 @@ export function buildTypeQuestion(input: {
     type: "text",
     text: tr("{0} {1} เป็นรายรับหรือรายจ่ายนะ?", input.title, money(input.amountSatang)),
     quickReply: {
-      items: [action(tr("รายจ่าย"), "expense"), action(tr("รายรับ"), "income"), action(tr("ยกเลิก"), "cancel")],
+      items: [
+        action(tr("รายจ่าย"), "expense"),
+        action(tr("รายรับ"), "income"),
+        action(tr("ยกเลิก"), "cancel"),
+      ],
     },
   };
 }
@@ -883,7 +893,7 @@ export function buildCategoryKeyboardList(
   if (shown.length === 0) {
     return {
       type: "text",
-      text: tr("ยังไม่มีหมวดให้เลือก พิมพ์จดได้เลย เช่น \"กาแฟ 30\" นะ"),
+      text: tr('ยังไม่มีหมวดให้เลือก พิมพ์จดได้เลย เช่น "กาแฟ 30" นะ'),
     };
   }
   return {

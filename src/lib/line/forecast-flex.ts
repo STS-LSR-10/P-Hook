@@ -148,7 +148,12 @@ export function buildForecastCard(input: {
     const line = b.overNow
       ? t("งบรวม {0}: ใช้เกินงบแล้ว", money(b.limitSatang))
       : b.exhaustedOn
-        ? t("งบรวม {0}: คาดว่าจะใช้ {1}% และงบหมดประมาณ {2}", money(b.limitSatang), b.percent, runOutText(b.exhaustedOn, input.today))
+        ? t(
+            "งบรวม {0}: คาดว่าจะใช้ {1}% และงบหมดประมาณ {2}",
+            money(b.limitSatang),
+            b.percent,
+            runOutText(b.exhaustedOn, input.today),
+          )
         : t("งบรวม {0}: คาดว่าจะใช้ {1}% ของงบ", money(b.limitSatang), b.percent);
     body.push(note(line, b.overNow || b.percent >= 100 ? COLOR.expense : COLOR.muted));
   }
@@ -160,7 +165,9 @@ export function buildForecastCard(input: {
   }
   body.push(
     note(
-      t("เป็นการประมาณจากอัตราใช้จ่ายของรอบนี้ ไม่รวมรายรับที่ยังไม่เกิดและไม่ใช่รายการประจำ (เช่น โบนัส)"),
+      t(
+        "เป็นการประมาณจากอัตราใช้จ่ายของรอบนี้ ไม่รวมรายรับที่ยังไม่เกิดและไม่ใช่รายการประจำ (เช่น โบนัส)",
+      ),
     ),
   );
 

@@ -323,7 +323,12 @@ export function buildCompareCard(input: {
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: t("เทียบรายจ่ายรายหมวด: {0} ({1}) จาก {2}", money(input.currentSatang), total.text, money(input.previousSatang)),
+    altText: t(
+      "เทียบรายจ่ายรายหมวด: {0} ({1}) จาก {2}",
+      money(input.currentSatang),
+      total.text,
+      money(input.previousSatang),
+    ),
     contents: bubble,
   };
 }
@@ -365,7 +370,11 @@ export function buildYearCard(input: {
       text:
         input.changePercent === 0
           ? t("รายจ่ายเท่ากับปีก่อน (ช่วงวันที่เดียวกัน)")
-          : t("รายจ่าย{0} {1}% จากปีก่อน (ช่วงวันที่เดียวกัน)", up ? t("เพิ่มขึ้น") : t("ลดลง"), Math.abs(input.changePercent)),
+          : t(
+              "รายจ่าย{0} {1}% จากปีก่อน (ช่วงวันที่เดียวกัน)",
+              up ? t("เพิ่มขึ้น") : t("ลดลง"),
+              Math.abs(input.changePercent),
+            ),
       size: "xs",
       color: up ? COLOR.expense : COLOR.income,
       wrap: true,
@@ -460,7 +469,12 @@ export function buildYearCard(input: {
   if (f) bubble.footer = f;
   return {
     type: "flex",
-    altText: t("สรุปรายปี {0}: รายรับ {1} รายจ่าย {2}", input.yearBE, money(input.income), money(input.expense)),
+    altText: t(
+      "สรุปรายปี {0}: รายรับ {1} รายจ่าย {2}",
+      input.yearBE,
+      money(input.income),
+      money(input.expense),
+    ),
     contents: bubble,
   };
 }

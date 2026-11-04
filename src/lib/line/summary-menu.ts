@@ -2,8 +2,9 @@ import type { LineMessage } from "@/lib/types";
 import { t } from "@/lib/i18n";
 
 /** The summaries offered when someone types just "สรุป" (each button sends its own command). */
-export const SUMMARY_MENU_TEXT =
-  t("อยากดูสรุปแบบไหน? เลือกได้เลย หรือพิมพ์ช่วงเอง เช่น สรุป 20/10-30/10");
+export const SUMMARY_MENU_TEXT = t(
+  "อยากดูสรุปแบบไหน? เลือกได้เลย หรือพิมพ์ช่วงเอง เช่น สรุป 20/10-30/10",
+);
 
 export const SUMMARY_MENU_ITEMS = [
   { label: t("📅 วันนี้"), text: "สรุปวันนี้" },

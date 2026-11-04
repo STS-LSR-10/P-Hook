@@ -97,7 +97,7 @@ export function buildBillsCard(input: {
           ...rows,
           {
             type: "text",
-            text: t("จ่ายแล้วพิมพ์ \"จ่ายบิล ค่าไฟ\" หรือกดปุ่มในข้อความเตือน"),
+            text: t('จ่ายแล้วพิมพ์ "จ่ายบิล ค่าไฟ" หรือกดปุ่มในข้อความเตือน'),
             size: "xs",
             color: COLOR.muted,
             wrap: true,
