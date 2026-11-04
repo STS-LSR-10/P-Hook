@@ -119,6 +119,7 @@ async function moveReminder(
       timeDefaulted: false,
       rolledToTomorrow: parsed.rolledToTomorrow,
       listUrl: deps.listUrl,
+      now: deps.now(),
     }),
   ];
 }

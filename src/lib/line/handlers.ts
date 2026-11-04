@@ -2450,6 +2450,7 @@ async function runCommand(
           timeDefaulted: parsed.timeDefaulted,
           rolledToTomorrow: parsed.rolledToTomorrow,
           listUrl: pageUrl("/reminders"),
+          now: deps.now(),
         }),
       ];
     }
