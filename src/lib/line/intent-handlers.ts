@@ -6,6 +6,7 @@ import {
   type RoutedIntent,
 } from "@/lib/ai/intent-router";
 import { queryCommand } from "@/lib/ai/query-command";
+import { syncReminderToGoogle } from "@/lib/google/sync";
 import { clockIsTheAmount, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
@@ -112,6 +113,7 @@ async function moveReminder(
     repeat,
   });
   if (!made) return [text(REMINDER_GONE_TEXT)];
+  await syncReminderToGoogle(deps.db, user.id, made);
   return [
     buildReminderCard({
       id: made.id,

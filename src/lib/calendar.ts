@@ -3,7 +3,7 @@ import type { Repeat } from "@/lib/user-reminder";
 /** How long the calendar event lasts: the reminder is a moment, the phone needs a span. */
 const EVENT_MS = 15 * 60_000;
 
-const RRULE: Record<Repeat, string> = {
+export const RRULE: Record<Repeat, string> = {
   daily: "RRULE:FREQ=DAILY",
   weekly: "RRULE:FREQ=WEEKLY",
   monthly: "RRULE:FREQ=MONTHLY",

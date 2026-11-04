@@ -1,4 +1,5 @@
 import type { LineMentionee } from "@/lib/group-mention";
+import { googleEventOf, removeGoogleEvent, syncReminderToGoogle } from "@/lib/google/sync";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   budgetAlertsFor,
@@ -2620,8 +2621,10 @@ async function answerReminderButton(
       repeat: null,
       category: reminder.category,
     });
-  } else if (!(await snoozeReminder(db, user.id, id, at))) {
-    return REMINDER_HANDLED_TEXT;
+  } else {
+    const snoozed = await snoozeReminder(db, user.id, id, at);
+    if (!snoozed) return REMINDER_HANDLED_TEXT;
+    await syncReminderToGoogle(db, user.id, snoozed);
   }
   return reminderSnoozedText(whenFromNow(at, now), snooze === "tm");
 }
@@ -2644,11 +2647,10 @@ async function handlePostback(
   if (action === "rmx") {
     const id = params.get("id") ?? "";
     if (!UUID_RE.test(id)) return [text(NOT_FOUND_TEXT)];
-    return [
-      text(
-        (await cancelReminder(deps.db, user.id, id)) ? REMINDER_CANCELLED_TEXT : REMINDER_GONE_TEXT,
-      ),
-    ];
+    const eventId = await googleEventOf(deps.db, user.id, id);
+    if (!(await cancelReminder(deps.db, user.id, id))) return [text(REMINDER_GONE_TEXT)];
+    await removeGoogleEvent(deps.db, user.id, eventId);
+    return [text(REMINDER_CANCELLED_TEXT)];
   }
   // The buttons that pop up under a reminder when it arrives.
   if (action === "rmd" || action === "rms") {

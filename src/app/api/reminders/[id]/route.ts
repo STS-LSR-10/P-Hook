@@ -9,6 +9,7 @@ import {
   reminderSchema,
   reminderTimeProblem,
 } from "@/lib/reminder-input";
+import { googleEventOf, removeGoogleEvent, syncReminderToGoogle } from "@/lib/google/sync";
 import { getAdminClient } from "@/lib/supabase/admin";
 import {
   cancelReminder,
@@ -82,7 +83,9 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
         category: edit.data.category ?? null,
         status: keepsDone ? "done" : "active",
       });
-      return updated ? json({ reminder: updated }) : apiError(NOT_FOUND, 404);
+      if (!updated) return apiError(NOT_FOUND, 404);
+      await syncReminderToGoogle(db, auth.userId, updated);
+      return json({ reminder: updated });
     }
 
     if (action.data?.action === "undo") {
@@ -120,8 +123,9 @@ export async function DELETE(request: Request, { params }: Params): Promise<Resp
     const db = getAdminClient();
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
-    return (await cancelReminder(db, auth.userId, id))
-      ? json({ ok: true })
-      : apiError(NOT_FOUND, 404);
+    const eventId = await googleEventOf(db, auth.userId, id);
+    if (!(await cancelReminder(db, auth.userId, id))) return apiError(NOT_FOUND, 404);
+    await removeGoogleEvent(db, auth.userId, eventId);
+    return json({ ok: true });
   });
 }
