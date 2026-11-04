@@ -2523,4 +2523,8 @@ export const EN: Record<string, string> = {
     "When signing in, tick the box that lets P'Hook manage calendar events. Go back, tap Add to calendar and try again",
   "ถ้ามีคนอื่นส่งลิงก์นี้มาให้ อย่ากดต่อ ลิงก์นี้ใช้ได้เฉพาะเจ้าของบัญชีไลน์ที่กดปุ่ม เพิ่มลงปฏิทิน เอง":
     "If someone else sent you this link, stop here. It is only for the LINE account owner who tapped Add to calendar",
+  เตือนที่รออยู่: "Waiting reminders",
+  "{0} รายการที่จะถึงก่อน": "Next {0} coming up",
+  ดูเตือนทั้งหมด: "See all reminders",
+  "เตือนที่รออยู่ {0} รายการ": "{0} reminders waiting",
 };

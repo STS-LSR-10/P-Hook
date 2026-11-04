@@ -1,6 +1,8 @@
 import type { LineMessage } from "@/lib/types";
+import type { ReminderDto } from "@/lib/user-reminder";
 import { REPEAT_LABEL, type Repeat } from "@/lib/user-reminder";
 import { bangkokParts, formatThaiDate, fromBangkok } from "@/lib/thai-date";
+import { cardHeader, pillFooter } from "./card-style";
 import { COLOR } from "./flex";
 import { t } from "@/lib/i18n";
 
@@ -208,6 +210,84 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
         ],
       },
     },
+  };
+}
+
+/** How many reminders the list card shows. */
+export const REMINDER_LIST_SHOWN = 3;
+
+/**
+ * "เตือนที่รออยู่": the next few reminders waiting, each with its time large and its day beside it,
+ * and a button to the page with all of them. `total` is how many wait in all.
+ */
+export function buildReminderListCard(input: {
+  /** Soonest first; only the first few are shown. */
+  items: ReminderDto[];
+  total: number;
+  listUrl?: string;
+  now?: Date;
+}): LineMessage {
+  const now = input.now ?? new Date();
+  const shown = input.items.slice(0, REMINDER_LIST_SHOWN);
+  const body: unknown[] = [];
+  shown.forEach((r, i) => {
+    const at = new Date(r.remindAt);
+    const p = bangkokParts(at);
+    const clock = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+    if (i > 0) body.push({ type: "separator", margin: "md" });
+    body.push({
+      type: "box",
+      layout: "vertical",
+      margin: i === 0 ? "none" : "md",
+      spacing: "xs",
+      contents: [
+        {
+          type: "box",
+          layout: "baseline",
+          spacing: "sm",
+          contents: [
+            {
+              type: "text",
+              text: clock,
+              size: "lg",
+              weight: "bold",
+              color: COLOR.primary,
+              flex: 0,
+            },
+            {
+              type: "text",
+              text: dayLabel(at, r.repeat, now),
+              size: "sm",
+              color: COLOR.muted,
+              wrap: true,
+            },
+          ],
+        },
+        { type: "text", text: r.body, size: "md", color: COLOR.text, wrap: true },
+      ],
+    });
+  });
+  if (input.total > shown.length) {
+    body.push({
+      type: "text",
+      text: t("และอีก {0} รายการ", input.total - shown.length),
+      size: "xs",
+      color: COLOR.muted,
+      margin: "lg",
+    });
+  }
+  const bubble: Record<string, unknown> = {
+    type: "bubble",
+    size: "mega",
+    header: cardHeader(t("เตือนที่รออยู่"), [t("{0} รายการที่จะถึงก่อน", shown.length)], "⏰"),
+    body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
+  };
+  const footer = pillFooter(t("ดูเตือนทั้งหมด"), input.listUrl);
+  if (footer) bubble.footer = footer;
+  return {
+    type: "flex",
+    altText: t("เตือนที่รออยู่ {0} รายการ", input.total),
+    contents: bubble,
   };
 }
 

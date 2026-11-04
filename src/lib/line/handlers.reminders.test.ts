@@ -199,10 +199,12 @@ describe("listing and cancelling", () => {
     ];
     const { deps, reply } = setup();
     await handleEvent(say("เตือน"), deps);
-    expect(said(reply)).toContain("เตือนที่รออยู่");
-    expect(said(reply)).toContain("29 ต.ค. 2569 09:00  จ่ายค่าไฟ");
-    expect(said(reply)).toContain("· ทุกวัน  กินยา");
-    expect(said(reply)).toContain("https://liff.line.me/1234-abcd/reminders");
+    const card = JSON.stringify(reply.mock.calls[0]?.[1]);
+    expect(card).toContain('"type":"flex"');
+    expect(card).toContain("เตือนที่รออยู่");
+    expect(card).toContain('"text":"จ่ายค่าไฟ"');
+    expect(card).toContain('"text":"กินยา"');
+    expect(card).toContain("https://liff.line.me/1234-abcd/reminders");
   });
 
   it("the cancel button removes it, and a second tap finds it gone", async () => {
