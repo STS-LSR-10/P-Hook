@@ -595,8 +595,9 @@ describe("finding files", () => {
     fileName: null,
   });
   const bubbles = (reply: ReturnType<typeof setup>["reply"]) => {
-    const flex = sent(reply).find((m) => "contents" in m) as
-      { contents: { type: string; contents: unknown[] } } | undefined;
+    const flex = sent(reply).find(
+      (m) => "contents" in m && (m as { contents: { type: string } }).contents.type === "carousel",
+    ) as { contents: { type: string; contents: unknown[] } } | undefined;
     return flex?.contents.contents.length ?? 0;
   };
 
@@ -618,7 +619,8 @@ describe("finding files", () => {
     await handleEvent(say("เรื่องสัญญาเช่าจดไว้ไหม"), deps);
     expect(fileQueries).toEqual(["สัญญา"]);
     expect(noteQueries).toEqual(["สัญญา"]);
-    expect(said(reply)).toContain("สัญญาเช่าหมดเดือนมีนา");
+    // the notes as a card, then the files
+    expect(JSON.stringify(sent(reply)[0])).toContain("สัญญาเช่าหมดเดือนมีนา");
     expect(bubbles(reply)).toBe(1);
   });
 
@@ -628,7 +630,7 @@ describe("finding files", () => {
     const { deps, reply } = setup();
     await handleEvent(say("เรื่องสัญญาเช่าจดไว้ไหม"), deps);
     expect(sent(reply)).toHaveLength(1);
-    expect(said(reply)).toContain("สัญญาเช่าหมดเดือนมีนา");
+    expect(JSON.stringify(sent(reply))).toContain("สัญญาเช่าหมดเดือนมีนา");
   });
 
   it("says so when nothing is found", async () => {
@@ -637,12 +639,15 @@ describe("finding files", () => {
     expect(said(reply)).toBe(fileNotFoundText("สัญญา"));
   });
 
-  it("ไฟล์ของฉัน shows the latest with the space used", async () => {
+  it("ไฟล์ของฉัน is one card with a button to the files page, no list and no space used", async () => {
     found = [file(1)];
     const { deps, reply } = setup();
     await handleEvent(say("ไฟล์ของฉัน"), deps);
-    expect(said(reply)).toContain("ใช้ไป 12 MB จาก 500 MB");
-    expect(bubbles(reply)).toBe(1);
+    const out = JSON.stringify(sent(reply));
+    expect(sent(reply)).toHaveLength(1);
+    expect(out).toContain('"label":"เปิดหน้าไฟล์","uri":"https://liff.line.me/1234-abcd/files"');
+    expect(out).not.toContain("ใช้ไป");
+    expect(bubbles(reply)).toBe(0);
   });
 
   it("ไฟล์ของฉัน with nothing kept says so", async () => {

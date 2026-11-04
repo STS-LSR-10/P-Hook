@@ -70,6 +70,18 @@ function card(input: {
   };
 }
 
+/** "ไฟล์ของฉัน": no list, one button to the files page. */
+export function buildFilesPageCard(filesUrl: string | undefined): LineMessage {
+  return card({
+    altText: t("ไฟล์ของฉัน"),
+    title: t("ไฟล์ของฉัน 📁"),
+    lines: [t("ดู ค้นหา และจัดการไฟล์ที่เก็บไว้ได้ที่หน้าไฟล์")],
+    button: filesUrl?.startsWith("https://")
+      ? { label: t("เปิดหน้าไฟล์"), uri: filesUrl }
+      : undefined,
+  });
+}
+
 /** Found files, one card each. The card opens the file through the signed-in page. */
 export function buildFileResults(
   files: FileDto[],

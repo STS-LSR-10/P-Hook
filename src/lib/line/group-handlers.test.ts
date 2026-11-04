@@ -480,7 +480,9 @@ describe("สรุป / ล่าสุด / ลบล่าสุด", () => {
   it("recent lists the entries with the payer's name", async () => {
     const { deps, reply } = setup();
     await handleEvent(inGroup("Uanna", "ล่าสุด"), deps);
-    expect(said(reply)).toContain("แท็กซี่ ฿700 · บ๊อบ");
+    expect(said(reply)).toContain('"text":"แท็กซี่"');
+    expect(said(reply)).toContain("฿700");
+    expect(said(reply)).toContain('"text":"บ๊อบ"');
   });
 
   it("ลบล่าสุด removes the sender's own latest entry, not somebody else's", async () => {

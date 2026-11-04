@@ -81,6 +81,9 @@ function setup() {
 }
 const said = (reply: ReturnType<typeof setup>["reply"]) =>
   ((reply.mock.calls[0]?.[1] ?? []) as { text?: string }[]).map((m) => m.text).join("\n");
+// what was sent, cards included
+const sentAll = (reply: ReturnType<typeof setup>["reply"]) =>
+  JSON.stringify(reply.mock.calls[0]?.[1] ?? []);
 
 const note = (n: number, body: string): NoteDto => ({
   id: `n${n}`,
@@ -200,10 +203,10 @@ describe("listing and searching", () => {
     listed = [note(1, "ซื้อนม\nไข่"), note(2, "รหัสไวไฟ 1234")];
     const { deps, reply } = setup();
     await handleEvent(say("โน้ต"), deps);
-    expect(said(reply)).toContain("โน้ตล่าสุด");
-    expect(said(reply)).toContain("ซื้อนม");
-    expect(said(reply)).not.toContain("ไข่"); // only the first line
-    expect(said(reply)).toContain("รหัสไวไฟ 1234");
+    expect(sentAll(reply)).toContain("โน้ตล่าสุด");
+    expect(sentAll(reply)).toContain("ซื้อนม");
+    expect(sentAll(reply)).not.toContain("ไข่"); // only the first line
+    expect(sentAll(reply)).toContain("รหัสไวไฟ 1234");
   });
 
   it("ค้นหาโน้ต finds by the word and links to the page with it typed", async () => {
@@ -211,9 +214,9 @@ describe("listing and searching", () => {
     const { deps, reply } = setup();
     await handleEvent(say("ค้นหาโน้ต ไวไฟ"), deps);
     expect(searched).toEqual(["ไวไฟ"]);
-    expect(said(reply)).toContain('โน้ตที่มี "ไวไฟ"');
-    expect(said(reply)).toContain("รหัสไวไฟ 1234");
-    expect(said(reply)).toContain(`/notes?q=${encodeURIComponent("ไวไฟ")}`);
+    expect(sentAll(reply)).toContain('โน้ตที่มี \\"ไวไฟ\\"'); // the card's title
+    expect(sentAll(reply)).toContain("รหัสไวไฟ 1234");
+    expect(sentAll(reply)).toContain(`/notes?q=${encodeURIComponent("ไวไฟ")}`);
   });
 
   it("says when nothing matches, and how to search when no word was given", async () => {

@@ -25,7 +25,7 @@ import { LIMITS } from "@/lib/rate-limit";
 import { looksSecret } from "@/lib/secret-text";
 import type { LineMessage } from "@/lib/types";
 import { monthKey, refundUsage, takeUsage } from "@/lib/usage";
-import { capacityOf, describeReminder, parseReminder, reminderKind } from "@/lib/user-reminder";
+import { capacityOf, parseReminder, reminderKind } from "@/lib/user-reminder";
 import {
   cancelGroupReminder,
   countActiveReminders,
@@ -73,9 +73,10 @@ import {
   NOTE_EMPTY_TEXT,
   NOTE_TOO_LONG_TEXT,
   NOTE_UNDONE_TEXT,
-  noteListText,
   text,
 } from "./messages";
+import { buildGroupRemindersCard, buildNoteListCard } from "./list-flex";
+import { t } from "@/lib/i18n";
 import { buildReminderCard } from "./reminder-flex";
 
 const MAX_FILES_SHOWN = 5;
@@ -281,19 +282,7 @@ export async function addGroupReminder(
 export async function listGroupRemindersText(ctx: GroupExtraContext): Promise<LineMessage[]> {
   const items = await listGroupReminders(ctx.db, ctx.group.id, 20);
   if (items.length === 0) return [text(GROUP_REMIND_EMPTY_TEXT)];
-  const lines = items.map(
-    (r, i) => `${i + 1}. ${r.body}\n   ${describeReminder(new Date(r.remindAt), r.repeat)}`,
-  );
-  return [
-    text(
-      [
-        "⏰ เตือนของกลุ่ม",
-        ...lines,
-        "",
-        'ยกเลิก พิมพ์ "ยกเลิกเตือน" ตามด้วยเลข เช่น "ยกเลิกเตือน 1"',
-      ].join("\n"),
-    ),
-  ];
+  return [buildGroupRemindersCard({ items })];
 }
 
 /** Cancel the `index`-th reminder of "เตือนกลุ่ม" (1 is the soonest). */
@@ -373,8 +362,15 @@ export async function listGroupNotesText(
   if (items.length === 0) {
     return [text(term ? groupNoteNotFoundText(term) : GROUP_NOTE_EMPTY_TEXT)];
   }
-  const title = term ? `โน้ตของกลุ่มที่มี "${term}"` : "โน้ตล่าสุดของกลุ่ม";
-  return [text(noteListText(title, items, ctx.pageUrl(groupNotesPath(ctx)), hasMore))];
+  const title = term ? t('โน้ตของกลุ่มที่มี "{0}"', term) : t("โน้ตล่าสุดของกลุ่ม");
+  return [
+    buildNoteListCard({
+      title,
+      items,
+      url: ctx.pageUrl(groupNotesPath(ctx)),
+      more: hasMore,
+    }),
+  ];
 }
 
 /** "↩️ ยกเลิกโน้ตนี้": whoever wrote it, or the owner, may remove it. */

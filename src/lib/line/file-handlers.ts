@@ -1,7 +1,6 @@
 import { fileCapacity, fileDayLimit, formatBytes, isBlockedFile, cleanFileName } from "@/lib/file";
 import type { FileDto } from "@/lib/file";
 import {
-  fileUsage,
   getMediaById,
   listFiles,
   rememberMedia,
@@ -16,7 +15,8 @@ import { listNotes } from "@/lib/note-repo";
 import { effectivePlan } from "@/lib/plan";
 import type { UserRow } from "@/lib/repo";
 import type { LineMessage } from "@/lib/types";
-import { buildFileResults, buildFilesSavedCard } from "./file-flex";
+import { buildFileResults, buildFilesPageCard, buildFilesSavedCard } from "./file-flex";
+import { buildNoteListCard } from "./list-flex";
 import {
   FILE_ASK_KEEP_TEXT,
   FILE_ASK_PDF_TEXT,
@@ -34,8 +34,6 @@ import {
   fileFullText,
   fileNotFoundText,
   fileRenamedText,
-  fileSpaceText,
-  noteListText,
   text,
 } from "./messages";
 import { t } from "@/lib/i18n";
@@ -214,22 +212,24 @@ export async function runFileSearch(
   const messages: LineMessage[] = [];
   if (notes.items.length > 0) {
     const url = deps.pageUrl(`/notes?q=${encodeURIComponent(term)}`);
-    messages.push(text(noteListText(t('โน้ตที่มี "{0}"', term), notes.items, url, notes.hasMore)));
+    messages.push(
+      buildNoteListCard({
+        title: t('โน้ตที่มี "{0}"', term),
+        items: notes.items,
+        url,
+        more: notes.hasMore,
+      }),
+    );
   }
   if (files.items.length > 0) messages.push(buildFileResults(files.items, openUrlOf(deps)));
   return messages.length > 0 ? messages : [text(fileNotFoundText(term))];
 }
 
-/** "ไฟล์ของฉัน": the space used and the latest files. */
+/** "ไฟล์ของฉัน": nothing kept says so; otherwise a card with a button to the files page. */
 export async function runFileList(deps: FileChatDeps, user: UserRow): Promise<LineMessage[]> {
-  const { items } = await listFiles(deps.db, user.id, { limit: MAX_RESULTS });
+  const { items } = await listFiles(deps.db, user.id, { limit: 1 });
   if (items.length === 0) return [text(FILE_NOT_FOUND_TEXT)];
-  const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
-  const used = await fileUsage(deps.db, user.id);
-  return [
-    text(fileSpaceText(formatBytes(used), formatBytes(fileCapacity(plan)), deps.pageUrl("/files"))),
-    buildFileResults(items, openUrlOf(deps)),
-  ];
+  return [buildFilesPageCard(deps.pageUrl("/files"))];
 }
 
 export async function runFileRename(
