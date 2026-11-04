@@ -224,6 +224,18 @@ describe("plain messages", () => {
     expect(entries).toEqual([]);
   });
 
+  it("a reminder's card can add it to a calendar", async () => {
+    route.mockResolvedValue(
+      decision({ intent: "reminder_add", reminderText: "ทำ weekly ทุก วัน พฤหัสบดี 15:00 น." }),
+    );
+    const { deps, reply } = setup();
+    await handleEvent(say("ทำ weekly ทุกวันพฤหัสบดี บ่าย 3"), deps);
+    const card = JSON.stringify(sent(reply));
+    expect(card).toContain("📅 เพิ่มลงปฏิทิน");
+    expect(card).toContain(`/reminders/calendar?id=${ID}`);
+    expect(card).toContain("ทุกวันพฤหัสบดี");
+  });
+
   it("saves the typed text as the note", async () => {
     route.mockResolvedValue(decision({ intent: "note_add" }));
     const { deps } = setup();
