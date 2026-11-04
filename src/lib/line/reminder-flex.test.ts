@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReminderCard } from "./reminder-flex";
+import { buildReminderCard, buildReminderListCard } from "./reminder-flex";
 
 // Wednesday 28 Oct 2026, 10:00 in Bangkok; the reminder is 09:00 on Thursday the 29th
 const NOW = new Date("2026-10-28T03:00:00Z");
@@ -94,5 +94,52 @@ describe("the card after a reminder was changed on its page", () => {
   it("says so in its header", () => {
     const head = card({ edited: true }).contents.header.contents.map((c) => c.text);
     expect(head[0]).toBe("แก้ไขเตือนแล้ว");
+  });
+});
+
+describe("the list of waiting reminders", () => {
+  const item = (n: number, body: string, remindAt: string, repeat: "daily" | null = null) => ({
+    id: `00000000-0000-4000-8000-00000000000${n}`,
+    body,
+    remindAt,
+    repeat,
+    status: "active" as const,
+    category: null,
+  });
+  const three = [
+    item(1, "กินข้าว", "2026-10-28T10:00:00Z"),
+    item(2, "กินยา", "2026-10-29T01:00:00Z", "daily"),
+    item(3, "ไปดูดวง", "2026-11-02T08:00:00Z"),
+  ];
+  const list = (over: Partial<Parameters<typeof buildReminderListCard>[0]> = {}) =>
+    JSON.stringify(
+      buildReminderListCard({
+        items: three,
+        total: 3,
+        listUrl: "https://liff.line.me/x/reminders",
+        now: NOW,
+        ...over,
+      }),
+    );
+
+  it("shows each reminder: its time large, its day beside it, and what it is", () => {
+    const out = list();
+    expect(out).toContain('"text":"17:00"');
+    expect(out).toContain('"text":"วันนี้"');
+    expect(out).toContain('"text":"กินข้าว"');
+    expect(out).toContain('"text":"08:00"');
+    expect(out).toContain('"text":"ทุกวัน"');
+    expect(out).toContain('"text":"ไปดูดวง"');
+  });
+
+  it("says how many wait, and how many more there are than shown", () => {
+    expect(list()).toContain("3 รายการ");
+    expect(list({ total: 8 })).toContain("และอีก 5 รายการ");
+    expect(list()).not.toContain("และอีก");
+  });
+
+  it("a button opens the page with them all, and none without a page", () => {
+    expect(list()).toContain('"label":"ดูเตือนทั้งหมด","uri":"https://liff.line.me/x/reminders"');
+    expect(list({ listUrl: undefined })).not.toContain("ดูเตือนทั้งหมด");
   });
 });

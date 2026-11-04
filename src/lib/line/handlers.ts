@@ -148,7 +148,6 @@ import {
 } from "@/lib/user-reminder-repo";
 import {
   capacityOf,
-  describeReminder,
   isSnooze,
   parseReminder,
   reminderKind,
@@ -156,7 +155,7 @@ import {
   snoozeTime,
   whenFromNow,
 } from "@/lib/user-reminder";
-import { buildReminderCard } from "./reminder-flex";
+import { buildReminderCard, buildReminderListCard } from "./reminder-flex";
 import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
 import { buildSummaryMenu } from "./summary-menu";
 import { PRESET_TITLE, presetRange } from "@/lib/summary-range-text";
@@ -2398,20 +2397,16 @@ async function runCommand(
       return owlAsk(owlDeps(deps), user, command.question, false, user.line_user_id);
 
     case "remind-list": {
-      const items = await listReminders(db, user.id, 5);
-      if (items.length === 0) return [text(REMINDER_EMPTY_TEXT)];
-      const lines = items.map(
-        (r) => `• ${describeReminder(new Date(r.remindAt), r.repeat)}  ${r.body}`,
-      );
-      const url = pageUrl("/reminders");
+      // the next few as a card; the page has all of them (the count is of what is waiting)
+      const waiting = await listReminders(db, user.id);
+      if (waiting.length === 0) return [text(REMINDER_EMPTY_TEXT)];
       return [
-        text(
-          [
-            tr("เตือนที่รออยู่ ⏰"),
-            ...lines,
-            ...(url ? [tr("ดู แก้ไข หรือลบ: {0}", url)] : []),
-          ].join("\n"),
-        ),
+        buildReminderListCard({
+          items: waiting,
+          total: waiting.length,
+          listUrl: pageUrl("/reminders"),
+          now: deps.now(),
+        }),
       ];
     }
 
