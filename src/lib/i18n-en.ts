@@ -2455,4 +2455,5 @@ export const EN: Record<string, string> = {
   "ทุกวันที่ {0}": "Monthly on the {0}",
   พรุ่งนี้: "Tomorrow",
   ตั้งเตือนกลุ่มแล้ว: "Group reminder set",
+  แก้ไขเตือนแล้ว: "Reminder updated",
 };

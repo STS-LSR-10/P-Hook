@@ -23,6 +23,8 @@ export interface ReminderCardInput {
   calendar?: { google: string; ics: string };
   /** Now, to say "วันนี้" / "พรุ่งนี้" beside the time. */
   now?: Date;
+  /** It was just changed on its page: the header says so. */
+  edited?: boolean;
 }
 
 const INK = "#0B5D4F";
@@ -31,6 +33,11 @@ const LINE = "#CBD5E1";
 /** "Reminder set" card: what, the time large with its day, and buttons to change the time or cancel. */
 export function buildReminderCard(input: ReminderCardInput): LineMessage {
   const now = input.now ?? new Date();
+  // a person's own reminder opens on its page ready to change; a group's goes to the group's page
+  const changeUrl =
+    input.listUrl && !input.cancelData
+      ? `${input.listUrl}${input.listUrl.includes("?") ? "&" : "?"}edit=${input.id}`
+      : input.listUrl;
   const p = bangkokParts(input.remindAt);
   const clock = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
   const notes = [
@@ -55,7 +62,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
         contents: [
           {
             type: "text",
-            text: input.title ?? t("ตั้งเตือนแล้ว"),
+            text: input.title ?? (input.edited ? t("แก้ไขเตือนแล้ว") : t("ตั้งเตือนแล้ว")),
             weight: "bold",
             size: "md",
             color: INK,
@@ -161,7 +168,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
                     pill(t("เปลี่ยนเวลา"), {
                       type: "uri",
                       label: t("เปลี่ยนเวลา"),
-                      uri: input.listUrl,
+                      uri: changeUrl,
                     }),
                   ]
                 : []),

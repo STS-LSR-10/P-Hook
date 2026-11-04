@@ -48,7 +48,14 @@ describe("reminder card", () => {
 
   it("two outlined buttons: change the time (the reminders page) and cancel", () => {
     const out = json({ listUrl: "https://liff.line.me/x/reminders" });
-    expect(out).toContain('"label":"เปลี่ยนเวลา","uri":"https://liff.line.me/x/reminders"');
+    // the page opens on this reminder, ready to change
+    expect(out).toContain(
+      `"label":"เปลี่ยนเวลา","uri":"https://liff.line.me/x/reminders?edit=${base.id}"`,
+    );
+    // a group's goes to the group's page as it is
+    expect(
+      json({ listUrl: "https://liff.line.me/x/reminders?g=g1", cancelData: "a=grmx&id=1" }),
+    ).toContain('"uri":"https://liff.line.me/x/reminders?g=g1"');
     expect(out).toContain(`"data":"a=rmx&id=${base.id}"`);
     // no page known: only cancel
     expect(json()).not.toContain("เปลี่ยนเวลา");
@@ -62,5 +69,12 @@ describe("reminder card", () => {
 
   it("keeps the postback data short", () => {
     expect(`a=rmx&id=${base.id}`.length).toBeLessThan(300);
+  });
+});
+
+describe("the card after a reminder was changed on its page", () => {
+  it("says so in its header", () => {
+    const head = card({ edited: true }).contents.header.contents.map((c) => c.text);
+    expect(head[0]).toBe("แก้ไขเตือนแล้ว");
   });
 });
