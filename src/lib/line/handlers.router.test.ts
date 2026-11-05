@@ -337,6 +337,22 @@ describe("plain messages", () => {
     expect(searched).toEqual(["หอ"]);
   });
 
+  it("a search for a file, with no file store, looks in the notes instead", async () => {
+    route.mockResolvedValue(decision({ intent: "search", searchTerm: "สัญญา", searchIn: "files" }));
+    const { deps } = setup();
+    await handleEvent(say("ไฟล์สัญญาเช่าอยู่ไหน"), deps);
+    expect(searched).toEqual(["สัญญา"]);
+  });
+
+  it("a search for entries does not look in the notes", async () => {
+    route.mockResolvedValue(
+      decision({ intent: "search", searchTerm: "กาแฟ", searchIn: "entries" }),
+    );
+    const { deps } = setup();
+    await handleEvent(say("กาแฟที่จดไว้"), deps);
+    expect(searched).toEqual([]);
+  });
+
   it("hands questions to the owl", async () => {
     route.mockResolvedValue(decision({ intent: "ask" }));
     const { deps } = setup();

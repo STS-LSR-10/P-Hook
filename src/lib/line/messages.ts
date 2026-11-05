@@ -721,6 +721,15 @@ export const OWL_FAILED_TEXT = t(
   "พี่ฮูกตอบไม่ได้ตอนนี้ ลองถามใหม่อีกครั้งนะ (ไม่นับโควตาครั้งนี้)",
 );
 export const OWL_DAY_LIMIT_TEXT = t("วันนี้ถามพี่ฮูกเยอะแล้ว พรุ่งนี้ค่อยมาถามใหม่นะ");
+/** A search could not be done (the database did not answer): never said as "nothing found". */
+export const FIND_FAILED_TEXT = t("ค้นหาไม่ได้ตอนนี้ ลองใหม่อีกครั้งในอีกสักครู่นะ");
+/** Under the count of entries a Free search found. */
+export const FIND_TRIAL_TEXT = t('ทดลอง Pro ฟรี 7 วัน ดูยอดรวมในแชทได้เลย ที่เมนู "อัปเกรด"');
+
+/** "ค้นหา …" found nothing in the entries, the notes or the files. */
+export const findNothingText = (term: string) =>
+  t('ไม่พบรายการ โน้ต หรือไฟล์ที่มีคำว่า "{0}"', term);
+
 /** "ถาม AI" of the month is used up: the chat still works with the ordinary commands. */
 export const aiQuotaText = (plan: "free" | "plus" | "ultimate", limit: number) =>
   plan === "free"

@@ -7,6 +7,9 @@ import { parseTransferText } from "@/lib/transfer";
 import { normalizeThaiDigits, parseAmountToSatang } from "@/lib/parse/thai-number";
 import { parsePromptPayId } from "@/lib/promptpay";
 
+/** Where "find" looks. */
+export type FindIn = "any" | "entries" | "notes" | "files";
+
 export type Command =
   | { kind: "help" }
   | { kind: "summary-range"; start: DaySpec; end: DaySpec | "today" }
@@ -22,7 +25,8 @@ export type Command =
   | { kind: "file-search"; term: string }
   | { kind: "file-list" }
   | { kind: "file-rename"; name: string }
-  | { kind: "kept-search"; term: string }
+  /** Look for `term` in entries, notes and files at once (or in one of them). */
+  | { kind: "find"; term: string; in: FindIn }
   | { kind: "remind-add"; text: string }
   | { kind: "owl-start" }
   | { kind: "open-page"; page: "summary" | "transactions" | "budgets" | "analytics" }

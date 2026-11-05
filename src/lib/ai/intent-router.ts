@@ -22,6 +22,10 @@ const INTENTS = [
   "ask",
   "unclear",
 ] as const;
+/** Where a search looks. */
+export const SEARCH_IN = ["any", "entries", "notes", "files"] as const;
+export type SearchIn = (typeof SEARCH_IN)[number];
+
 export type RoutedIntent = (typeof INTENTS)[number];
 
 export interface IntentDecision {
@@ -34,6 +38,8 @@ export interface IntentDecision {
   searchTerm: string | null;
   /** What to call a kept file, when the message says. */
   fileName: string | null;
+  /** search: where to look (anywhere when unsure). */
+  searchIn?: SearchIn;
   /** query: the days asked about (the code works out the dates). */
   period?: QueryPeriod | null;
   /** query, period custom: "2026-10-05". */
@@ -62,6 +68,7 @@ const rawSchema = z.object({
   whenText: field(MAX_TERM),
   searchTerm: field(MAX_TERM),
   fileName: field(MAX_TERM),
+  searchIn: z.enum(SEARCH_IN).nullable().optional().catch(null),
   period: z.enum(QUERY_PERIODS).nullable().optional().catch(null),
   fromDate: field(10),
   toDate: field(10),
@@ -77,6 +84,7 @@ const JSON_SCHEMA = {
     whenText: { type: ["string", "null"], description: "The new time, in the same words" },
     searchTerm: { type: ["string", "null"], description: "The thing to look for" },
     fileName: { type: ["string", "null"], description: "The name for the file, if one is said" },
+    searchIn: { type: ["string", "null"], enum: [...SEARCH_IN, null] },
     period: { type: ["string", "null"], enum: [...QUERY_PERIODS, null] },
     fromDate: { type: ["string", "null"], description: "YYYY-MM-DD, only for period custom" },
     toDate: { type: ["string", "null"], description: "YYYY-MM-DD, only for period custom" },
@@ -90,8 +98,11 @@ export function sanitizeDecision(raw: unknown): IntentDecision | null {
   if (!parsed.success) return null;
   const { confidence, ...rest } = parsed.data;
   // a question about money with no days said is about this month
-  const d =
-    rest.intent === "query" ? { ...rest, period: rest.period ?? ("this_month" as const) } : rest;
+  const d = {
+    ...rest,
+    ...(rest.intent === "query" ? { period: rest.period ?? ("this_month" as const) } : {}),
+    searchIn: rest.searchIn ?? ("any" as const),
+  };
   const complete =
     (d.intent !== "reminder_add" || d.reminderText !== null) &&
     (d.intent !== "reminder_edit" || (d.reminderQuery !== null && d.whenText !== null)) &&
@@ -114,7 +125,7 @@ export function routerPrompt(input: { text: string; today: string }): string {
     '- reminder_add: wants to be reminded at a time. "เตือนกินยา 6 โมงเย็น", "พรุ่งนี้ต้องไปหาหมอ 10 โมง"',
     '- reminder_edit: changes the time of a reminder. "เลื่อนเตือนกินยาเป็น 1 ทุ่ม"',
     '- note_add: wants something kept for later, such as a list or an address. "ไปเที่ยวต้องซื้อครีมกันแดด หมวก"',
-    '- search: looks for a note or file they kept. "ที่อยู่หอพักจดไว้ไหม", "หาไฟล์สัญญาเช่า", "สลิปค่าเทอมอยู่ไหน"',
+    '- search: looks for something they recorded, noted or kept: an entry of money, a note or a file. "กาแฟที่จดไว้", "ค่าแท็กซี่ครั้งล่าสุด", "ที่อยู่หอพักจดไว้ไหม", "หาไฟล์สัญญาเช่า", "สลิปค่าเทอมอยู่ไหน"',
     '- file_save: wants a file or picture they sent kept. "เก็บไว้ให้หน่อย", "ฝากรูปนี้ไว้ด้วย"',
     '- query: asks how much they spent or received over some days, all of it or on one thing. "เดือนนี้ใช้เงินไปเท่าไร", "เมื่อวานจ่ายอะไรไปบ้าง", "อาทิตย์ที่แล้วกินกาแฟไปกี่บาท", "ปีนี้ได้เงินเดือนรวมเท่าไร"',
     '- ask: any other question, including about their reminders, advice on their money, or anything else. "พรุ่งนี้มีเตือนอะไรบ้าง", "ควรออมเดือนละเท่าไร", "ทำไมเดือนนี้ใช้เยอะ", "ทำไมฟ้าสีฟ้า"',
@@ -126,6 +137,8 @@ export function routerPrompt(input: { text: string; today: string }): string {
     '  "จ่ายค่าไฟทุกวันที่ 5 ตอน 9 โมง" gives "จ่ายค่าไฟ ทุกวันที่ 5 9 โมง".',
     "- reminderQuery and whenText for reminder_edit: the reminder's words and the new time, in the",
     "  person's own words. Never work out a date yourself.",
+    "- searchIn for search: entries (money they recorded), notes, files, or any when it could be",
+    "  more than one or you are not sure.",
     "- searchTerm for search: the thing to look for, in one or two words. For query: the one thing",
     '  asked about ("กาแฟ"), or null when it is about all their money.',
     `- period for query: one of ${QUERY_PERIODS.join(", ")}. Null when no days are said. Use custom`,

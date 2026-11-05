@@ -180,7 +180,11 @@ function execute(
     case "note_add":
       return deps.run({ kind: "note-add", body: input });
     case "search":
-      return deps.run({ kind: "kept-search", term: decision.searchTerm ?? input });
+      return deps.run({
+        kind: "find",
+        term: decision.searchTerm ?? input,
+        in: decision.searchIn ?? "any",
+      });
     case "query": {
       const command = queryCommand(
         {

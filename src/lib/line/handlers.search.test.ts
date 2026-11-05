@@ -16,6 +16,10 @@ vi.mock("@/lib/repo", async (original) => ({
     plan_expires_at: null,
   }),
 }));
+vi.mock("@/lib/note-repo", async (original) => ({
+  ...(await original<typeof import("@/lib/note-repo")>()),
+  listNotes: async () => ({ items: [], hasMore: false }),
+}));
 vi.mock("@/lib/search", async (original) => ({
   ...(await original<typeof import("@/lib/search")>()),
   loadSearchTotals: async (_db: unknown, _user: string, target: unknown) => {
@@ -68,11 +72,11 @@ beforeEach(() => {
 });
 
 describe("ค้นหา", () => {
-  it("is for Pro and above: Free gets the upsell and nothing is searched", async () => {
+  it("Free finds them too, with the totals left for Pro", async () => {
     const { deps, reply } = setup();
     await handleEvent(say("ค้นหา กาแฟ"), deps);
-    expect(first(reply).text).toContain("Pro ขึ้นไป");
-    expect(totalsCalls).toHaveLength(0);
+    expect(first(reply).text).toContain("พบ 3 รายการเงิน");
+    expect(first(reply).text).toContain("Pro");
   });
 
   it.each(["plus", "ultimate"])("%s gets a result card for the words", async (p) => {

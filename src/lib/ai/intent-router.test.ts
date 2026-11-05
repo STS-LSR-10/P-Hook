@@ -86,6 +86,16 @@ describe("sanitizeDecision", () => {
     expect(bad?.intent).toBe("unclear");
   });
 
+  it("a search says where to look: entries, notes, files, or anywhere", () => {
+    const d = (searchIn: unknown) =>
+      sanitizeDecision({ intent: "search", confidence: 0.9, searchTerm: "เช่า", searchIn })
+        ?.searchIn;
+    expect(d("entries")).toBe("entries");
+    expect(d("files")).toBe("files");
+    expect(d("somewhere")).toBe("any");
+    expect(d(undefined)).toBe("any");
+  });
+
   it("returns null for junk", () => {
     expect(sanitizeDecision("hello")).toBeNull();
   });
@@ -103,6 +113,12 @@ describe("routerPrompt", () => {
     expect(p).toContain('"intent"');
     expect(p).toContain('"confidence"');
     expect(p).toContain("reminder_add");
+  });
+
+  it("a search covers the entries they recorded too", () => {
+    const prompt = routerPrompt({ text: "x", today: "2026-11-04" });
+    expect(prompt).toContain("searchIn");
+    expect(prompt).toMatch(/search: .*entr/i);
   });
 
   it("tells the AI to keep the words of the day", () => {
