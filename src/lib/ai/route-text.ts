@@ -6,7 +6,7 @@ import { AI_CHAT_LIMIT, type Plan } from "@/lib/plan";
 import { looksSecret } from "@/lib/secret-text";
 import { bangkokParts } from "@/lib/thai-date";
 import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
-import { aiUnits } from "./ai-quota";
+import { aiUnits, type AiCharge } from "./ai-quota";
 import {
   MAX_ROUTER_INPUT,
   sanitizeDecision,
@@ -70,7 +70,13 @@ export function needsRouter(input: string, result: ParseResult): boolean {
  * reply is unusable. Takes one use for each 20 words, given back when no answer came. Never throws.
  */
 export async function runRouter(
-  deps: { router?: IntentRouter; now: () => Date; onQuotaOut?: () => void },
+  deps: {
+    router?: IntentRouter;
+    now: () => Date;
+    onQuotaOut?: () => void;
+    /** Told what the message took, when a decision came of it. */
+    onCharged?: (charge: AiCharge) => void;
+  },
   input: { db: SupabaseClient; userId: string; plan: Plan; text: string },
 ): Promise<IntentDecision | null> {
   const { router } = deps;
@@ -107,7 +113,10 @@ export async function runRouter(
     const decision = sanitizeDecision(
       await router.route({ text: input.text, today: dayOf(deps.now()) }),
     );
-    if (decision) return decision;
+    if (decision) {
+      deps.onCharged?.({ units, month });
+      return decision;
+    }
     log.warn("intent_router_failed", { provider: router.name, reason: "unusable reply" });
   } catch (error) {
     log.warn("intent_router_failed", { provider: router.name, reason: safeMessage(error) });

@@ -2623,4 +2623,11 @@ export const EN: Record<string, string> = {
   ถามพี่ฮูกในกลุ่ม: "Ask P'Hook in groups",
   "ถาม AI (AI อ่านทุกข้อความในแชท)": "Ask AI (the AI reads every chat message)",
   "{0} ครั้ง/เดือน": "{0}/month",
+  "โควตา ถาม AI เดือนนี้หมดแล้ว คำสั่งต่าง ๆ และการจดแบบ กาแฟ 30 ยังใช้ได้ตามปกติ":
+    'This month\'s AI uses are gone. Commands and entries like "coffee 30" still work as usual',
+  "ใช้ ถาม AI ได้มากขึ้น": "More AI uses",
+  "AI ช่วยอ่านทุกข้อความ ทั้งจดเงิน ตั้งเตือน จดโน้ต ค้นหา และตอบคำถามของคุณ ใช้ ถาม AI ฟรีของเดือนนี้ครบแล้ว (พิมพ์จดแบบปกติยังได้เหมือนเดิม)":
+    "The AI reads every message: entries, reminders, notes, searches and your questions. This month's free AI uses are gone (typing entries still works as usual)",
+  "Pro ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}":
+    "Pro ฿{0}/month, {1} AI uses a month · Elite ฿{2}/month, {3} a month{4}",
 };

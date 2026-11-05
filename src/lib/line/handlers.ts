@@ -710,7 +710,8 @@ async function handleText(
   const tell = await takeUsage(deps.db, user.id, "ai_out_notice", 1, dayKey(deps.now())).catch(
     () => false,
   );
-  return tell ? [...replies, text(AI_OUT_NOTICE_TEXT)] : replies;
+  // before the last message: LINE shows quick-reply buttons only under the last one
+  return tell ? [...replies.slice(0, -1), text(AI_OUT_NOTICE_TEXT), ...replies.slice(-1)] : replies;
 }
 
 interface TextOptions {
@@ -772,7 +773,8 @@ async function readText(
   // here, and the rest is a question. A button already said what the message is, so that answer
   // goes straight to the money path.
   if (!options.routed && (await inOwlMode(owlDeps(deps), user))) {
-    const owlIntents = intentDeps(user, deps, true, options.aiOut);
+    // in the mode the owl says the quota is out itself: no second notice
+    const owlIntents = intentDeps(user, deps, true);
     const replies =
       (await routeText(typed, parsed, user, owlIntents, true)) ??
       (await owlIntents.recordMoney(typed));

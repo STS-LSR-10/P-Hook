@@ -8,7 +8,8 @@ import {
 import { queryCommand } from "@/lib/ai/query-command";
 import { syncReminderToGoogle } from "@/lib/google/sync";
 import { later } from "@/lib/later";
-import { clockIsTheAmount, runRouter } from "@/lib/ai/route-text";
+import type { AiCharge } from "@/lib/ai/ai-quota";
+import { clockIsTheAmount, needsRouter, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
 import { putPendingIntent, takePendingIntent } from "@/lib/pending-intent-repo";
@@ -66,8 +67,11 @@ export interface IntentDeps {
   now: () => Date;
   router?: IntentRouter;
   run: (command: Command) => Promise<LineMessage[]>;
-  /** `prepaid`: the AI already read this message (and took its use) before it turned out a question. */
-  ask: (question: string, prepaid: boolean) => Promise<LineMessage[]>;
+  /**
+   * `prepaid`: the AI already read this message before it turned out a question: what it took (given
+   * back if no answer comes), or true when that is no longer known (a tap on a later button).
+   */
+  ask: (question: string, prepaid: AiCharge | boolean) => Promise<LineMessage[]>;
   /** Told when the month's "ถาม AI" is used up (the rules read the message instead). */
   onQuotaOut?: () => void;
   recordMoney: (input: string) => Promise<LineMessage[]>;
@@ -166,6 +170,7 @@ function execute(
   decision: IntentDecision,
   user: UserRow,
   deps: IntentDeps,
+  prepaid: AiCharge | true = true,
 ): Promise<LineMessage[]> {
   switch (decision.intent) {
     case "reminder_add":
@@ -186,12 +191,12 @@ function execute(
         },
         deps.now(),
       );
-      return command ? deps.run(command) : deps.ask(input, true);
+      return command ? deps.run(command) : deps.ask(input, prepaid);
     }
     case "file_save":
       return deps.run({ kind: "file-save", name: decision.fileName });
     case "ask":
-      return deps.ask(input, true);
+      return deps.ask(input, prepaid);
     case "money":
       return deps.recordMoney(input);
     case "unclear":
@@ -233,8 +238,14 @@ export async function routeText(
   const hold = (decision: IntentDecision) =>
     putPendingIntent(db, user.id, { text: input, decision }, deps.now());
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
+  let charge: AiCharge | true = true;
   const decision = await runRouter(
-    { router: deps.router, now: deps.now, onQuotaOut: deps.onQuotaOut },
+    {
+      router: deps.router,
+      now: deps.now,
+      onQuotaOut: deps.onQuotaOut,
+      onCharged: (c) => (charge = c),
+    },
     { db, userId: user.id, plan, text: input },
   );
   const reads = QUESTION_RE.test(input);
@@ -244,10 +255,22 @@ export async function routeText(
     return entry ? null : deps.ask(input, false);
   }
   if (chatting && (decision?.intent === "ask" || decision?.intent === "unclear")) {
-    return deps.ask(input, true);
+    return deps.ask(input, charge);
   }
   if (!decision) {
     return clockIsTheAmount(input, parsed.entries) ? [text(ROUTER_REMINDER_HINT_TEXT)] : null;
+  }
+  // a plain entry the rules read with certainty ("กาแฟ 50") is recorded at once, unless the AI is
+  // sure it is something else: a doubt of the AI never holds up an ordinary entry
+  const rulesSure = parsed.entries.length > 0 && !needsRouter(input, parsed);
+  if (
+    !chatting &&
+    rulesSure &&
+    (decision.intent === "money" ||
+      decision.intent === "unclear" ||
+      decision.confidence < ROUTER_ACT_CONFIDENCE)
+  ) {
+    return null;
   }
   if (decision.intent === "unclear") {
     const id = await hold(decision);
@@ -272,9 +295,9 @@ export async function routeText(
   }
   if (decision.intent === "money") {
     if (parsed.entries.length > 0 || can(plan, "smartParse")) return null;
-    return chatting ? deps.ask(input, true) : [text(MONEY_HINT_TEXT)];
+    return chatting ? deps.ask(input, charge) : [text(MONEY_HINT_TEXT)];
   }
-  return execute(input, decision, user, deps);
+  return execute(input, decision, user, deps, charge);
 }
 
 /**

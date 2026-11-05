@@ -226,6 +226,46 @@ describe("plain messages", () => {
     expect(entries).toHaveLength(1);
   });
 
+  it("a clear entry is recorded at once even when the AI is unsure or cannot tell", async () => {
+    for (const d of [
+      decision({ intent: "money", confidence: 0.6 }),
+      decision({ intent: "unclear", confidence: 0.2 }),
+      decision({ intent: "note_add", confidence: 0.5 }),
+    ]) {
+      entries.length = 0;
+      route.mockResolvedValue(d);
+      const { deps } = setup();
+      await handleEvent(say("กาแฟ 50"), deps);
+      expect(entries, d.intent).toEqual(["กาแฟ"]);
+    }
+    expect(putPending).not.toHaveBeenCalled();
+  });
+
+  it("a clear entry the AI is sure is something else goes that way", async () => {
+    route.mockResolvedValue(decision({ intent: "note_add", confidence: 0.95 }));
+    const { deps } = setup();
+    await handleEvent(say("ซื้อครีม 2 หลอด"), deps);
+    expect(notes).toEqual(["ซื้อครีม 2 หลอด"]);
+    expect(entries).toEqual([]);
+  });
+
+  it("the once-a-day notice goes before the last message, so its buttons stay at the bottom", async () => {
+    quota = false;
+    const { deps, reply } = setup();
+    await handleEvent(say("อะไรก็ไม่รู้"), deps);
+    const out = sent(reply);
+    expect(out.at(-2)?.text).toBe(AI_OUT_NOTICE_TEXT);
+    expect(out.at(-1)?.quickReply).toBeDefined();
+  });
+
+  it("in the พี่ฮูก mode the owl says the quota is out itself: no second notice", async () => {
+    quota = false;
+    owlMode = true;
+    const { deps, reply } = setup();
+    await handleEvent(say("ทำไมฟ้าสีฟ้า"), deps);
+    expect(said(reply)).not.toContain(AI_OUT_NOTICE_TEXT);
+  });
+
   it("with AI_CHAT_ALL=off, clear money stays with the rules as before", async () => {
     process.env.AI_CHAT_ALL = "off";
     const { deps } = setup();
@@ -257,7 +297,8 @@ describe("plain messages", () => {
     route.mockResolvedValue(decision({ intent: "ask" }));
     const { deps } = setup();
     await handleEvent(say("ทำไมฟ้าสีฟ้า"), deps);
-    expect(askedWith).toHaveBeenCalledWith({ prepaid: true });
+    // what the router took, so it can be given back if พี่ฮูก gives no answer
+    expect(askedWith).toHaveBeenCalledWith({ prepaid: { units: 1, month: "2026-11-01" } });
   });
 
   it("sets a reminder", async () => {

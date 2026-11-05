@@ -1,4 +1,4 @@
-import { OWL_LIMIT, PDF_LIMIT, SLIP_LIMIT, VOICE_LIMIT } from "@/lib/plan";
+import { AI_CHAT_LIMIT, PDF_LIMIT, SLIP_LIMIT, VOICE_LIMIT } from "@/lib/plan";
 import { LAUNCH_ENDS_TEXT, launchActive, priceFor, TRIAL_DAYS } from "@/lib/pricing";
 import type { LineMessage } from "@/lib/types";
 import { COLOR } from "./flex";
@@ -35,9 +35,9 @@ const COPY = {
     ),
   },
   owl: {
-    title: t("ถามพี่ฮูกได้มากขึ้น"),
+    title: t("ใช้ ถาม AI ได้มากขึ้น"),
     body: t(
-      "ถามพี่ฮูก (AI) เรื่องรายรับรายจ่าย งบ เตือน และโน้ตของคุณได้เลย ใช้สิทธิ์ถามฟรีของเดือนนี้ครบแล้ว",
+      "AI ช่วยอ่านทุกข้อความ ทั้งจดเงิน ตั้งเตือน จดโน้ต ค้นหา และตอบคำถามของคุณ ใช้ ถาม AI ฟรีของเดือนนี้ครบแล้ว (พิมพ์จดแบบปกติยังได้เหมือนเดิม)",
     ),
   },
   pdf: {
@@ -79,11 +79,11 @@ export function buildUpsellCard(input: UpsellCardInput): LineMessage {
         )
       : input.feature === "owl"
         ? t(
-            "Pro ฿{0}/เดือน ถามพี่ฮูกได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}",
+            "Pro ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}",
             plus,
-            OWL_LIMIT.plus,
+            AI_CHAT_LIMIT.plus.toLocaleString("en-US"),
             ultimate,
-            OWL_LIMIT.ultimate,
+            AI_CHAT_LIMIT.ultimate.toLocaleString("en-US"),
             launch,
           )
         : input.feature === "pdf"

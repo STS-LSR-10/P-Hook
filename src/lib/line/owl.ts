@@ -4,7 +4,7 @@ import { clearAskWait, isAskWaitLive, startAskWait } from "@/lib/ask-repo";
 import { log, safeMessage } from "@/lib/log";
 import { looksSecret } from "@/lib/secret-text";
 import { loadOwlFacts, renderOwlContext } from "@/lib/owl-context";
-import { aiUnits } from "@/lib/ai/ai-quota";
+import { aiUnits, type AiCharge } from "@/lib/ai/ai-quota";
 import { AI_CHAT_LIMIT, effectivePlan } from "@/lib/plan";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import type { UserRow } from "@/lib/repo";
@@ -113,8 +113,41 @@ export async function owlAsk(
   question: string,
   inMode: boolean,
   lineUserId: string,
-  /** `prepaid`: the AI already read this message (and took its use) and found a question. */
-  options: { prepaid?: boolean } = {},
+  /**
+   * `prepaid`: the AI already read this message and found a question. With what it took, that is
+   * given back if no answer comes; `true` when it is no longer known.
+   */
+  options: { prepaid?: AiCharge | boolean } = {},
+): Promise<LineMessage[]> {
+  const prepaid = typeof options.prepaid === "object" ? options.prepaid : null;
+  const outcome = { answered: false };
+  try {
+    return await askOwl(
+      deps,
+      user,
+      question,
+      inMode,
+      lineUserId,
+      Boolean(options.prepaid),
+      outcome,
+    );
+  } finally {
+    if (!outcome.answered && prepaid) {
+      await refundUsageAmount(deps.db, user.id, "ai_chat", prepaid.units, prepaid.month).catch(
+        (e) => log.error("owl_refund_failed", e),
+      );
+    }
+  }
+}
+
+async function askOwl(
+  deps: OwlDeps,
+  user: UserRow,
+  question: string,
+  inMode: boolean,
+  lineUserId: string,
+  paid: boolean,
+  outcome: { answered: boolean },
 ): Promise<LineMessage[]> {
   const { db } = deps;
   const owl = deps.owl;
@@ -134,7 +167,7 @@ export async function owlAsk(
   const plan = effectivePlan(user.plan, user.plan_expires_at, now);
   const limit = AI_CHAT_LIMIT[plan];
   const month = monthKey(now);
-  const units = options.prepaid ? 0 : aiUnits(q);
+  const units = paid ? 0 : aiUnits(q);
   if (units > 0) {
     let allowed = false;
     try {
@@ -150,7 +183,6 @@ export async function owlAsk(
     }
   }
 
-  let answered = false;
   try {
     // the person's records go to the AI only for a question about them; "ทำไมท้องฟ้าสีฟ้า" gets none
     const data = needsPersonalData(q)
@@ -158,7 +190,7 @@ export async function owlAsk(
       : "";
     const reply = cleanOwlAnswer(await owl.answer({ question: q, data }));
     if (!reply) return [text(OWL_FAILED_TEXT)];
-    answered = true;
+    outcome.answered = true;
     if (inMode) {
       await startAskWait(db, user.id, now).catch((e) =>
         log.warn("ask_wait_extend_failed", { reason: safeMessage(e) }),
@@ -169,7 +201,7 @@ export async function owlAsk(
     log.warn("owl_failed", { owl: owl.name, reason: safeMessage(error) });
     return [text(OWL_FAILED_TEXT)];
   } finally {
-    if (!answered && units > 0) {
+    if (!outcome.answered && units > 0) {
       await refundUsageAmount(db, user.id, "ai_chat", units, month).catch((e) =>
         log.error("owl_refund_failed", e),
       );

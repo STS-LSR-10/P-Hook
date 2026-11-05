@@ -740,18 +740,5 @@ export const aiQuotaText = (plan: "free" | "plus" | "ultimate", limit: number) =
 
 /** Once a day when the month's "ถาม AI" is out: the message was read by the ordinary rules. */
 export const AI_OUT_NOTICE_TEXT = t(
-  "โควตา ถาม AI เดือนนี้หมดแล้ว ข้อความนี้บอทอ่านแบบปกติ พิมพ์คำสั่งหรือจดแบบ กาแฟ 30 ได้เหมือนเดิม",
+  "โควตา ถาม AI เดือนนี้หมดแล้ว คำสั่งต่าง ๆ และการจดแบบ กาแฟ 30 ยังใช้ได้ตามปกติ",
 );
-
-export const owlQuotaText = (plan: "free" | "plus" | "ultimate", limit: number) =>
-  plan === "free"
-    ? t(
-        "เดือนนี้ถามพี่ฮูกครบ {0} ครั้งแล้ว (แผน Free) อัปเกรดเป็น Pro ถามได้ 50 ครั้ง/เดือน หรือรอโควตารีเซ็ตต้นเดือนหน้านะ",
-        limit,
-      )
-    : plan === "plus"
-      ? t(
-          "เดือนนี้ถามพี่ฮูกครบ {0} ครั้งแล้ว (แผน Pro) อัปเกรดเป็น Elite ถามได้ 300 ครั้ง/เดือน หรือรอโควตารีเซ็ตต้นเดือนหน้านะ",
-          limit,
-        )
-      : t("เดือนนี้ถามพี่ฮูกครบ {0} ครั้งตามเกณฑ์ใช้งานปกติแล้ว ถามได้ใหม่ต้นเดือนหน้านะ", limit);

@@ -4,6 +4,13 @@
  */
 export const AI_WORDS_PER_USE = 20;
 
+/** What one message took from the quota: given back when no answer came of it. */
+export interface AiCharge {
+  units: number;
+  /** The counter's month ("2026-11-01"). */
+  month: string;
+}
+
 const segmenter =
   typeof Intl !== "undefined" && "Segmenter" in Intl
     ? new Intl.Segmenter("th", { granularity: "word" })
