@@ -2604,4 +2604,11 @@ export const EN: Record<string, string> = {
   เฉพาะเจ้าของสมุด: "The book's owner only",
   "ทุกคนต้องเพิ่มพี่ฮูกเป็นเพื่อนก่อน บอทถึงรู้ว่าใครจ่าย":
     "Everyone adds P'Hook as a friend first, so the bot knows who paid",
+  จดและดูยอด: "Record and totals",
+  หารเงิน: "Splitting money",
+  ดูว่าใครยังค้างจ่าย: "Who still owes",
+  ของในกลุ่ม: "Group stuff",
+  "แท็กคนได้ · ดูทั้งหมด: เตือนกลุ่ม": 'Tag people · see all: "เตือนกลุ่ม"',
+  "วิธีใช้สมุดกลุ่ม: จด ข้าวเที่ยง 350 · สรุป · ล่าสุด · หารบิล":
+    'Group book guide: "จด ข้าวเที่ยง 350" · "สรุป" · "ล่าสุด" · "หารบิล"',
 };
