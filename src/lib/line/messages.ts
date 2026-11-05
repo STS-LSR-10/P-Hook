@@ -721,6 +721,10 @@ export const OWL_FAILED_TEXT = t(
   "พี่ฮูกตอบไม่ได้ตอนนี้ ลองถามใหม่อีกครั้งนะ (ไม่นับโควตาครั้งนี้)",
 );
 export const OWL_DAY_LIMIT_TEXT = t("วันนี้ถามพี่ฮูกเยอะแล้ว พรุ่งนี้ค่อยมาถามใหม่นะ");
+/** "ค้นหา …" found nothing in the entries, the notes or the files. */
+export const findNothingText = (term: string) =>
+  t('ไม่พบรายการ โน้ต หรือไฟล์ที่มีคำว่า "{0}"', term);
+
 /** "ถาม AI" of the month is used up: the chat still works with the ordinary commands. */
 export const aiQuotaText = (plan: "free" | "plus" | "ultimate", limit: number) =>
   plan === "free"

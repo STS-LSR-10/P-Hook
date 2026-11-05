@@ -337,6 +337,13 @@ describe("plain messages", () => {
     expect(searched).toEqual(["หอ"]);
   });
 
+  it("a search for a file looks only in the files", async () => {
+    route.mockResolvedValue(decision({ intent: "search", searchTerm: "สัญญา", searchIn: "files" }));
+    const { deps } = setup();
+    await handleEvent(say("ไฟล์สัญญาเช่าอยู่ไหน"), deps);
+    expect(searched).toEqual([]);
+  });
+
   it("hands questions to the owl", async () => {
     route.mockResolvedValue(decision({ intent: "ask" }));
     const { deps } = setup();

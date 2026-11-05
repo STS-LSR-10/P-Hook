@@ -11,7 +11,7 @@ import {
 } from "@/lib/budget-alert";
 import { calendarMonthRange, cycleRange, dayRange } from "@/lib/budget-cycle";
 import { categorizeByRules, matchLeadingCategory, type CategoryLite } from "@/lib/categorize/rules";
-import { parseCommand, type Command } from "@/lib/commands";
+import { parseCommand, type Command, type FindIn } from "@/lib/commands";
 import { currentCurrency, formatBaht, money, satangToString, toSatang } from "@/lib/money";
 import {
   CONFIRM_THRESHOLD,
@@ -156,6 +156,7 @@ import {
   snoozeTime,
   whenFromNow,
 } from "@/lib/user-reminder";
+import { buildFileResults } from "./file-flex";
 import { buildNoteListCard } from "./list-flex";
 import { buildReminderCard, buildReminderListCard } from "./reminder-flex";
 import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
@@ -177,7 +178,7 @@ import {
   saveWaitingFile,
   type FileChatDeps,
 } from "./file-handlers";
-import { forgetMedia, rememberMedia, takeFileWait } from "@/lib/file-repo";
+import { forgetMedia, listFiles, rememberMedia, takeFileWait } from "@/lib/file-repo";
 import type { SaveDeps } from "@/lib/file-save";
 import { handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
@@ -339,6 +340,7 @@ import {
   PDF_UNAVAILABLE_TEXT,
   pdfRecordedText,
   AI_OUT_NOTICE_TEXT,
+  findNothingText,
   text,
 } from "./messages";
 import { log, safeMessage } from "@/lib/log";
@@ -1380,6 +1382,85 @@ function listUrl(term: string): string | undefined {
   return base ? `${base}/transactions${query}` : undefined;
 }
 
+const FOUND_SHOWN = 5;
+
+/**
+ * "ค้นหา สัญญา" (typed, or a question the AI sorted): entries, notes and files that hold the words,
+ * one message each, only for what was found. Totals of entries are Pro: Free is told how many there
+ * are and where to see them. A part that cannot be searched right now does not stop the others.
+ */
+async function runFind(
+  term: string,
+  where: FindIn,
+  user: UserRow,
+  deps: HandlerDeps,
+): Promise<LineMessage[]> {
+  const target = parseSearchTerm(term);
+  if (!target) return [text(SEARCH_USAGE_TEXT)];
+  const shown = target.tag ? `#${target.tag}` : (target.q ?? "");
+  const { db } = deps;
+  const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
+  const wants = (part: FindIn) => where === "any" || where === part;
+  const files = fileChatDeps(deps);
+  const quietly = async <T>(part: string, work: () => Promise<T>): Promise<T | null> => {
+    try {
+      return await work();
+    } catch (error) {
+      log.warn("find_part_failed", { part, reason: safeMessage(error) });
+      return null;
+    }
+  };
+
+  const [entries, notes, kept] = await Promise.all([
+    wants("entries")
+      ? quietly("entries", async (): Promise<LineMessage | null> => {
+          const totals = await loadSearchTotals(db, user.id, target);
+          if (totals.count === 0) return null;
+          if (!can(plan, "searchTotals")) {
+            const url = listUrl(shown);
+            return text(
+              url
+                ? tr(
+                    'พบ {0} รายการเงินที่มีคำว่า "{1}" ดูในแอปได้ที่ {2} (ยอดรวมในแชทสำหรับ Pro ขึ้นไป)',
+                    totals.count,
+                    shown,
+                    url,
+                  )
+                : tr(
+                    'พบ {0} รายการเงินที่มีคำว่า "{1}" (ยอดรวมในแชทสำหรับ Pro ขึ้นไป)',
+                    totals.count,
+                    shown,
+                  ),
+            );
+          }
+          const items = await loadSearchItems(db, user.id, target, FOUND_SHOWN);
+          return buildSearchCard({ term: shown, totals, items, moreUrl: listUrl(shown) });
+        })
+      : null,
+    wants("notes") && target.q
+      ? quietly("notes", async (): Promise<LineMessage | null> => {
+          const found = await listNotes(db, user.id, { q: target.q ?? "", limit: FOUND_SHOWN });
+          if (found.items.length === 0) return null;
+          return buildNoteListCard({
+            title: tr('โน้ตที่มี "{0}"', shown),
+            items: found.items,
+            url: pageUrl(`/notes?q=${encodeURIComponent(shown)}`),
+            more: found.hasMore,
+          });
+        })
+      : null,
+    wants("files") && files && target.q
+      ? quietly("files", async (): Promise<LineMessage | null> => {
+          const found = await listFiles(db, user.id, { q: target.q ?? "", limit: FOUND_SHOWN });
+          if (found.items.length === 0) return null;
+          return buildFileResults(found.items, (id) => pageUrl(`/files?open=${id}`));
+        })
+      : null,
+  ]);
+  const messages = [entries, notes, kept].filter((m): m is LineMessage => m !== null);
+  return messages.length > 0 ? messages : [text(findNothingText(shown))];
+}
+
 /** The card for a custom range (typed or picked), or the text that says what is wrong with it. */
 /** Why the days asked for cannot be summed up. */
 function rangeErrorText(reason: "invalid" | "order" | "too_long"): string {
@@ -2379,11 +2460,8 @@ async function runCommand(
     case "search-usage":
       return [text(SEARCH_USAGE_TEXT)];
 
-    case "kept-search": {
-      const files = fileChatDeps(deps);
-      if (!files) return runCommand({ kind: "note-search", term: command.term }, user, deps);
-      return runFileSearch(files, user, command.term, true);
-    }
+    case "find":
+      return runFind(command.term, command.in, user, deps);
 
     case "file-save":
     case "file-rename":
@@ -2518,6 +2596,8 @@ async function runCommand(
     }
 
     case "search": {
+      // "ค้นหา กาแฟ" looks everywhere; a question about some days ("กาแฟเดือนที่แล้ว") is entries only
+      if (!command.start) return runFind(command.term, "any", user, deps);
       if (!can(effectivePlan(user.plan, user.plan_expires_at, deps.now()), "searchTotals")) {
         return [text(SEARCH_LOCKED_TEXT)];
       }
