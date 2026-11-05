@@ -721,6 +721,28 @@ export const OWL_FAILED_TEXT = t(
   "พี่ฮูกตอบไม่ได้ตอนนี้ ลองถามใหม่อีกครั้งนะ (ไม่นับโควตาครั้งนี้)",
 );
 export const OWL_DAY_LIMIT_TEXT = t("วันนี้ถามพี่ฮูกเยอะแล้ว พรุ่งนี้ค่อยมาถามใหม่นะ");
+/** "ถาม AI" of the month is used up: the chat still works with the ordinary commands. */
+export const aiQuotaText = (plan: "free" | "plus" | "ultimate", limit: number) =>
+  plan === "free"
+    ? t(
+        "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน Free) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น Pro ได้ 1,500 ครั้ง/เดือน หรือรอต้นเดือนหน้านะ",
+        limit,
+      )
+    : plan === "plus"
+      ? t(
+          "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน Pro) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น Elite ได้ 5,000 ครั้ง/เดือน หรือรอต้นเดือนหน้านะ",
+          limit,
+        )
+      : t(
+          "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว พิมพ์จดแบบปกติได้เหมือนเดิม และใช้ได้ใหม่ต้นเดือนหน้านะ",
+          limit,
+        );
+
+/** Once a day when the month's "ถาม AI" is out: the message was read by the ordinary rules. */
+export const AI_OUT_NOTICE_TEXT = t(
+  "โควตา ถาม AI เดือนนี้หมดแล้ว ข้อความนี้บอทอ่านแบบปกติ พิมพ์คำสั่งหรือจดแบบ กาแฟ 30 ได้เหมือนเดิม",
+);
+
 export const owlQuotaText = (plan: "free" | "plus" | "ultimate", limit: number) =>
   plan === "free"
     ? t(

@@ -1,16 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parseMessage } from "@/lib/parse/text-parser";
-import { ROUTER_DAILY_LIMIT } from "@/lib/plan";
+import { AI_CHAT_LIMIT } from "@/lib/plan";
 import type { IntentRouter } from "./intent-router";
 import { clockIsTheAmount, needsRouter, runRouter } from "./route-text";
 
 const take = vi.fn(async () => true);
 const refund = vi.fn(async () => undefined);
+const takeAmount = vi.fn(async () => true);
+const refundAmount = vi.fn(async () => undefined);
 vi.mock("@/lib/usage", async (original) => ({
   ...(await original<typeof import("@/lib/usage")>()),
   takeUsage: (...a: unknown[]) => take(...(a as [])),
   refundUsage: (...a: unknown[]) => refund(...(a as [])),
+  takeUsageAmount: (...a: unknown[]) => takeAmount(...(a as [])),
+  refundUsageAmount: (...a: unknown[]) => refundAmount(...(a as [])),
 }));
 
 const NOW = new Date("2026-11-01T05:00:00Z");
@@ -105,41 +109,63 @@ describe("runRouter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    take.mockResolvedValue(true);
+    takeAmount.mockResolvedValue(true);
     route.mockResolvedValue({ intent: "ask", confidence: 0.9 });
   });
 
-  it("takes one use on the Bangkok day", async () => {
+  it("takes one use of the month's AI quota for up to 20 words", async () => {
     await expect(runRouter(deps, input)).resolves.toMatchObject({ intent: "ask" });
-    expect(take).toHaveBeenCalledWith(db, "u1", "router", ROUTER_DAILY_LIMIT.free, "2026-11-01");
+    expect(takeAmount).toHaveBeenCalledWith(
+      db,
+      "u1",
+      "ai_chat",
+      1,
+      AI_CHAT_LIMIT.free,
+      "2026-11-01",
+    );
   });
 
-  it("counts the day in Bangkok, not in UTC", async () => {
-    const late = { router, now: () => new Date("2026-11-01T18:00:00Z") };
+  it("a long message takes one use for each 20 words", async () => {
+    const long = Array.from({ length: 45 }, () => "กาแฟ").join(" ");
+    await runRouter(deps, { ...input, text: long });
+    expect(takeAmount).toHaveBeenCalledWith(
+      db,
+      "u1",
+      "ai_chat",
+      3,
+      AI_CHAT_LIMIT.free,
+      "2026-11-01",
+    );
+  });
+
+  it("counts the month in Bangkok, not in UTC", async () => {
+    const late = { router, now: () => new Date("2026-11-30T18:00:00Z") };
     await runRouter(late, input);
-    expect(take).toHaveBeenCalledWith(db, "u1", "router", 10, "2026-11-02");
+    expect(takeAmount).toHaveBeenCalledWith(db, "u1", "ai_chat", 1, 200, "2026-12-01");
   });
 
-  it("returns null without calling the AI when the day is used up", async () => {
-    take.mockResolvedValue(false);
-    await expect(runRouter(deps, input)).resolves.toBeNull();
+  it("quota used up: no AI, null (the rules read it), and says the quota is out", async () => {
+    takeAmount.mockResolvedValue(false);
+    const onQuotaOut = vi.fn();
+    await expect(runRouter({ ...deps, onQuotaOut }, input)).resolves.toBeNull();
     expect(route).not.toHaveBeenCalled();
+    expect(onQuotaOut).toHaveBeenCalledOnce();
   });
 
-  it("gives the use back when the AI fails", async () => {
+  it("gives the uses back when the AI fails", async () => {
     route.mockRejectedValue(new Error("down"));
     await expect(runRouter(deps, input)).resolves.toBeNull();
-    expect(refund).toHaveBeenCalledWith(db, "u1", "router", "2026-11-01");
+    expect(refundAmount).toHaveBeenCalledWith(db, "u1", "ai_chat", 1, "2026-11-01");
   });
 
-  it("gives the use back when the reply is junk", async () => {
+  it("gives the uses back when the reply is junk", async () => {
     route.mockResolvedValue({ intent: "nope" });
     await expect(runRouter(deps, input)).resolves.toBeNull();
-    expect(refund).toHaveBeenCalledOnce();
+    expect(refundAmount).toHaveBeenCalledOnce();
   });
 
   it("returns null when the usage counter is down", async () => {
-    take.mockRejectedValue(new Error("db"));
+    takeAmount.mockRejectedValue(new Error("db"));
     await expect(runRouter(deps, input)).resolves.toBeNull();
     expect(route).not.toHaveBeenCalled();
   });
@@ -147,7 +173,7 @@ describe("runRouter", () => {
   it("skips the AI for text over 1000 characters", async () => {
     const d = await runRouter(deps, { ...input, text: "ก".repeat(1001) });
     expect(d).toMatchObject({ intent: "unclear", confidence: 0 });
-    expect(take).not.toHaveBeenCalled();
+    expect(takeAmount).not.toHaveBeenCalled();
     expect(route).not.toHaveBeenCalled();
   });
 

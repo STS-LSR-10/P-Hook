@@ -66,7 +66,10 @@ export interface IntentDeps {
   now: () => Date;
   router?: IntentRouter;
   run: (command: Command) => Promise<LineMessage[]>;
-  ask: (question: string) => Promise<LineMessage[]>;
+  /** `prepaid`: the AI already read this message (and took its use) before it turned out a question. */
+  ask: (question: string, prepaid: boolean) => Promise<LineMessage[]>;
+  /** Told when the month's "ถาม AI" is used up (the rules read the message instead). */
+  onQuotaOut?: () => void;
   recordMoney: (input: string) => Promise<LineMessage[]>;
   listUrl: string | undefined;
 }
@@ -183,12 +186,12 @@ function execute(
         },
         deps.now(),
       );
-      return command ? deps.run(command) : deps.ask(input);
+      return command ? deps.run(command) : deps.ask(input, true);
     }
     case "file_save":
       return deps.run({ kind: "file-save", name: decision.fileName });
     case "ask":
-      return deps.ask(input);
+      return deps.ask(input, true);
     case "money":
       return deps.recordMoney(input);
     case "unclear":
@@ -231,17 +234,17 @@ export async function routeText(
     putPendingIntent(db, user.id, { text: input, decision }, deps.now());
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
   const decision = await runRouter(
-    { router: deps.router, now: deps.now },
+    { router: deps.router, now: deps.now, onQuotaOut: deps.onQuotaOut },
     { db, userId: user.id, plan, text: input },
   );
   const reads = QUESTION_RE.test(input);
   if (chatting && !decision) {
     // no AI to ask: what the rules read as a plain entry is one, like outside the mode
     const entry = parsed.entries.length > 0 && !reads && !clockIsTheAmount(input, parsed.entries);
-    return entry ? null : deps.ask(input);
+    return entry ? null : deps.ask(input, false);
   }
   if (chatting && (decision?.intent === "ask" || decision?.intent === "unclear")) {
-    return deps.ask(input);
+    return deps.ask(input, true);
   }
   if (!decision) {
     return clockIsTheAmount(input, parsed.entries) ? [text(ROUTER_REMINDER_HINT_TEXT)] : null;
@@ -269,7 +272,7 @@ export async function routeText(
   }
   if (decision.intent === "money") {
     if (parsed.entries.length > 0 || can(plan, "smartParse")) return null;
-    return chatting ? deps.ask(input) : [text(MONEY_HINT_TEXT)];
+    return chatting ? deps.ask(input, true) : [text(MONEY_HINT_TEXT)];
   }
   return execute(input, decision, user, deps);
 }
@@ -294,7 +297,9 @@ export async function handleIntentPick(
   if (pick === "note") return deps.run({ kind: "note-add", body: input });
   if (pick === "reminder") return deps.run({ kind: "remind-add", text: input });
   if (pick === "money") return deps.recordMoney(input);
-  if (pick === "no") return chatting && decision ? deps.ask(input) : [text(INTENT_CANCELLED_TEXT)];
+  if (pick === "no") {
+    return chatting && decision ? deps.ask(input, true) : [text(INTENT_CANCELLED_TEXT)];
+  }
   if (pick.startsWith("rm:") && decision) {
     const reminderId = pick.slice(3);
     if (!UUID_RE.test(reminderId)) return [text(INTENT_EXPIRED_TEXT)];

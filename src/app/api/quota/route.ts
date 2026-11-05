@@ -59,12 +59,12 @@ export async function GET(request: Request): Promise<Response> {
         paid ? { kind: "voice", month } : { kind: "teaser_voice", month: LIFETIME },
         { kind: "pdf", month },
         { kind: "owl", month },
-        { kind: "router", month: day },
+        { kind: "ai_chat", month },
         { kind: "file_save", month: day },
         { kind: "group_remind", month },
       ]),
     ]);
-    const [voice = 0, pdf = 0, owl = 0, router = 0, fileSaves = 0, groupReminders = 0] = counters;
+    const [voice = 0, pdf = 0, owl = 0, ai = 0, fileSaves = 0, groupReminders = 0] = counters;
 
     return json({
       plan,
@@ -86,7 +86,7 @@ export async function GET(request: Request): Promise<Response> {
         voice,
         pdf,
         owl,
-        router,
+        ai,
         fileSaves,
       }),
     });

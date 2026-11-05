@@ -2,9 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { log, safeMessage } from "@/lib/log";
 import type { ParsedEntry, ParseResult } from "@/lib/parse/text-parser";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
-import { ROUTER_DAILY_LIMIT, type Plan } from "@/lib/plan";
+import { AI_CHAT_LIMIT, type Plan } from "@/lib/plan";
 import { looksSecret } from "@/lib/secret-text";
-import { dayKey, refundUsage, takeUsage } from "@/lib/usage";
+import { bangkokParts } from "@/lib/thai-date";
+import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
+import { aiUnits } from "./ai-quota";
 import {
   MAX_ROUTER_INPUT,
   sanitizeDecision,
@@ -64,10 +66,11 @@ export function needsRouter(input: string, result: ParseResult): boolean {
 
 /**
  * Ask the AI which group `text` belongs to. Null means "use the ordinary rules instead": no AI
- * configured, the day's use is gone, the call failed, or the reply is unusable. Never throws.
+ * configured, the month's "ถาม AI" is used up (then `onQuotaOut` is told), the call failed, or the
+ * reply is unusable. Takes one use for each 20 words, given back when no answer came. Never throws.
  */
 export async function runRouter(
-  deps: { router?: IntentRouter; now: () => Date },
+  deps: { router?: IntentRouter; now: () => Date; onQuotaOut?: () => void },
   input: { db: SupabaseClient; userId: string; plan: Plan; text: string },
 ): Promise<IntentDecision | null> {
   const { router } = deps;
@@ -85,25 +88,38 @@ export async function runRouter(
     };
   }
 
-  const day = dayKey(deps.now());
+  const month = monthKey(deps.now());
+  const units = aiUnits(input.text);
   let counted = false;
   try {
-    counted = await takeUsage(
+    counted = await takeUsageAmount(
       input.db,
       input.userId,
-      "router",
-      ROUTER_DAILY_LIMIT[input.plan],
-      day,
+      "ai_chat",
+      units,
+      AI_CHAT_LIMIT[input.plan],
+      month,
     );
-    if (!counted) return null;
-    const decision = sanitizeDecision(await router.route({ text: input.text, today: day }));
+    if (!counted) {
+      deps.onQuotaOut?.();
+      return null;
+    }
+    const decision = sanitizeDecision(
+      await router.route({ text: input.text, today: dayOf(deps.now()) }),
+    );
     if (decision) return decision;
     log.warn("intent_router_failed", { provider: router.name, reason: "unusable reply" });
   } catch (error) {
     log.warn("intent_router_failed", { provider: router.name, reason: safeMessage(error) });
   }
   if (counted) {
-    await refundUsage(input.db, input.userId, "router", day).catch(() => undefined);
+    await refundUsageAmount(input.db, input.userId, "ai_chat", units, month).catch(() => undefined);
   }
   return null;
+}
+
+/** "2026-11-04": today in Bangkok, for the AI to know what "tomorrow" means. */
+function dayOf(now: Date): string {
+  const p = bangkokParts(now);
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
 }

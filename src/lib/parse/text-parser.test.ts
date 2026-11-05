@@ -442,7 +442,8 @@ describe("one entry with numbers in its name is not split", () => {
   });
 
   it("a piece the rules cannot read keeps the whole message unread, never half saved", () => {
-    const long = "ค่าข้าวเที่ยงกับเพื่อนที่ทำงานร้านอาหารญี่ปุ่นแถวสยามสแควร์ซอยสามตรงข้ามสยามพารากอน 500 น้ำ 20";
+    const long =
+      "ค่าข้าวเที่ยงกับเพื่อนที่ทำงานร้านอาหารญี่ปุ่นแถวสยามสแควร์ซอยสามตรงข้ามสยามพารากอน 500 น้ำ 20";
     const result = parseMessage(long, now);
     expect(result.entries.map((e) => e.amountSatang)).not.toEqual([2000]);
   });

@@ -17,7 +17,7 @@ const USED: QuotaUsage = {
   voice: 1,
   pdf: 0,
   owl: 7,
-  router: 9,
+  ai: 9,
   fileSaves: 3,
 };
 
@@ -61,7 +61,7 @@ describe("buildQuota", () => {
     expect(q.pdf?.limit).toBe(0);
     expect(q.storage).toMatchObject({ used: 1024, limit: 500 * 1024 * 1024, unit: "bytes" });
     expect(q.owl).toMatchObject({ limit: 5, period: "month" });
-    expect(q.router).toMatchObject({ limit: 10, period: "day" });
+    expect(q.ai).toMatchObject({ limit: 200, period: "month", label: "ถาม AI" });
   });
 
   it("Pro: monthly slips and voice, 10 repeating reminders, groups still Elite", () => {

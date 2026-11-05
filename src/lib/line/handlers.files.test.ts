@@ -64,6 +64,8 @@ vi.mock("@/lib/usage", async (original) => ({
   ...(await original<typeof import("@/lib/usage")>()),
   takeUsage: async () => true,
   refundUsage: async () => undefined,
+  takeUsageAmount: async () => true,
+  refundUsageAmount: async () => undefined,
 }));
 vi.mock("@/lib/photo-repo", async (original) => ({
   ...(await original<typeof import("@/lib/photo-repo")>()),

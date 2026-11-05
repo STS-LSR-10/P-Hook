@@ -174,3 +174,11 @@ describe("prepaidUpgradeQuote", () => {
     ).toBeNull();
   });
 });
+
+describe("the AI quota on the plan table", () => {
+  it("says how many uses of ถาม AI each plan has a month, from the real limits", async () => {
+    const { FEATURE_GROUPS } = await import("./pricing");
+    const row = FEATURE_GROUPS.flatMap((g) => g.rows).find((r) => r.label.includes("ถาม AI"));
+    expect(row?.cells).toEqual(["200 ครั้ง/เดือน", "1,500 ครั้ง/เดือน", "5,000 ครั้ง/เดือน"]);
+  });
+});

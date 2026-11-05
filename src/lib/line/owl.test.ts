@@ -9,7 +9,7 @@ import {
   OWL_NOT_IN_MODE_TEXT,
   OWL_SECRET_TEXT,
   OWL_UNAVAILABLE_TEXT,
-  owlQuotaText,
+  aiQuotaText,
 } from "./messages";
 import { inOwlMode, keepOwlOpen, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 
@@ -23,6 +23,11 @@ vi.mock("@/lib/usage", async (original) => ({
   ...(await original<typeof import("@/lib/usage")>()),
   takeUsage: async () => usageLeft-- > 0,
   refundUsage: async (_d: unknown, _u: unknown, kind: string) => {
+    refunds.push(kind);
+  },
+  // questions take from the one "ถาม AI" quota
+  takeUsageAmount: async () => usageLeft-- > 0,
+  refundUsageAmount: async (_d: unknown, _u: unknown, kind: string) => {
     refunds.push(kind);
   },
 }));
@@ -202,7 +207,7 @@ describe("asking", () => {
     expect(first(await owlAsk(deps(), user(), "x", false, "U1")).text).toBe(OWL_FAILED_TEXT);
     answer.mockResolvedValueOnce("   ");
     expect(first(await owlAsk(deps(), user(), "x", false, "U1")).text).toBe(OWL_FAILED_TEXT);
-    expect(refunds).toEqual(["owl", "owl"]);
+    expect(refunds).toEqual(["ai_chat", "ai_chat"]);
   });
 
   it("stops at the monthly quota: Free is pitched an upgrade, Pro and Elite get the plain text", async () => {
@@ -212,12 +217,12 @@ describe("asking", () => {
     plan = "plus";
     usageLeft = 0;
     expect(first(await owlAsk(deps(), user(), "x", false, "U1")).text).toBe(
-      owlQuotaText("plus", 50),
+      aiQuotaText("plus", 1500),
     );
     plan = "ultimate";
     usageLeft = 0;
     expect(first(await owlAsk(deps(), user(), "x", false, "U1")).text).toBe(
-      owlQuotaText("ultimate", 300),
+      aiQuotaText("ultimate", 5000),
     );
     expect(answer).not.toHaveBeenCalled();
   });
