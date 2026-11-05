@@ -106,7 +106,10 @@ describe("the help flow in the chat", () => {
     plan = "ultimate";
     const { deps, reply } = setup();
     await handleEvent(tap("a=help&t=debt"), deps);
-    expect(JSON.stringify(first(reply))).toContain("Elite ✓");
+    // an Elite member can tap the Elite rows
+    expect(JSON.stringify(first(reply))).toContain(
+      '"action":{"type":"message","label":"หนี้","text":"หนี้"}',
+    );
     const again = setup();
     await handleEvent(tap("a=help&t=whatever"), again.deps);
     expect(first(again.reply).type).toBe("text");

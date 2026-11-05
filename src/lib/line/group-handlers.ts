@@ -343,7 +343,7 @@ async function runGroupCommand(
   const userId = event.source?.userId;
   const now = deps.now();
 
-  if (command.kind === "help") return reply([buildGroupHelpCard({ appUrl: appBaseUrl() })]);
+  if (command.kind === "help") return reply([buildGroupHelpCard()]);
 
   if (command.kind === "open") {
     if (!userId) return reply([text(GROUP_NO_USER_TEXT)]);

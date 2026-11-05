@@ -87,7 +87,7 @@ describe("help topics", () => {
     }
   });
 
-  it("only what the plan has can be tapped; the rest is dimmed with its badge", () => {
+  it("only what the plan has can be tapped", () => {
     const taps = (plan: "free" | "plus" | "ultimate") =>
       HELP_TOPICS.reduce(
         (n, t) =>
@@ -99,11 +99,26 @@ describe("help topics", () => {
     expect(taps("plus")).toBeGreaterThan(taps("free"));
     expect(taps("ultimate")).toBeGreaterThan(taps("plus"));
 
-    const free = json(buildHelpTopicCard({ topic: "record", plan: "free" }));
-    expect(free).toContain("Pro");
-    expect(free).not.toContain("Pro ✓");
-    expect(json(buildHelpTopicCard({ topic: "record", plan: "plus" }))).toContain("Pro ✓");
-    expect(json(buildHelpTopicCard({ topic: "debt", plan: "ultimate" }))).toContain("Elite ✓");
+  });
+
+  it("is a plain, narrow page: a one-row header with its icon, rows of a command and a short line", () => {
+    for (const topic of HELP_TOPICS) {
+      const card = buildHelpTopicCard({ topic: topic.id, plan: "free", appUrl: "https://x.test" }) as unknown as {
+        contents: { size: string; header: { contents: { text?: string }[] }; footer?: unknown };
+      };
+      expect(card.contents.size, topic.id).toBe("kilo");
+      expect(card.contents.header.contents[0]?.text).toBe(`${topic.icon} ${topic.title}`);
+      // no plan badges, no coloured tiles, no logo or closing line at the foot
+      const out = json(card.contents);
+      expect(out, topic.id).not.toMatch(/"(Pro|Elite)( ✓)?"/);
+      expect(out, topic.id).not.toMatch(/#FDECEF|#E8F8EF|#E8F1FD|#EFEBFD|#E3F7F4|#FFF1E5|#F1F5F9/);
+      expect(out, topic.id).not.toContain("logo.png");
+      expect(card.contents.footer, topic.id).toBeUndefined();
+    }
+  });
+
+  it("every line is short", () => {
+    for (const { item } of all) expect(item.desc.length, item.desc).toBeLessThanOrEqual(28);
   });
 
   it("a Free user cannot tap a Pro command (it would only bounce)", () => {
@@ -124,16 +139,6 @@ describe("help topics", () => {
     const none = json(buildHelpTopicCard({ topic: "shortcuts", plan: "free" }));
     expect(none).not.toContain("undefined");
     expect(none).toContain("เมนูด้านล่าง");
-  });
-
-  it("the logo shows only with a public https address", () => {
-    expect(
-      json(buildHelpTopicCard({ topic: "record", plan: "free", appUrl: "https://x.test" })),
-    ).toContain("https://x.test/logo.png");
-    expect(json(buildHelpTopicCard({ topic: "record", plan: "free" }))).not.toContain("logo.png");
-    expect(
-      json(buildHelpTopicCard({ topic: "record", plan: "free", appUrl: "http://localhost:3000" })),
-    ).not.toContain("logo.png");
   });
 
   it("an unknown topic id falls back to the first topic", () => {
@@ -175,9 +180,10 @@ describe("welcome and group cards", () => {
   });
 
   it("the group card lists the commands in the same look as the private ones, with no buttons that talk in the group", () => {
-    const card = json(buildGroupHelpCard({ appUrl: "https://x.test" }));
-    expect(card).toContain("https://x.test/logo.png");
-    expect(card).toContain("👥"); // the same big-icon header
+    const card = json(buildGroupHelpCard());
+    expect(card).toContain('"text":"👥 วิธีใช้สมุดกลุ่ม"'); // the same plain header
+    expect(card).toContain('"size":"kilo"');
+    expect(card).not.toContain("logo.png");
     expect(card).toContain("เริ่มทริป");
     expect(card).toContain("จด ข้าวเที่ยง 350");
     expect(card).toContain("ปิดสมุดกลุ่ม");
