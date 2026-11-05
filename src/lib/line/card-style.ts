@@ -71,7 +71,7 @@ export function cardHeader(title: string, subtitles: string[], icon: string) {
  * The short card's header, as the reminder card has it: one row, the title and a few words at the
  * right. These cards are narrow (kilo): a title, a few rows and a small button.
  */
-export function compactHeader(title: string, right?: string) {
+export function compactHeader(title: string, right?: string, icon?: string) {
   return {
     type: "box",
     layout: "horizontal",
@@ -80,7 +80,7 @@ export function compactHeader(title: string, right?: string) {
     contents: [
       {
         type: "text",
-        text: title,
+        text: icon ? `${icon} ${title}` : title,
         weight: "bold",
         size: "md",
         color: TINT.headerTitle,

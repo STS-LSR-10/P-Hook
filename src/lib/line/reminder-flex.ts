@@ -69,7 +69,7 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
         contents: [
           {
             type: "text",
-            text: input.title ?? (input.edited ? t("แก้ไขเตือนแล้ว") : t("ตั้งเตือนแล้ว")),
+            text: `⏰ ${input.title ?? (input.edited ? t("แก้ไขเตือนแล้ว") : t("ตั้งเตือนแล้ว"))}`,
             weight: "bold",
             size: "md",
             color: INK,
@@ -278,7 +278,7 @@ export function buildReminderListCard(input: {
   const bubble: Record<string, unknown> = {
     type: "bubble",
     size: "kilo",
-    header: compactHeader(t("เตือนที่รออยู่"), t("{0} รายการ", input.total)),
+    header: compactHeader(t("เตือนที่รออยู่"), t("{0} รายการ", input.total), "⏳"),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: body },
   };
   const footer = compactFooter(t("ดูเตือนทั้งหมด"), input.listUrl);
