@@ -38,8 +38,16 @@ describe("readMentions", () => {
       readMentions(text, [{ index, length: 7, type: "user", isSelf: true }]);
     expect(at("@พี่ฮูก ช่วยจดหน่อย", 0).called).toBe(true);
     expect(at("ช่วย @พี่ฮูก จดหน่อย", 5).called).toBe(true);
-    // a tag in the middle is not taken off the text
-    expect(at("ช่วย @พี่ฮูก จดหน่อย", 5).text).toBe("ช่วย @พี่ฮูก จดหน่อย");
+    // a tag in the middle comes out of the text too
+    expect(at("ช่วย @พี่ฮูก จดหน่อย", 5).text).toBe("ช่วย จดหน่อย");
+  });
+
+  it("takes the tag of พี่ฮูก out of the text wherever it stands", () => {
+    const out = readMentions("ค่าข้าว 120 จด @พี่ฮูก", [
+      { index: 15, length: 7, type: "user", isSelf: true },
+    ]);
+    expect(out.text).toBe("ค่าข้าว 120 จด");
+    expect(out.called).toBe(true);
   });
 
   it("ignores a tag that does not fit the text", () => {

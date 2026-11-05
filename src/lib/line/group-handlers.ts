@@ -63,7 +63,7 @@ import { checkGroupSlip } from "./split-bill-slip";
 import { endGroupReminders } from "@/lib/user-reminder-repo";
 import { moveGroupNotes } from "@/lib/note-repo";
 import { readMentions, type Mention } from "@/lib/group-mention";
-import { readGroupWithAi } from "./group-ai";
+import { readGroupWithAi, refundGroupCharge } from "./group-ai";
 import { withGroupRiders } from "./group-riders";
 import {
   addGroupNote,
@@ -230,9 +230,11 @@ async function handleGroupMessage(
   } = readMentions(event.message.text, event.message.mention?.mentionees);
   const command = parseGroupCommand(said);
   // the AI reads what is meant for the bot and no exact command covers: a tag of the bot, or "ฮูก …"
+  const asked = command?.kind === "owl" ? command.question : said;
   const forAi =
-    (called && (!command || command.kind === "owl")) ||
-    (command?.kind === "owl" && command.question !== "");
+    asked.trim() !== "" &&
+    ((called && (!command || command.kind === "owl")) ||
+      (command?.kind === "owl" && command.question !== ""));
   if (!command && !called) {
     // ordinary chat: stay quiet, except for the once-a-day reminder of unpaid bills
     await remindIfDue(groupId, deps, reply);
@@ -243,19 +245,36 @@ async function handleGroupMessage(
     if (!result.allowed) return;
   }
   const userId = event.source?.userId;
-  const read = forAi && userId ? await readGroupWithAi(said, userId, groupId, deps) : null;
+  // what the AI reads is what was meant, without the "ฮูก" that called the bot
+  const read =
+    forAi && userId
+      ? await readGroupWithAi(
+          asked,
+          userId,
+          groupId,
+          deps,
+          async (g) => (await ownerState(deps.db, g, deps.now())).writable,
+        )
+      : null;
   if (read) {
     // one reply for everything it needs (a reply token is good once)
     const out: LineMessage[] = [];
-    for (const each of read.commands) {
-      await runGroupCommand(
-        each,
-        event,
-        groupId,
-        deps,
-        async (messages) => void out.push(...messages),
-        mentions,
-      );
+    let done = false;
+    try {
+      for (const each of read.commands) {
+        await runGroupCommand(
+          each,
+          event,
+          groupId,
+          deps,
+          async (messages) => void out.push(...messages),
+          mentions,
+        );
+      }
+      done = out.length > 0;
+    } finally {
+      // nothing came of it (it threw, or said nothing): the use goes back to the typer
+      if (!done) await refundGroupCharge(deps, read.charge);
     }
     await reply(out.slice(0, MAX_REPLY_MESSAGES));
     return;

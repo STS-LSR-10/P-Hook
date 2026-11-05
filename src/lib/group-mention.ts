@@ -35,11 +35,14 @@ export function readMentions(
       if (m.type === "all") return [{ label, all: true }];
       return m.type === "user" && m.userId ? [{ label, userId: m.userId }] : [];
     });
-  const self = tags.find((m) => m.isSelf && m.index === 0);
+  const selves = tags.filter((m) => m.isSelf).sort((a, b) => b.index - a.index);
+  // each tag of พี่ฮูก comes out of the text, from the back so the others keep their places
+  let said = text;
+  for (const m of selves) said = `${said.slice(0, m.index)} ${said.slice(m.index + m.length)}`;
   return {
-    text: self ? text.slice(self.length).trim() : text,
+    text: selves.length > 0 ? said.replace(/\s+/g, " ").trim() : text,
     mentions,
-    called: tags.some((m) => m.isSelf),
+    called: selves.length > 0,
   };
 }
 

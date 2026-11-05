@@ -10,6 +10,10 @@ const NOW = new Date("2026-11-04T03:00:00Z");
 let group: GroupRow | null;
 let entries: GroupEntryRow[] = [];
 let quotaOk = true;
+let ownerPlan = "ultimate";
+let ensured = 0;
+let reminderBreaks = false;
+const ownerTaken: string[] = [];
 let notes: { id: string; body: string; createdAt: string; updatedAt: string }[] = [];
 const taken: { user: string; kind: string; amount: number }[] = [];
 const refunded: { user: string; kind: string; amount: number }[] = [];
@@ -20,6 +24,7 @@ const notesAdded: string[] = [];
 vi.mock("@/lib/repo", async (original) => ({
   ...(await original<typeof import("@/lib/repo")>()),
   ensureUser: async (_db: unknown, lineUserId: string) => ({
+    ...((ensured += 1), {}),
     id: `app-${lineUserId}`,
     line_user_id: lineUserId,
     display_name: null,
@@ -29,7 +34,10 @@ vi.mock("@/lib/repo", async (original) => ({
 }));
 vi.mock("@/lib/usage", async (original) => ({
   ...(await original<typeof import("@/lib/usage")>()),
-  takeUsage: async () => true,
+  takeUsage: async (_db: unknown, user: string, kind: string) => {
+    ownerTaken.push(`${user}:${kind}`);
+    return true;
+  },
   refundUsage: async () => undefined,
   takeUsageAmount: async (_db: unknown, user: string, kind: string, amount: number) => {
     taken.push({ user, kind, amount });
@@ -41,7 +49,7 @@ vi.mock("@/lib/usage", async (original) => ({
 }));
 vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
-  getOwner: async () => ({ lineUserId: "Uowner", plan: "ultimate", planExpiresAt: null }),
+  getOwner: async () => ({ lineUserId: "Uowner", plan: ownerPlan, planExpiresAt: null }),
   memberNames: async () => new Map(),
   upsertMember: async () => undefined,
   addEntries: async (
@@ -85,6 +93,7 @@ vi.mock("@/lib/user-reminder-repo", async (original) => ({
   ...(await original<typeof import("@/lib/user-reminder-repo")>()),
   countActiveReminders: async () => 0,
   createReminder: async (_db: unknown, _u: string, i: { body: string; remindAt: Date }) => {
+    if (reminderBreaks) throw new Error("db down");
     remindersMade.push(i.body);
     return { id: "r1", body: i.body, remindAt: i.remindAt.toISOString(), repeat: null };
   },
@@ -150,6 +159,10 @@ beforeEach(() => {
   entries = [];
   notes = [];
   quotaOk = true;
+  ownerPlan = "ultimate";
+  ensured = 0;
+  reminderBreaks = false;
+  ownerTaken.length = 0;
   taken.length = 0;
   refunded.length = 0;
   remindersMade.length = 0;
@@ -182,6 +195,60 @@ describe("the AI in a group reads only what calls the bot", () => {
     expect(route).toHaveBeenCalledOnce();
     expect(taken[0]).toMatchObject({ user: "app-Uanna", kind: "ai_chat", amount: 1 });
     expect(entries.map((e) => e.amountSatang)).toEqual([12000]);
+    // the entry is what was spent, not the words that asked the bot
+    expect(entries[0]?.title).toBe("ค่าข้าว");
+  });
+
+  it("'ฮูก …' does not put 'ฮูก' into the entry or into what the AI reads", async () => {
+    route.mockResolvedValue(decision({ intent: "money" }));
+    const { deps } = setup();
+    await handleEvent(say("ฮูก ช่วยจดค่าข้าว 120 หน่อย"), deps);
+    expect(route.mock.calls[0]?.[0]).toMatchObject({ text: "ช่วยจดค่าข้าว 120 หน่อย" });
+    expect(entries[0]?.title).toBe("ค่าข้าว");
+  });
+
+  it("a question with an amount in it is a question, not an entry", async () => {
+    route.mockResolvedValue(decision({ intent: "money", confidence: 0.9 }));
+    const { deps, reply } = setup();
+    await handleEvent(say("ฮูก ค่าไฟ 2000 แพงไหม"), deps);
+    expect(entries).toEqual([]);
+    expect(said(reply)).toContain("ตอบจากพี่ฮูก");
+  });
+
+  it("an entry the group cannot read becomes a question, not a charged silence", async () => {
+    route.mockResolvedValue(decision({ intent: "money" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("ช่วยจดค่าข้าวให้หน่อย", { mentioned: true }), deps);
+    expect(entries).toEqual([]);
+    expect(said(reply)).toContain("ตอบจากพี่ฮูก");
+  });
+
+  it("a reminder the AI gives that cannot be read becomes a question too", async () => {
+    route.mockResolvedValue(decision({ intent: "reminder_add", reminderText: "อะไรสักอย่าง" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("ตั้งเตือนอะไรสักอย่าง", { mentioned: true }), deps);
+    expect(remindersMade).toEqual([]);
+    expect(said(reply)).toContain("ตอบจากพี่ฮูก");
+  });
+
+  it("a bare tag costs nothing and says nothing", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("", { mentioned: true }), deps);
+    expect(route).not.toHaveBeenCalled();
+    expect(taken).toEqual([]);
+    expect(reply).not.toHaveBeenCalled();
+  });
+
+  it("the use is given back when the work breaks", async () => {
+    route.mockResolvedValue(
+      decision({ intent: "reminder_add", reminderText: "ส่งงาน พรุ่งนี้ 10 โมง" }),
+    );
+    reminderBreaks = true;
+    const { deps } = setup();
+    await handleEvent(say("ตั้งเตือนส่งงานพรุ่งนี้สิบโมง", { mentioned: true }), deps).catch(
+      () => undefined,
+    );
+    expect(refunded).toEqual([{ user: "app-Uanna", kind: "ai_chat", amount: 1 }]);
   });
 
   it("sets a group reminder from what was said", async () => {
@@ -213,6 +280,8 @@ describe("the AI in a group reads only what calls the bot", () => {
     await handleEvent(say("ทำไมฟ้าสีฟ้า", { mentioned: true }), deps);
     expect(said(reply)).toContain("ตอบจากพี่ฮูก");
     expect(taken).toHaveLength(1);
+    // nothing taken from the owner's own quota
+    expect(ownerTaken).toEqual([]);
   });
 
   it("an answer that never came gives the typer's use back", async () => {
@@ -264,6 +333,18 @@ describe("secrets", () => {
     await handleEvent(say("รหัสไวไฟคือ 12345678", { mentioned: true }), deps);
     expect(route).not.toHaveBeenCalled();
     expect(taken).toEqual([]);
+    // not even a user row is made for it
+    expect(ensured).toBe(0);
+  });
+});
+
+describe("the owner's plan has run out", () => {
+  it("nothing is sent to the AI and the typer is not charged", async () => {
+    ownerPlan = "free";
+    const { deps } = setup();
+    await handleEvent(say("ช่วยจดค่าข้าว 120", { mentioned: true }), deps);
+    expect(route).not.toHaveBeenCalled();
+    expect(taken).toEqual([]);
   });
 });
 
@@ -282,6 +363,7 @@ describe("every group message", () => {
     route.mockResolvedValue(decision({ intent: "search", searchTerm: "สัญญา" }));
     const { deps, reply } = setup();
     await handleEvent(say("สัญญาเช่าอยู่ไหน", { mentioned: true }), deps);
-    expect(reply.mock.calls.length).toBeLessThanOrEqual(1);
+    expect(reply.mock.calls).toHaveLength(1);
+    expect(said(reply)).toContain("ไม่พบไฟล์");
   });
 });

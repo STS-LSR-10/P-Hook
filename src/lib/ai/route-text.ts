@@ -39,7 +39,7 @@ export function clockIsTheAmount(input: string, entries: ParsedEntry[]): boolean
  * A question, even with an amount in it ("ค่าไฟ 2000 แพงไหม"): never an entry. "ไหม" counts only at
  * the end, so "ผ้าไหม 500" stays an entry.
  */
-const ASKS_RE =
+export const ASKS_RE =
   /(?:(?<!ผ้า)ไหม|มั้ย|หรือยัง|หรือเปล่า|รึเปล่า|รึยัง)\s*\??\s*$|\?\s*$|เท่าไร|เท่าไหร่|กี่บาท|กี่รายการ|กี่ครั้ง/;
 
 /** Three lines or more, most with no number: a list of things, not a list of entries. */
