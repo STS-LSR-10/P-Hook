@@ -161,3 +161,21 @@ describe("the list cards are as narrow and as plain as the reminder card", () =>
     expect(json(card)).not.toContain('"style":"primary"');
   });
 });
+
+describe("the icon in a card's header", () => {
+  const title = (m: unknown) =>
+    (m as { contents: { header: { contents: { text?: string }[] } } }).contents.header.contents[0]
+      ?.text;
+
+  it("notes have a notebook, the files page a folder", () => {
+    expect(title(buildNoteListCard({ title: "โน้ตล่าสุด", items: [], url: undefined }))).toBe(
+      "📒 โน้ตล่าสุด",
+    );
+    expect(title(buildFilesPageCard(undefined))).toBe("📁 ไฟล์ของฉัน");
+  });
+
+  it("the group's reminders have a clock, its finished trips a pin", () => {
+    expect(title(buildGroupRemindersCard({ items: [] }))).toBe("⏰ เตือนของกลุ่ม");
+    expect(title(buildGroupTripsCard([]))).toBe("📌 ทริปที่จบแล้ว");
+  });
+});

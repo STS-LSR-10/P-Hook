@@ -13,6 +13,8 @@ function listCard(input: {
   title: string;
   /** A few words at the right of the title ("3 โน้ต"). */
   right: string;
+  /** A small picture before the title. */
+  icon?: string;
   altText: string;
   rows: unknown[];
   button?: { label: string; uri: string | undefined };
@@ -20,7 +22,7 @@ function listCard(input: {
   const bubble: Record<string, unknown> = {
     type: "bubble",
     size: "kilo",
-    header: compactHeader(input.title, input.right),
+    header: compactHeader(input.title, input.right, input.icon),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: input.rows },
   };
   const footer = input.button ? compactFooter(input.button.label, input.button.uri) : undefined;
@@ -66,6 +68,7 @@ export function buildNoteListCard(input: {
   return listCard({
     title: input.title,
     right: t("{0} โน้ต", input.items.length),
+    icon: "📒",
     altText: `${input.title}: ${input.items.length}`,
     rows: body,
     button: { label: t("ดูโน้ตทั้งหมด"), uri: input.url },
@@ -138,6 +141,7 @@ export function buildGroupRemindersCard(input: {
   );
   return listCard({
     title: t("เตือนของกลุ่ม"),
+    icon: "⏰",
     right: t("{0} รายการ", input.items.length),
     altText: t("เตือนของกลุ่ม {0} รายการ", input.items.length),
     rows: body,
@@ -218,6 +222,7 @@ export function buildGroupTripsCard(
   ]);
   return listCard({
     title: t("ทริปที่จบแล้ว"),
+    icon: "📌",
     right: t("{0} ทริป", trips.length),
     altText: t("ทริปที่จบแล้ว {0} ทริป", trips.length),
     rows: separated(rows),

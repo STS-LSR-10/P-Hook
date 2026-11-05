@@ -31,7 +31,7 @@ describe("reminder card", () => {
 
   it("says it is set and how often in the header, in the app's green", () => {
     const head = card().contents.header.contents.map((c) => c.text);
-    expect(head).toEqual(["ตั้งเตือนแล้ว", "ครั้งเดียว"]);
+    expect(head).toEqual(["⏰ ตั้งเตือนแล้ว", "ครั้งเดียว"]);
     expect(json()).toContain("#CCFBF1");
     expect(card({ repeat: "daily" }).contents.header.contents[1]?.text).toBe("ทุกวัน");
   });
@@ -93,7 +93,7 @@ describe("reminder card", () => {
 describe("the card after a reminder was changed on its page", () => {
   it("says so in its header", () => {
     const head = card({ edited: true }).contents.header.contents.map((c) => c.text);
-    expect(head[0]).toBe("แก้ไขเตือนแล้ว");
+    expect(head[0]).toBe("⏰ แก้ไขเตือนแล้ว");
   });
 });
 
@@ -141,5 +141,16 @@ describe("the list of waiting reminders", () => {
   it("a button opens the page with them all, and none without a page", () => {
     expect(list()).toContain('"label":"ดูเตือนทั้งหมด","uri":"https://liff.line.me/x/reminders"');
     expect(list({ listUrl: undefined })).not.toContain("ดูเตือนทั้งหมด");
+  });
+});
+
+describe("the icon in a card's header", () => {
+  const title = (m: unknown) =>
+    (m as { contents: { header: { contents: { text?: string }[] } } }).contents.header.contents[0]
+      ?.text;
+
+  it("the reminder list has an hourglass", () => {
+    const card = buildReminderListCard({ items: [], total: 0, now: NOW });
+    expect(title(card)).toBe("⏳ เตือนที่รออยู่");
   });
 });

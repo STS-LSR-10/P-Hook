@@ -80,7 +80,7 @@ export function buildFilesPageCard(filesUrl: string | undefined): LineMessage {
     contents: {
       type: "bubble",
       size: "kilo",
-      header: compactHeader(t("ไฟล์ของฉัน")),
+      header: compactHeader(t("ไฟล์ของฉัน"), undefined, "📁"),
       body: {
         type: "box",
         layout: "vertical",
