@@ -29,7 +29,17 @@ describe("readMentions", () => {
     expect(readMentions("เตือน 9 โมง ประชุม", undefined)).toEqual({
       text: "เตือน 9 โมง ประชุม",
       mentions: [],
+      called: false,
     });
+  });
+
+  it("says when พี่ฮูก was tagged, wherever the tag stands", () => {
+    const at = (text: string, index: number) =>
+      readMentions(text, [{ index, length: 7, type: "user", isSelf: true }]);
+    expect(at("@พี่ฮูก ช่วยจดหน่อย", 0).called).toBe(true);
+    expect(at("ช่วย @พี่ฮูก จดหน่อย", 5).called).toBe(true);
+    // a tag in the middle is not taken off the text
+    expect(at("ช่วย @พี่ฮูก จดหน่อย", 5).text).toBe("ช่วย @พี่ฮูก จดหน่อย");
   });
 
   it("ignores a tag that does not fit the text", () => {

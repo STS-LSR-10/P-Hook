@@ -8,7 +8,7 @@ import {
   type RecentMedia,
 } from "@/lib/file-repo";
 import { saveFile, type FileOwner, type SaveFailure } from "@/lib/file-save";
-import type { GroupRow } from "@/lib/group";
+import type { GroupAiCharge, GroupRow } from "@/lib/group";
 import type { Mention } from "@/lib/group-mention";
 import { loadGroupOwlFacts, renderGroupOwlContext } from "@/lib/group-owl-context";
 import { log, safeMessage } from "@/lib/log";
@@ -24,7 +24,7 @@ import { effectivePlan, OWL_LIMIT, type Plan } from "@/lib/plan";
 import { LIMITS } from "@/lib/rate-limit";
 import { looksSecret } from "@/lib/secret-text";
 import type { LineMessage } from "@/lib/types";
-import { monthKey, refundUsage, takeUsage } from "@/lib/usage";
+import { monthKey, refundUsage, refundUsageAmount, takeUsage } from "@/lib/usage";
 import { capacityOf, parseReminder, reminderKind } from "@/lib/user-reminder";
 import {
   cancelGroupReminder,
@@ -392,6 +392,30 @@ export async function undoGroupNote(ctx: GroupExtraContext, id: string): Promise
 export async function askOwlInGroup(
   ctx: GroupExtraContext,
   question: string,
+  /** The AI already read this message: nothing is taken from the owner, and a failure is refunded to the typer. */
+  prepaid?: GroupAiCharge,
+): Promise<LineMessage[]> {
+  const outcome = { answered: false };
+  try {
+    return await askOwl(ctx, question, prepaid, outcome);
+  } finally {
+    if (!outcome.answered && prepaid) {
+      await refundUsageAmount(
+        ctx.db,
+        prepaid.userId,
+        "ai_chat",
+        prepaid.units,
+        prepaid.month,
+      ).catch((e) => log.error("owl_refund_failed", e));
+    }
+  }
+}
+
+async function askOwl(
+  ctx: GroupExtraContext,
+  question: string,
+  prepaid: GroupAiCharge | undefined,
+  outcome: { answered: boolean },
 ): Promise<LineMessage[]> {
   const owl = ctx.deps.owl;
   if (!owl) return [text(OWL_UNAVAILABLE_TEXT)];
@@ -403,20 +427,23 @@ export async function askOwlInGroup(
   const owner = ownerOf(ctx);
   if (!ctx.writable || !owner) return [text(GROUP_PAUSED_TEXT)];
 
-  // the owner's monthly quota first: a question it refuses does not use up the member's day
+  // the owner's monthly quota first, unless the typer already paid for the AI reading this message
   const now = ctx.deps.now();
   const limit = OWL_LIMIT[ownerPlan(ctx, owner)];
   const month = monthKey(now);
-  try {
-    if (!(await takeUsage(ctx.db, owner.id, "owl", limit, month))) {
-      return [text(groupOwlQuotaText(limit))];
+  let tookFromOwner = false;
+  if (!prepaid) {
+    try {
+      if (!(await takeUsage(ctx.db, owner.id, "owl", limit, month))) {
+        return [text(groupOwlQuotaText(limit))];
+      }
+      tookFromOwner = true;
+    } catch (error) {
+      log.error("owl_quota_failed", error);
+      return [text(OWL_FAILED_TEXT)];
     }
-  } catch (error) {
-    log.error("owl_quota_failed", error);
-    return [text(OWL_FAILED_TEXT)];
   }
 
-  let answered = false;
   try {
     if (ctx.deps.limit) {
       const day = await ctx.deps.limit("owl_day", ctx.userId, LIMITS.owlDay);
@@ -428,13 +455,13 @@ export async function askOwlInGroup(
       : "";
     const reply = cleanOwlAnswer(await owl.answer({ question: q, data, group: true }));
     if (!reply) return [text(OWL_FAILED_TEXT)];
-    answered = true;
+    outcome.answered = true;
     return [text(reply)];
   } catch (error) {
     log.warn("owl_failed", { owl: owl.name, reason: safeMessage(error) });
     return [text(OWL_FAILED_TEXT)];
   } finally {
-    if (!answered) {
+    if (!outcome.answered && tookFromOwner) {
       await refundUsage(ctx.db, owner.id, "owl", month).catch((e) =>
         log.error("owl_refund_failed", e),
       );

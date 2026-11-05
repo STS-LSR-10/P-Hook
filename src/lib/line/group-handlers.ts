@@ -63,6 +63,7 @@ import { checkGroupSlip } from "./split-bill-slip";
 import { endGroupReminders } from "@/lib/user-reminder-repo";
 import { moveGroupNotes } from "@/lib/note-repo";
 import { readMentions, type Mention } from "@/lib/group-mention";
+import { readGroupWithAi } from "./group-ai";
 import { withGroupRiders } from "./group-riders";
 import {
   addGroupNote,
@@ -222,12 +223,17 @@ async function handleGroupMessage(
   }
   if (event.message?.type !== "text" || event.message.text === undefined) return;
   // "@พี่ฮูก เตือน …" reads as "เตือน …"; whoever else it tags may be tagged by a reminder
-  const { text: said, mentions } = readMentions(
-    event.message.text,
-    event.message.mention?.mentionees,
-  );
+  const {
+    text: said,
+    mentions,
+    called,
+  } = readMentions(event.message.text, event.message.mention?.mentionees);
   const command = parseGroupCommand(said);
-  if (!command) {
+  // the AI reads what is meant for the bot and no exact command covers: a tag of the bot, or "ฮูก …"
+  const forAi =
+    (called && (!command || command.kind === "owl")) ||
+    (command?.kind === "owl" && command.question !== "");
+  if (!command && !called) {
     // ordinary chat: stay quiet, except for the once-a-day reminder of unpaid bills
     await remindIfDue(groupId, deps, reply);
     return;
@@ -236,10 +242,32 @@ async function handleGroupMessage(
     const result = await deps.limit("group", groupId, LIMITS.chat);
     if (!result.allowed) return;
   }
-  await runGroupCommand(command, event, groupId, deps, reply, mentions);
+  const userId = event.source?.userId;
+  const read = forAi && userId ? await readGroupWithAi(said, userId, groupId, deps) : null;
+  if (read) {
+    // one reply for everything it needs (a reply token is good once)
+    const out: LineMessage[] = [];
+    for (const each of read.commands) {
+      await runGroupCommand(
+        each,
+        event,
+        groupId,
+        deps,
+        async (messages) => void out.push(...messages),
+        mentions,
+      );
+    }
+    await reply(out.slice(0, MAX_REPLY_MESSAGES));
+    return;
+  }
+  // the AI could not help (no AI, quota used up, down): "ฮูก …" is asked as before, a bare tag is quiet
+  if (command) await runGroupCommand(command, event, groupId, deps, reply, mentions);
 }
 
 type Reply = (messages: LineMessage[]) => Promise<void>;
+
+/** LINE takes at most five messages in one reply. */
+const MAX_REPLY_MESSAGES = 5;
 
 /** A closed ledger's reminders stop, and stop taking the owner's limits. */
 async function endRemindersOf(lineGroupId: string, deps: HandlerDeps): Promise<void> {
@@ -494,7 +522,7 @@ async function runGroupCommand(
         return reply(await cancelGroupReminderAt(ctx, command.index));
       if (command.kind === "note-add") return reply(await addGroupNote(ctx, command.body));
       if (command.kind === "note-list") return reply(await listGroupNotesText(ctx, command.term));
-      return reply(await askOwlInGroup(ctx, command.question));
+      return reply(await askOwlInGroup(ctx, command.question, command.prepaid));
     }
 
     default:
