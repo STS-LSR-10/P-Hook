@@ -98,12 +98,15 @@ describe("help topics", () => {
     expect(taps("free")).toBeGreaterThan(0);
     expect(taps("plus")).toBeGreaterThan(taps("free"));
     expect(taps("ultimate")).toBeGreaterThan(taps("plus"));
-
   });
 
   it("is a plain, narrow page: a one-row header with its icon, rows of a command and a short line", () => {
     for (const topic of HELP_TOPICS) {
-      const card = buildHelpTopicCard({ topic: topic.id, plan: "free", appUrl: "https://x.test" }) as unknown as {
+      const card = buildHelpTopicCard({
+        topic: topic.id,
+        plan: "free",
+        appUrl: "https://x.test",
+      }) as unknown as {
         contents: { size: string; header: { contents: { text?: string }[] }; footer?: unknown };
       };
       expect(card.contents.size, topic.id).toBe("kilo");
@@ -179,15 +182,59 @@ describe("welcome and group cards", () => {
     expect(json(buildWelcomeCard({}))).not.toContain("undefined");
   });
 
-  it("the group card lists the commands in the same look as the private ones, with no buttons that talk in the group", () => {
-    const card = json(buildGroupHelpCard());
-    expect(card).toContain('"text":"👥 วิธีใช้สมุดกลุ่ม"'); // the same plain header
-    expect(card).toContain('"size":"kilo"');
-    expect(card).not.toContain("logo.png");
-    expect(card).toContain("เริ่มทริป");
-    expect(card).toContain("จด ข้าวเที่ยง 350");
-    expect(card).toContain("ปิดสมุดกลุ่ม");
-    expect(card).not.toContain('"type":"message"');
+  it("the group guide is four small cards to swipe through, a topic each", () => {
+    const msg = buildGroupHelpCard() as unknown as {
+      contents: {
+        type: string;
+        contents: {
+          size: string;
+          header: { contents: { text?: string }[] };
+          body: { contents: { type: string }[] };
+        }[];
+      };
+    };
+    expect(msg.contents.type).toBe("carousel");
+    const cards = msg.contents.contents;
+    expect(cards).toHaveLength(4);
+    expect(cards.map((c) => c.header.contents[0]?.text)).toEqual([
+      "🧾 จดและดูยอด",
+      "💸 หารเงิน",
+      "🗂️ ของในกลุ่ม",
+      "🦉 อื่น ๆ",
+    ]);
+    cards.forEach((c, i) => {
+      expect(c.size).toBe("kilo");
+      expect(c.header.contents[1]?.text).toBe(`${i + 1}/4`);
+      // at most three commands a card (rows are the boxes; lines between are separators)
+      expect(c.body.contents.filter((r) => r.type === "box").length).toBeLessThanOrEqual(3);
+    });
+    const all = json(msg);
+    for (const cmd of [
+      "จด ข้าวเที่ยง 350",
+      "หารบิล หมูกระทะ 1200",
+      "ตามเงิน",
+      "เริ่มทริป",
+      "ปิดสมุดกลุ่ม",
+    ]) {
+      expect(all).toContain(cmd);
+    }
+    // nobody types in the group by tapping the guide
+    expect(all).not.toContain('"type":"message"');
+    expect(all).not.toContain("logo.png");
+  });
+
+  it("the commands in the group guide are ones the group understands", () => {
+    for (const cmd of [
+      "สรุป",
+      "ล่าสุด",
+      "ลบล่าสุด",
+      "ตามเงิน",
+      "โน้ตกลุ่ม",
+      "เตือนกลุ่ม",
+      "ปิดสมุดกลุ่ม",
+    ]) {
+      expect(parseGroupCommand(cmd), cmd).not.toBeNull();
+    }
   });
 });
 

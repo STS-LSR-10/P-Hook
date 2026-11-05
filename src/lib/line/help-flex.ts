@@ -422,11 +422,11 @@ function row(item: HelpItem, index: number, plan: Plan) {
 }
 
 /** A how-to card: the one-row header with its icon, then the rows, and nothing at the foot. */
-function plainBubble(input: { icon: string; title: string; body: unknown[] }) {
+function plainBubble(input: { icon: string; title: string; body: unknown[]; right?: string }) {
   return {
     type: "bubble",
     size: "kilo",
-    header: compactHeader(input.title, undefined, input.icon),
+    header: compactHeader(input.title, input.right, input.icon),
     body: { type: "box", layout: "vertical", paddingAll: "12px", contents: input.body },
   };
 }
@@ -680,82 +680,99 @@ export function buildWelcomeCard(input: { appUrl?: string }): LineMessage {
   };
 }
 
-const GROUP_ITEMS: HelpItem[] = [
+/** The group guide, one topic a card: at most three commands each, the most used first. */
+const GROUP_CARDS: { icon: string; title: string; items: HelpItem[]; note?: string }[] = [
   {
     icon: "🧾",
-    cmd: "จด ข้าวเที่ยง 350",
-    desc: tr("ต้องมีคำว่า จด ด้วย"),
-    need: "free",
-  },
-  { icon: "📊", cmd: "สรุป · สรุปวันนี้", desc: tr("ใครจ่ายไปเท่าไร"), need: "free" },
-  {
-    icon: "🕘",
-    cmd: "ล่าสุด · ลบล่าสุด",
-    desc: tr("ดูหรือลบรายการล่าสุด"),
-    need: "free",
+    title: tr("จดและดูยอด"),
+    items: [
+      { icon: "🧾", cmd: "จด ข้าวเที่ยง 350", desc: tr("ต้องมีคำว่า จด ด้วย"), need: "free" },
+      { icon: "📊", cmd: "สรุป · สรุปวันนี้", desc: tr("ใครจ่ายไปเท่าไร"), need: "free" },
+      { icon: "🕘", cmd: "ล่าสุด · ลบล่าสุด", desc: tr("ดูหรือลบรายการล่าสุด"), need: "free" },
+    ],
   },
   {
-    icon: "🍽️",
-    cmd: "หารบิล หมูกระทะ 1200",
-    desc: tr("หารบิล พร้อม QR รายคน"),
-    need: "free",
+    icon: "💸",
+    title: tr("หารเงิน"),
+    items: [
+      { icon: "🍽️", cmd: "หารบิล หมูกระทะ 1200", desc: tr("หารบิล พร้อม QR รายคน"), need: "free" },
+      { icon: "📣", cmd: "ตามเงิน", desc: tr("ดูว่าใครยังค้างจ่าย"), need: "free" },
+      {
+        icon: "✈️",
+        cmd: "เริ่มทริป · สรุปทริป · จบทริป",
+        desc: tr("หารค่าทริป ใครโอนคืนใคร"),
+        need: "free",
+      },
+    ],
   },
   {
-    icon: "✈️",
-    cmd: "เริ่มทริป · สรุปทริป · จบทริป",
-    desc: tr("หารค่าทริป ใครโอนคืนใคร"),
-    need: "free",
-  },
-  {
-    icon: "📁",
-    cmd: "เก็บไฟล์ · ไฟล์กลุ่ม · หาไฟล์ สัญญา",
-    desc: tr("คลังไฟล์ของกลุ่ม"),
-    need: "free",
-  },
-  {
-    icon: "📝",
-    cmd: "โน้ต ซื้อน้ำแข็ง · โน้ตกลุ่ม · หาโน้ต ไวไฟ",
-    desc: tr("โน้ตที่ทั้งกลุ่มเห็น"),
-    need: "free",
-  },
-  {
-    icon: "⏰",
-    cmd: "เตือน 10 โมง บอกให้ @แอน ส่งงาน",
-    desc: tr("เตือนกลุ่ม แท็ก @คน ได้"),
-    need: "free",
+    icon: "🗂️",
+    title: tr("ของในกลุ่ม"),
+    items: [
+      {
+        icon: "⏰",
+        cmd: "เตือน 10 โมง บอกให้ @แอน ส่งงาน",
+        desc: tr("แท็กคนได้ · ดูทั้งหมด: เตือนกลุ่ม"),
+        need: "free",
+      },
+      {
+        icon: "📝",
+        cmd: "โน้ต ซื้อน้ำแข็ง · โน้ตกลุ่ม",
+        desc: tr("โน้ตที่ทั้งกลุ่มเห็น"),
+        need: "free",
+      },
+      { icon: "📁", cmd: "เก็บไฟล์ · หาไฟล์ สัญญา", desc: tr("คลังไฟล์ของกลุ่ม"), need: "free" },
+    ],
   },
   {
     icon: "🦉",
-    cmd: "ฮูก เดือนนี้กลุ่มใช้ไปเท่าไร",
-    desc: tr("ถามพี่ฮูกเรื่องสมุดกลุ่ม"),
-    need: "free",
+    title: tr("อื่น ๆ"),
+    items: [
+      {
+        icon: "🦉",
+        cmd: "ฮูก เดือนนี้กลุ่มใช้ไปเท่าไร",
+        desc: tr("ถามพี่ฮูกเรื่องสมุดกลุ่ม"),
+        need: "free",
+      },
+      { icon: "🔒", cmd: "ปิดสมุดกลุ่ม", desc: tr("เฉพาะเจ้าของสมุด"), need: "free" },
+    ],
+    note: tr("ทุกคนต้องเพิ่มพี่ฮูกเป็นเพื่อนก่อน บอทถึงรู้ว่าใครจ่าย"),
   },
-  { icon: "🔒", cmd: "ปิดสมุดกลุ่ม", desc: tr("เฉพาะเจ้าของสมุด"), need: "free" },
 ];
 
 /**
- * How to use the group ledger, in the same look as the private how-to cards. Everyone in the group
- * reads it, so there are no buttons that send messages.
+ * How to use the group ledger: small cards to swipe through, a topic each, numbered so it shows there
+ * is more. Everyone in the group reads it, so there are no buttons that send messages.
  */
 export function buildGroupHelpCard(): LineMessage {
   return {
     type: "flex",
-    altText: tr("วิธีใช้สมุดกลุ่ม: จด ข้าวเที่ยง 350 · สรุป · ล่าสุด · ลบล่าสุด"),
-    contents: plainBubble({
-      icon: "👥",
-      title: tr("วิธีใช้สมุดกลุ่ม"),
-      body: [
-        ...GROUP_ITEMS.flatMap((item, i) => row(item, i, "free")),
-        {
-          type: "text",
-          text: tr("ทุกคนต้องเพิ่มพี่ฮูกเป็นเพื่อนก่อน บอทถึงรู้ว่าใครจ่าย"),
-          size: "xs",
-          color: COLOR.muted,
-          wrap: true,
-          margin: "lg",
-        },
-      ],
-    }),
+    altText: tr("วิธีใช้สมุดกลุ่ม: จด ข้าวเที่ยง 350 · สรุป · ล่าสุด · หารบิล"),
+    contents: {
+      type: "carousel",
+      contents: GROUP_CARDS.map((card, n) =>
+        plainBubble({
+          icon: card.icon,
+          title: card.title,
+          right: `${n + 1}/${GROUP_CARDS.length}`,
+          body: [
+            ...card.items.flatMap((item, i) => row(item, i, "free")),
+            ...(card.note
+              ? [
+                  {
+                    type: "text",
+                    text: card.note,
+                    size: "xs",
+                    color: COLOR.muted,
+                    wrap: true,
+                    margin: "lg",
+                  },
+                ]
+              : []),
+          ],
+        }),
+      ),
+    },
   };
 }
 
