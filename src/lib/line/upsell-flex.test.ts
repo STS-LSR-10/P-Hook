@@ -60,3 +60,18 @@ describe("upgrade card", () => {
     expect(card).toContain("https://x.test/upgrade");
   });
 });
+
+describe("the AI quota card", () => {
+  it("pitches the one 'ถาม AI' quota with its real numbers", () => {
+    const out = JSON.stringify(
+      buildUpsellCard({
+        feature: "owl",
+        trialAvailable: true,
+        now: new Date("2026-11-04T03:00:00Z"),
+      }),
+    );
+    expect(out).toContain("ถาม AI");
+    expect(out).toContain("1,500");
+    expect(out).toContain("5,000");
+  });
+});

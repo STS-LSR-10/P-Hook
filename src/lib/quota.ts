@@ -11,7 +11,7 @@ import {
   PDF_LIMIT,
   PHOTOS_PER_MONTH,
   recurringLimit,
-  ROUTER_DAILY_LIMIT,
+  AI_CHAT_LIMIT,
   SLIP_LIMIT,
   VOICE_LIMIT,
   walletCapacity,
@@ -85,7 +85,8 @@ export interface QuotaUsage {
   voice: number;
   pdf: number;
   owl: number;
-  router: number;
+  /** "ถาม AI" this month. */
+  ai: number;
   fileSaves: number;
 }
 
@@ -208,9 +209,18 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
 
   const others: Def[] = [
     {
+      key: "ai",
+      label: "ถาม AI",
+      hint: "ทุกข้อความที่ AI ช่วยอ่านและคำถามถึงพี่ฮูก (ไม่เกิน 20 คำนับ 1 ครั้ง) หมดแล้วบอทยังจดตามคำสั่งปกติได้",
+      word: "ครั้ง",
+      icon: "ai",
+      used: used.ai,
+      on: (p) => ({ limit: AI_CHAT_LIMIT[p], period: "month" }),
+    },
+    {
       key: "owl",
-      label: "ถามพี่ฮูก",
-      hint: "คำถามที่ให้พี่ฮูกตอบ (รวมคำถามในกลุ่มที่คุณเป็นเจ้าของ)",
+      label: "ถามพี่ฮูกในกลุ่ม",
+      hint: "คำถามที่ให้พี่ฮูกตอบในกลุ่มที่คุณเป็นเจ้าของ",
       word: "ครั้ง",
       icon: "owl",
       used: used.owl,
@@ -234,15 +244,6 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       icon: "photo",
       used: used.photos,
       on: (p) => ({ limit: can(p, "entryPhoto") ? PHOTOS_PER_MONTH : 0, period: "month" }),
-    },
-    {
-      key: "router",
-      label: "ข้อความที่ AI ช่วยแยก",
-      hint: "เตือน จดโน้ต หรือค้นหาจากประโยคธรรมดา",
-      word: "ข้อความ",
-      icon: "ai",
-      used: used.router,
-      on: (p) => ({ limit: ROUTER_DAILY_LIMIT[p], period: "day" }),
     },
     {
       key: "fileSaves",

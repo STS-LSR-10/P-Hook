@@ -1,4 +1,4 @@
-import { FAIR_USE, type Feature, type Plan } from "@/lib/plan";
+import { AI_CHAT_LIMIT, FAIR_USE, type Feature, type Plan } from "@/lib/plan";
 import { t } from "@/lib/i18n";
 
 export type Period = "monthly" | "yearly";
@@ -159,6 +159,15 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         feature: "entryPhoto",
       },
       { label: t("แยกรายการจากใบเสร็จ"), icon: "receipt", cells: [false, false, true] },
+      {
+        label: t("ถาม AI (AI อ่านทุกข้อความในแชท)"),
+        icon: "sparkles",
+        cells: [
+          t("{0} ครั้ง/เดือน", AI_CHAT_LIMIT.free.toLocaleString("en-US")),
+          t("{0} ครั้ง/เดือน", AI_CHAT_LIMIT.plus.toLocaleString("en-US")),
+          t("{0} ครั้ง/เดือน", AI_CHAT_LIMIT.ultimate.toLocaleString("en-US")),
+        ],
+      },
       {
         label: t("ให้ AI อ่านประโยคยาวๆ"),
         icon: "sparkles",

@@ -9,6 +9,8 @@ export type UsageKind =
   | "pdf"
   | "owl"
   | "router"
+  | "ai_chat"
+  | "ai_out_notice"
   | "file_save"
   | "group_remind"
   | "group_push";

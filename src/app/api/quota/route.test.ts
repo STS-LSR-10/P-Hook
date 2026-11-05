@@ -52,7 +52,7 @@ vi.mock("@/lib/usage", async (original) => ({
     usageAsked.push(keys);
     return keys.map(
       (k) =>
-        ({ voice: 5, teaser_voice: 1, pdf: 2, owl: 8, router: 9, file_save: 1, group_remind: 40 })[
+        ({ voice: 5, teaser_voice: 1, pdf: 2, owl: 8, ai_chat: 9, file_save: 1, group_remind: 40 })[
           k.kind
         ] ?? 0,
     );
@@ -100,7 +100,7 @@ describe("GET /api/quota", () => {
     expect(q.photos).toMatchObject({ used: 6 });
     expect(q.voice).toMatchObject({ used: 5 });
     expect(q.owl).toMatchObject({ used: 8 });
-    expect(q.router).toMatchObject({ used: 9 });
+    expect(q.ai).toMatchObject({ used: 9 });
     expect(q.fileSaves).toMatchObject({ used: 1 });
     expect(q.pdf).toMatchObject({ used: 2 });
     // each counter in the period its limit counts: the month, or today
@@ -108,7 +108,7 @@ describe("GET /api/quota", () => {
       { kind: "voice", month: "2026-11-01" },
       { kind: "pdf", month: "2026-11-01" },
       { kind: "owl", month: "2026-11-01" },
-      { kind: "router", month: "2026-11-02" },
+      { kind: "ai_chat", month: "2026-11-01" },
       { kind: "file_save", month: "2026-11-02" },
       { kind: "group_remind", month: "2026-11-01" },
     ]);

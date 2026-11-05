@@ -2611,4 +2611,23 @@ export const EN: Record<string, string> = {
   "แท็กคนได้ · ดูทั้งหมด: เตือนกลุ่ม": 'Tag people · see all: "เตือนกลุ่ม"',
   "วิธีใช้สมุดกลุ่ม: จด ข้าวเที่ยง 350 · สรุป · ล่าสุด · หารบิล":
     'Group book guide: "จด ข้าวเที่ยง 350" · "สรุป" · "ล่าสุด" · "หารบิล"',
+  "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน Free) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น Pro ได้ 1,500 ครั้ง/เดือน หรือรอต้นเดือนหน้านะ":
+    "You've used all {0} AI uses this month (Free). Typing entries still works as usual. Pro gets 1,500 a month, or wait for next month",
+  "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน Pro) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น Elite ได้ 5,000 ครั้ง/เดือน หรือรอต้นเดือนหน้านะ":
+    "You've used all {0} AI uses this month (Pro). Typing entries still works as usual. Elite gets 5,000 a month, or wait for next month",
+  "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว พิมพ์จดแบบปกติได้เหมือนเดิม และใช้ได้ใหม่ต้นเดือนหน้านะ":
+    "You've used all {0} AI uses this month. Typing entries still works as usual, and the AI is back next month",
+  "โควตา ถาม AI เดือนนี้หมดแล้ว ข้อความนี้บอทอ่านแบบปกติ พิมพ์คำสั่งหรือจดแบบ กาแฟ 30 ได้เหมือนเดิม":
+    'This month\'s AI uses are gone, so this message was read the usual way. Commands and entries like "coffee 30" still work',
+  "ถาม AI": "Ask AI",
+  ถามพี่ฮูกในกลุ่ม: "Ask P'Hook in groups",
+  "ถาม AI (AI อ่านทุกข้อความในแชท)": "Ask AI (the AI reads every chat message)",
+  "{0} ครั้ง/เดือน": "{0}/month",
+  "โควตา ถาม AI เดือนนี้หมดแล้ว คำสั่งต่าง ๆ และการจดแบบ กาแฟ 30 ยังใช้ได้ตามปกติ":
+    'This month\'s AI uses are gone. Commands and entries like "coffee 30" still work as usual',
+  "ใช้ ถาม AI ได้มากขึ้น": "More AI uses",
+  "AI ช่วยอ่านทุกข้อความ ทั้งจดเงิน ตั้งเตือน จดโน้ต ค้นหา และตอบคำถามของคุณ ใช้ ถาม AI ฟรีของเดือนนี้ครบแล้ว (พิมพ์จดแบบปกติยังได้เหมือนเดิม)":
+    "The AI reads every message: entries, reminders, notes, searches and your questions. This month's free AI uses are gone (typing entries still works as usual)",
+  "Pro ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}":
+    "Pro ฿{0}/month, {1} AI uses a month · Elite ฿{2}/month, {3} a month{4}",
 };

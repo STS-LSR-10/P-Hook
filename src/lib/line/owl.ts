@@ -4,11 +4,12 @@ import { clearAskWait, isAskWaitLive, startAskWait } from "@/lib/ask-repo";
 import { log, safeMessage } from "@/lib/log";
 import { looksSecret } from "@/lib/secret-text";
 import { loadOwlFacts, renderOwlContext } from "@/lib/owl-context";
-import { effectivePlan, OWL_LIMIT } from "@/lib/plan";
+import { aiUnits, type AiCharge } from "@/lib/ai/ai-quota";
+import { AI_CHAT_LIMIT, effectivePlan } from "@/lib/plan";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import type { UserRow } from "@/lib/repo";
 import type { LineMessage } from "@/lib/types";
-import { monthKey, refundUsage, takeUsage } from "@/lib/usage";
+import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
 import {
   OWL_DAY_LIMIT_TEXT,
   OWL_END_TEXT,
@@ -19,7 +20,7 @@ import {
   OWL_SECRET_TEXT,
   OWL_TOO_LONG_TEXT,
   OWL_UNAVAILABLE_TEXT,
-  owlQuotaText,
+  aiQuotaText,
   text,
 } from "./messages";
 import { upsellReply } from "./upsell-reply";
@@ -112,6 +113,41 @@ export async function owlAsk(
   question: string,
   inMode: boolean,
   lineUserId: string,
+  /**
+   * `prepaid`: the AI already read this message and found a question. With what it took, that is
+   * given back if no answer comes; `true` when it is no longer known.
+   */
+  options: { prepaid?: AiCharge | boolean } = {},
+): Promise<LineMessage[]> {
+  const prepaid = typeof options.prepaid === "object" ? options.prepaid : null;
+  const outcome = { answered: false };
+  try {
+    return await askOwl(
+      deps,
+      user,
+      question,
+      inMode,
+      lineUserId,
+      Boolean(options.prepaid),
+      outcome,
+    );
+  } finally {
+    if (!outcome.answered && prepaid) {
+      await refundUsageAmount(deps.db, user.id, "ai_chat", prepaid.units, prepaid.month).catch(
+        (e) => log.error("owl_refund_failed", e),
+      );
+    }
+  }
+}
+
+async function askOwl(
+  deps: OwlDeps,
+  user: UserRow,
+  question: string,
+  inMode: boolean,
+  lineUserId: string,
+  paid: boolean,
+  outcome: { answered: boolean },
 ): Promise<LineMessage[]> {
   const { db } = deps;
   const owl = deps.owl;
@@ -127,23 +163,26 @@ export async function owlAsk(
     if (!day.allowed) return [text(OWL_DAY_LIMIT_TEXT)];
   }
 
+  // one quota for all of the AI in the chat ("ถาม AI"): a use for each 20 words of the question
   const plan = effectivePlan(user.plan, user.plan_expires_at, now);
-  const limit = OWL_LIMIT[plan];
+  const limit = AI_CHAT_LIMIT[plan];
   const month = monthKey(now);
-  let allowed = false;
-  try {
-    allowed = await takeUsage(db, user.id, "owl", limit, month);
-  } catch (error) {
-    log.error("owl_quota_failed", error);
-    return [text(OWL_FAILED_TEXT)];
-  }
-  if (!allowed) {
-    return plan === "free"
-      ? upsellReply(db, user.id, now, "owl", owlQuotaText(plan, limit))
-      : [text(owlQuotaText(plan, limit))];
+  const units = paid ? 0 : aiUnits(q);
+  if (units > 0) {
+    let allowed = false;
+    try {
+      allowed = await takeUsageAmount(db, user.id, "ai_chat", units, limit, month);
+    } catch (error) {
+      log.error("owl_quota_failed", error);
+      return [text(OWL_FAILED_TEXT)];
+    }
+    if (!allowed) {
+      return plan === "free"
+        ? upsellReply(db, user.id, now, "owl", aiQuotaText(plan, limit))
+        : [text(aiQuotaText(plan, limit))];
+    }
   }
 
-  let answered = false;
   try {
     // the person's records go to the AI only for a question about them; "ทำไมท้องฟ้าสีฟ้า" gets none
     const data = needsPersonalData(q)
@@ -151,7 +190,7 @@ export async function owlAsk(
       : "";
     const reply = cleanOwlAnswer(await owl.answer({ question: q, data }));
     if (!reply) return [text(OWL_FAILED_TEXT)];
-    answered = true;
+    outcome.answered = true;
     if (inMode) {
       await startAskWait(db, user.id, now).catch((e) =>
         log.warn("ask_wait_extend_failed", { reason: safeMessage(e) }),
@@ -162,8 +201,10 @@ export async function owlAsk(
     log.warn("owl_failed", { owl: owl.name, reason: safeMessage(error) });
     return [text(OWL_FAILED_TEXT)];
   } finally {
-    if (!answered) {
-      await refundUsage(db, user.id, "owl", month).catch((e) => log.error("owl_refund_failed", e));
+    if (!outcome.answered && units > 0) {
+      await refundUsageAmount(db, user.id, "ai_chat", units, month).catch((e) =>
+        log.error("owl_refund_failed", e),
+      );
     }
   }
 }

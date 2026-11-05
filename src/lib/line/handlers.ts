@@ -1,6 +1,7 @@
 import type { LineMentionee } from "@/lib/group-mention";
 import { googleEventOf, removeGoogleEvent, syncReminderToGoogle } from "@/lib/google/sync";
 import { later } from "@/lib/later";
+import { dayKey, takeUsage } from "@/lib/usage";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   budgetAlertsFor,
@@ -337,6 +338,7 @@ import {
   PDF_CANCELLED_TEXT,
   PDF_UNAVAILABLE_TEXT,
   pdfRecordedText,
+  AI_OUT_NOTICE_TEXT,
   text,
 } from "./messages";
 import { log, safeMessage } from "@/lib/log";
@@ -666,13 +668,20 @@ function fileChatDeps(deps: HandlerDeps): FileChatDeps | null {
 }
 
 /** What sorting a plain message needs from the handler's dependencies. */
-function intentDeps(user: UserRow, deps: HandlerDeps, inOwl = false): IntentDeps {
+function intentDeps(
+  user: UserRow,
+  deps: HandlerDeps,
+  inOwl = false,
+  aiOut?: { out: boolean },
+): IntentDeps {
   return {
     db: deps.db,
     now: deps.now,
     router: deps.router,
+    onQuotaOut: aiOut ? () => (aiOut.out = true) : undefined,
     run: (command) => runCommand(command, user, deps),
-    ask: (question) => owlAsk(owlDeps(deps), user, question, inOwl, user.line_user_id),
+    ask: (question, prepaid) =>
+      owlAsk(owlDeps(deps), user, question, inOwl, user.line_user_id, { prepaid }),
     recordMoney: (input) => handleText(input, user, deps, { routed: true, showCard: inOwl }),
     listUrl: pageUrl("/reminders"),
   };
@@ -683,11 +692,41 @@ function owlDeps(deps: HandlerDeps): OwlDeps {
   return { db: deps.db, now: deps.now, owl: deps.owl, limit: deps.limit };
 }
 
+/**
+ * Every typed message: read by the AI first (unless it is a command typed exactly, or AI_CHAT_ALL is
+ * "off"), then by the ordinary rules. When the month's "ถาม AI" is out the rules read it, and the
+ * person is told so once a day.
+ */
 async function handleText(
   input: string,
   user: UserRow,
   deps: HandlerDeps,
-  options: { routed?: boolean; showCard?: boolean; entry?: string } = {},
+  options: TextOptions = {},
+): Promise<LineMessage[]> {
+  if (options.aiOut) return readText(input, user, deps, options);
+  const aiOut = { out: false };
+  const replies = await readText(input, user, deps, { ...options, aiOut });
+  if (!aiOut.out || replies.length >= MAX_REPLY_MESSAGES) return replies;
+  const tell = await takeUsage(deps.db, user.id, "ai_out_notice", 1, dayKey(deps.now())).catch(
+    () => false,
+  );
+  // before the last message: LINE shows quick-reply buttons only under the last one
+  return tell ? [...replies.slice(0, -1), text(AI_OUT_NOTICE_TEXT), ...replies.slice(-1)] : replies;
+}
+
+interface TextOptions {
+  routed?: boolean;
+  showCard?: boolean;
+  entry?: string;
+  /** Set when the AI quota turned out to be used up while reading this message. */
+  aiOut?: { out: boolean };
+}
+
+async function readText(
+  input: string,
+  user: UserRow,
+  deps: HandlerDeps,
+  options: TextOptions = {},
 ): Promise<LineMessage[]> {
   const command = parseCommand(input);
   if (command?.kind === "transfer") {
@@ -734,6 +773,7 @@ async function handleText(
   // here, and the rest is a question. A button already said what the message is, so that answer
   // goes straight to the money path.
   if (!options.routed && (await inOwlMode(owlDeps(deps), user))) {
+    // in the mode the owl says the quota is out itself: no second notice
     const owlIntents = intentDeps(user, deps, true);
     const replies =
       (await routeText(typed, parsed, user, owlIntents, true)) ??
@@ -745,13 +785,20 @@ async function handleText(
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
 
   // What the rules cannot be trusted with: the AI says whether it is money at all.
+  // every message goes to the AI first (AI_CHAT_ALL=off: only what the rules cannot be trusted with)
+  const aiReadsAll = process.env.AI_CHAT_ALL?.trim().toLowerCase() !== "off";
   if (
     !options.routed &&
     deps.router &&
     !entries.some((e) => e.foreign) &&
-    needsRouter(typed, parsed)
+    (aiReadsAll || needsRouter(typed, parsed))
   ) {
-    const routed = await routeText(typed, parsed, user, intentDeps(user, deps));
+    const routed = await routeText(
+      typed,
+      parsed,
+      user,
+      intentDeps(user, deps, false, options.aiOut),
+    );
     if (routed) return routed;
   }
 

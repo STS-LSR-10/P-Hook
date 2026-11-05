@@ -12,6 +12,7 @@ import {
   REMINDER_NOT_MATCHED_TEXT,
   REMINDER_WHICH_MORE_TEXT,
   ROUTER_REMINDER_HINT_TEXT,
+  AI_OUT_NOTICE_TEXT,
   SEARCH_LOCKED_TEXT,
   SECRET_ASK_TEXT,
   SUMMARY_RANGE_LOCKED_TEXT,
@@ -25,6 +26,7 @@ let plan = "free";
 /** Repeating reminders waiting (their own limit). */
 let repeating = 0;
 let quota = true;
+let noticesLeft = 1;
 let reminders: ReminderDto[] = [];
 let moved: ReminderDto | null = null;
 let pending: PendingIntent | null = null;
@@ -35,6 +37,7 @@ const madeReminders: { body: string; remindAt: Date }[] = [];
 const moves: { id: string; remindAt: Date; repeat: unknown }[] = [];
 const putPending = vi.fn();
 const asked = vi.fn();
+const askedWith = vi.fn();
 let owlMode = false;
 
 vi.mock("@/lib/repo", async (original) => ({
@@ -65,8 +68,12 @@ vi.mock("@/lib/repo", async (original) => ({
 }));
 vi.mock("@/lib/usage", async (original) => ({
   ...(await original<typeof import("@/lib/usage")>()),
-  takeUsage: async () => quota,
+  // the once-a-day "AI quota is out" notice has a counter of its own
+  takeUsage: async (_db: unknown, _u: string, kind: string) =>
+    kind === "ai_out_notice" ? noticesLeft-- > 0 : quota,
   refundUsage: async () => undefined,
+  takeUsageAmount: async () => quota,
+  refundUsageAmount: async () => undefined,
 }));
 vi.mock("@/lib/note-repo", () => ({
   countNotes: async () => 0,
@@ -119,8 +126,9 @@ vi.mock("@/lib/pending-intent-repo", () => ({
 vi.mock("./owl", async (original) => ({
   ...(await original<typeof import("./owl")>()),
   inOwlMode: async () => owlMode,
-  owlAsk: async (_d: unknown, _u: unknown, q: string) => {
+  owlAsk: async (_d: unknown, _u: unknown, q: string, ...rest: unknown[]) => {
     asked(q);
+    askedWith(rest[2]);
     return [{ type: "text", text: "ตอบแล้ว" }];
   },
 }));
@@ -193,6 +201,8 @@ beforeEach(() => {
   plan = "free";
   repeating = 0;
   quota = true;
+  noticesLeft = 1;
+  delete process.env.AI_CHAT_ALL;
   owlMode = false;
   reminders = [];
   moved = null;
@@ -208,11 +218,87 @@ beforeEach(() => {
 });
 
 describe("plain messages", () => {
-  it("clear money skips the AI", async () => {
+  it("every message is read by the AI first, even clear money, which the rules then record", async () => {
+    route.mockResolvedValue(decision({ intent: "money" }));
+    const { deps } = setup();
+    await handleEvent(say("กินข้าว50"), deps);
+    expect(route).toHaveBeenCalledOnce();
+    expect(entries).toHaveLength(1);
+  });
+
+  it("a clear entry is recorded at once even when the AI is unsure or cannot tell", async () => {
+    for (const d of [
+      decision({ intent: "money", confidence: 0.6 }),
+      decision({ intent: "unclear", confidence: 0.2 }),
+      decision({ intent: "note_add", confidence: 0.5 }),
+    ]) {
+      entries.length = 0;
+      route.mockResolvedValue(d);
+      const { deps } = setup();
+      await handleEvent(say("กาแฟ 50"), deps);
+      expect(entries, d.intent).toEqual(["กาแฟ"]);
+    }
+    expect(putPending).not.toHaveBeenCalled();
+  });
+
+  it("a clear entry the AI is sure is something else goes that way", async () => {
+    route.mockResolvedValue(decision({ intent: "note_add", confidence: 0.95 }));
+    const { deps } = setup();
+    await handleEvent(say("ซื้อครีม 2 หลอด"), deps);
+    expect(notes).toEqual(["ซื้อครีม 2 หลอด"]);
+    expect(entries).toEqual([]);
+  });
+
+  it("the once-a-day notice goes before the last message, so its buttons stay at the bottom", async () => {
+    quota = false;
+    const { deps, reply } = setup();
+    await handleEvent(say("อะไรก็ไม่รู้"), deps);
+    const out = sent(reply);
+    expect(out.at(-2)?.text).toBe(AI_OUT_NOTICE_TEXT);
+    expect(out.at(-1)?.quickReply).toBeDefined();
+  });
+
+  it("in the พี่ฮูก mode the owl says the quota is out itself: no second notice", async () => {
+    quota = false;
+    owlMode = true;
+    const { deps, reply } = setup();
+    await handleEvent(say("ทำไมฟ้าสีฟ้า"), deps);
+    expect(said(reply)).not.toContain(AI_OUT_NOTICE_TEXT);
+  });
+
+  it("with AI_CHAT_ALL=off, clear money stays with the rules as before", async () => {
+    process.env.AI_CHAT_ALL = "off";
     const { deps } = setup();
     await handleEvent(say("กินข้าว50"), deps);
     expect(route).not.toHaveBeenCalled();
     expect(entries).toHaveLength(1);
+  });
+
+  it("a command typed exactly is not sent to the AI", async () => {
+    const { deps } = setup();
+    await handleEvent(say("เตือน"), deps);
+    expect(route).not.toHaveBeenCalled();
+  });
+
+  it("the AI quota used up: the rules record it, and it is said once a day", async () => {
+    quota = false;
+    const first = setup();
+    await handleEvent(say("กินข้าว50"), first.deps);
+    expect(route).not.toHaveBeenCalled();
+    expect(entries).toHaveLength(1);
+    expect(said(first.reply)).toContain(AI_OUT_NOTICE_TEXT);
+    const second = setup();
+    await handleEvent(say("กาแฟ 30"), second.deps);
+    expect(entries).toHaveLength(2);
+    expect(said(second.reply)).not.toContain(AI_OUT_NOTICE_TEXT);
+  });
+
+  it("a question the AI already read is answered without taking a second use", async () => {
+    route.mockResolvedValue(decision({ intent: "ask" }));
+    const { deps } = setup();
+    await handleEvent(say("ทำไมฟ้าสีฟ้า"), deps);
+    // what the router took, so it can be given back if พี่ฮูก gives no answer
+    expect(askedWith).toHaveBeenCalledWith({ prepaid: { units: 1, month: "2026-11-01" } });
   });
 
   it("sets a reminder", async () => {
@@ -318,6 +404,7 @@ describe("plain messages", () => {
 
   it("clock words without the AI do not become money", async () => {
     quota = false;
+    noticesLeft = 0;
     const { deps, reply } = setup();
     await handleEvent(say("กินยา 6 โมงเย็น"), deps);
     expect(entries).toEqual([]);
