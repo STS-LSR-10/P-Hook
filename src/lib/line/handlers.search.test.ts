@@ -16,6 +16,10 @@ vi.mock("@/lib/repo", async (original) => ({
     plan_expires_at: null,
   }),
 }));
+vi.mock("@/lib/note-repo", async (original) => ({
+  ...(await original<typeof import("@/lib/note-repo")>()),
+  listNotes: async () => ({ items: [], hasMore: false }),
+}));
 vi.mock("@/lib/search", async (original) => ({
   ...(await original<typeof import("@/lib/search")>()),
   loadSearchTotals: async (_db: unknown, _user: string, target: unknown) => {

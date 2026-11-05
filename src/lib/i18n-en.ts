@@ -2630,9 +2630,12 @@ export const EN: Record<string, string> = {
     "The AI reads every message: entries, reminders, notes, searches and your questions. This month's free AI uses are gone (typing entries still works as usual)",
   "Pro ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}":
     "Pro ฿{0}/month, {1} AI uses a month · Elite ฿{2}/month, {3} a month{4}",
-  'พบ {0} รายการเงินที่มีคำว่า "{1}" ดูในแอปได้ที่ {2} (ยอดรวมในแชทสำหรับ Pro ขึ้นไป)':
-    'Found {0} entries with "{1}". See them in the app: {2} (totals in the chat are for Pro and up)',
-  'พบ {0} รายการเงินที่มีคำว่า "{1}" (ยอดรวมในแชทสำหรับ Pro ขึ้นไป)':
-    'Found {0} entries with "{1}" (totals in the chat are for Pro and up)',
   'ไม่พบรายการ โน้ต หรือไฟล์ที่มีคำว่า "{0}"': 'No entries, notes or files with "{0}"',
+  'พบ {0} รายการเงินที่มีคำว่า "{1}" ดูในแอปได้ที่ {2}':
+    'Entries with "{1}": {0}. See them in the app: {2}',
+  'พบ {0} รายการเงินที่มีคำว่า "{1}"': 'Entries with "{1}": {0}',
+  "ค้นหาไม่ได้ตอนนี้ ลองใหม่อีกครั้งในอีกสักครู่นะ":
+    "Search is not available right now. Please try again in a moment",
+  'ทดลอง Pro ฟรี 7 วัน ดูยอดรวมในแชทได้เลย ที่เมนู "อัปเกรด"':
+    'Try Pro free for 7 days to see totals in the chat: menu "Upgrade"',
 };

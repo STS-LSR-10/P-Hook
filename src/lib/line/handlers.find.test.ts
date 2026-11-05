@@ -14,6 +14,8 @@ let files: {
   hasThumb: boolean;
 }[] = [];
 let searchBroken = false;
+let notesBroken = false;
+const noteQueries: string[] = [];
 const asked: string[] = [];
 
 vi.mock("@/lib/repo", async (original) => ({
@@ -48,8 +50,10 @@ vi.mock("@/lib/search", async (original) => ({
 }));
 vi.mock("@/lib/note-repo", async (original) => ({
   ...(await original<typeof import("@/lib/note-repo")>()),
-  listNotes: async () => {
+  listNotes: async (_db: unknown, _u: string, o: { q?: string }) => {
     asked.push("notes");
+    noteQueries.push(o.q ?? "");
+    if (notesBroken) throw new Error("db down");
     return { items: notes, hasMore: false };
   },
 }));
@@ -114,6 +118,8 @@ beforeEach(() => {
     },
   ];
   searchBroken = false;
+  notesBroken = false;
+  noteQueries.length = 0;
   asked.length = 0;
   process.env.NEXT_PUBLIC_LIFF_ID = "1234-abcd";
 });
@@ -164,6 +170,29 @@ describe("ค้นหา finds entries, notes and files in one go", () => {
     const { deps, reply } = setup();
     await handleEvent(say("ค้นหา เช่า"), deps);
     expect(JSON.stringify(sent(reply))).toContain("สัญญาเช่าห้อง");
+  });
+
+  it("a search that could not be done says so, never 'nothing found'", async () => {
+    searchBroken = true;
+    notesBroken = true;
+    files = [];
+    const { deps, reply } = setup();
+    await handleEvent(say("ค้นหา เช่า"), deps);
+    expect(sent(reply)[0]?.text).toContain("ค้นหาไม่ได้ตอนนี้");
+    expect(sent(reply)[0]?.text).not.toContain("ไม่พบ");
+  });
+
+  it("Free is offered the Pro trial with the count", async () => {
+    plan = "free";
+    const { deps, reply } = setup();
+    await handleEvent(say("ค้นหา เช่า"), deps);
+    expect(JSON.stringify(sent(reply)[0])).toContain("ทดลอง Pro ฟรี 7 วัน");
+  });
+
+  it("a #tag is looked for in the notes as written", async () => {
+    const { deps } = setup();
+    await handleEvent(say("ค้นหา #ปาร์ตี้"), deps);
+    expect(noteQueries).toEqual(["#ปาร์ตี้"]);
   });
 
   it("without the file store, notes and entries still come", async () => {

@@ -340,6 +340,8 @@ import {
   PDF_UNAVAILABLE_TEXT,
   pdfRecordedText,
   AI_OUT_NOTICE_TEXT,
+  FIND_FAILED_TEXT,
+  FIND_TRIAL_TEXT,
   findNothingText,
   text,
 } from "./messages";
@@ -1400,13 +1402,17 @@ async function runFind(
   const shown = target.tag ? `#${target.tag}` : (target.q ?? "");
   const { db } = deps;
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
-  const wants = (part: FindIn) => where === "any" || where === part;
   const files = fileChatDeps(deps);
+  // without the file store a search for files looks in the notes instead
+  const look = where === "files" && !files ? "notes" : where;
+  const wants = (part: FindIn) => look === "any" || look === part;
+  let failed = 0;
   const quietly = async <T>(part: string, work: () => Promise<T>): Promise<T | null> => {
     try {
       return await work();
     } catch (error) {
-      log.warn("find_part_failed", { part, reason: safeMessage(error) });
+      failed++;
+      log.error("find_part_failed", error, { part });
       return null;
     }
   };
@@ -1418,28 +1424,19 @@ async function runFind(
           if (totals.count === 0) return null;
           if (!can(plan, "searchTotals")) {
             const url = listUrl(shown);
-            return text(
-              url
-                ? tr(
-                    'พบ {0} รายการเงินที่มีคำว่า "{1}" ดูในแอปได้ที่ {2} (ยอดรวมในแชทสำหรับ Pro ขึ้นไป)',
-                    totals.count,
-                    shown,
-                    url,
-                  )
-                : tr(
-                    'พบ {0} รายการเงินที่มีคำว่า "{1}" (ยอดรวมในแชทสำหรับ Pro ขึ้นไป)',
-                    totals.count,
-                    shown,
-                  ),
-            );
+            const found = url
+              ? tr('พบ {0} รายการเงินที่มีคำว่า "{1}" ดูในแอปได้ที่ {2}', totals.count, shown, url)
+              : tr('พบ {0} รายการเงินที่มีคำว่า "{1}"', totals.count, shown);
+            return text(`${found}\n${FIND_TRIAL_TEXT}`);
           }
           const items = await loadSearchItems(db, user.id, target, FOUND_SHOWN);
           return buildSearchCard({ term: shown, totals, items, moreUrl: listUrl(shown) });
         })
       : null,
-    wants("notes") && target.q
+    // notes and files are looked for as written, "#ปาร์ตี้" included
+    wants("notes")
       ? quietly("notes", async (): Promise<LineMessage | null> => {
-          const found = await listNotes(db, user.id, { q: target.q ?? "", limit: FOUND_SHOWN });
+          const found = await listNotes(db, user.id, { q: shown, limit: FOUND_SHOWN });
           if (found.items.length === 0) return null;
           return buildNoteListCard({
             title: tr('โน้ตที่มี "{0}"', shown),
@@ -1449,16 +1446,18 @@ async function runFind(
           });
         })
       : null,
-    wants("files") && files && target.q
+    wants("files") && files
       ? quietly("files", async (): Promise<LineMessage | null> => {
-          const found = await listFiles(db, user.id, { q: target.q ?? "", limit: FOUND_SHOWN });
+          const found = await listFiles(db, user.id, { q: shown, limit: FOUND_SHOWN });
           if (found.items.length === 0) return null;
           return buildFileResults(found.items, (id) => pageUrl(`/files?open=${id}`));
         })
       : null,
   ]);
   const messages = [entries, notes, kept].filter((m): m is LineMessage => m !== null);
-  return messages.length > 0 ? messages : [text(findNothingText(shown))];
+  if (messages.length > 0) return messages;
+  // a part that could not be searched: "nothing found" would not be true
+  return [text(failed > 0 ? FIND_FAILED_TEXT : findNothingText(shown))];
 }
 
 /** The card for a custom range (typed or picked), or the text that says what is wrong with it. */
