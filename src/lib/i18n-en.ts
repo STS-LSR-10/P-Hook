@@ -2646,10 +2646,10 @@ export const EN: Record<string, string> = {
   "ใช้ k แทนพัน เช่น 25k": "Uses k for thousands, like 25k",
   "ใช้คำว่า พัน เช่น 12พัน": 'Uses "พัน" for thousands, like "12พัน"',
   "มักลงท้ายจำนวนเงินด้วย บาท": 'Usually ends an amount with "บาท"',
-  จำสไตล์การพิมพ์: "Remember how I type",
+  จำสไตล์การจด: "Remember how I type",
   "บอทสังเกตวิธีที่คุณพิมพ์รายการ เก็บเป็นตัวเลขสรุปเท่านั้น ไม่เก็บข้อความของคุณ แล้วบอก AI ให้อ่านข้อความได้แม่นขึ้น":
     "The bot notices how you type entries. It keeps only counts, never your messages, and tells the AI so it reads you more accurately",
-  จำสไตล์การพิมพ์ของฉัน: "Remember how I type",
+  จำสไตล์การจดของฉัน: "Remember how I type",
   เปิดแล้ว: "Turned on",
   ปิดและลืมที่จำไว้แล้ว: "Turned off and forgotten",
   "ยังเรียนรู้ไม่พอ พิมพ์จดไปอีกสักพัก แล้วจะเห็นที่นี่":

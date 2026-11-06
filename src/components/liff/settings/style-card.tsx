@@ -48,10 +48,10 @@ export function StyleCard() {
 
   const data = status.data;
   return (
-    <section className={cardClass} aria-label={t("จำสไตล์การพิมพ์")}>
+    <section className={cardClass} aria-label={t("จำสไตล์การจด")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold">{t("จำสไตล์การพิมพ์")}</h3>
+          <h3 className="text-sm font-semibold">{t("จำสไตล์การจด")}</h3>
           <p className="break-words text-xs text-muted">
             {t(
               "บอทสังเกตวิธีที่คุณพิมพ์รายการ เก็บเป็นตัวเลขสรุปเท่านั้น ไม่เก็บข้อความของคุณ แล้วบอก AI ให้อ่านข้อความได้แม่นขึ้น",
@@ -62,7 +62,7 @@ export function StyleCard() {
           <Switch
             checked={data.enabled}
             disabled={busy}
-            label={t("จำสไตล์การพิมพ์ของฉัน")}
+            label={t("จำสไตล์การจดของฉัน")}
             onChange={(next) =>
               run(
                 () => api("/api/style", { method: "PUT", body: JSON.stringify({ enabled: next }) }),
