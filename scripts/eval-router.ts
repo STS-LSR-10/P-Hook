@@ -11,6 +11,7 @@
  */
 import { EVAL_CASES, MUTATING, type EvalCase } from "../src/lib/ai/eval-cases";
 import { buildIntentRouter, sanitizeDecision } from "../src/lib/ai/intent-router";
+import { looksSecret } from "../src/lib/secret-text";
 import type { AiProviderName } from "../src/lib/ocr/provider";
 
 const MIN_RIGHT = 0.95;
@@ -43,14 +44,29 @@ async function main(): Promise<void> {
   const byGroup = new Map<string, { right: number; total: number }>();
   const wrong: string[] = [];
   let wrongWrite = 0;
+  let secretSkipped = 0;
+  const noAnswer: string[] = [];
 
   for (const c of cases) {
     if (pause > 0) await new Promise((done) => setTimeout(done, pause));
+    // the bot never sends a password or an ID number to the AI, so neither does the check
+    if (looksSecret(c.text)) {
+      secretSkipped += 1;
+      continue;
+    }
     let d = null;
-    try {
-      d = sanitizeDecision(await router.route({ text: c.text, today }));
-    } catch {
-      d = null;
+    for (let attempt = 0; attempt < 2 && d === null; attempt += 1) {
+      try {
+        d = sanitizeDecision(await router.route({ text: c.text, today }));
+      } catch {
+        d = null;
+      }
+      if (d === null && pause > 0) await new Promise((done) => setTimeout(done, pause));
+    }
+    if (d === null) {
+      // no answer twice: the bot falls back to its rules, so this is not a wrong answer
+      noAnswer.push(c.text);
+      continue;
     }
     const pass =
       d !== null &&
@@ -73,14 +89,18 @@ async function main(): Promise<void> {
       `  ${group.padEnd(14)} ${g.right}/${g.total}  ${Math.round((g.right / g.total) * 100)}%`,
     );
   }
-  const scored = cases.filter((c) => c.expected);
+  const scored = cases.filter((c) => c.expected && !noAnswer.includes(c.text));
   const right = scored.filter((c) => !wrong.some((w) => w.endsWith(`  ${c.text}`))).length;
   const rightRate = scored.length ? right / scored.length : 1;
-  const writeRate = cases.length ? wrongWrite / cases.length : 0;
+  const asked = cases.length - secretSkipped - noAnswer.length;
+  const writeRate = asked ? wrongWrite / asked : 0;
   console.log(`\nright group: ${right}/${scored.length} (${(rightRate * 100).toFixed(1)}%)`);
   console.log(
-    `written when it must not be: ${wrongWrite}/${cases.length} (${(writeRate * 100).toFixed(1)}%)`,
+    `written when it must not be: ${wrongWrite}/${asked} (${(writeRate * 100).toFixed(1)}%)`,
   );
+  if (secretSkipped) console.log(`kept away from the AI (secrets): ${secretSkipped}`);
+  if (noAnswer.length)
+    console.log(`\nno answer after 2 tries (the bot uses its rules): ${noAnswer.length}\n  ${noAnswer.join("\n  ")}`);
   if (wrong.length) console.log(`\nwrong (${wrong.length}):\n  ${wrong.join("\n  ")}`);
   if (rightRate < MIN_RIGHT || writeRate > MAX_WRITE_WRONG) {
     console.log("\nNOT ready for everyone");

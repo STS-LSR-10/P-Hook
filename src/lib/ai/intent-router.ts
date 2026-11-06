@@ -129,6 +129,8 @@ export function routerPrompt(input: { text: string; today: string; hints?: strin
     '- file_save: wants a file or picture they sent kept. "เก็บไว้ให้หน่อย", "ฝากรูปนี้ไว้ด้วย"',
     '- query: asks how much they spent or received over some days, all of it or on one thing. "เดือนนี้ใช้เงินไปเท่าไร", "เมื่อวานจ่ายอะไรไปบ้าง", "อาทิตย์ที่แล้วกินกาแฟไปกี่บาท", "ปีนี้ได้เงินเดือนรวมเท่าไร"',
     '- ask: any other question, including about their reminders, advice on their money, or anything else. "พรุ่งนี้มีเตือนอะไรบ้าง", "ควรออมเดือนละเท่าไร", "ทำไมเดือนนี้ใช้เยอะ", "ทำไมฟ้าสีฟ้า"',
+    '- "ฝากจำ" or "จดไว้" with a fact and no wish to be reminded is note_add, even with a date in it: "ฝากจำว่าวันเกิดแม่ 12 สิงหาคม".',
+    '- A file or picture named with no word about keeping it ("รูปสลิปโอนค่าหอ") is search, not file_save.',
     "- unclear: none of these, or you cannot tell. Asking to delete or reset anything is unclear.",
     'A question stays ask even with an amount or a time in it: "ค่าไฟ 2000 แพงไหม", "พรุ่งนี้ 9 โมงมีอะไร".',
     "Fields:",
