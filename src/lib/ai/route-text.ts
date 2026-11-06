@@ -5,6 +5,7 @@ import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { AI_CHAT_LIMIT, type Plan } from "@/lib/plan";
 import { looksSecret } from "@/lib/secret-text";
 import { bangkokParts } from "@/lib/thai-date";
+import { loadStyleHints } from "@/lib/style-repo";
 import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
 import { aiUnits, type AiCharge } from "./ai-quota";
 import {
@@ -136,8 +137,9 @@ export async function runRouter(
       return null;
     }
     asked = true;
+    const hints = await loadStyleHints(input.db, input.userId);
     const decision = sanitizeDecision(
-      await router.route({ text: input.text, today: dayOf(deps.now()) }),
+      await router.route({ text: input.text, today: dayOf(deps.now()), hints }),
     );
     if (decision) {
       failureTimes = [];

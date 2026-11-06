@@ -25,6 +25,11 @@ vi.mock("@/lib/usage", async (original) => ({
   refundUsageAmount: (...a: unknown[]) => refundAmount(...(a as [])),
 }));
 
+const hintsOf = vi.fn(async () => [] as string[]);
+vi.mock("@/lib/style-repo", () => ({
+  loadStyleHints: (...a: unknown[]) => hintsOf(...(a as [])),
+}));
+
 const NOW = new Date("2026-11-01T05:00:00Z");
 const db = {} as SupabaseClient;
 const read = (t: string) => parseMessage(t, NOW, { currencies: true });
@@ -182,6 +187,14 @@ describe("runRouter", () => {
     takeAmount.mockRejectedValue(new Error("db"));
     await expect(runRouter(deps, input)).resolves.toBeNull();
     expect(route).not.toHaveBeenCalled();
+  });
+
+  it("gives the AI what is known of how this person types", async () => {
+    hintsOf.mockResolvedValueOnce(["They often type Thai digits."]);
+    await runRouter(deps, input);
+    expect(route).toHaveBeenCalledWith(
+      expect.objectContaining({ hints: ["They often type Thai digits."] }),
+    );
   });
 
   it("skips the AI for text over 1000 characters", async () => {

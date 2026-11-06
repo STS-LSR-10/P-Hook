@@ -25,6 +25,7 @@ import { DeleteCard } from "@/components/liff/settings/delete-card";
 import { MemoryCard } from "@/components/liff/settings/memory-card";
 import { MenuButton, MenuGroup, MenuLink } from "@/components/liff/settings/menu";
 import { GoogleCalendarCard } from "@/components/liff/settings/google-calendar-card";
+import { StyleCard } from "@/components/liff/settings/style-card";
 import { NotificationsCard } from "@/components/liff/settings/notifications-card";
 import { PaymentHistorySheet } from "@/components/liff/settings/payment-history-sheet";
 import { PersonalizeCard } from "@/components/liff/settings/personalize-card";
@@ -268,6 +269,7 @@ export default function SettingsPage() {
             <PersonalizeCard me={person} settings={data} onSaved={setOverride} />
             <NotificationsCard me={person} settings={data} onSaved={setOverride} />
             <GoogleCalendarCard />
+            <StyleCard />
           </>
         );
       case "money":

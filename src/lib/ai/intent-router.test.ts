@@ -180,3 +180,22 @@ describe("buildIntentRouter", () => {
     });
   });
 });
+
+describe("routerPrompt hints", () => {
+  it("tells the AI how the person usually types, when it is known", () => {
+    const p = routerPrompt({
+      text: "50 กาแฟ",
+      today: "2026-11-01",
+      hints: ["They often type Thai digits."],
+    });
+    expect(p).toContain("How this person usually types");
+    expect(p).toContain("- They often type Thai digits.");
+    expect(p.indexOf("usually types")).toBeLessThan(p.indexOf("<message>"));
+  });
+  it("adds nothing when there is nothing to say", () => {
+    expect(routerPrompt({ text: "x", today: "2026-11-01", hints: [] })).not.toContain(
+      "usually types",
+    );
+    expect(routerPrompt({ text: "x", today: "2026-11-01" })).not.toContain("usually types");
+  });
+});

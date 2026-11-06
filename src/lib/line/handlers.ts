@@ -1,6 +1,7 @@
 import type { LineMentionee } from "@/lib/group-mention";
 import { googleEventOf, removeGoogleEvent, syncReminderToGoogle } from "@/lib/google/sync";
 import { later } from "@/lib/later";
+import { learnStyle } from "@/lib/style-repo";
 import { dayKey, takeUsage } from "@/lib/usage";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -864,6 +865,8 @@ async function readText(
       walletIds.set(e, found.wallet.id);
     }
   }
+  // how they type, from what the rules read by themselves: counts only, after the answer
+  if (entries.length === 1) void later(() => learnStyle(deps.db, user.id, typed));
   return saveEntries(entries, user, deps, walletIds, options.showCard);
 }
 
