@@ -34,12 +34,12 @@ export default function InvitePage() {
         <div className="mt-1 flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/invite-mascot.png"
+            src="/phook-invite.png"
             alt=""
             aria-hidden
-            width={128}
-            height={118}
-            className="h-[118px] w-[128px] shrink-0 object-contain"
+            width={120}
+            height={116}
+            className="h-[116px] w-[120px] shrink-0 object-contain"
           />
           <h1 className="text-xl font-extrabold leading-snug text-primary">
             {t("ชวนเพื่อนมาจดใช้งาน")}
