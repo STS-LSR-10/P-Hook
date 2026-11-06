@@ -521,6 +521,9 @@ export const INTENT_EXPIRED_TEXT = t("รายการนี้หมดเว
 export const ROUTER_REMINDER_HINT_TEXT = t(
   'ถ้าจะตั้งเตือน พิมพ์ขึ้นต้นด้วย "เตือน" เช่น "เตือน กินยา 6 โมงเย็น"\nถ้าจะจดเงิน พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"',
 );
+export const QUESTION_NOT_RECORDED_TEXT = t(
+  'ข้อความนี้ดูเหมือนคำถาม ตอนนี้ AI ช่วยตอบไม่ได้ เลยยังไม่ได้จดอะไร ถ้าต้องการจดเป็นรายการ พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"',
+);
 export const MONEY_HINT_TEXT = t('ลองพิมพ์ชื่อรายการกับจำนวนเงิน เช่น "ค่าหมอ 800" นะ');
 
 /** "• 27 ธ.ค. 2569  ซื้อนม…" lines for a short list of notes, then where to see the rest. */

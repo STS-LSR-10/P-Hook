@@ -43,7 +43,6 @@ async function main(): Promise<void> {
   const byGroup = new Map<string, { right: number; total: number }>();
   const wrong: string[] = [];
   let wrongWrite = 0;
-  let wrongWriteTotal = 0;
 
   for (const c of cases) {
     if (pause > 0) await new Promise((done) => setTimeout(done, pause));
@@ -63,7 +62,6 @@ async function main(): Promise<void> {
     if (pass) g.right += 1;
     byGroup.set(group, g);
     if (c.never) {
-      wrongWriteTotal += 1;
       if (d !== null && MUTATING.includes(d.intent) && c.never.includes(d.intent)) wrongWrite += 1;
     }
     if (!pass) wrong.push(`${d?.intent ?? "-"} (${d?.confidence ?? "-"})  ${c.text}`);
@@ -78,10 +76,10 @@ async function main(): Promise<void> {
   const scored = cases.filter((c) => c.expected);
   const right = scored.filter((c) => !wrong.some((w) => w.endsWith(`  ${c.text}`))).length;
   const rightRate = scored.length ? right / scored.length : 1;
-  const writeRate = wrongWriteTotal ? wrongWrite / wrongWriteTotal : 0;
+  const writeRate = cases.length ? wrongWrite / cases.length : 0;
   console.log(`\nright group: ${right}/${scored.length} (${(rightRate * 100).toFixed(1)}%)`);
   console.log(
-    `written when it must not be: ${wrongWrite}/${wrongWriteTotal} (${(writeRate * 100).toFixed(1)}%)`,
+    `written when it must not be: ${wrongWrite}/${cases.length} (${(writeRate * 100).toFixed(1)}%)`,
   );
   if (wrong.length) console.log(`\nwrong (${wrong.length}):\n  ${wrong.join("\n  ")}`);
   if (rightRate < MIN_RIGHT || writeRate > MAX_WRITE_WRONG) {

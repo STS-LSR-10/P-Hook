@@ -19,7 +19,7 @@ import { needsSmartParse } from "./smart-parse";
 const CLOCK_RE =
   /(?<!ชั่ว)โมง|ทุ่ม|พรุ่งนี้|มะรืน|ทุกวัน|ทุกสัปดาห์|ทุกเดือน|\d{1,2}:\d{2}|\d{1,2}\.\d{2}\s*น|บ่าย\s*\d|ตี\s*\d|อีก\s*\d+\s*(?:นาที|ชั่วโมง|ชม)/;
 const KEEP_RE =
-  /^\s*(?:ช่วย)?เตือน|ต้องซื้อ|ต้องเตรียม|จดไว้|จดว่า|จำไว้ว่า|ฝากจำ|อย่าลืม|(?<!ค่า)ที่อยู่|เก็บ(?:ไฟล์|รูป|เอกสาร|วิดีโอ)|หา(?:ไฟล์|รูป)/;
+  /^\s*(?:ช่วย)?เตือน(?!ใจ)|ต้องซื้อ|ต้องเตรียม|จดไว้|จดว่า|จำไว้ว่า|ฝากจำ|อย่าลืม|(?<!ค่า)ที่อยู่|เก็บ(?:ไฟล์|รูป|เอกสาร|วิดีโอ)|หา(?:ไฟล์|รูป)/;
 const CLOCK_NUMBER_RE =
   /(\d{1,2})\s*(?:โมง|ทุ่ม)|(\d{1,2}):\d{2}|(\d{1,2}\.\d{2})\s*น|บ่าย\s*(\d)|ตี\s*(\d)|อีก\s*(\d+)\s*(?:นาที|ชั่วโมง|ชม)/g;
 
@@ -41,7 +41,7 @@ export function clockIsTheAmount(input: string, entries: ParsedEntry[]): boolean
  * the end, so "ผ้าไหม 500" stays an entry.
  */
 export const ASKS_RE =
-  /(?:(?<!ผ้า)ไหม|มั้ย|หรือยัง|หรือเปล่า|รึเปล่า|รึยัง)\s*\??\s*$|\?\s*$|เท่าไร|เท่าไหร่|กี่บาท|กี่รายการ|ยังไง|อย่างไร|ทำไม|คืออะไร|กี่ครั้ง|กี่(?:เดือน|วัน|ปี|สัปดาห์|อาทิตย์|ชั่วโมง)/;
+  /(?:(?<!ผ้า)ไหม|มั้ย|หรือยัง|หรือเปล่า|รึเปล่า|รึยัง)\s*\??\s*$|\?\s*$|เท่าไร|เท่าไหร่|กี่บาท|กี่รายการ|ยังไง(?!ก็)|อย่างไร|ทำไม(?!้)|คืออะไร|กี่ครั้ง|กี่(?:เดือน|วัน|ปี|สัปดาห์|อาทิตย์|ชั่วโมง)/;
 
 /** Three lines or more, most with no number: a list of things, not a list of entries. */
 function isPlainList(input: string): boolean {
@@ -76,6 +76,20 @@ let pausedUntil = 0;
 export function resetRouterBreaker(): void {
   failureTimes = [];
   pausedUntil = 0;
+}
+
+/**
+ * Did the provider fail us, rather than this one message? A timeout, a network error, or a status
+ * that is not about the message (5xx, 429, 401/403, 404…) pauses the AI for everyone; a refused
+ * message (400/422), an unusable reply or a parse error is that person's own and must not.
+ */
+function isProviderFailure(error: unknown): boolean {
+  if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+    return true;
+  }
+  if (error instanceof TypeError) return true;
+  const status = /request failed: (\d{3})/.exec(error instanceof Error ? error.message : "")?.[1];
+  return status !== undefined && status !== "400" && status !== "422";
 }
 
 function noteFailure(at: number): void {
@@ -124,6 +138,8 @@ export async function runRouter(
   let counted = false;
   let asked = false;
   try {
+    // read in step with the count, not after it: it is on the way of every message
+    const hintsRead = loadStyleHints(input.db, input.userId);
     counted = await takeUsageAmount(
       input.db,
       input.userId,
@@ -137,7 +153,7 @@ export async function runRouter(
       return null;
     }
     asked = true;
-    const hints = await loadStyleHints(input.db, input.userId);
+    const hints = await hintsRead;
     const decision = sanitizeDecision(
       await router.route({ text: input.text, today: dayOf(deps.now()), hints }),
     );
@@ -146,10 +162,9 @@ export async function runRouter(
       deps.onCharged?.({ units, month });
       return decision;
     }
-    noteFailure(deps.now().getTime());
     log.warn("intent_router_failed", { provider: router.name, reason: "unusable reply" });
   } catch (error) {
-    if (asked) noteFailure(deps.now().getTime());
+    if (asked && isProviderFailure(error)) noteFailure(deps.now().getTime());
     log.warn("intent_router_failed", { provider: router.name, reason: safeMessage(error) });
   }
   if (counted) {

@@ -9,7 +9,7 @@ import { queryCommand } from "@/lib/ai/query-command";
 import { syncReminderToGoogle } from "@/lib/google/sync";
 import { later } from "@/lib/later";
 import type { AiCharge } from "@/lib/ai/ai-quota";
-import { clockIsTheAmount, needsRouter, runRouter } from "@/lib/ai/route-text";
+import { ASKS_RE, clockIsTheAmount, needsRouter, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
 import { putPendingIntent, takePendingIntent } from "@/lib/pending-intent-repo";
@@ -35,6 +35,7 @@ import {
   REMINDER_USAGE_TEXT,
   REMINDER_WHICH_MORE_TEXT,
   REMINDER_WHICH_TEXT,
+  QUESTION_NOT_RECORDED_TEXT,
   ROUTER_REMINDER_HINT_TEXT,
   SECRET_ASK_TEXT,
   text,
@@ -262,7 +263,13 @@ export async function routeText(
     return deps.ask(input, charge);
   }
   if (!decision) {
-    return clockIsTheAmount(input, parsed.entries) ? [text(ROUTER_REMINDER_HINT_TEXT)] : null;
+    if (clockIsTheAmount(input, parsed.entries)) return [text(ROUTER_REMINDER_HINT_TEXT)];
+    // the AI could not answer (slow, paused, quota out): a question is not an entry just because it
+    // has a number in it
+    if (parsed.entries.length > 0 && (reads || ASKS_RE.test(input))) {
+      return [text(QUESTION_NOT_RECORDED_TEXT)];
+    }
+    return null;
   }
   // a plain entry the rules read with certainty ("กาแฟ 50") is recorded at once, unless the AI is
   // sure it is something else: a doubt of the AI never holds up an ordinary entry

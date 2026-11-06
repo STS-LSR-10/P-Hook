@@ -12,8 +12,12 @@ import {
 /** A one-table fake: select().eq().maybeSingle(), upsert(), update().eq(). */
 function fake(row: Record<string, unknown> | null, opts: { selectError?: boolean } = {}) {
   const upsert = vi.fn(async () => ({ error: null }));
-  const eq = vi.fn(async () => ({ error: null }));
-  const update = vi.fn(() => ({ eq }));
+  const insert = vi.fn(async () => ({ error: null }));
+  const u: { eq: () => typeof u; then: (r: (v: { error: null }) => void) => void } = {
+    eq: () => u,
+    then: (r) => r({ error: null }),
+  };
+  const update = vi.fn(() => u);
   const db = {
     from: () => ({
       select: () => ({
@@ -25,10 +29,11 @@ function fake(row: Record<string, unknown> | null, opts: { selectError?: boolean
         }),
       }),
       upsert,
+      insert,
       update,
     }),
   } as unknown as SupabaseClient;
-  return { db, upsert, update };
+  return { db, upsert, update, insert };
 }
 
 const seen = (n: number, first: number) => ({
@@ -38,24 +43,90 @@ const seen = (n: number, first: number) => ({
   amountLast: n - first,
 });
 
+describe("learnStyle never undoes the person's choice", () => {
+  it("writes only the counts, never the on/off, and only while it is on", async () => {
+    const calls: { op: string; arg: unknown; eqs: [string, unknown][] }[] = [];
+    const chain = (op: string, arg: unknown) => {
+      const eqs: [string, unknown][] = [];
+      const c = {
+        eq: (k: string, v: unknown) => (eqs.push([k, v]), c),
+        then: (r: (v: { error: null }) => void) => (
+          calls.push({ op, arg, eqs }),
+          r({ error: null })
+        ),
+      };
+      return c;
+    };
+    const db = {
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: { habits: seen(2, 2), enabled: true }, error: null }),
+          }),
+        }),
+        update: (arg: unknown) => chain("update", arg),
+        insert: (arg: unknown) => {
+          calls.push({ op: "insert", arg, eqs: [] });
+          return Promise.resolve({ error: null });
+        },
+        upsert: (arg: unknown) => {
+          calls.push({ op: "upsert", arg, eqs: [] });
+          return Promise.resolve({ error: null });
+        },
+      }),
+    } as unknown as SupabaseClient;
+    await learnStyle(db, "u1", "50 กาแฟ");
+    expect(calls.some((c) => c.op === "upsert")).toBe(false);
+    const upd = calls.find((c) => c.op === "update");
+    expect(upd).toBeDefined();
+    expect(JSON.stringify(upd?.arg)).not.toContain("enabled");
+    expect(upd?.eqs).toContainEqual(["enabled", true]);
+  });
+
+  it("makes the first row when the person has none, without touching an existing one", async () => {
+    const inserts: unknown[] = [];
+    const db = {
+      from: () => ({
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+        insert: (arg: unknown) => {
+          inserts.push(arg);
+          return Promise.resolve({ error: { code: "23505", message: "duplicate" } });
+        },
+      }),
+    } as unknown as SupabaseClient;
+    await expect(learnStyle(db, "u1", "50 กาแฟ")).resolves.toBeUndefined();
+    expect(inserts).toHaveLength(1);
+  });
+
+  it("learns nothing from a secret", async () => {
+    const { db, upsert, update } = fake({ habits: seen(2, 2), enabled: true });
+    await learnStyle(db, "u1", "รหัสไวไฟ 12345678");
+    expect(upsert).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+});
+
 describe("learnStyle", () => {
   it("adds one message to the counts", async () => {
-    const { db, upsert } = fake({ habits: seen(2, 2), enabled: true });
+    const { db, update } = fake({ habits: seen(2, 2), enabled: true });
     await learnStyle(db, "u1", "50 กาแฟ");
-    const saved = (upsert.mock.calls[0] as unknown as [{ habits: { n: number } }])[0];
+    const saved = (update.mock.calls[0] as unknown as [{ habits: { n: number } }])[0];
     expect(saved.habits.n).toBe(3);
   });
 
   it("keeps nothing of what was written", async () => {
-    const { db, upsert } = fake(null);
+    const { db, insert } = fake(null);
     await learnStyle(db, "u1", "50 กาแฟร้านลับ");
-    expect(JSON.stringify(upsert.mock.calls)).not.toContain("ร้านลับ");
+    expect(insert).toHaveBeenCalledOnce();
+    expect(JSON.stringify(insert.mock.calls)).not.toContain("ร้านลับ");
   });
 
   it("learns nothing when the person switched it off", async () => {
-    const { db, upsert } = fake({ habits: seen(2, 2), enabled: false });
+    const { db, upsert, update, insert } = fake({ habits: seen(2, 2), enabled: false });
     await learnStyle(db, "u1", "50 กาแฟ");
     expect(upsert).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
   });
 
   it("never throws, even when the table is not there yet", async () => {

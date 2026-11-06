@@ -78,6 +78,18 @@ describe("needsRouter", () => {
     expect(needsRouter(t, read(t))).toBe(true),
   );
 
+  it.each([
+    "กาแฟ 50",
+    "ค่าทำไม้ระแนง 500",
+    "ยังไงก็จ่ายค่าเช่า 5000",
+    "ค่าเช่า 3 เดือน 15000",
+    "เตือนใจ 200",
+    "ค่าซ่อมรถ 1200",
+    "จ่ายค่าเทอม 12000",
+  ])("an ordinary entry stays with the rules: %s", (t) =>
+    expect(needsRouter(t, read(t))).toBe(false),
+  );
+
   it.each(["ผ้าไหม 500", "ไหมพรม 120", "1200 ผ้าไหม", "ค่าผ้า 500 ผ้าไหม"])(
     "an entry about silk stays one: %s",
     (t) => expect(needsRouter(t, read(t))).toBe(false),
@@ -216,7 +228,7 @@ describe("runRouter", () => {
   describe("circuit breaker", () => {
     const at = (ms: number) => ({ router, now: () => new Date(NOW.getTime() + ms) });
     const fail = async (ms = 0) => {
-      route.mockRejectedValueOnce(new Error("timeout"));
+      route.mockRejectedValueOnce(Object.assign(new Error("timed out"), { name: "TimeoutError" }));
       await runRouter(at(ms), input);
     };
 
@@ -259,15 +271,40 @@ describe("runRouter", () => {
       await expect(runRouter(at(400), input)).resolves.toMatchObject({ intent: "ask" });
     });
 
-    it("an unusable reply counts as a failure; a usage-counter outage does not", async () => {
+    it("a usage-counter outage does not count", async () => {
       takeAmount.mockRejectedValue(new Error("db"));
       for (let i = 0; i < BREAKER_FAILURES; i++) await runRouter(at(i), input);
       takeAmount.mockResolvedValue(true);
       await expect(runRouter(at(50), input)).resolves.toMatchObject({ intent: "ask" });
-      route.mockResolvedValue({ intent: "nope" });
-      for (let i = 0; i < BREAKER_FAILURES; i++) await runRouter(at(100 + i), input);
+    });
+
+    it("one person's odd messages cannot pause the AI for everyone", async () => {
+      // an unusable reply, a parse error and a refused request (400) are about the message
+      for (let i = 0; i < BREAKER_FAILURES; i++) {
+        route.mockResolvedValueOnce({ intent: "nope" });
+        await runRouter(at(i), input);
+        route.mockRejectedValueOnce(new SyntaxError("Unexpected token"));
+        await runRouter(at(i), input);
+        route.mockRejectedValueOnce(new Error("gemini-text request failed: 400"));
+        await runRouter(at(i), input);
+      }
       route.mockClear();
-      await runRouter(at(200), input);
+      await expect(runRouter(at(100), input)).resolves.toMatchObject({ intent: "ask" });
+      expect(route).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      new Error("gemini-text request failed: 503"),
+      new Error("gemini-text request failed: 429"),
+      new Error("anthropic-text request failed: 401"),
+      new TypeError("fetch failed"),
+    ])("%s counts: the provider is down or refusing us", async (err) => {
+      for (let i = 0; i < BREAKER_FAILURES; i++) {
+        route.mockRejectedValueOnce(err);
+        await runRouter(at(i), input);
+      }
+      route.mockClear();
+      await expect(runRouter(at(100), input)).resolves.toBeNull();
       expect(route).not.toHaveBeenCalled();
     });
   });

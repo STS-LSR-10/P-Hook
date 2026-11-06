@@ -2657,4 +2657,6 @@ export const EN: Record<string, string> = {
   "สังเกตจาก {0} ข้อความ": "Seen from {0} messages",
   ล้างแล้ว: "Cleared",
   ล้างที่จำไว้: "Clear what it remembers",
+  'ข้อความนี้ดูเหมือนคำถาม ตอนนี้ AI ช่วยตอบไม่ได้ เลยยังไม่ได้จดอะไร ถ้าต้องการจดเป็นรายการ พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"':
+    'This looks like a question and the AI cannot answer right now, so nothing was recorded. To record an entry, type the name and the amount, like "coffee 50"',
 };
