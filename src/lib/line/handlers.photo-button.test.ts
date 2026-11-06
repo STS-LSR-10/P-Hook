@@ -106,12 +106,13 @@ describe("the แนบรูป button on the saved card (Pro and above)", () =
     expect(waits).toHaveLength(0);
   });
 
-  it("every card of a multi-entry message has its own button", async () => {
+  it("a multi-entry message is one list card: edit and delete per row, no photo button", async () => {
     const { deps, reply } = setup();
     await handleEvent(say("กาแฟ 45\nข้าว 50"), deps);
     const json = everything(reply);
-    expect(json).toContain("a=ph&id=t-กาแฟ");
-    expect(json).toContain("a=ph&id=t-ข้าว");
+    expect(json).not.toContain("a=ph");
+    expect(json).toContain("a=del&id=t-กาแฟ");
+    expect(json).toContain("a=del&id=t-ข้าว");
   });
 
   it("is not on a Free card, nor when the person turned it off", async () => {

@@ -152,17 +152,16 @@ describe("budget on the entry card", () => {
     expect(restOf(reply)).toContain("เกินงบ");
   });
 
-  it("two entries against one budget: both cards show the figures, only the last warns", async () => {
+  it("two entries against one budget: one card shows the figures and warns once", async () => {
     budgetSpent = 1_510_000; // ฿14,800 before the two entries, ฿15,100 after
     const { deps, reply } = setup();
     await handleEvent(say("ข้าว 150, ช้อปปิ้ง 150"), deps);
     const cards = sent(reply)
       .filter((m) => m.type === "flex")
       .map((m) => JSON.stringify(m));
-    expect(cards).toHaveLength(2);
-    expect(cards.every((c) => c.includes(" / ฿15,000"))).toBe(true);
-    expect(cards.filter((c) => c.includes("🚨"))).toHaveLength(1);
-    expect(cards[1]).toContain("🚨");
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toContain("งบเดือนนี้ ฿15,000");
+    expect((cards[0] ?? "").split("🚨").length - 1).toBe(1);
   });
 });
 

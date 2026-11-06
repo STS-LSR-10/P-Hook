@@ -2715,4 +2715,15 @@ export const EN: Record<string, string> = {
     "Nags night owls, spots every expense, eyes wide open",
   "ดึกป่านนี้ยังไม่นอนอีกนะ{name}! ตาจะค้างแข่งกับพี่ฮูกเหรอ รีบนอนได้แล้ว!":
     "Still awake this late{name}! Staying up to compete with P'Hook? Go to bed!",
+  "จดสำเร็จ {0} รายการ ✅": "Recorded {0} entries ✅",
+  "จดแล้ว {0} รายการ: {1}": "Recorded {0} entries: {1}",
+  รวม: "Total",
+  รายจ่ายรวม: "Total spent",
+  รายรับรวม: "Total received",
+  "ใช้ไป {0} · เหลือ {1}": "Spent {0} · {1} left",
+  "ใช้ไป {0} · เกินงบ {1}": "Spent {0} · {1} over",
+  "และอีก {0} รายการ (ดูทั้งหมดที่หน้ารายการ)": "and {0} more (see all on the entries page)",
+  งบเดือนนี้: "This month's budget",
+  งบสัปดาห์นี้: "This week's budget",
+  "งบ{0}": "{0} budget",
 };

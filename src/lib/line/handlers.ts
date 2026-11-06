@@ -61,7 +61,7 @@ import {
 } from "@/lib/points";
 import { cancelSlipEntries, getSlip, getSlipItems, learnMerchant } from "@/lib/slip-repo";
 import { planReceiptSplit } from "@/lib/receipt-split";
-import { categoryLabel } from "@/lib/category-emoji";
+import { categoryLabel, emojiOf } from "@/lib/category-emoji";
 import { buildCategorySlices } from "@/lib/category-spend";
 import { loadSearchItems, loadSearchTotals, parseSearchTerm } from "@/lib/search";
 import { describeTotals, sameSpanRanges } from "@/lib/period-compare";
@@ -211,6 +211,7 @@ import {
   buildTypeQuestion,
 } from "./flex";
 import { buildCategoryChooser } from "./slip-flex";
+import { buildBatchConfirmMessage, type BatchBudget, type BatchRow } from "./batch-flex";
 import { startTrialFromChat, upsellReply } from "./upsell-reply";
 import { runPaymentCommand } from "./payment-handlers";
 import { buildHelpPrompt, buildHelpTopicCard, buildWelcomeCard, isHelpTopic } from "./help-flex";
@@ -1711,12 +1712,15 @@ async function saveEntries(
 
   // With the full card the warnings (budget, daily limit, card limit) ride on the card itself, so
   // none is sent as a separate message. Other styles have no card to carry them.
-  const embed =
-    settings.confirm_style === "full" &&
-    confirmed.length > 0 &&
-    confirmed.length <= MAX_CARDS_PER_REPLY;
+  // Two or more entries from one message come back as one card: a row for each, the total, the budget.
+  const batch = settings.confirm_style === "full" && confirmed.length >= 2;
+  const embed = !batch && settings.confirm_style === "full" && confirmed.length === 1;
   let cardWarned = false;
-  if (embed) {
+  if (batch) {
+    const card = await batchCard(confirmed, categories, settings, user, deps);
+    messages.push(card.message);
+    cardWarned = card.warned;
+  } else if (embed) {
     const mode = await getBudgetMode(db, user.id).catch(() => "overall" as const);
     // the budget an entry counts against: the overall one, or its category's
     const scopeOf = (c: (typeof confirmed)[number]): string | null =>
@@ -1800,7 +1804,8 @@ async function saveEntries(
 
   // Budget alerts go last so they are the freshest thing in the chat (even with cards turned off).
   const alerts: string[] = [];
-  if (!embed) {
+  // (a batch card and a single full card already carry theirs)
+  if (!embed && !batch) {
     for (const c of confirmed) {
       alerts.push(...(await safeAlerts(deps, user.id, c.tx, c.categoryId)));
     }
@@ -1961,6 +1966,116 @@ async function safeAlerts(
     log.error("budget_alert_failed", error);
     return [];
   }
+}
+
+/** The one card for several entries saved from one message (rows, total, budgets, warnings). */
+async function batchCard(
+  confirmed: {
+    tx: TxRow;
+    entry: ParsedEntry;
+    categoryId: string | null;
+    walletId: string | null;
+  }[],
+  categories: CategoryLite[],
+  settings: SettingsRow,
+  user: UserRow,
+  deps: HandlerDeps,
+): Promise<{ message: LineMessage; warned: boolean }> {
+  const { db } = deps;
+  const wallets = await listWallets(db, user.id).catch(() => []);
+  const multi = wallets.length > 1;
+  const mode = await getBudgetMode(db, user.id).catch(() => "overall" as const);
+
+  // the budget an entry counts against: the overall one, or its category's
+  const scopeOf = (c: (typeof confirmed)[number]): string | null =>
+    c.tx.type !== "expense" ? null : mode === "category" ? (c.categoryId ?? "none") : "all";
+  const range = cycleRange(deps.now(), settings.budget_cycle, settings.cycle_start_day);
+  const groups = new Map<string, { total: number; first: (typeof confirmed)[number] }>();
+  for (const c of confirmed) {
+    const key = scopeOf(c);
+    // an entry dated outside the current cycle does not count against this cycle's budget
+    const at = new Date(c.tx.occurred_at);
+    if (key === null || at < range.from || at >= range.to) continue;
+    const g = groups.get(key);
+    if (g) g.total += txAmountSatang(c.tx);
+    else groups.set(key, { total: txAmountSatang(c.tx), first: c });
+  }
+
+  const budgets: BatchBudget[] = [];
+  const notices: { text: string; level: "warn" | "over" }[] = [];
+  for (const g of groups.values()) {
+    // at most three boxes: the ones that have a budget, not the first three categories
+    if (budgets.length >= 3) break;
+    try {
+      const reading = await budgetReadingFor(db, {
+        userId: user.id,
+        type: "expense",
+        categoryId: g.first.categoryId,
+        amountSatang: g.total,
+        occurredAt: new Date(g.first.tx.occurred_at),
+        now: deps.now(),
+      });
+      if (!reading) continue;
+      budgets.push({
+        label: reading.status.scopeName
+          ? tr("งบ{0}", reading.status.scopeName)
+          : settings.budget_cycle === "weekly"
+            ? tr("งบสัปดาห์นี้")
+            : tr("งบเดือนนี้"),
+        status: reading.status,
+      });
+      if (reading.notice) {
+        notices.push({
+          text: reading.notice,
+          level: reading.status.level === "over" ? "over" : "warn",
+        });
+      }
+    } catch (error) {
+      log.error("budget_status_failed", error);
+    }
+  }
+  const others = [
+    ...(await safeDailyAlerts(deps, user.id, confirmed)),
+    ...(await cardLimitAlerts(
+      deps,
+      user,
+      confirmed
+        .filter((c) => c.tx.type === "expense")
+        .map((c) => ({ walletId: c.walletId, amountSatang: c.entry.amountSatang })),
+    )),
+  ].map((t) => ({ text: t, level: "warn" as const }));
+  notices.push(...others);
+
+  const rows: BatchRow[] = confirmed.map((c) => {
+    const category = categories.find((x) => x.id === c.categoryId);
+    const wallet = multi
+      ? (wallets.find((w) => w.id === c.walletId) ?? wallets.find((w) => w.isDefault))
+      : undefined;
+    const detail = [wallet ? walletLabel(wallet) : null, c.entry.fx ? fxNoteOf(c.entry.fx) : null]
+      .filter((x): x is string => Boolean(x))
+      .join(" · ");
+    return {
+      txId: c.tx.id,
+      title: c.tx.title,
+      type: c.tx.type,
+      amountSatang: txAmountSatang(c.tx),
+      categoryName: category ? category.name : tr("ไม่ระบุหมวด"),
+      categoryEmoji: category ? emojiOf((category as { icon?: string | null }).icon) : null,
+      walletName: detail || null,
+      editUrl: pageUrl(`/transactions?edit=${c.tx.id}`),
+    };
+  });
+  return {
+    message: buildBatchConfirmMessage({
+      rows,
+      budgets,
+      notices,
+      logoUrl: process.env.APP_BASE_URL
+        ? `${process.env.APP_BASE_URL.replace(/\/$/, "")}/success-logo.png?v=2`
+        : undefined,
+    }),
+    warned: notices.length > 0,
+  };
 }
 
 /** The daily-limit scold for what this message added to today (best effort, like the budget alerts). */

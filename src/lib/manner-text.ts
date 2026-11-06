@@ -99,6 +99,16 @@ const DELETED: Line = {
   night: "ลบทิ้งแล้ว:",
 };
 
+/** "จดสำเร็จ 3 รายการ ✅": the title of the card for several entries; `{n}` is the count. */
+const BATCH_TITLE = /^จดสำเร็จ (\d+) รายการ ✅$/;
+const BATCH: Line = {
+  warm: "จดให้แล้ว {n} รายการนะ ✅",
+  bestie: "จดให้แล้ว {n} อัน เว้ย ✅",
+  spicy: "จด {n} รายการรวด ขยันจดแต่ขยันใช้ด้วยนะ ✅",
+  tea: "บันทึก {n} รายการเรียบร้อยครับ ✅",
+  night: "จด {n} รายการ ก่อนตาปรือ ✅",
+};
+
 /** "สรุปวันนี้ (…)\nยังไม่มีรายการเลย": the heading stays, the last line changes. */
 const EMPTY_TAIL = "\nยังไม่มีรายการเลย";
 const EMPTY: Line = {
@@ -117,6 +127,8 @@ function swap(
 ): string {
   const exact = MANNER_LINES[value];
   if (exact) return withName(exact[persona], name);
+  const many = BATCH_TITLE.exec(value);
+  if (many) return withName(BATCH[persona].replace("{n}", many[1] ?? ""), name);
   // the two patterns are for a plain reply only: never an AI answer, or a title inside a card
   if (!topLevel) return value;
   if (value.startsWith(DELETED_LEAD) && !value.includes("\n")) {

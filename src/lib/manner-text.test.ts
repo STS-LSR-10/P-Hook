@@ -142,4 +142,21 @@ describe("applyManner", () => {
     const out = applyManner([quick], "spicy", null)[0] as unknown as typeof quick;
     expect(out.quickReply.items[0]?.action.text).toBe("จดสำเร็จ ✅");
   });
+
+  it.each(PERSONA_IDS)(
+    "says the title of a many-entries card in the %s manner, keeping the count",
+    (id) => {
+      const card = {
+        type: "flex",
+        altText: "x",
+        contents: { type: "text", text: "จดสำเร็จ 4 รายการ ✅" },
+      };
+      const out = applyManner([card], id, "เจ้านาย")[0] as unknown as {
+        contents: { text: string };
+      };
+      expect(out.contents.text).not.toBe("จดสำเร็จ 4 รายการ ✅");
+      expect(out.contents.text).toContain("4");
+      expect(out.contents.text).not.toMatch(/[{}]/);
+    },
+  );
 });
