@@ -6,8 +6,8 @@ import { chooseAiProvider, STRUCTURER_DEFAULT_MODELS, type StructurerEnv } from 
 /** At or above this the bot acts straight away; below it, it asks first. */
 export const ROUTER_ACT_CONFIDENCE = 0.8;
 export const MAX_ROUTER_INPUT = 1000;
-/** Short: the Worker has about 30 seconds after the 200, and must still be able to answer. */
-export const ROUTER_TIMEOUT_MS = 8_000;
+/** Short: a slow AI is not worth the wait, the rules answer instead (and see the breaker). */
+export const ROUTER_TIMEOUT_MS = 4_000;
 const MAX_REMINDER_TEXT = 300;
 const MAX_TERM = 100;
 

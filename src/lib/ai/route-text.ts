@@ -64,6 +64,27 @@ export function needsRouter(input: string, result: ParseResult): boolean {
   );
 }
 
+/** AI failures in a row, within a window, that pause it; the rules carry on in the meantime. */
+export const BREAKER_FAILURES = 3;
+export const BREAKER_WINDOW_MS = 60_000;
+export const BREAKER_PAUSE_MS = 120_000;
+let failureTimes: number[] = [];
+let pausedUntil = 0;
+
+/** For tests: forget every failure and end any pause. */
+export function resetRouterBreaker(): void {
+  failureTimes = [];
+  pausedUntil = 0;
+}
+
+function noteFailure(at: number): void {
+  failureTimes = [...failureTimes.filter((t) => at - t < BREAKER_WINDOW_MS), at];
+  if (failureTimes.length >= BREAKER_FAILURES) {
+    pausedUntil = at + BREAKER_PAUSE_MS;
+    failureTimes = [];
+  }
+}
+
 /**
  * Ask the AI which group `text` belongs to. Null means "use the ordinary rules instead": no AI
  * configured, the month's "ถาม AI" is used up (then `onQuotaOut` is told), the call failed, or the
@@ -94,9 +115,13 @@ export async function runRouter(
     };
   }
 
+  // A slow or failing AI is skipped for a while: nothing is charged and the rules answer at once.
+  if (deps.now().getTime() < pausedUntil) return null;
+
   const month = monthKey(deps.now());
   const units = aiUnits(input.text);
   let counted = false;
+  let asked = false;
   try {
     counted = await takeUsageAmount(
       input.db,
@@ -110,15 +135,19 @@ export async function runRouter(
       deps.onQuotaOut?.();
       return null;
     }
+    asked = true;
     const decision = sanitizeDecision(
       await router.route({ text: input.text, today: dayOf(deps.now()) }),
     );
     if (decision) {
+      failureTimes = [];
       deps.onCharged?.({ units, month });
       return decision;
     }
+    noteFailure(deps.now().getTime());
     log.warn("intent_router_failed", { provider: router.name, reason: "unusable reply" });
   } catch (error) {
+    if (asked) noteFailure(deps.now().getTime());
     log.warn("intent_router_failed", { provider: router.name, reason: safeMessage(error) });
   }
   if (counted) {

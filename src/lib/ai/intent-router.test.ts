@@ -157,7 +157,7 @@ describe("buildIntentRouter", () => {
     await router?.route({ text: "x", today: "2026-11-01" });
     expect(signal).toBeDefined();
     expect(timeout).toHaveBeenCalledWith(ROUTER_TIMEOUT_MS);
-    expect(ROUTER_TIMEOUT_MS).toBeLessThanOrEqual(10_000);
+    expect(ROUTER_TIMEOUT_MS).toBeLessThanOrEqual(4_000);
     timeout.mockRestore();
   });
 

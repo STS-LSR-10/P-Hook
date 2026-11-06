@@ -3,7 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parseMessage } from "@/lib/parse/text-parser";
 import { AI_CHAT_LIMIT } from "@/lib/plan";
 import type { IntentRouter } from "./intent-router";
-import { clockIsTheAmount, needsRouter, runRouter } from "./route-text";
+import {
+  BREAKER_FAILURES,
+  BREAKER_PAUSE_MS,
+  BREAKER_WINDOW_MS,
+  clockIsTheAmount,
+  needsRouter,
+  resetRouterBreaker,
+  runRouter,
+} from "./route-text";
 
 const take = vi.fn(async () => true);
 const refund = vi.fn(async () => undefined);
@@ -109,6 +117,7 @@ describe("runRouter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRouterBreaker();
     takeAmount.mockResolvedValue(true);
     route.mockResolvedValue({ intent: "ask", confidence: 0.9 });
   });
@@ -184,5 +193,64 @@ describe("runRouter", () => {
 
   it("is null when there is no router", async () => {
     await expect(runRouter({ now: () => NOW }, input)).resolves.toBeNull();
+  });
+
+  describe("circuit breaker", () => {
+    const at = (ms: number) => ({ router, now: () => new Date(NOW.getTime() + ms) });
+    const fail = async (ms = 0) => {
+      route.mockRejectedValueOnce(new Error("timeout"));
+      await runRouter(at(ms), input);
+    };
+
+    it("skips the AI, and charges nothing, after repeated failures in a minute", async () => {
+      for (let i = 0; i < BREAKER_FAILURES; i++) await fail(i * 1000);
+      vi.clearAllMocks();
+      await expect(runRouter(at(5_000), input)).resolves.toBeNull();
+      expect(route).not.toHaveBeenCalled();
+      expect(takeAmount).not.toHaveBeenCalled();
+    });
+
+    it("is not told the quota is out while the AI is paused", async () => {
+      const onQuotaOut = vi.fn();
+      for (let i = 0; i < BREAKER_FAILURES; i++) await fail(i);
+      await runRouter({ ...at(10), onQuotaOut }, input);
+      expect(onQuotaOut).not.toHaveBeenCalled();
+    });
+
+    it("tries again once the pause is over", async () => {
+      for (let i = 0; i < BREAKER_FAILURES; i++) await fail(i);
+      vi.clearAllMocks();
+      await expect(runRouter(at(BREAKER_PAUSE_MS + 1_000), input)).resolves.toMatchObject({
+        intent: "ask",
+      });
+    });
+
+    it("does not trip on failures spread out over more than the window", async () => {
+      for (let i = 0; i < BREAKER_FAILURES; i++) await fail(i * (BREAKER_WINDOW_MS + 1_000));
+      vi.clearAllMocks();
+      const last = BREAKER_FAILURES * (BREAKER_WINDOW_MS + 1_000);
+      await expect(runRouter(at(last), input)).resolves.toMatchObject({ intent: "ask" });
+    });
+
+    it("a good answer clears the count", async () => {
+      for (let i = 0; i < BREAKER_FAILURES - 1; i++) await fail(i);
+      await runRouter(at(100), input);
+      await fail(200);
+      await fail(300);
+      vi.clearAllMocks();
+      await expect(runRouter(at(400), input)).resolves.toMatchObject({ intent: "ask" });
+    });
+
+    it("an unusable reply counts as a failure; a usage-counter outage does not", async () => {
+      takeAmount.mockRejectedValue(new Error("db"));
+      for (let i = 0; i < BREAKER_FAILURES; i++) await runRouter(at(i), input);
+      takeAmount.mockResolvedValue(true);
+      await expect(runRouter(at(50), input)).resolves.toMatchObject({ intent: "ask" });
+      route.mockResolvedValue({ intent: "nope" });
+      for (let i = 0; i < BREAKER_FAILURES; i++) await runRouter(at(100 + i), input);
+      route.mockClear();
+      await runRouter(at(200), input);
+      expect(route).not.toHaveBeenCalled();
+    });
   });
 });
