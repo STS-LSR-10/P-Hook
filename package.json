@@ -19,7 +19,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "format": "prettier --write .",
-    "richmenu": "tsx scripts/create-richmenu.ts"
+    "richmenu": "tsx scripts/create-richmenu.ts",
+    "eval:router": "tsx scripts/eval-router.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-thai": "^0.4.2",
