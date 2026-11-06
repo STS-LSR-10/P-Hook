@@ -387,12 +387,14 @@ function chips(): unknown {
 }
 
 /** The question after "วิธีใช้งาน", in the chosen manner of the bot, with the topic chips under it. */
-export function buildHelpPrompt(persona: PersonaId = "polite"): LineMessage {
+export function buildHelpPrompt(persona: PersonaId = "plain"): LineMessage {
   const wording: Record<PersonaId, string> = {
-    polite: tr("อยากรู้เรื่องไหนเป็นพิเศษคะ แตะหัวข้อด้านล่างเพื่อดูวิธีใช้ได้เลยค่ะ ✨"),
-    friendly: tr("อยากรู้เรื่องไหนบอกได้เลยเพื่อน! จิ้มหัวข้อข้างล่างได้เลย 😎"),
-    strict: tr("ยังไม่รู้จะเริ่มตรงไหนใช่ไหม? เลือกหัวข้อข้างล่าง แล้วอ่านให้จบนะ! 📖"),
-    cheer: tr("ถามไว้ก่อนเก่งมากเลย! เลือกหัวข้อด้านล่าง เดี๋ยวบอกให้ละเอียดเลยนะ 🌟"),
+    plain: tr("อยากรู้เรื่องไหนเป็นพิเศษคะ แตะหัวข้อด้านล่างเพื่อดูวิธีใช้ได้เลยค่ะ ✨"),
+    warm: tr("ถามไว้ก่อนเก่งมากเลย! เลือกหัวข้อด้านล่าง เดี๋ยวบอกให้ละเอียดเลยนะ 🌟"),
+    bestie: tr("อยากรู้เรื่องไหนบอกได้เลยเพื่อน! จิ้มหัวข้อข้างล่างได้เลย 😎"),
+    spicy: tr("ยังไม่รู้จะเริ่มตรงไหนใช่ไหม? เลือกหัวข้อข้างล่าง แล้วอ่านให้จบนะ! 📖"),
+    tea: tr("หากสงสัยเรื่องใด เลือกหัวข้อด้านล่างได้เลยครับ ...ถ้าไม่ลืมไปก่อนนะครับ 🫖"),
+    night: tr("ดึกแล้วยังขยันถามอีกนะ! เลือกหัวข้อข้างล่าง ดูเสร็จแล้วรีบนอนด้วย 🦉"),
   };
   return { type: "text", text: wording[persona], quickReply: chips() };
 }

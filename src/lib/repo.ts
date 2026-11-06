@@ -38,6 +38,8 @@ export interface SettingsRow {
   /** Card colour theme and the bot's manner (Pro and above); unknown values read as the defaults. */
   card_theme?: string;
   bot_persona?: string;
+  /** The name the bot calls the person (Pro and above); null = none. */
+  call_name?: string | null;
   /** After a plain save, offer the camera / album buttons to attach a photo (default on). */
   photo_prompt?: boolean;
 }
@@ -62,7 +64,8 @@ const DEFAULT_SETTINGS: SettingsRow = {
   weekly_summary_enabled: false,
   monthly_summary_enabled: false,
   card_theme: "mint",
-  bot_persona: "polite",
+  bot_persona: "warm",
+  call_name: null,
   photo_prompt: true,
 };
 
@@ -130,7 +133,7 @@ export async function getSettings(db: SupabaseClient, userId: string): Promise<S
   const { data, error } = await db
     .from("user_settings")
     .select(
-      "budget_cycle,cycle_start_day,confirm_style,daily_reminder_enabled,daily_reminder_time,weekly_summary_enabled,monthly_summary_enabled,daily_budget,card_theme,bot_persona,photo_prompt",
+      "budget_cycle,cycle_start_day,confirm_style,daily_reminder_enabled,daily_reminder_time,weekly_summary_enabled,monthly_summary_enabled,daily_budget,card_theme,bot_persona,call_name,photo_prompt",
     )
     .eq("user_id", userId)
     .maybeSingle();

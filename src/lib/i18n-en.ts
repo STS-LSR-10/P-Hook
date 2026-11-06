@@ -2659,4 +2659,60 @@ export const EN: Record<string, string> = {
   ล้างที่จำไว้: "Clear what it remembers",
   'ข้อความนี้ดูเหมือนคำถาม ตอนนี้ AI ช่วยตอบไม่ได้ เลยยังไม่ได้จดอะไร ถ้าต้องการจดเป็นรายการ พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"':
     'This looks like a question and the AI cannot answer right now, so nothing was recorded. To record an entry, type the name and the amount, like "coffee 50"',
+  ชื่อที่ให้พี่ฮูกเรียกคุณ: "What P'Hook calls you",
+  "พี่ฮูกจะใช้ชื่อนี้เวลาตอบและเตือนเรื่องงบในแชท LINE":
+    "P'Hook uses this name when it replies and warns you about your budget in LINE",
+  ตั้งชื่อที่ให้พี่ฮูกเรียกคุณ: "Set what P'Hook calls you",
+  ชื่อบอทประจำระบบ: "The bot's name",
+  "พี่ฮูก (P-Hook AI)": "P'Hook (P-Hook AI)",
+  ถาวร: "Fixed",
+  "ให้พี่ฮูกเรียกคุณว่าอะไร?": "What should P'Hook call you?",
+  "เช่น คุณบาส, พี่สุข, เจ้านาย": "For example Alex, Sam, Boss",
+  "ไม่เกิน {0} ตัวอักษร": "At most {0} characters",
+  "กดเลือกด่วน:": "Quick picks:",
+  ตัวอย่างข้อความของพี่ฮูก: "A sample message from P'Hook",
+  สวัสดีครับ: "Hello",
+  "! วันนี้พี่ฮูกพร้อมช่วยจดบันทึกรายรับ-รายจ่ายแล้วครับ":
+    "! P'Hook is ready to record your income and spending today",
+  ลบชื่อ: "Remove name",
+  "เลือกสีการ์ดสรุปในแชท และน้ำเสียงที่พี่ฮูกใช้คุยกับคุณ":
+    "Pick the colour of the summary cards in the chat and the tone P'Hook talks to you in",
+  "ตัวอย่างการ์ดตอบกลับใน LINE": "Sample reply card in LINE",
+  ตัวอย่างหัวการ์ดในแชท: "Sample card heading in the chat",
+  "รายการล่าสุด: ชาเขียวมัทฉะ": "Latest entry: matcha green tea",
+  พี่ฮูก: "P'Hook",
+  บันทึกอัตโนมัติแล้ว: "Saved automatically",
+  สีธีมการ์ด: "Card theme colour",
+  น้ำเสียงและนิสัยของพี่ฮูก: "P'Hook's tone and personality",
+  "เลือกได้ 1 แบบ": "Pick one",
+  "หากสงสัยเรื่องใด เลือกหัวข้อด้านล่างได้เลยครับ ...ถ้าไม่ลืมไปก่อนนะครับ 🫖":
+    "If you wonder about anything, pick a topic below... if you have not forgotten it already 🫖",
+  "ดึกแล้วยังขยันถามอีกนะ! เลือกหัวข้อข้างล่าง ดูเสร็จแล้วรีบนอนด้วย 🦉":
+    "Still asking questions this late! Pick a topic below, then go to bed 🦉",
+  ฮูกน้อยอบอุ่น: "Warm Little Owl",
+  "พูดจาน่ารัก สุภาพ ให้กำลังใจ ใส่ใจทุกเรื่องของคุณ":
+    "Sweet and polite, encouraging, cares about everything you do",
+  "รับทราบครับ{name} ไม่ต้องห่วงนะ พรุ่งนี้สู้ใหม่ พี่ฮูกคอยซัพพอร์ตเสมอครับ ✨":
+    "Got it{name}, no worries. Tomorrow is a new day and P'Hook has your back ✨",
+  ฮูกเพื่อนซี้: "Bestie Owl",
+  "ฟีลเพื่อนสนิท คุยชิล แซะพอกรุบกริบ แต่พึ่งพาได้":
+    "Like a close friend: relaxed, a little teasing, always there for you",
+  "เออ จัดไป{name}! จดไว้ให้ละ เผื่อรอบนี้สมองเออเร่อลืมอีก 555":
+    "Sure thing{name}! Noted, in case your brain forgets again 555",
+  ฮูกปากแจ๋ว: "Sassy Owl",
+  "กวนประสาทขั้นสุด ปั่นเก่ง ขยันเบรก ยิงมุกไม่พัก":
+    "Cheeky to the max, a master teaser who keeps cracking jokes",
+  "พรุ่งนี้อีกละนะ{name} พูดงี้มาสามวันติดละ 555 เดี๋ยวพี่ฮูกบินไปจิกถึงเตียงเลยคอยดู!":
+    "Tomorrow again{name}? Three days in a row now 555 P'Hook will fly over and peck you out of bed!",
+  นกฮูกจิบชา: "Tea-Sipping Owl",
+  "ท่าทีสุขุม ผู้ดีทุกคำ แต่คำพูดแอบเหน็บเบา ๆ ให้สะดุ้ง":
+    "Calm and proper, but with a gentle sting in every word",
+  "ได้ครับ{name} นึกว่าจะผลัดเป็นเดือนหน้าซะแล้วนะเนี่ย... บันทึกเรียบร้อยครับ":
+    "Certainly{name}. I thought you would put it off until next month... Recorded",
+  ฮูกนอนดึก: "Night Owl",
+  พิเศษ: "Special",
+  "ขยันเตือนคนนอนดึก จ้องจับผิดรายจ่ายเก่ง ตาวาวทุกการเคลื่อนไหว":
+    "Nags night owls, spots every expense, eyes wide open",
+  "ดึกป่านนี้ยังไม่นอนอีกนะ{name}! ตาจะค้างแข่งกับพี่ฮูกเหรอ รีบนอนได้แล้ว!":
+    "Still awake this late{name}! Staying up to compete with P'Hook? Go to bed!",
 };

@@ -28,6 +28,7 @@ import { GoogleCalendarCard } from "@/components/liff/settings/google-calendar-c
 import { StyleCard } from "@/components/liff/settings/style-card";
 import { NotificationsCard } from "@/components/liff/settings/notifications-card";
 import { PaymentHistorySheet } from "@/components/liff/settings/payment-history-sheet";
+import { CallNameCard } from "@/components/liff/settings/call-name-card";
 import { PersonalizeCard } from "@/components/liff/settings/personalize-card";
 import { PhotoPromptCard } from "@/components/liff/settings/photo-prompt-card";
 import { ProfileCard } from "@/components/liff/settings/profile-card";
@@ -267,6 +268,7 @@ export default function SettingsPage() {
             </section>
             <PhotoPromptCard me={person} settings={data} onSaved={setOverride} />
             <PersonalizeCard me={person} settings={data} onSaved={setOverride} />
+            <CallNameCard me={person} settings={data} onSaved={setOverride} />
             <NotificationsCard me={person} settings={data} onSaved={setOverride} />
             <GoogleCalendarCard />
             <StyleCard />

@@ -7,9 +7,12 @@ import {
   THEME_IDS,
   applyTheme,
   budgetAlertLine,
+  cleanCallName,
   dailyOverLines,
+  dailyStillOverLine,
   effectivePrefs,
   savedQuip,
+  withName,
 } from "./personalize";
 
 const card = {
@@ -78,21 +81,22 @@ describe("applyTheme", () => {
 });
 
 describe("persona lines", () => {
-  it("polite adds nothing and keeps the original budget text", () => {
-    expect(savedQuip("polite", "expense")).toBeNull();
-    expect(budgetAlertLine("polite", { level: 80, scope: "รวม", figures: "x" })).toBeNull();
-    expect(dailyOverLines("polite")).toBeUndefined();
+  it("plain adds nothing and keeps the original budget text", () => {
+    expect(savedQuip("plain", "expense")).toBeNull();
+    expect(budgetAlertLine("plain", { level: 80, scope: "รวม", figures: "x" })).toBeNull();
+    expect(dailyOverLines("plain")).toBeUndefined();
   });
 
-  it("friendly and cheer comment on saves; strict only on income", () => {
-    expect(savedQuip("friendly", "expense", 0)).toBeTruthy();
-    expect(savedQuip("cheer", "income", 0.99)).toBeTruthy();
-    expect(savedQuip("strict", "expense")).toBeNull();
-    expect(savedQuip("strict", "income", 0)).toBeTruthy();
+  it("every manner comments on saves, expense and income", () => {
+    for (const persona of PERSONA_IDS) {
+      for (const type of ["expense", "income"] as const) {
+        for (const pick of [0, 0.5, 0.99]) expect(savedQuip(persona, type, pick)).toBeTruthy();
+      }
+    }
   });
 
-  it("every non-polite manner words both budget levels with the figures", () => {
-    for (const persona of PERSONA_IDS.filter((p) => p !== "polite")) {
+  it("every manner words both budget levels with the figures", () => {
+    for (const persona of PERSONA_IDS) {
       for (const level of [80, 100] as const) {
         const line = budgetAlertLine(
           persona,
@@ -129,17 +133,58 @@ describe("persona lines", () => {
 
 describe("effectivePrefs", () => {
   it("free and unknown values read as the defaults; paid plans use the saved choice", () => {
-    expect(effectivePrefs("free", { card_theme: "ocean", bot_persona: "strict" })).toEqual({
-      theme: "mint",
-      persona: "polite",
-    });
-    expect(effectivePrefs("plus", { card_theme: "ocean", bot_persona: "strict" })).toEqual({
-      theme: "ocean",
-      persona: "strict",
-    });
+    expect(
+      effectivePrefs("free", { card_theme: "ocean", bot_persona: "spicy", call_name: "บาส" }),
+    ).toEqual({ theme: "mint", persona: "plain", name: null });
+    expect(
+      effectivePrefs("plus", { card_theme: "ocean", bot_persona: "spicy", call_name: "บาส" }),
+    ).toEqual({ theme: "ocean", persona: "spicy", name: "บาส" });
     expect(effectivePrefs("ultimate", { card_theme: "nope", bot_persona: 3 })).toEqual({
       theme: "mint",
-      persona: "polite",
+      persona: "plain",
+      name: null,
     });
+  });
+});
+
+describe("the name the bot calls someone", () => {
+  it("goes into a line where it belongs, and leaves no gap without one", () => {
+    expect(withName("จัดไป{name}!", "คุณบาส")).toBe("จัดไป คุณบาส!");
+    expect(withName("จัดไป{name}!", null)).toBe("จัดไป!");
+    expect(withName("จัดไป{name}!", "")).toBe("จัดไป!");
+  });
+
+  it("no line ever shows a bare {name}", () => {
+    for (const persona of PERSONA_IDS) {
+      for (const pick of [0, 0.3, 0.6, 0.99]) {
+        for (const name of [null, "บาส"]) {
+          const lines = [
+            savedQuip(persona, "expense", pick, name),
+            savedQuip(persona, "income", pick, name),
+            budgetAlertLine(persona, { level: 80, scope: "รวม", figures: "x" }, pick, name),
+            budgetAlertLine(persona, { level: 100, scope: "รวม", figures: "x" }, pick, name),
+            dailyStillOverLine(persona, "5", name),
+            dailyOverLines(persona)?.[0]?.({ spent: "1", limit: "1", over: "1", name }),
+          ];
+          for (const line of lines) expect(line).not.toContain("{");
+        }
+      }
+    }
+  });
+
+  it("is used in a line when one is given", () => {
+    expect(savedQuip("bestie", "expense", 0, "บาส")).toContain("บาส");
+    expect(dailyStillOverLine("tea", "5", "บาส")).toContain("บาส");
+  });
+
+  it("is cleaned: one line, at most 20 letters, nothing that looks like a placeholder or markup", () => {
+    expect(cleanCallName("  คุณบาส ")).toBe("คุณบาส");
+    expect(cleanCallName("a\nb")).toBe("a b");
+    expect(cleanCallName("")).toBeNull();
+    expect(cleanCallName("   ")).toBeNull();
+    expect(cleanCallName("ก".repeat(21))).toBeNull();
+    expect(cleanCallName("ก".repeat(20))).toBe("ก".repeat(20));
+    expect(cleanCallName("{name}<b>")).toBe("name b");
+    expect(cleanCallName(42)).toBeNull();
   });
 });

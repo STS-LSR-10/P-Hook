@@ -25,7 +25,7 @@ test.describe("theme and bot manner (360px)", () => {
     await expect(card.getByText("สำหรับแผน Pro")).toBeVisible();
     await expect(card.getByRole("radio", { name: "เขียวมิ้นต์" })).toBeEnabled();
     await expect(card.getByRole("radio", { name: "ฟ้าทะเล" })).toBeDisabled();
-    await expect(card.getByRole("radio", { name: /ดุหน่อย/ })).toBeDisabled();
+    await expect(card.getByRole("radio", { name: /ฮูกปากแจ๋ว/ })).toBeDisabled();
     await expectNoHorizontalScroll(page);
     await expectNoSeriousA11yViolations(page);
   });
@@ -51,12 +51,12 @@ test.describe("theme and bot manner (360px)", () => {
       "aria-checked",
       "true",
     );
-    await card.getByRole("radio", { name: /ดุหน่อย/ }).click();
-    await expect(card.getByRole("radio", { name: /ดุหน่อย/ })).toHaveAttribute(
+    await card.getByRole("radio", { name: /ฮูกปากแจ๋ว/ }).click();
+    await expect(card.getByRole("radio", { name: /ฮูกปากแจ๋ว/ })).toHaveAttribute(
       "aria-checked",
       "true",
     );
-    expect(bodies).toEqual([{ card_theme: "ocean" }, { bot_persona: "strict" }]);
+    expect(bodies).toEqual([{ card_theme: "ocean" }, { bot_persona: "spicy" }]);
     await expectNoHorizontalScroll(page);
     await expectNoSeriousA11yViolations(page);
   });
@@ -107,5 +107,54 @@ test.describe("photo offer after a save (360px)", () => {
     await expect.poll(() => bodies.length).toBe(1);
     expect(bodies[0]).toEqual({ photo_prompt: false });
     await expect(card.getByRole("switch")).not.toBeChecked();
+  });
+});
+
+test.describe("the name the bot calls you (360px)", () => {
+  test("Free sees it locked", async ({ page }) => {
+    await mockApi(page, { ...COMMON, "GET /api/settings": SETTINGS, "GET /api/me": ME_FREE });
+    await openSettings(page);
+    const card = page.getByRole("region", { name: "ชื่อที่ให้พี่ฮูกเรียกคุณ" });
+    await expect(card).toBeVisible();
+    await expect(card.getByRole("textbox")).toBeDisabled();
+    await expect(card.getByRole("button", { name: "บันทึกชื่อ" })).toBeDisabled();
+    await expectNoHorizontalScroll(page);
+    await expectNoSeriousA11yViolations(page);
+  });
+
+  test("Pro types a name, sees it in the sample, and saves it", async ({ page }) => {
+    const bodies: unknown[] = [];
+    await mockApi(page, {
+      ...COMMON,
+      "GET /api/me": ME_PLUS,
+      "GET /api/settings": SETTINGS,
+      "PATCH /api/settings": async (route: Route) => {
+        const body = route.request().postDataJSON();
+        bodies.push(body);
+        return { ...SETTINGS, ...body };
+      },
+    });
+    await openSettings(page);
+    const card = page.getByRole("region", { name: "ชื่อที่ให้พี่ฮูกเรียกคุณ" });
+    await expect(card.getByRole("button", { name: "บันทึกชื่อ" })).toBeDisabled();
+    await card.getByRole("textbox").fill("คุณบาส");
+    await expect(card.getByTestId("call-name-preview")).toContainText("สวัสดีครับ คุณบาส!");
+    await card.getByRole("button", { name: "บันทึกชื่อ" }).click();
+    await expect(card.getByText("บันทึกแล้ว")).toBeVisible();
+    expect(bodies).toEqual([{ call_name: "คุณบาส" }]);
+    await card.getByRole("button", { name: "ลบชื่อ" }).click();
+    await expect.poll(() => bodies.length).toBe(2);
+    expect(bodies[1]).toEqual({ call_name: null });
+    await expectNoHorizontalScroll(page);
+    await expectNoSeriousA11yViolations(page);
+  });
+
+  test("a name over 20 letters cannot be saved", async ({ page }) => {
+    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/settings": SETTINGS });
+    await openSettings(page);
+    const card = page.getByRole("region", { name: "ชื่อที่ให้พี่ฮูกเรียกคุณ" });
+    await card.getByRole("textbox").fill("ก".repeat(25));
+    await expect(card.getByRole("alert")).toContainText("20");
+    await expect(card.getByRole("button", { name: "บันทึกชื่อ" })).toBeDisabled();
   });
 });

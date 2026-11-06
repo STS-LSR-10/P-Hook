@@ -97,12 +97,17 @@ export async function budgetReadingFor(
     ? crossedThreshold(after - input.amountSatang, after, limit)
     : null;
   if (!level) return { status, notice: null };
-  const { persona } = effectivePrefs(plan, settings);
-  const custom = budgetAlertLine(persona, {
-    level,
-    scope: scopeName ? `หมวด${scopeName}` : "รวม",
-    figures: `${money(after)} จาก ${money(limit)}`,
-  });
+  const { persona, name } = effectivePrefs(plan, settings);
+  const custom = budgetAlertLine(
+    persona,
+    {
+      level,
+      scope: scopeName ? `หมวด${scopeName}` : "รวม",
+      figures: `${money(after)} จาก ${money(limit)}`,
+    },
+    undefined,
+    name,
+  );
   return {
     status,
     notice: custom ?? alertText({ level, scopeName, spentSatang: after, limitSatang: limit }),
@@ -160,6 +165,7 @@ export async function dailyBudgetAlertsFor(
     limitSatang: limit,
     pick: input.pick,
     persona: effectivePrefs(plan, settings).persona,
+    name: effectivePrefs(plan, settings).name,
   });
   return alert ? [alert] : [];
 }

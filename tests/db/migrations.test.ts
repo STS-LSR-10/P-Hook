@@ -2107,14 +2107,14 @@ describe("row level security (supabase/tests/rls_check.sql)", () => {
 });
 
 describe("card theme and bot manner (0032)", () => {
-  it("existing and new users start with the mint theme and the polite manner", async () => {
+  it("new users start with the mint theme and the warm manner, and no name", async () => {
     const u = await newUser(db, `per-${Math.random()}`);
-    const r = await one<{ card_theme: string; bot_persona: string }>(
+    const r = await one<{ card_theme: string; bot_persona: string; call_name: string | null }>(
       db,
-      "select card_theme, bot_persona from user_settings where user_id = $1",
+      "select card_theme, bot_persona, call_name from user_settings where user_id = $1",
       [u],
     );
-    expect(r).toEqual({ card_theme: "mint", bot_persona: "polite" });
+    expect(r).toEqual({ card_theme: "mint", bot_persona: "warm", call_name: null });
   });
 
   it("refuses a theme or manner that does not exist, accepts the real ones", async () => {
@@ -2126,9 +2126,24 @@ describe("card theme and bot manner (0032)", () => {
       db.query("update user_settings set bot_persona = 'rude' where user_id = $1", [u]),
     ).rejects.toThrow();
     await db.query(
-      "update user_settings set card_theme = 'night', bot_persona = 'strict' where user_id = $1",
+      "update user_settings set card_theme = 'night', bot_persona = 'spicy', call_name = 'คุณบาส' where user_id = $1",
       [u],
     );
+    // the manners of before are no longer values
+    await expect(
+      db.query("update user_settings set bot_persona = 'strict' where user_id = $1", [u]),
+    ).rejects.toThrow();
+  });
+
+  it("a name is one to twenty letters, or none", async () => {
+    const u = await newUser(db, `per-${Math.random()}`);
+    for (const bad of ["", "ก".repeat(21)]) {
+      await expect(
+        db.query("update user_settings set call_name = $2 where user_id = $1", [u, bad]),
+      ).rejects.toThrow();
+    }
+    await db.query("update user_settings set call_name = $2 where user_id = $1", [u, "ก".repeat(20)]);
+    await db.query("update user_settings set call_name = null where user_id = $1", [u]);
   });
 });
 

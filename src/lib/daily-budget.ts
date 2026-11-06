@@ -27,19 +27,26 @@ export function dailyBudgetAlert(input: {
   afterSatang: number;
   limitSatang: number;
   pick?: number;
-  /** The bot's manner; the original playful lines when omitted or polite. */
+  /** The bot's manner; the original playful lines when omitted or plain. */
   persona?: PersonaId;
+  /** The name the person asked to be called. */
+  name?: string | null;
 }): string | null {
   const { beforeSatang, afterSatang, limitSatang } = input;
   if (limitSatang <= 0 || afterSatang <= beforeSatang || afterSatang <= limitSatang) return null;
   const over = formatBaht(afterSatang - limitSatang);
-  const persona = input.persona ?? "polite";
-  if (beforeSatang > limitSatang) return dailyStillOverLine(persona, over);
+  const persona = input.persona ?? "plain";
+  if (beforeSatang > limitSatang) return dailyStillOverLine(persona, over, input.name);
   const lines = dailyOverLines(persona) ?? SCOLDS;
   const i = Math.min(lines.length - 1, Math.floor((input.pick ?? Math.random()) * lines.length));
   const scold = lines[i];
   return scold
-    ? scold({ spent: formatBaht(afterSatang), limit: formatBaht(limitSatang), over })
+    ? scold({
+        spent: formatBaht(afterSatang),
+        limit: formatBaht(limitSatang),
+        over,
+        name: input.name,
+      })
     : null;
 }
 

@@ -3,7 +3,14 @@ import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { MAX_START_DAY } from "@/lib/budget-cycle";
 import { requireFeature } from "@/lib/plan-server";
-import { DEFAULT_PERSONA, DEFAULT_THEME, PERSONA_IDS, THEME_IDS } from "@/lib/personalize";
+import {
+  cleanCallName,
+  DEFAULT_PERSONA,
+  DEFAULT_THEME,
+  MAX_CALL_NAME,
+  PERSONA_IDS,
+  THEME_IDS,
+} from "@/lib/personalize";
 import { normalizeTime } from "@/lib/reminder";
 import { getSettings } from "@/lib/repo";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -51,6 +58,8 @@ const patchSchema = z
     monthly_summary_enabled: z.boolean(),
     card_theme: z.enum(THEME_IDS),
     bot_persona: z.enum(PERSONA_IDS),
+    /** What the bot calls the person (Pro and above); null or blank clears it. */
+    call_name: z.string().max(100).nullable(),
     photo_prompt: z.boolean(),
     /** One of the zones we list; the page signs in again after a change, so the session carries it. */
     timezone: z.string().refine(isZone),
@@ -118,6 +127,21 @@ export async function PATCH(request: Request): Promise<Response> {
     ) {
       const locked = await requireFeature(db, auth.userId, "personalize");
       if (locked) return locked;
+    }
+
+    // A name is one short line. Clearing it is always allowed; setting one is part of the manner.
+    if (parsed.data.call_name !== undefined) {
+      const raw = parsed.data.call_name;
+      const blank = raw === null || raw.trim() === "";
+      const name = blank ? null : cleanCallName(raw);
+      if (!blank && name === null) {
+        return apiError(`ชื่อต้องไม่เกิน ${MAX_CALL_NAME} ตัวอักษร`, 400);
+      }
+      patch.call_name = name;
+      if (name !== null) {
+        const locked = await requireFeature(db, auth.userId, "personalize");
+        if (locked) return locked;
+      }
     }
 
     if (Object.keys(patch).length > 0) {

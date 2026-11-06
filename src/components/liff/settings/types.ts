@@ -43,6 +43,7 @@ export interface Settings {
   monthly_summary_enabled: boolean;
   card_theme?: string;
   bot_persona?: string;
+  call_name?: string | null;
   photo_prompt?: boolean;
 }
 

@@ -4,7 +4,7 @@ import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 
 let plan = "plus";
 let theme = "ocean";
-let persona = "friendly";
+let persona = "bestie";
 
 vi.mock("@/lib/slip-repo", () => ({
   getUserPlanRow: async () => ({ plan, plan_expires_at: null }),
@@ -75,11 +75,11 @@ const everything = (reply: ReturnType<typeof setup>["reply"]) =>
 beforeEach(() => {
   plan = "plus";
   theme = "ocean";
-  persona = "friendly";
+  persona = "bestie";
 });
 
 describe("theme and manner in the chat", () => {
-  it("a Pro user gets the chosen colours and a friendly line after saving", async () => {
+  it("a Pro user gets the chosen colours and a line in the chosen manner after saving", async () => {
     const { deps, reply } = setup();
     await handleEvent(say("กาแฟ 50"), deps);
     const text = everything(reply);
@@ -98,9 +98,10 @@ describe("theme and manner in the chat", () => {
     expect(text).not.toMatch(/จดให้แล้วจ้า|เก็บเข้าสมุด|ลงบัญชีแล้ว ไม่หลุด|จำให้เอง/);
   });
 
-  it("the polite default adds no extra line", async () => {
+  it("a free plan adds no extra line, whatever manner was saved", async () => {
+    plan = "free";
     theme = "mint";
-    persona = "polite";
+    persona = "bestie";
     const { deps, reply } = setup();
     await handleEvent(say("กาแฟ 50"), deps);
     const sent = reply.mock.calls[0]?.[1] ?? [];

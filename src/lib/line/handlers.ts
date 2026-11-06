@@ -46,10 +46,10 @@ import type { SlipImage, SlipOcrProvider } from "@/lib/ocr/provider";
 import { can, effectivePlan } from "@/lib/plan";
 import {
   applyTheme,
-  DEFAULT_PERSONA,
   DEFAULT_THEME,
   effectivePrefs,
   savedQuip,
+  type PersonaId,
 } from "@/lib/personalize";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import {
@@ -1808,9 +1808,12 @@ async function saveEntries(
   // A friendly / cheering manner adds one line after a plain save (never on top of a budget warning).
   const first = confirmed[0];
   if (first && alerts.length === 0 && !cardWarned && messages.length < MAX_REPLY_MESSAGES) {
+    const prefs = await prefsOf(deps, user);
     const quip = savedQuip(
-      (await prefsOf(deps, user)).persona,
+      prefs.persona,
       confirmed.some((c) => c.entry.type === "expense") ? "expense" : "income",
+      undefined,
+      prefs.name,
     );
     if (quip) messages.push(text(quip));
   }
@@ -1917,7 +1920,7 @@ async function pointsSummaryText(db: SupabaseClient, userId: string, now: Date):
 /** The card theme and bot manner in force for a user (the defaults on a free or lapsed plan). Best effort. */
 async function prefsOf(deps: HandlerDeps, user: UserRow) {
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
-  const fallback = { theme: DEFAULT_THEME, persona: DEFAULT_PERSONA };
+  const fallback = { theme: DEFAULT_THEME, persona: "plain" as PersonaId, name: null };
   if (!can(plan, "personalize")) return fallback;
   try {
     return effectivePrefs(plan, await getSettings(deps.db, user.id));

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 
 let plan = "free";
-let persona = "polite";
+let persona = "warm";
 
 vi.mock("@/lib/slip-repo", () => ({
   getUserPlanRow: async () => ({ plan, plan_expires_at: null }),
@@ -63,7 +63,7 @@ const first = (reply: ReturnType<typeof setup>["reply"]) =>
 
 beforeEach(() => {
   plan = "free";
-  persona = "polite";
+  persona = "warm";
 });
 
 describe("the help flow in the chat", () => {
@@ -83,7 +83,7 @@ describe("the help flow in the chat", () => {
 
   it("the question follows the bot's manner when the person has set one (Pro)", async () => {
     plan = "plus";
-    persona = "friendly";
+    persona = "bestie";
     const { deps, reply } = setup();
     await handleEvent(say("วิธีใช้งาน"), deps);
     expect(first(reply).text).toContain("เพื่อน");
