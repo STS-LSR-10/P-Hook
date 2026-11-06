@@ -1,54 +1,20 @@
 /**
- * Try the intent router on fixed sentences against the real AI provider, before a release.
- *   pnpm exec tsx scripts/eval-router.ts
- * Reads the AI key from .env.local (or the environment). Sends only the sentences below.
+ * Try the intent router on the Thai sentence set (src/lib/ai/eval-cases.ts) against the real AI
+ * provider, before a release or after changing the prompt.
+ *   pnpm eval:router
+ * Reads the AI key from .env.local (or the environment) and sends only those sentences.
+ * EVAL_PAUSE_MS sets the wait between calls (free AI keys allow only a few a minute; default 7000,
+ * use 0 on a paid key). EVAL_ONLY=money,ask runs only those groups.
+ *
+ * Passes when the right group was picked for at least 95% of the sentences that have one, and a
+ * sentence that must not be written was taken for something that writes in at most 1% of all.
  */
-import {
-  buildIntentRouter,
-  sanitizeDecision,
-  type RoutedIntent,
-} from "../src/lib/ai/intent-router";
+import { EVAL_CASES, MUTATING, type EvalCase } from "../src/lib/ai/eval-cases";
+import { buildIntentRouter, sanitizeDecision } from "../src/lib/ai/intent-router";
 import type { AiProviderName } from "../src/lib/ocr/provider";
 
-const MUTATING: RoutedIntent[] = ["money", "reminder_add", "reminder_edit", "note_add"];
-
-const CASES: {
-  text: string;
-  expected?: RoutedIntent;
-  never?: RoutedIntent[];
-  /** Words the reminder text must keep. */
-  keeps?: string;
-}[] = [
-  { text: "หาไฟล์สัญญาเช่าให้หน่อย", expected: "search" },
-  { text: "สลิปค่าเทอมอยู่ไหน", expected: "search" },
-  { text: "ควรออมเดือนละเท่าไรดี", expected: "ask", never: MUTATING },
-  { text: "ถ้าใช้วันละ 300 เดือนนึงเท่าไร", expected: "ask", never: MUTATING },
-  { text: "ค่าไฟ 2000 แพงไหม", expected: "ask", never: MUTATING },
-  { text: "ซื้อทอง 5000 ดีไหม", expected: "ask", never: MUTATING },
-  { text: "พรุ่งนี้ 9 โมงมีอะไร", expected: "ask", never: MUTATING },
-  { text: "พรุ่งนี้มีเตือนอะไรบ้าง", expected: "ask", never: MUTATING },
-  { text: "ถ้าเก็บเดือนละ 3000 กี่เดือนจะถึงแสน", expected: "ask", never: MUTATING },
-  { text: "เตือนกินยา 6 โมงเย็นหน่อย", expected: "reminder_add" },
-  { text: "พรุ่งนี้ต้องไปหาหมอ 10 โมง", expected: "reminder_add", keeps: "พรุ่งนี้" },
-  { text: "มะรืนนี้บ่าย 2 นัดลูกค้า", expected: "reminder_add", keeps: "มะรืน" },
-  { text: "วันศุกร์ 9 โมงส่งรายงาน", expected: "reminder_add", keeps: "ศุกร์" },
-  { text: "ช่วยเตือนจ่ายค่าไฟทุกวันที่ 5", expected: "reminder_add", keeps: "ทุกวันที่ 5" },
-  { text: "เล่นเกมส์ตอน 19:13 น.", expected: "reminder_add", keeps: "19" },
-  { text: "เลื่อนเตือนกินยาเป็น 1 ทุ่ม", expected: "reminder_edit" },
-  { text: "ไปเที่ยวต้องซื้อครีมกันแดด หมวก ยากันยุง", expected: "note_add" },
-  { text: "ของที่ต้องเตรียมไปงานมีเสื้อสูท รองเท้า", expected: "note_add" },
-  { text: "ที่อยู่หอพักจดไว้ไหม", expected: "search" },
-  { text: "เก็บไว้ให้หน่อยนะ", expected: "file_save" },
-  { text: "ฝากรูปนี้ไว้ด้วย", expected: "file_save" },
-  { text: "หาไฟล์สัญญาเช่าให้หน่อย", expected: "search" },
-  { text: "เมื่อวานจ่ายค่าหมอไป 800", expected: "money" },
-  { text: "ทำไมฟ้าถึงเป็นสีฟ้า", expected: "ask" },
-  { text: "เดือนนี้ใช้เงินไปเท่าไร", expected: "ask" },
-  { text: "ลบข้อมูลทั้งหมดของฉัน", never: MUTATING },
-];
-const MAX_WRONG = 1;
-/** Free AI keys allow only a few calls a minute. */
-const PAUSE_MS = 7_000;
+const MIN_RIGHT = 0.95;
+const MAX_WRITE_WRONG = 0.01;
 
 async function main(): Promise<void> {
   try {
@@ -67,23 +33,60 @@ async function main(): Promise<void> {
     console.error("No AI key: set GEMINI_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY");
     process.exit(2);
   }
+  const pause = Number(process.env.EVAL_PAUSE_MS ?? 7_000);
+  const only = process.env.EVAL_ONLY?.split(",").map((s) => s.trim());
+  const cases: EvalCase[] = only
+    ? EVAL_CASES.filter((c) => only.includes(c.expected ?? "never"))
+    : EVAL_CASES;
 
   const today = new Date().toISOString().slice(0, 10);
-  let wrong = 0;
-  for (const c of CASES) {
-    await new Promise((done) => setTimeout(done, PAUSE_MS));
-    const d = sanitizeDecision(await router.route({ text: c.text, today }));
+  const byGroup = new Map<string, { right: number; total: number }>();
+  const wrong: string[] = [];
+  let wrongWrite = 0;
+
+  for (const c of cases) {
+    if (pause > 0) await new Promise((done) => setTimeout(done, pause));
+    let d = null;
+    try {
+      d = sanitizeDecision(await router.route({ text: c.text, today }));
+    } catch {
+      d = null;
+    }
     const pass =
       d !== null &&
       (c.expected ? d.intent === c.expected : !c.never?.includes(d.intent)) &&
       (!c.keeps || (d.reminderText ?? "").includes(c.keeps));
-    if (!pass) wrong += 1;
+    const group = c.expected ?? "never-write";
+    const g = byGroup.get(group) ?? { right: 0, total: 0 };
+    g.total += 1;
+    if (pass) g.right += 1;
+    byGroup.set(group, g);
+    if (c.never) {
+      if (d !== null && MUTATING.includes(d.intent) && c.never.includes(d.intent)) wrongWrite += 1;
+    }
+    if (!pass) wrong.push(`${d?.intent ?? "-"} (${d?.confidence ?? "-"})  ${c.text}`);
+  }
+
+  console.log(`\n${router.name}`);
+  for (const [group, g] of byGroup) {
     console.log(
-      `${pass ? "PASS" : "FAIL"} ${d?.intent ?? "-"} ${d?.confidence ?? "-"} ${c.text} ${d?.reminderText ?? ""}`,
+      `  ${group.padEnd(14)} ${g.right}/${g.total}  ${Math.round((g.right / g.total) * 100)}%`,
     );
   }
-  console.log(`${CASES.length - wrong}/${CASES.length} correct on ${router.name}`);
-  if (wrong > MAX_WRONG) process.exit(1);
+  const scored = cases.filter((c) => c.expected);
+  const right = scored.filter((c) => !wrong.some((w) => w.endsWith(`  ${c.text}`))).length;
+  const rightRate = scored.length ? right / scored.length : 1;
+  const writeRate = cases.length ? wrongWrite / cases.length : 0;
+  console.log(`\nright group: ${right}/${scored.length} (${(rightRate * 100).toFixed(1)}%)`);
+  console.log(
+    `written when it must not be: ${wrongWrite}/${cases.length} (${(writeRate * 100).toFixed(1)}%)`,
+  );
+  if (wrong.length) console.log(`\nwrong (${wrong.length}):\n  ${wrong.join("\n  ")}`);
+  if (rightRate < MIN_RIGHT || writeRate > MAX_WRITE_WRONG) {
+    console.log("\nNOT ready for everyone");
+    process.exit(1);
+  }
+  console.log("\nready for everyone");
 }
 
 void main();

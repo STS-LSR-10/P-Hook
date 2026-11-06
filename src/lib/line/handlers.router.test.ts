@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IntentDecision } from "@/lib/ai/intent-router";
 import type { PendingIntent } from "@/lib/pending-intent-repo";
 import type { ReminderDto } from "@/lib/user-reminder";
+import { resetRouterBreaker } from "@/lib/ai/route-text";
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
 import {
   INTENT_CANCELLED_TEXT,
@@ -11,6 +12,7 @@ import {
   REMINDER_GONE_TEXT,
   REMINDER_NOT_MATCHED_TEXT,
   REMINDER_WHICH_MORE_TEXT,
+  QUESTION_NOT_RECORDED_TEXT,
   ROUTER_REMINDER_HINT_TEXT,
   AI_OUT_NOTICE_TEXT,
   SEARCH_LOCKED_TEXT,
@@ -198,6 +200,7 @@ const reminder = (id: string, body: string, repeat: ReminderDto["repeat"] = null
 });
 
 beforeEach(() => {
+  resetRouterBreaker();
   plan = "free";
   repeating = 0;
   quota = true;
@@ -425,6 +428,26 @@ describe("plain messages", () => {
     await handleEvent(say("กินยา 6 โมงเย็น"), deps);
     expect(entries).toEqual([]);
     expect(said(reply)).toBe(ROUTER_REMINDER_HINT_TEXT);
+  });
+
+  it.each([
+    "ค่าไฟ 2000 แพงไหม",
+    "เงินเดือน 20000 ควรแบ่งยังไง",
+    "ถ้าเก็บเดือนละ 3000 กี่เดือนจะถึงแสน",
+  ])("a question with an amount is not recorded when the AI cannot answer it: %s", async (q) => {
+    route.mockRejectedValueOnce(new TypeError("fetch failed"));
+    const { deps, reply } = setup();
+    await handleEvent(say(q), deps);
+    expect(entries).toEqual([]);
+    expect(said(reply)).toContain(QUESTION_NOT_RECORDED_TEXT);
+  });
+
+  it("a question with an amount is not recorded when the quota is out either", async () => {
+    quota = false;
+    noticesLeft = 0;
+    const { deps } = setup();
+    await handleEvent(say("ค่าไฟ 2000 แพงไหม"), deps);
+    expect(entries).toEqual([]);
   });
 
   it("real money with a clock word still records without the AI", async () => {

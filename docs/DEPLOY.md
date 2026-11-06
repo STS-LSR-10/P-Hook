@@ -204,3 +204,17 @@ pnpm e2e                                   # Playwright + axe ที่ 360px (�
 - ครั้งแรกให้ดู build log: ต้องจบด้วย `Deployed phook` · ถ้า build พังเพราะหา `pnpm` ไม่เจอ ให้ตั้ง build variable `PNPM_VERSION=10`
 - ถ้ายังไม่ตั้ง: deploy ด้วยมือได้เสมอจากเครื่อง `pnpm cf:deploy` (ต้องมี `.env.local` ที่มี `NEXT_PUBLIC_*` ของจริงและ `pnpm` ใน PATH)
 - CI บน GitHub (`ci.yml`) ยังรันทุก PR และมีงาน `cloudflare-build` ตรวจว่า bundle บิลด์ผ่านและไม่เกินขนาด
+
+## สไตล์การพิมพ์ของผู้ใช้ (migration 0057)
+
+ก่อนใช้ ให้รัน `supabase/migrations/0057_user_style.sql` ใน Supabase → SQL Editor (เพิ่มอย่างเดียว รันซ้ำได้)
+ตารางเก็บเฉพาะตัวเลขนับนิสัยการพิมพ์ ไม่เก็บข้อความ ถ้ายังไม่รัน บอททำงานปกติ แค่ยังไม่เรียนรู้สไตล์
+
+## ตรวจความแม่นยำของ AI ก่อนเปิดให้ทุกคน
+
+```bash
+pnpm eval:router
+```
+
+ใช้ชุดประโยคไทยใน `src/lib/ai/eval-cases.ts` เรียก AI จริง (ต้องมี API key ในสภาพแวดล้อมหรือ `.env.local`)
+ผ่านเมื่อเลือกกลุ่มถูก ≥ 95% และบันทึกผิดโดยไม่ควรบันทึก ≤ 1% ตั้ง `EVAL_PAUSE_MS=0` ถ้าใช้ key แบบเสียเงิน

@@ -157,7 +157,7 @@ describe("buildIntentRouter", () => {
     await router?.route({ text: "x", today: "2026-11-01" });
     expect(signal).toBeDefined();
     expect(timeout).toHaveBeenCalledWith(ROUTER_TIMEOUT_MS);
-    expect(ROUTER_TIMEOUT_MS).toBeLessThanOrEqual(10_000);
+    expect(ROUTER_TIMEOUT_MS).toBeLessThanOrEqual(4_000);
     timeout.mockRestore();
   });
 
@@ -178,5 +178,24 @@ describe("buildIntentRouter", () => {
       intent: "ask",
       confidence: 0.9,
     });
+  });
+});
+
+describe("routerPrompt hints", () => {
+  it("tells the AI how the person usually types, when it is known", () => {
+    const p = routerPrompt({
+      text: "50 กาแฟ",
+      today: "2026-11-01",
+      hints: ["They often type Thai digits."],
+    });
+    expect(p).toContain("How this person usually types");
+    expect(p).toContain("- They often type Thai digits.");
+    expect(p.indexOf("usually types")).toBeLessThan(p.indexOf("<message>"));
+  });
+  it("adds nothing when there is nothing to say", () => {
+    expect(routerPrompt({ text: "x", today: "2026-11-01", hints: [] })).not.toContain(
+      "usually types",
+    );
+    expect(routerPrompt({ text: "x", today: "2026-11-01" })).not.toContain("usually types");
   });
 });

@@ -44,28 +44,30 @@
 
 ## File Structure
 
-| ไฟล์ | หน้าที่ |
-|---|---|
-| `src/lib/file.ts` | โควตา, ตรวจชนิดไฟล์, ชื่อไฟล์, DTO |
-| `src/lib/file-store.ts` | interface `FileStore` และตัวจริงที่ใช้ R2 |
-| `src/lib/file-repo.ts` | อ่าน/เขียน `stored_files`, `file_waits`, `recent_media` |
-| `src/lib/file-save.ts` | บริการ `saveFile` |
-| `src/lib/line/file-handlers.ts` | เหตุการณ์ไฟล์จาก LINE, ปุ่ม, คำสั่ง |
-| `src/lib/line/file-flex.ts` | การ์ดไฟล์ |
-| `src/lib/auth/file-token.ts` | token ดาวน์โหลด |
-| `src/app/api/files/**` | API รายการ, แก้ชื่อ, ลบ, ลิงก์, ดาวน์โหลด |
-| `src/app/(liff)/files/page.tsx` | หน้าไฟล์ |
-| `supabase/migrations/0047_stored_files.sql` | ตารางและ `file_reserve` |
+| ไฟล์                                        | หน้าที่                                                 |
+| ------------------------------------------- | ------------------------------------------------------- |
+| `src/lib/file.ts`                           | โควตา, ตรวจชนิดไฟล์, ชื่อไฟล์, DTO                      |
+| `src/lib/file-store.ts`                     | interface `FileStore` และตัวจริงที่ใช้ R2               |
+| `src/lib/file-repo.ts`                      | อ่าน/เขียน `stored_files`, `file_waits`, `recent_media` |
+| `src/lib/file-save.ts`                      | บริการ `saveFile`                                       |
+| `src/lib/line/file-handlers.ts`             | เหตุการณ์ไฟล์จาก LINE, ปุ่ม, คำสั่ง                     |
+| `src/lib/line/file-flex.ts`                 | การ์ดไฟล์                                               |
+| `src/lib/auth/file-token.ts`                | token ดาวน์โหลด                                         |
+| `src/app/api/files/**`                      | API รายการ, แก้ชื่อ, ลบ, ลิงก์, ดาวน์โหลด               |
+| `src/app/(liff)/files/page.tsx`             | หน้าไฟล์                                                |
+| `supabase/migrations/0047_stored_files.sql` | ตารางและ `file_reserve`                                 |
 
 ---
 
 ### Task 1: โควตา กฎไฟล์ และฐานข้อมูล
 
 **Files:**
+
 - Create: `src/lib/file.ts`, `src/lib/file.test.ts`, `supabase/migrations/0047_stored_files.sql`, `src/lib/file-repo.ts`, `src/lib/file-repo.test.ts`
 - Modify: `src/lib/usage.ts`, `tests/db/migrations.test.ts`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -78,25 +80,84 @@ export function isBlockedFile(name: string): boolean;
 export function cleanFileName(raw: string): string;
 export function defaultFileName(kind: MediaKind, now: Date): string; // "รูป 1 พ.ย. 2569 19:30"
 export type MediaKind = "image" | "video" | "file";
-export interface FileDto { id: string; name: string; mimeType: string; sizeBytes: number; createdAt: string }
+export interface FileDto {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
 
 // src/lib/file-repo.ts
-export interface RecentMedia { id: string; messageId: string; kind: MediaKind; fileName: string | null; fileSize: number | null }
-export async function reserveFile(db, input: { id: string; userId: string; name: string; mimeType: string; sizeBytes: number; r2Key: string; capacity: number }): Promise<boolean>;
+export interface RecentMedia {
+  id: string;
+  messageId: string;
+  kind: MediaKind;
+  fileName: string | null;
+  fileSize: number | null;
+}
+export async function reserveFile(
+  db,
+  input: {
+    id: string;
+    userId: string;
+    name: string;
+    mimeType: string;
+    sizeBytes: number;
+    r2Key: string;
+    capacity: number;
+  },
+): Promise<boolean>;
 export async function markFileReady(db, userId: string, id: string): Promise<void>;
 export async function dropFileRow(db, userId: string, id: string): Promise<void>;
-export async function getReadyFile(db, userId: string, id: string): Promise<(FileDto & { r2Key: string }) | null>;
-export async function listFiles(db, userId: string, options?: { q?: string; before?: string; limit?: number }): Promise<{ items: FileDto[]; hasMore: boolean }>;
+export async function getReadyFile(
+  db,
+  userId: string,
+  id: string,
+): Promise<(FileDto & { r2Key: string }) | null>;
+export async function listFiles(
+  db,
+  userId: string,
+  options?: { q?: string; before?: string; limit?: number },
+): Promise<{ items: FileDto[]; hasMore: boolean }>;
 export async function renameFile(db, userId: string, id: string, name: string): Promise<boolean>;
 export async function renameLatestFile(db, userId: string, name: string): Promise<FileDto | null>;
 export async function fileUsage(db, userId: string): Promise<number>;
 export async function listAllKeys(db, userId: string): Promise<string[]>;
-export async function listStalePending(db, before: Date, limit?: number): Promise<{ id: string; userId: string; r2Key: string }[]>;
-export async function startFileWait(db, userId: string, name: string | null, now: Date): Promise<void>; // 5 minutes
-export async function takeFileWait(db, userId: string, now: Date): Promise<{ name: string | null } | null>;
-export async function rememberMedia(db, userId: string, media: Omit<RecentMedia, "id">, now: Date): Promise<string>; // 30 minutes
-export async function takeRecentMedia(db, userId: string, now: Date, limit?: number): Promise<RecentMedia[]>; // oldest first, default 5
-export async function takeMediaById(db, userId: string, id: string, now: Date): Promise<RecentMedia | null>;
+export async function listStalePending(
+  db,
+  before: Date,
+  limit?: number,
+): Promise<{ id: string; userId: string; r2Key: string }[]>;
+export async function startFileWait(
+  db,
+  userId: string,
+  name: string | null,
+  now: Date,
+): Promise<void>; // 5 minutes
+export async function takeFileWait(
+  db,
+  userId: string,
+  now: Date,
+): Promise<{ name: string | null } | null>;
+export async function rememberMedia(
+  db,
+  userId: string,
+  media: Omit<RecentMedia, "id">,
+  now: Date,
+): Promise<string>; // 30 minutes
+export async function takeRecentMedia(
+  db,
+  userId: string,
+  now: Date,
+  limit?: number,
+): Promise<RecentMedia[]>; // oldest first, default 5
+export async function takeMediaById(
+  db,
+  userId: string,
+  id: string,
+  now: Date,
+): Promise<RecentMedia | null>;
 export async function purgeExpiredMedia(db, now: Date): Promise<void>;
 ```
 
@@ -105,14 +166,19 @@ export async function purgeExpiredMedia(db, now: Date): Promise<void>;
 - [ ] **Step 1: เขียนเทสต์ `src/lib/file.test.ts`**
 
 ```ts
-it.each(["setup.exe", "APP.APK", "x.msi", "run.bat", "a.b.sh", " tool.exe "])("blocks %s", (n) => expect(isBlockedFile(n)).toBe(true));
-it.each(["สัญญาเช่า.pdf", "photo.jpg", "exe", "notes.exe.txt"])("allows %s", (n) => expect(isBlockedFile(n)).toBe(false));
+it.each(["setup.exe", "APP.APK", "x.msi", "run.bat", "a.b.sh", " tool.exe "])("blocks %s", (n) =>
+  expect(isBlockedFile(n)).toBe(true),
+);
+it.each(["สัญญาเช่า.pdf", "photo.jpg", "exe", "notes.exe.txt"])("allows %s", (n) =>
+  expect(isBlockedFile(n)).toBe(false),
+);
 it("gives each plan its space", () => {
   expect(fileCapacity("free")).toBe(500 * 1024 * 1024);
   expect(fileCapacity("plus")).toBe(5 * 1024 ** 3);
   expect(fileCapacity("ultimate")).toBe(50 * 1024 ** 3);
 });
-it("gives each plan its daily number", () => expect(["free", "plus", "ultimate"].map(fileDayLimit)).toEqual([20, 100, 200]));
+it("gives each plan its daily number", () =>
+  expect(["free", "plus", "ultimate"].map(fileDayLimit)).toEqual([20, 100, 200]));
 it("tidies a name", () => expect(cleanFileName('  a\n"b"\t.pdf  ')).toBe('a "b" .pdf'));
 it("keeps the extension when cutting a long name", () => {
   const n = cleanFileName(`${"ก".repeat(300)}.pdf`);
@@ -127,10 +193,10 @@ it("names a picture by its time in Bangkok", () =>
 
 ```ts
 describe("stored files (0047)", () => {
-  it("file_reserve stops at the capacity");            // 60 + 50 over capacity 100: second returns false, no row
-  it("file_reserve counts pending rows too");          // pending 60 then 50 over 100 is refused
+  it("file_reserve stops at the capacity"); // 60 + 50 over capacity 100: second returns false, no row
+  it("file_reserve counts pending rows too"); // pending 60 then 50 over 100 is refused
   it("files of another person do not count");
-  it("keeps every table server only");                 // RLS on, no policies, for all 3 tables
+  it("keeps every table server only"); // RLS on, no policies, for all 3 tables
   it("removes the rows with the user");
   it("refuses a name that is too long");
 });
@@ -186,27 +252,44 @@ git commit -m "feat(files): quotas, rules and tables for stored files"
 ### Task 2: ที่เก็บ R2 และการโหลดจาก LINE
 
 **Files:**
+
 - Create: `src/lib/file-store.ts`, `src/lib/file-store.test.ts`
 - Modify: `src/lib/line/content.ts`, `src/lib/line/content.pdf.test.ts`, `wrangler.jsonc`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
 // src/lib/file-store.ts
-export interface StoredObject { body: ReadableStream; size: number }
+export interface StoredObject {
+  body: ReadableStream;
+  size: number;
+}
 export interface FileStore {
   put(key: string, bytes: Uint8Array, mimeType: string): Promise<void>;
   get(key: string): Promise<StoredObject | null>;
   delete(keys: string[]): Promise<void>;
 }
-export interface R2Like { put(key: string, value: Uint8Array, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>; get(key: string): Promise<{ body: ReadableStream; size: number } | null>; delete(keys: string | string[]): Promise<void> }
+export interface R2Like {
+  put(
+    key: string,
+    value: Uint8Array,
+    options?: { httpMetadata?: { contentType?: string } },
+  ): Promise<unknown>;
+  get(key: string): Promise<{ body: ReadableStream; size: number } | null>;
+  delete(keys: string | string[]): Promise<void>;
+}
 export function createR2Store(bucket: R2Like): FileStore;
 export function createMemoryStore(): FileStore & { keys(): string[] };
 export async function getFileStore(): Promise<FileStore | null>; // null where no binding exists
 
 // src/lib/line/content.ts
-export async function fetchLineFile(accessToken: string, messageId: string, fetchImpl?: typeof fetch): Promise<{ bytes: Uint8Array; mimeType: string }>;
+export async function fetchLineFile(
+  accessToken: string,
+  messageId: string,
+  fetchImpl?: typeof fetch,
+): Promise<{ bytes: Uint8Array; mimeType: string }>;
 ```
 
 - [ ] **Step 1: เขียนเทสต์**
@@ -257,20 +340,30 @@ git commit -m "feat(files): R2 store and LINE file download"
 ### Task 3: บริการเก็บไฟล์
 
 **Files:**
+
 - Create: `src/lib/file-save.ts`, `src/lib/file-save.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 1 และ Task 2
 - Produces:
 
 ```ts
-export type SaveFailure = "blocked" | "too_large" | "day_limit" | "full" | "gone" | "failed" | "unavailable";
+export type SaveFailure =
+  "blocked" | "too_large" | "day_limit" | "full" | "gone" | "failed" | "unavailable";
 export type SaveResult = { ok: true; file: FileDto } | { ok: false; reason: SaveFailure };
 export interface SaveDeps {
-  db: SupabaseClient; now: () => Date; store: FileStore | null;
+  db: SupabaseClient;
+  now: () => Date;
+  store: FileStore | null;
   fetchFile: (messageId: string) => Promise<{ bytes: Uint8Array; mimeType: string }>;
 }
-export async function saveFile(deps: SaveDeps, user: UserRow, media: Omit<RecentMedia, "id">, name: string | null): Promise<SaveResult>;
+export async function saveFile(
+  deps: SaveDeps,
+  user: UserRow,
+  media: Omit<RecentMedia, "id">,
+  name: string | null,
+): Promise<SaveResult>;
 ```
 
 - [ ] **Step 1: เขียนเทสต์ `file-save.test.ts`**
@@ -278,18 +371,18 @@ export async function saveFile(deps: SaveDeps, user: UserRow, media: Omit<Recent
 ใช้ `createMemoryStore` และ mock `@/lib/file-repo`, `@/lib/usage`
 
 ```ts
-it("downloads, reserves, writes, then marks ready");     // call order, key matches /^u\/u1\/[0-9a-f-]{36}$/
+it("downloads, reserves, writes, then marks ready"); // call order, key matches /^u\/u1\/[0-9a-f-]{36}$/
 it("uses the given name, else the file name, else a default");
 it("keeps the extension of the real file when given a name"); // "สัญญา" + a.pdf is "สัญญา.pdf"
 it("refuses a blocked file before downloading");
 it("refuses a declared size over 20 MB before downloading");
 it("says full and writes nothing when the reserve fails");
-it("drops the row when the write fails");                 // dropFileRow called, reason failed
+it("drops the row when the write fails"); // dropFileRow called, reason failed
 it("gives the day's use back when it fails");
-it("says gone when LINE no longer has the content");      // fetchFile rejects with ImageError gone
+it("says gone when LINE no longer has the content"); // fetchFile rejects with ImageError gone
 it("still refuses when a plan was lowered below the space used"); // reserve false gives full
-it("says unavailable without a store");                   // no download, no use taken
-it("takes the day's use by plan");                        // takeUsage(db, id, "file_save", 20, day)
+it("says unavailable without a store"); // no download, no use taken
+it("takes the day's use by plan"); // takeUsage(db, id, "file_save", 20, day)
 ```
 
 - [ ] **Step 2: รันให้ล้มเหลว**
@@ -314,10 +407,12 @@ git commit -m "feat(files): the service that saves a file"
 ### Task 4: รับไฟล์จากแชท LINE
 
 **Files:**
+
 - Create: `src/lib/line/file-handlers.ts`, `src/lib/line/file-flex.ts`, `src/lib/line/handlers.files.test.ts`
 - Modify: `src/lib/line/handlers.ts:376-390,425-520,2305+`, `src/lib/slips.ts:51-66,166`, `src/lib/line/process.ts`, `src/lib/commands.ts`, `src/lib/commands.test.ts`, `src/lib/line/messages.ts`, `src/lib/ai/intent-router.ts`, `src/lib/ai/route-text.ts`, `src/lib/line/intent-handlers.ts`, `scripts/eval-router.ts`
 
 **Interfaces:**
+
 - Consumes: `saveFile`, repo จาก Task 1
 - Produces:
 
@@ -345,29 +440,29 @@ Postback: `a=fsv&id=<recentId>` เก็บไฟล์, `a=frd&id=<recentId>` 
 
 - [ ] **Step 1: เขียนเทสต์ `handlers.files.test.ts`**
 
-| เทสต์ | สถานการณ์ | สิ่งที่ assert |
-|---|---|---|
-| `a waiting save beats the slip reader` | `file_waits` มีอยู่, ส่งรูป | `saveFile` ถูกเรียก, `ocr` ไม่ถูกเรียก |
-| `a photo wait beats the file wait` | `photo_waits` มีอยู่ | แนบกับรายการตามเดิม |
-| `an image still reads as a slip` | ไม่มีการรอ | อ่านสลิป, จำไฟล์ล่าสุด |
-| `a picture that is no slip offers to keep it` | OCR ตอบ `not_slip` | มีปุ่ม `a=fsv&id=` |
-| `a PDF asks first and calls no AI` | ส่ง PDF | ปุ่ม "เก็บไฟล์" (`fsv`) และ "อ่านเป็นรายการ" (`frd`) ตามลำดับนี้, `reader` ไม่ถูกเรียก |
-| `reading a PDF from its button` | postback `frd` | `handlePdfMessage` ได้ชื่อและขนาดเดิม |
-| `a document offers to keep it` | `.docx` | ปุ่ม `fsv` |
-| `a video offers to keep it` | video | ปุ่ม `fsv` |
-| `a video kept elsewhere is left alone` | `contentProvider.type = "external"` | ตอบว่ารับไม่ได้ |
-| `a blocked file is refused` | `.exe` | ตอบ `FILE_BLOCKED_TEXT`, ไม่จำไฟล์ |
-| `voice still records money` | audio | `handleVoiceMessage` ถูกเรียก |
-| `"เก็บไว้" keeps everything waiting` | ค้าง 3 รูป | `saveFile` 3 ครั้ง, การ์ดสรุป 3 ไฟล์ |
-| `a name is numbered across several files` | `เก็บไฟล์ บัตร`, ค้าง 2 รูป | ชื่อ `บัตร 1`, `บัตร 2` |
-| `nothing waiting opens the 5 minute wait` | ไม่มีไฟล์ค้าง | `startFileWait`, ตอบให้ส่งไฟล์ |
-| `a second tap saves nothing` | `takeMediaById` คืน null | ตอบ `FILE_EXPIRED_TEXT` |
-| `a full space says so` | `saveFile` ตอบ `full` | ตอบ `FILE_FULL_TEXT` พร้อมเพดานของแผน |
-| `the content is gone` | `saveFile` ตอบ `gone` | ตอบให้ส่งใหม่ และเปิดการรอ |
-| `a saved picture says how to name it` | รูปไม่มีชื่อ | การ์ดมีข้อความ `ชื่อไฟล์` |
-| `renames the latest file` | `ชื่อไฟล์ รูปบัตร` | `renameLatestFile` |
-| `a sorted message saves too` | AI ตอบ `file_save` `fileName:"บัตร"` | `runFileSave` ได้ชื่อ `บัตร` |
-| `the file words reach the router` | "เก็บรูปบัตร 2 ใบ" | `needsRouter` เป็น true |
+| เทสต์                                         | สถานการณ์                            | สิ่งที่ assert                                                                         |
+| --------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| `a waiting save beats the slip reader`        | `file_waits` มีอยู่, ส่งรูป          | `saveFile` ถูกเรียก, `ocr` ไม่ถูกเรียก                                                 |
+| `a photo wait beats the file wait`            | `photo_waits` มีอยู่                 | แนบกับรายการตามเดิม                                                                    |
+| `an image still reads as a slip`              | ไม่มีการรอ                           | อ่านสลิป, จำไฟล์ล่าสุด                                                                 |
+| `a picture that is no slip offers to keep it` | OCR ตอบ `not_slip`                   | มีปุ่ม `a=fsv&id=`                                                                     |
+| `a PDF asks first and calls no AI`            | ส่ง PDF                              | ปุ่ม "เก็บไฟล์" (`fsv`) และ "อ่านเป็นรายการ" (`frd`) ตามลำดับนี้, `reader` ไม่ถูกเรียก |
+| `reading a PDF from its button`               | postback `frd`                       | `handlePdfMessage` ได้ชื่อและขนาดเดิม                                                  |
+| `a document offers to keep it`                | `.docx`                              | ปุ่ม `fsv`                                                                             |
+| `a video offers to keep it`                   | video                                | ปุ่ม `fsv`                                                                             |
+| `a video kept elsewhere is left alone`        | `contentProvider.type = "external"`  | ตอบว่ารับไม่ได้                                                                        |
+| `a blocked file is refused`                   | `.exe`                               | ตอบ `FILE_BLOCKED_TEXT`, ไม่จำไฟล์                                                     |
+| `voice still records money`                   | audio                                | `handleVoiceMessage` ถูกเรียก                                                          |
+| `"เก็บไว้" keeps everything waiting`          | ค้าง 3 รูป                           | `saveFile` 3 ครั้ง, การ์ดสรุป 3 ไฟล์                                                   |
+| `a name is numbered across several files`     | `เก็บไฟล์ บัตร`, ค้าง 2 รูป          | ชื่อ `บัตร 1`, `บัตร 2`                                                                |
+| `nothing waiting opens the 5 minute wait`     | ไม่มีไฟล์ค้าง                        | `startFileWait`, ตอบให้ส่งไฟล์                                                         |
+| `a second tap saves nothing`                  | `takeMediaById` คืน null             | ตอบ `FILE_EXPIRED_TEXT`                                                                |
+| `a full space says so`                        | `saveFile` ตอบ `full`                | ตอบ `FILE_FULL_TEXT` พร้อมเพดานของแผน                                                  |
+| `the content is gone`                         | `saveFile` ตอบ `gone`                | ตอบให้ส่งใหม่ และเปิดการรอ                                                             |
+| `a saved picture says how to name it`         | รูปไม่มีชื่อ                         | การ์ดมีข้อความ `ชื่อไฟล์`                                                              |
+| `renames the latest file`                     | `ชื่อไฟล์ รูปบัตร`                   | `renameLatestFile`                                                                     |
+| `a sorted message saves too`                  | AI ตอบ `file_save` `fileName:"บัตร"` | `runFileSave` ได้ชื่อ `บัตร`                                                           |
+| `the file words reach the router`             | "เก็บรูปบัตร 2 ใบ"                   | `needsRouter` เป็น true                                                                |
 
 เพิ่มใน `commands.test.ts` ครอบทั้ง 4 คำสั่ง และ `"ไฟล์ 500"` ยังเป็นรายการเงิน
 
@@ -417,9 +512,11 @@ git commit -m "feat(line): keep files sent in the chat"
 ### Task 5: ค้นหาและรายการไฟล์ในแชท
 
 **Files:**
+
 - Modify: `src/lib/line/file-handlers.ts`, `src/lib/line/file-flex.ts`, `src/lib/line/handlers.ts`, `src/lib/line/handlers.files.test.ts`
 
 **Interfaces:**
+
 - Consumes: `listFiles`, `listNotes`
 - Produces: `runFileSearch(deps, user, term, withNotes: boolean): Promise<LineMessage[]>`, `runFileList(deps, user): Promise<LineMessage[]>`
 
@@ -430,7 +527,7 @@ it("หาไฟล์ finds by name and shows at most 5 cards");
 it("kept-search answers with notes and files together");
 it("kept-search with notes only stays the note answer");
 it("says so when nothing is found");
-it("ไฟล์ของฉัน shows the latest with the space used");   // "ใช้ไป 12 MB จาก 500 MB"
+it("ไฟล์ของฉัน shows the latest with the space used"); // "ใช้ไป 12 MB จาก 500 MB"
 ```
 
 - [ ] **Step 2: รันให้ล้มเหลว**
@@ -455,27 +552,37 @@ git commit -m "feat(line): find kept files from the chat"
 ### Task 6: API ไฟล์และการดาวน์โหลด
 
 **Files:**
+
 - Create: `src/lib/auth/file-token.ts`, `src/lib/auth/file-token.test.ts`, `src/app/api/files/route.ts`, `src/app/api/files/route.test.ts`, `src/app/api/files/[id]/route.ts`, `src/app/api/files/[id]/link/route.ts`, `src/app/api/files/[id]/download/route.ts`, `src/app/api/files/[id]/download/route.test.ts`
 - Modify: `src/lib/rate-limit.ts`, `src/lib/file.ts`
 
 **Interfaces:**
+
 - Consumes: repo, `getFileStore`
 - Produces:
 
 ```ts
 export const FILE_LINK_TTL_SECONDS = 600;
-export async function signFileToken(claims: { userId: string; fileId: string }, secret: string, now?: Date): Promise<string>;
-export async function verifyFileToken(token: string, secret: string, now?: Date): Promise<{ userId: string; fileId: string } | null>;
+export async function signFileToken(
+  claims: { userId: string; fileId: string },
+  secret: string,
+  now?: Date,
+): Promise<string>;
+export async function verifyFileToken(
+  token: string,
+  secret: string,
+  now?: Date,
+): Promise<{ userId: string; fileId: string } | null>;
 export function contentDisposition(name: string): string;
 ```
 
-| Route | ผลลัพธ์ |
-|---|---|
-| `GET /api/files?q=&before=` | `{ items, hasMore, usedBytes, capacityBytes }` |
-| `PATCH /api/files/[id]` `{ name }` | แก้ชื่อ |
-| `DELETE /api/files/[id]` | ลบ R2 ก่อน แล้วลบแถว |
-| `POST /api/files/[id]/link` | `{ url }` อายุ 10 นาที |
-| `GET /api/files/[id]/download?t=` | ไฟล์ |
+| Route                              | ผลลัพธ์                                        |
+| ---------------------------------- | ---------------------------------------------- |
+| `GET /api/files?q=&before=`        | `{ items, hasMore, usedBytes, capacityBytes }` |
+| `PATCH /api/files/[id]` `{ name }` | แก้ชื่อ                                        |
+| `DELETE /api/files/[id]`           | ลบ R2 ก่อน แล้วลบแถว                           |
+| `POST /api/files/[id]/link`        | `{ url }` อายุ 10 นาที                         |
+| `GET /api/files/[id]/download?t=`  | ไฟล์                                           |
 
 - [ ] **Step 1: เขียนเทสต์**
 
@@ -525,10 +632,12 @@ git commit -m "feat(files): API for the files page and private downloads"
 ### Task 7: หน้าไฟล์
 
 **Files:**
+
 - Create: `src/app/(liff)/files/page.tsx`, `tests/e2e/files.spec.ts`
 - Modify: `src/app/(liff)/notes/page.tsx`
 
 **Interfaces:**
+
 - Consumes: API จาก Task 6, `useApi`, `useLiff().openExternal`, `formatBytes`
 
 - [ ] **Step 1: เขียน `tests/e2e/files.spec.ts` ตามแบบไฟล์ e2e เดิมที่ 360px**
@@ -566,10 +675,12 @@ git commit -m "feat(files): the files page"
 ### Task 8: ลบบัญชี งานทำความสะอาด เอกสาร และการตรวจจริง
 
 **Files:**
+
 - Modify: `src/lib/account.ts`, `src/lib/account.test.ts`, `src/app/api/cron/reminders/route.ts`, `src/app/privacy/page.tsx`, `src/app/terms/page.tsx`, `src/lib/line/help-flex.ts`, `docs/DEPLOY.md`, `docs/PROJECT-STATUS.md`
 - Create: `src/lib/file-cleanup.ts`, `src/lib/file-cleanup.test.ts`
 
 **Interfaces:**
+
 - Consumes: `listAllKeys`, `listStalePending`, `dropFileRow`, `purgeExpiredMedia`, `getFileStore`
 - Produces: `cleanupFiles(db, store: FileStore | null, now: Date): Promise<{ removed: number }>`
 

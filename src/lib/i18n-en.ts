@@ -2638,4 +2638,25 @@ export const EN: Record<string, string> = {
     "Search is not available right now. Please try again in a moment",
   'ทดลอง Pro ฟรี 7 วัน ดูยอดรวมในแชทได้เลย ที่เมนู "อัปเกรด"':
     'Try Pro free for 7 days to see totals in the chat: menu "Upgrade"',
+  "มักพิมพ์จำนวนเงินไว้หน้าชื่อ เช่น 50 กาแฟ":
+    "Usually types the amount before the name, like 50 coffee",
+  "มักพิมพ์จำนวนเงินไว้หลังชื่อ เช่น กาแฟ 50":
+    "Usually types the amount after the name, like coffee 50",
+  มักพิมพ์เลขไทย: "Often types Thai digits",
+  "ใช้ k แทนพัน เช่น 25k": "Uses k for thousands, like 25k",
+  "ใช้คำว่า พัน เช่น 12พัน": 'Uses "พัน" for thousands, like "12พัน"',
+  "มักลงท้ายจำนวนเงินด้วย บาท": 'Usually ends an amount with "บาท"',
+  จำสไตล์การจด: "Remember how I type",
+  "บอทสังเกตวิธีที่คุณพิมพ์รายการ เก็บเป็นตัวเลขสรุปเท่านั้น ไม่เก็บข้อความของคุณ แล้วบอก AI ให้อ่านข้อความได้แม่นขึ้น":
+    "The bot notices how you type entries. It keeps only counts, never your messages, and tells the AI so it reads you more accurately",
+  จำสไตล์การจดของฉัน: "Remember how I type",
+  เปิดแล้ว: "Turned on",
+  ปิดและลืมที่จำไว้แล้ว: "Turned off and forgotten",
+  "ยังเรียนรู้ไม่พอ พิมพ์จดไปอีกสักพัก แล้วจะเห็นที่นี่":
+    "Not enough yet. Keep recording for a while and it will show here",
+  "สังเกตจาก {0} ข้อความ": "Seen from {0} messages",
+  ล้างแล้ว: "Cleared",
+  ล้างที่จำไว้: "Clear what it remembers",
+  'ข้อความนี้ดูเหมือนคำถาม ตอนนี้ AI ช่วยตอบไม่ได้ เลยยังไม่ได้จดอะไร ถ้าต้องการจดเป็นรายการ พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"':
+    'This looks like a question and the AI cannot answer right now, so nothing was recorded. To record an entry, type the name and the amount, like "coffee 50"',
 };
