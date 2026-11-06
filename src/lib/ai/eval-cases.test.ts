@@ -40,7 +40,7 @@ describe("the Thai sentence set", () => {
       const r = parseMessage(c.text, NOW, { currencies: true });
       if (needsRouter(c.text, r)) continue;
       expect(r.entries.length, c.text).toBeGreaterThan(0);
-      expect(r.entries[0].amountSatang / 100, c.text).toBe(c.amount);
+      expect((r.entries[0]?.amountSatang ?? 0) / 100, c.text).toBe(c.amount);
     }
   });
 
