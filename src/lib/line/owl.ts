@@ -8,6 +8,7 @@ import { aiUnits, type AiCharge } from "@/lib/ai/ai-quota";
 import { AI_CHAT_LIMIT, effectivePlan } from "@/lib/plan";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import type { UserRow } from "@/lib/repo";
+import type { PersonaId } from "@/lib/personalize";
 import type { LineMessage } from "@/lib/types";
 import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
 import {
@@ -31,6 +32,8 @@ export interface OwlDeps {
   /** Absent (no AI key) -> a polite "not available". */
   owl?: Owl;
   limit?: (bucket: string, subject: string, rule: LimitRule) => Promise<RateLimitResult>;
+  /** The manner and call name this person chose (best effort: a failure means the usual tone). */
+  manner?: (user: UserRow) => Promise<{ persona: PersonaId; name: string | null }>;
 }
 
 const MAX_QUICK_REPLIES = 13; // LINE's limit
@@ -188,7 +191,17 @@ async function askOwl(
     const data = needsPersonalData(q)
       ? renderOwlContext(await loadOwlFacts(db, user.id, q, now))
       : "";
-    const reply = cleanOwlAnswer(await owl.answer({ question: q, data }));
+    const manner = await deps.manner?.(user).catch((e) => {
+      log.warn("owl_manner_failed", { reason: safeMessage(e) });
+      return undefined;
+    });
+    const reply = cleanOwlAnswer(
+      await owl.answer({
+        question: q,
+        data,
+        ...(manner ? { persona: manner.persona, callName: manner.name } : {}),
+      }),
+    );
     if (!reply) return [text(OWL_FAILED_TEXT)];
     outcome.answered = true;
     if (inMode) {

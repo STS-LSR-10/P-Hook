@@ -107,4 +107,24 @@ describe("theme and manner in the chat", () => {
     const sent = reply.mock.calls[0]?.[1] ?? [];
     expect(sent.length).toBeLessThanOrEqual(1);
   });
+
+  it("a Pro user's saved card says its title and subtitle in the chosen manner", async () => {
+    persona = "spicy";
+    const { deps, reply } = setup();
+    await handleEvent(say("กาแฟ 50"), deps);
+    const text = everything(reply);
+    expect(text).toContain("จดแล้ว ไม่ต้องขอบคุณ ✅");
+    expect(text).toContain("ตรวจเองด้วย อย่าให้พี่ฮูกต้องตามแก้");
+    expect(text).not.toContain("อย่าลืมตรวจสอบรายการที่จดด้วยนะ");
+  });
+
+  it("Free keeps the usual card wording", async () => {
+    plan = "free";
+    persona = "spicy";
+    const { deps, reply } = setup();
+    await handleEvent(say("กาแฟ 50"), deps);
+    const text = everything(reply);
+    expect(text).toContain("จดสำเร็จ ✅");
+    expect(text).toContain("อย่าลืมตรวจสอบรายการที่จดด้วยนะ");
+  });
 });

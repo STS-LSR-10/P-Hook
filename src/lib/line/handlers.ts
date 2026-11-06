@@ -164,6 +164,7 @@ import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
 import { buildSummaryMenu } from "./summary-menu";
 import { PRESET_TITLE, presetRange } from "@/lib/summary-range-text";
 import type { Owl } from "@/lib/ai/owl";
+import { applyManner } from "@/lib/manner-text";
 import { inOwlMode, keepOwlOpen, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 import type { IntentRouter } from "@/lib/ai/intent-router";
 import { needsRouter } from "@/lib/ai/route-text";
@@ -474,8 +475,9 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
   enterLocale(user.locale);
   const reply = async (messages: LineMessage[]) => {
     if (event.replyToken && messages.length > 0) {
-      const { theme } = await prefsOf(deps, user);
-      await deps.reply(event.replyToken, applyTheme(messages.slice(0, MAX_REPLY_MESSAGES), theme));
+      const { theme, persona, name } = await prefsOf(deps, user);
+      const said = applyManner(messages.slice(0, MAX_REPLY_MESSAGES), persona, name);
+      await deps.reply(event.replyToken, applyTheme(said, theme));
     }
   };
 
@@ -694,7 +696,16 @@ function intentDeps(
 
 /** What the assistant needs from the handler's dependencies. */
 function owlDeps(deps: HandlerDeps): OwlDeps {
-  return { db: deps.db, now: deps.now, owl: deps.owl, limit: deps.limit };
+  return {
+    db: deps.db,
+    now: deps.now,
+    owl: deps.owl,
+    limit: deps.limit,
+    manner: async (user) => {
+      const { persona, name } = await prefsOf(deps, user);
+      return { persona, name };
+    },
+  };
 }
 
 /**
