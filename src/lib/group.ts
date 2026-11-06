@@ -40,6 +40,14 @@ export interface TripRow {
   closedAt: string | null;
 }
 
+/** What reading a group message took from the typer's "ถาม AI": given back if no answer comes. */
+export interface GroupAiCharge {
+  /** The typer's user id in the app. */
+  userId: string;
+  units: number;
+  month: string;
+}
+
 export type GroupCommand =
   | { kind: "open" }
   | { kind: "close" }
@@ -53,7 +61,8 @@ export type GroupCommand =
   | { kind: "remind-add"; text: string }
   | { kind: "remind-list" }
   | { kind: "remind-cancel"; index: number }
-  | { kind: "owl"; question: string }
+  /** `prepaid`: the AI already read this message and took its use from the one who typed it. */
+  | { kind: "owl"; question: string; prepaid?: GroupAiCharge }
   | { kind: "note-add"; body: string }
   | { kind: "note-list"; term: string | null }
   | TripCommand

@@ -18,12 +18,13 @@ export interface LineMentionee {
 
 /**
  * The text of a group message with a tag of พี่ฮูก in front taken off ("@พี่ฮูก เตือน …" is read as
- * "เตือน …"), and the people it tags (พี่ฮูก itself never counts).
+ * "เตือน …"), the people it tags (พี่ฮูก itself never counts), and whether พี่ฮูก was tagged at all
+ * (`called`: the message is for the bot, wherever the tag stands).
  */
 export function readMentions(
   text: string,
   mentionees: LineMentionee[] | undefined,
-): { text: string; mentions: Mention[] } {
+): { text: string; mentions: Mention[]; called: boolean } {
   const fits = (m: LineMentionee) =>
     Number.isInteger(m.index) && m.index >= 0 && m.length > 0 && m.index + m.length <= text.length;
   const tags = (mentionees ?? []).filter(fits);
@@ -34,8 +35,15 @@ export function readMentions(
       if (m.type === "all") return [{ label, all: true }];
       return m.type === "user" && m.userId ? [{ label, userId: m.userId }] : [];
     });
-  const self = tags.find((m) => m.isSelf && m.index === 0);
-  return { text: self ? text.slice(self.length).trim() : text, mentions };
+  const selves = tags.filter((m) => m.isSelf).sort((a, b) => b.index - a.index);
+  // each tag of พี่ฮูก comes out of the text, from the back so the others keep their places
+  let said = text;
+  for (const m of selves) said = `${said.slice(0, m.index)} ${said.slice(m.index + m.length)}`;
+  return {
+    text: selves.length > 0 ? said.replace(/\s+/g, " ").trim() : text,
+    mentions,
+    called: selves.length > 0,
+  };
 }
 
 /**

@@ -47,7 +47,7 @@ const MAX_LABEL = 20; // LINE's limit for a quick reply
 const UUID_RE = /^[0-9a-f-]{36}$/;
 /** In the พี่ฮูก mode these wait for a yes when the words read as a question. */
 const SAVES: readonly RoutedIntent[] = ["money", "reminder_add", "note_add"];
-const QUESTION_RE =
+export const QUESTION_RE =
   /\?|ไหม|มั้ย|เท่าไร|เท่าไหร่|กี่|ยังไง|อย่างไร|อะไร|ทำไม|หรือเปล่า|รึเปล่า|^\s*ถ้า/;
 
 const CONFIRM_LABEL: Record<RoutedIntent, string> = {
