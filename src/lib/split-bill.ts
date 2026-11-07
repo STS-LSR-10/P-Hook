@@ -175,7 +175,9 @@ export function parseBillCommand(input: string): BillCommand | null {
   const announce = /^✅ เลือกคนหารบิล .+ #([0-9a-f]{8})$/.exec(text);
   if (announce?.[1]) return { kind: "bill-announce", shortId: announce[1] };
   if (text === "ตามเงิน") return { kind: "bill-chase" };
-  if (text === "บิลค้าง") return { kind: "bill-open" };
+  // "ใครค้างบ้าง", "ใครค้างเงินบ้าง", "ใครยังไม่จ่ายบ้าง": asked the way people say it
+  if (text === "บิลค้าง" || /^ใคร(?:ยัง)?(?:ค้าง|ไม่จ่าย)(?:เงิน|จ่าย)?(?:อยู่)?บ้าง$/.test(text))
+    return { kind: "bill-open" };
   if (text === "ปิดรายชื่อ") return { kind: "bill-close" };
   if (text === "ยกเลิกบิล") return { kind: "bill-cancel" };
   if (text === "โอนแล้ว") return { kind: "bill-claim" };

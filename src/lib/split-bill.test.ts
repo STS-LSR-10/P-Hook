@@ -176,6 +176,9 @@ describe("parseBillCommand", () => {
   it("the other words", () => {
     expect(parseBillCommand("ตามเงิน")).toEqual({ kind: "bill-chase" });
     expect(parseBillCommand("บิลค้าง")).toEqual({ kind: "bill-open" });
+    for (const q of ["ใครค้างบ้าง", "ใครค้างเงินบ้าง", "ใครยังไม่จ่ายบ้าง", "ใครค้างจ่ายอยู่บ้าง"])
+      expect(parseBillCommand(q), q).toEqual({ kind: "bill-open" });
+    expect(parseBillCommand("ใครค้างเรื่องงานอยู่")).toBeNull();
     expect(parseBillCommand("ปิดรายชื่อ")).toEqual({ kind: "bill-close" });
     expect(parseBillCommand("ยกเลิกบิล")).toEqual({ kind: "bill-cancel" });
     expect(parseBillCommand("ได้รับแล้ว แอน")).toEqual({ kind: "bill-paid", names: ["แอน"] });
