@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRate } from "@/lib/fx-repo";
-import { aiCostUsd, r2OperationClass, type TokenPrice } from "./pricing";
+import { aiCostUsd, findAiPrice, r2OperationClass, type TokenPrice } from "./pricing";
 
 const PAGE = 1000; // the most the database API returns in one read
 const LINE_API = "https://api.line.me/v2/bot";
@@ -42,8 +42,23 @@ export interface AiModelUsage {
   costUsd: number | null;
 }
 
+/** One model's calls, tokens and cost across every feature. */
+export interface AiModelTotal {
+  provider: string;
+  model: string;
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  /** Null when the model has no known price. */
+  costUsd: number | null;
+  /** USD per 1M tokens, null when unknown. */
+  price: TokenPrice | null;
+}
+
 export interface AiCosts {
   rows: AiModelUsage[];
+  /** The same calls grouped by model, dearest first. */
+  models: AiModelTotal[];
   calls: number;
   inputTokens: number;
   outputTokens: number;
@@ -91,8 +106,30 @@ export async function loadAiCosts(
     (min, r) => (min === null || r.first_at < min ? r.first_at : min),
     null,
   );
+  const byModel = new Map<string, AiModelTotal>();
+  for (const r of rows) {
+    const key = `${r.provider}:${r.model}`;
+    const m = byModel.get(key) ?? {
+      provider: r.provider,
+      model: r.model,
+      calls: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      costUsd: null,
+      price: findAiPrice(prices, r.model),
+    };
+    m.calls += r.calls;
+    m.inputTokens += r.inputTokens;
+    m.outputTokens += r.outputTokens;
+    if (r.costUsd !== null) m.costUsd = (m.costUsd ?? 0) + r.costUsd;
+    byModel.set(key, m);
+  }
+  const models = [...byModel.values()].sort(
+    (a, b) => (b.costUsd ?? 0) - (a.costUsd ?? 0) || b.calls - a.calls,
+  );
   return {
     rows,
+    models,
     calls: rows.reduce((n, r) => n + r.calls, 0),
     inputTokens: rows.reduce((n, r) => n + r.inputTokens, 0),
     outputTokens: rows.reduce((n, r) => n + r.outputTokens, 0),

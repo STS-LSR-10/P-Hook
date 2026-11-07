@@ -15,6 +15,7 @@ import {
   resolveLinePlan,
   type LineCost,
   type LinePlan,
+  type PlanCost,
 } from "@/lib/admin/pricing";
 
 export type Loaded<T> = { ok: true; value: T } | { ok: false; reason: "failed" | "not_configured" };
@@ -55,7 +56,7 @@ const USAGE_KINDS: Record<string, string> = {
   group_push: "ส่งในกลุ่ม",
 };
 
-export const COLORS = { ai: "#7c3aed", line: "#06c755", r2: "#f38020" } as const;
+export const COLORS = { ai: "#7c3aed", line: "#06c755", r2: "#f38020", plan: "#0ea5e9" } as const;
 
 // ---------- small pieces ----------
 
@@ -154,38 +155,80 @@ export function AiPanel({
             <Stat label="Input" value={int.format(c.inputTokens)} sub="tokens" />
             <Stat label="Output" value={int.format(c.outputTokens)} sub="tokens (รวม thinking)" />
           </div>
-          {c.rows.length > 0 ? (
+          {c.models.length > 0 && (
             <div className="-mx-1 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
-                    <th className="px-1 py-1.5 font-medium">ฟีเจอร์ / โมเดล</th>
+                    <th className="px-1 py-1.5 font-medium">แยกตามโมเดล</th>
                     <th className="px-1 py-1.5 text-right font-medium">ครั้ง</th>
                     <th className="hidden px-1 py-1.5 text-right font-medium sm:table-cell">
-                      Token
+                      In / Out
                     </th>
                     <th className="px-1 py-1.5 text-right font-medium">USD</th>
                   </tr>
                 </thead>
                 <tbody className="tabular-nums">
-                  {c.rows.map((r) => (
-                    <tr key={`${r.model}:${r.feature}`} className="border-t border-border">
+                  {c.models.map((m) => (
+                    <tr key={`${m.provider}:${m.model}`} className="border-t border-border">
                       <td className="px-1 py-1.5">
-                        <span className="block">{AI_FEATURES[r.feature] ?? r.feature}</span>
-                        <span className="block font-mono text-[11px] text-muted">{r.model}</span>
+                        <span className="block font-mono text-xs">{m.model}</span>
+                        <span className="block text-[11px] text-muted">
+                          {m.price
+                            ? `$${m.price.input} in · $${m.price.output} out / 1M`
+                            : "ไม่ทราบราคา"}
+                        </span>
                       </td>
-                      <td className="px-1 py-1.5 text-right">{int.format(r.calls)}</td>
+                      <td className="px-1 py-1.5 text-right">{int.format(m.calls)}</td>
                       <td className="hidden px-1 py-1.5 text-right sm:table-cell">
-                        {compact(r.inputTokens + r.outputTokens)}
+                        {compact(m.inputTokens)} / {compact(m.outputTokens)}
                       </td>
                       <td className="px-1 py-1.5 text-right">
-                        {r.costUsd === null ? "ไม่ทราบราคา" : usd(r.costUsd)}
+                        {m.costUsd === null ? "—" : usd(m.costUsd)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          )}
+          {c.rows.length > 0 ? (
+            <details className="rounded-md border border-border px-3 py-2 text-sm">
+              <summary className="cursor-pointer select-none text-xs font-medium text-muted">
+                แยกตามฟีเจอร์
+              </summary>
+              <div className="-mx-1 mt-2 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                      <th className="px-1 py-1.5 font-medium">ฟีเจอร์ / โมเดล</th>
+                      <th className="px-1 py-1.5 text-right font-medium">ครั้ง</th>
+                      <th className="hidden px-1 py-1.5 text-right font-medium sm:table-cell">
+                        Token
+                      </th>
+                      <th className="px-1 py-1.5 text-right font-medium">USD</th>
+                    </tr>
+                  </thead>
+                  <tbody className="tabular-nums">
+                    {c.rows.map((r) => (
+                      <tr key={`${r.model}:${r.feature}`} className="border-t border-border">
+                        <td className="px-1 py-1.5">
+                          <span className="block">{AI_FEATURES[r.feature] ?? r.feature}</span>
+                          <span className="block font-mono text-[11px] text-muted">{r.model}</span>
+                        </td>
+                        <td className="px-1 py-1.5 text-right">{int.format(r.calls)}</td>
+                        <td className="hidden px-1 py-1.5 text-right sm:table-cell">
+                          {compact(r.inputTokens + r.outputTokens)}
+                        </td>
+                        <td className="px-1 py-1.5 text-right">
+                          {r.costUsd === null ? "ไม่ทราบราคา" : usd(r.costUsd)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
           ) : (
             <p className="text-sm text-muted">เดือนนี้ยังไม่มีการเรียก AI ที่บันทึกไว้</p>
           )}
@@ -223,11 +266,44 @@ export function AiPanel({
       )}
 
       <Note>
-        ราคา paid tier ต่อ 1 ล้าน token (เช่น gemini-3.5-flash-lite: input $0.30, output $2.50)
-        ถ้าใช้ Gemini แบบ free tier ค่าจริงคือ $0
+        คิดราคาแยกตามโมเดลที่ใช้จริง (paid tier ต่อ 1 ล้าน token) ถ้าใช้ Gemini แบบ free tier
+        ค่าจริงคือ $0 · โมเดลใหม่/ราคาเปลี่ยน ตั้ง AI_PRICES
         {c?.firstAt
           ? ` · เริ่มบันทึกเดือนนี้ ${new Date(c.firstAt).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" })}`
           : ""}
+      </Note>
+    </Panel>
+  );
+}
+
+export function PlanPanel({ plans, rate }: { plans: PlanCost[]; rate: UsdRate | null }) {
+  const total = plans.reduce((n, p) => n + p.usd, 0);
+  return (
+    <Panel
+      title="ค่าแพลนรายเดือน"
+      tag="Workers · Supabase"
+      color={COLORS.plan}
+      cost={usd(total)}
+      costSub={rate ? `≈ ${thb(total * rate.rate)}` : undefined}
+      delay={320}
+    >
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {plans.map((p) => (
+          <li key={p.id} className="min-w-0 rounded-md bg-background px-3 py-2.5">
+            <p className="truncate text-[11px] font-medium uppercase tracking-wide text-muted">
+              {p.name}
+            </p>
+            <p className="text-lg font-semibold tabular-nums">{usd(p.usd)}</p>
+            <p className="truncate text-[11px] text-muted">
+              {p.detail}
+              {rate ? ` · ≈ ${thb(p.usd * rate.rate)}` : ""}
+            </p>
+          </li>
+        ))}
+      </ul>
+      <Note>
+        ค่าคงที่ต่อเดือน (ไม่ใช่ตามการใช้งาน) · ตั้ง WORKERS_PLAN_USD / SUPABASE_PLAN_USD
+        ถ้าเปลี่ยนแพลน (Supabase Pro = 25)
       </Note>
     </Panel>
   );
@@ -435,6 +511,7 @@ export interface AdminViewProps {
   scan: Loaded<BucketScan>;
   ops: Loaded<R2Operations>;
   rate: UsdRate | null;
+  plans: PlanCost[];
 }
 
 export function AdminView({
@@ -447,6 +524,7 @@ export function AdminView({
   scan,
   ops,
   rate,
+  plans,
 }: AdminViewProps) {
   const plan = line.ok ? resolveLinePlan(line.value.quotaLimit) : null;
   const lineCost = line.ok && plan ? lineCostThb(plan, line.value.quotaUsed) : null;
@@ -465,6 +543,12 @@ export function AdminView({
     },
     { key: "line", label: "LINE OA", color: COLORS.line, thb: lineCost?.totalThb ?? null },
     { key: "r2", label: "R2", color: COLORS.r2, thb: rate ? r2.totalUsd * rate.rate : null },
+    {
+      key: "plan",
+      label: "ค่าแพลน",
+      color: COLORS.plan,
+      thb: rate ? plans.reduce((n, p) => n + p.usd, 0) * rate.rate : null,
+    },
   ];
   const total = parts.reduce((n, p) => n + (p.thb ?? 0), 0);
   const partial = parts.some((p) => p.thb === null) || !ops.ok;
@@ -519,7 +603,9 @@ export function AdminView({
           />
           <div className="relative grid gap-6 lg:grid-cols-[1.2fr_1fr] lg:items-end">
             <div>
-              <p className="text-sm text-[var(--hero-ink-soft)]">ยอดรวมเดือนนี้ (AI + LINE + R2)</p>
+              <p className="text-sm text-[var(--hero-ink-soft)]">
+                ยอดรวมเดือนนี้ (AI + LINE + R2 + ค่าแพลน)
+              </p>
               <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl lg:text-6xl">
                 {thb(total)}
               </p>
@@ -541,7 +627,7 @@ export function AdminView({
                     ) : null,
                   )}
               </div>
-              <ul className="grid grid-cols-3 gap-2 text-sm">
+              <ul className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                 {parts.map((p) => (
                   <li key={p.key} className="min-w-0 rounded-md bg-white/10 px-3 py-2">
                     <span className="flex items-center gap-1.5 text-[11px] text-[var(--hero-ink-soft)]">
@@ -565,10 +651,14 @@ export function AdminView({
           <AiPanel costs={aiCosts} uses={uses} rate={rate} />
           <LinePanel usage={line} plan={plan} cost={lineCost} />
           <R2Panel stored={stored} scan={scan} ops={ops} rate={rate} />
+          <div className="md:col-span-2 xl:col-span-3">
+            <PlanPanel plans={plans} rate={rate} />
+          </div>
         </div>
 
         <footer className="text-center text-[11px] text-muted">
-          ราคาตรวจเมื่อ 7 พ.ย. 2026 อาจเปลี่ยนได้ · ยังไม่รวมค่าแพลน Workers และ Supabase
+          ราคาตรวจเมื่อ 7 พ.ย. 2026 อาจเปลี่ยนได้ · ยังไม่รวมค่า Cloudflare อื่น ๆ (เช่น
+          Images/Stream)
         </footer>
       </main>
     </div>

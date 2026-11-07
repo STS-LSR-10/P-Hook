@@ -13,6 +13,7 @@ import {
   scanBucket,
   type ListableBucket,
 } from "./dashboard-data";
+import { readAiPrices } from "./pricing";
 
 /** A stand-in for the database client that serves `rows` in pages like the real API does. */
 function fakeDb(rows: unknown[], fail = false, rpc?: unknown): SupabaseClient {
@@ -97,6 +98,58 @@ describe("loadAiCosts", () => {
     expect(result.unpricedModels).toEqual(["claude-haiku-5-5"]);
     expect(result.firstAt).toBe("2026-11-01T05:00:00Z");
     expect(result.rows[0]?.model).toBe("gemini-3.5-flash-lite");
+  });
+
+  it("groups by model, pricing each model on its own and matching dated names", async () => {
+    const db = fakeDb([], false, [
+      {
+        provider: "gemini",
+        model: "gemini-3.5-flash-lite",
+        feature: "slip",
+        calls: 1,
+        input_tokens: 1_000_000,
+        output_tokens: 0,
+        first_at: "2026-11-02T00:00:00Z",
+      },
+      {
+        provider: "gemini",
+        model: "gemini-3.5-flash-lite",
+        feature: "owl",
+        calls: 1,
+        input_tokens: 1_000_000,
+        output_tokens: 0,
+        first_at: "2026-11-02T00:00:00Z",
+      },
+      {
+        provider: "anthropic",
+        model: "claude-sonnet-5-5-20261001",
+        feature: "slip",
+        calls: 3,
+        input_tokens: 1_000_000,
+        output_tokens: 1_000_000,
+        first_at: "2026-11-02T00:00:00Z",
+      },
+      {
+        provider: "openai",
+        model: "mystery",
+        feature: "text",
+        calls: 1,
+        input_tokens: 5,
+        output_tokens: 5,
+        first_at: "2026-11-02T00:00:00Z",
+      },
+    ]);
+    const { models, costUsd } = await loadAiCosts(db, "2026-11-01", readAiPrices({}));
+    expect(models.map((m) => m.model)).toEqual([
+      "claude-sonnet-5-5-20261001",
+      "gemini-3.5-flash-lite",
+      "mystery",
+    ]);
+    expect(models[0]).toMatchObject({ calls: 3, costUsd: 12 });
+    expect(models[1]).toMatchObject({ calls: 2 });
+    expect(models[1]?.costUsd).toBeCloseTo(0.6, 6);
+    expect(models[2]).toMatchObject({ costUsd: null, price: null });
+    expect(costUsd).toBeCloseTo(12.6, 6);
   });
 
   it("is empty for a month with no calls and throws when the database fails", async () => {

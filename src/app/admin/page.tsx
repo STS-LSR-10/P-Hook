@@ -13,7 +13,7 @@ import {
   monthRange,
   scanBucket,
 } from "@/lib/admin/dashboard-data";
-import { readAiPrices } from "@/lib/admin/pricing";
+import { readAiPrices, readPlanCosts } from "@/lib/admin/pricing";
 import { getServerEnv } from "@/lib/env";
 import { log } from "@/lib/log";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -80,6 +80,7 @@ export default async function AdminPage() {
       scan={scan}
       ops={ops}
       rate={rate}
+      plans={readPlanCosts()}
     />
   );
 }

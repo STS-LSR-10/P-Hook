@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   aiCostUsd,
+  findAiPrice,
+  readPlanCosts,
   lineCostThb,
   LINE_PLANS,
   r2CostUsd,
@@ -26,6 +28,26 @@ describe("AI prices", () => {
     expect(prices.bad).toBeUndefined();
     expect(prices["gemini-3.5-flash-lite"]).toBeDefined();
     expect(readAiPrices({ AI_PRICES: "{nope" })["gemini-3.5-flash-lite"]).toBeDefined();
+  });
+});
+
+describe("model matching and plan fees", () => {
+  it("finds dated names by the longest entry, not a lookalike", () => {
+    const prices = readAiPrices({});
+    expect(findAiPrice(prices, "claude-haiku-5-5-20261001")).toEqual({ input: 0.1, output: 0.5 });
+    expect(findAiPrice(prices, "gemini-3.5-flash-lite-preview")).toEqual({
+      input: 0.3,
+      output: 2.5,
+    });
+    expect(findAiPrice(prices, "gemini-3.5-flash")).toEqual({ input: 1.5, output: 9 });
+    expect(findAiPrice(prices, "gemini-3.5-flashy")).toBeNull();
+  });
+
+  it("charges Workers Paid $5 and Supabase Free $0 unless overridden", () => {
+    expect(readPlanCosts({}).map((p) => p.usd)).toEqual([5, 0]);
+    const pro = readPlanCosts({ SUPABASE_PLAN_USD: "25", WORKERS_PLAN_USD: "bad" });
+    expect(pro.map((p) => p.usd)).toEqual([5, 25]);
+    expect(pro[1]?.detail).toBe("Pro plan");
   });
 });
 
