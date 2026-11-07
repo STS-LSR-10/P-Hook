@@ -1,3 +1,4 @@
+import { noteAiUsage } from "@/lib/ai/usage-log";
 import { SLIP_JSON_SCHEMA } from "./slip-schema";
 
 export interface SlipImage {
@@ -100,7 +101,9 @@ export async function postJson(
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (!res.ok) throw new Error(`${label} request failed: ${res.status}`);
-  return res.json();
+  const data: unknown = await res.json();
+  await noteAiUsage(label, url, body, data);
+  return data;
 }
 
 function geminiProvider(cfg: AiConfig, fetchImpl: typeof fetch): SlipOcrProvider {
