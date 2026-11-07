@@ -16,11 +16,13 @@ import {
   Repeat,
   Search,
   Settings2,
+  Users,
   ShieldAlert,
   Wallet,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
+import { GroupManageCard } from "@/components/liff/settings/group-manage-card";
 import { DeleteCard } from "@/components/liff/settings/delete-card";
 import { MemoryCard } from "@/components/liff/settings/memory-card";
 import { MenuButton, MenuGroup, MenuLink } from "@/components/liff/settings/menu";
@@ -73,7 +75,7 @@ const CYCLE_OPTIONS: { value: Settings["budget_cycle"]; label: string }[] = [
 
 const START_DAYS = Array.from({ length: MAX_START_DAY }, (_, i) => i + 1);
 
-type SectionId = "bot" | "money" | "member" | "general" | "privacy";
+type SectionId = "bot" | "money" | "groups" | "member" | "general" | "privacy";
 
 interface SectionDef {
   id: SectionId;
@@ -105,6 +107,14 @@ const SECTIONS: SectionDef[] = [
     words: t(
       "รอบงบ งบ รายเดือน รายสัปดาห์ วันเริ่ม กระเป๋าเงิน บัญชี บัตร เป้าหมาย ออม บิล รายการประจำ ความจำ หมวด สลิป ผู้รับ",
     ),
+  },
+  {
+    id: "groups",
+    title: t("จัดการกลุ่ม"),
+    sub: t("สรุป, รายการจด, บิลค้างจ่าย, ตั้งเวลาทวงตัง"),
+    tone: "sky",
+    icon: <Users className="h-5 w-5" />,
+    words: t("กลุ่ม สมุดกลุ่ม จด สรุป ค้างจ่าย เคลียร์ ยอดค้าง ทวงตัง ทวงเงิน หารบิล เตือน"),
   },
   {
     id: "member",
@@ -141,6 +151,10 @@ export default function SettingsPage() {
   const { api } = useLiff();
   const settings = useApi<Settings>("/api/settings");
   const me = useApi<Me>("/api/me");
+  // the card for LINE group ledgers is only there for someone who owns one
+  const owned = useApi<{ items: { id: string; name: string; isActive: boolean }[] }>("/api/groups");
+  const groups = owned.data?.items ?? [];
+  const sections = SECTIONS.filter((s) => s.id !== "groups" || groups.length > 0);
   const [override, setOverride] = useState<Settings | null>(null);
   // shown in the section whose setting was changed, so it is never off-screen
   const [notice, setNotice] = useState<{ at: SectionId; text: string } | null>(null);
@@ -186,10 +200,10 @@ export default function SettingsPage() {
   }
 
   const term = search.trim().toLowerCase();
-  const found = term ? SECTIONS.filter((s) => matches(s, term)) : SECTIONS;
+  const found = term ? sections.filter((s) => matches(s, term)) : sections;
   // a search opens what it finds; otherwise each section is as the person left it
   const isOpen = (id: SectionId) => (term ? !closedInSearch.has(id) : opened.has(id));
-  const allOpen = SECTIONS.every((s) => opened.has(s.id));
+  const allOpen = sections.every((s) => opened.has(s.id));
   const flip = (set: Set<SectionId>, id: SectionId) => {
     const next = new Set(set);
     if (next.has(id)) next.delete(id);
@@ -220,6 +234,8 @@ export default function SettingsPage() {
         return current.budget_cycle === "weekly"
           ? t("รอบรายสัปดาห์")
           : t("รอบวันที่ {0}", current.cycle_start_day);
+      case "groups":
+        return t("{0} กลุ่ม", groups.length);
       case "member":
         return t("สมาชิก {0}", PLAN_LABEL[user.plan]);
       case "general":
@@ -369,6 +385,8 @@ export default function SettingsPage() {
             </MenuGroup>
           </>
         );
+      case "groups":
+        return <GroupManageCard groups={groups} />;
       case "member":
         return (
           <>
@@ -485,7 +503,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() =>
-                    setOpened(allOpen ? new Set() : new Set(SECTIONS.map((s) => s.id)))
+                    setOpened(allOpen ? new Set() : new Set(sections.map((s) => s.id)))
                   }
                   className="h-8 text-xs font-semibold text-primary"
                 >
@@ -502,7 +520,7 @@ export default function SettingsPage() {
             ) : null}
             {/* every section stays in the page, so a search never loses what was typed in one */}
             <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
-              {SECTIONS.map((s) => (
+              {sections.map((s) => (
                 <SettingsSection
                   key={s.id}
                   hidden={!found.includes(s)}

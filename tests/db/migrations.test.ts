@@ -2142,7 +2142,10 @@ describe("card theme and bot manner (0032)", () => {
         db.query("update user_settings set call_name = $2 where user_id = $1", [u, bad]),
       ).rejects.toThrow();
     }
-    await db.query("update user_settings set call_name = $2 where user_id = $1", [u, "ก".repeat(20)]);
+    await db.query("update user_settings set call_name = $2 where user_id = $1", [
+      u,
+      "ก".repeat(20),
+    ]);
     await db.query("update user_settings set call_name = null where user_id = $1", [u]);
   });
 });
@@ -3173,5 +3176,61 @@ describe("reminder categories (0049)", () => {
   it("refuses anything else", async () => {
     const u = await newUser(db, `rc-${Math.random()}`);
     await expect(add(u, "x")).rejects.toThrow();
+  });
+});
+
+describe("group chase schedule (0060)", () => {
+  async function makeGroup() {
+    const owner = await newUser(db, `cs-${Math.random()}`);
+    return (
+      await one<{ id: string; chase_every_days: number; chase_window: string }>(
+        db,
+        "insert into bot_groups (line_group_id, owner_user_id) values ($1,$2) returning id, chase_every_days, chase_window",
+        [`C${Math.random().toString(16).slice(2)}`, owner],
+      )
+    ).id;
+  }
+  const remind = async (bill: string, day: string, every?: number) =>
+    (
+      await one<{ r: boolean }>(
+        db,
+        every === undefined
+          ? "select split_bill_mark_reminded($1, $2::date) as r"
+          : "select split_bill_mark_reminded($1, $2::date, $3) as r",
+        every === undefined ? [bill, day] : [bill, day, every],
+      )
+    ).r;
+
+  it("a group starts as it always did: every day, from 10:00; and takes only the offered values", async () => {
+    const id = await makeGroup();
+    const row = await one<{ chase_every_days: number; chase_window: string }>(
+      db,
+      "select chase_every_days, chase_window from bot_groups where id = $1",
+      [id],
+    );
+    expect(row).toMatchObject({ chase_every_days: 1, chase_window: "any" });
+    await expect(
+      db.query("update bot_groups set chase_every_days = 4 where id = $1", [id]),
+    ).rejects.toThrow();
+    await expect(
+      db.query("update bot_groups set chase_window = 'night' where id = $1", [id]),
+    ).rejects.toThrow();
+  });
+
+  it("a bill is chased again only after `every` days (no argument means every day)", async () => {
+    const group = await makeGroup();
+    const bill = (
+      await one<{ id: string }>(
+        db,
+        "insert into split_bills (group_id, payer_line_user_id, title, amount_satang, status) values ($1,'Uanna','x',100,'collecting') returning id",
+        [group],
+      )
+    ).id;
+    expect(await remind(bill, "2026-10-18", 3)).toBe(true);
+    expect(await remind(bill, "2026-10-19", 3)).toBe(false);
+    expect(await remind(bill, "2026-10-20", 3)).toBe(false);
+    expect(await remind(bill, "2026-10-21", 3)).toBe(true);
+    expect(await remind(bill, "2026-10-21")).toBe(false); // the same day, never twice
+    expect(await remind(bill, "2026-10-22")).toBe(true); // the old call: every day
   });
 });

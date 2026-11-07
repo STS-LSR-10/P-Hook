@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { billShares, type BillMemberRow, type BillRow } from "@/lib/split-bill";
 import type { PaymentAccount } from "@/lib/split-bill-repo";
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
@@ -15,6 +15,7 @@ const NAMES: Record<string, string> = {
 
 let group = { id: "g1", lineGroupId: GID, ownerUserId: "app-Uowner", isActive: true };
 let ownerPlan = "ultimate";
+let chase = { everyDays: 1, window: "any" };
 let members = new Map<string, { name: string; updatedAt: string }>();
 let bills: BillRow[] = [];
 let billMembers: Record<string, (BillMemberRow & { joinedAt: number })[]> = {};
@@ -45,6 +46,7 @@ vi.mock("@/lib/repo", async (original) => ({
 }));
 vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
+  getChaseSchedule: async () => chase,
   getOwner: async () => ({ lineUserId: "Uowner", plan: ownerPlan, planExpiresAt: null }),
   memberNames: async () => members,
   upsertMember: async (_db: unknown, _g: string, userId: string, name: string) => {
@@ -131,8 +133,9 @@ vi.mock("@/lib/split-bill-repo", () => ({
     announced.add(id);
     return true;
   },
-  markReminded: async (_db: unknown, id: string, day: string) => {
-    if (reminded.get(id) === day) return false;
+  markReminded: async (_db: unknown, id: string, day: string, every = 1) => {
+    const last = reminded.get(id);
+    if (last && (Date.parse(day) - Date.parse(last)) / 86_400_000 < every) return false;
     reminded.set(id, day);
     return true;
   },
@@ -590,6 +593,33 @@ describe("the daily reminder (free: it rides on ordinary chat)", () => {
     expect(await chat("Ubob", AT_ELEVEN, "บิลค้าง")).not.toContain("เตือนประจำวัน");
     const old = new Date(AT_ELEVEN.getTime() + 31 * 86_400_000);
     expect(await chat("Ubob", old)).toBe("[]");
+  });
+
+  describe("the owner's schedule", () => {
+    afterEach(() => {
+      chase = { everyDays: 1, window: "any" };
+    });
+    const AT_FIVE_PM = new Date("2026-10-18T10:00:00Z"); // 17:00 in Bangkok
+
+    it("off: nothing is ever chased", async () => {
+      chase = { everyDays: 0, window: "any" };
+      expect(await chat("Ubob", AT_ELEVEN)).toBe("[]");
+    });
+
+    it("a window keeps the reminder to its hours: evening is not 11:00, but is 17:00", async () => {
+      chase = { everyDays: 1, window: "evening" };
+      expect(await chat("Ubob", AT_ELEVEN)).toBe("[]");
+      expect(await chat("Ubob", AT_FIVE_PM)).toContain("เตือนประจำวัน");
+    });
+
+    it("every 3 days: not the next day, but three days later", async () => {
+      chase = { everyDays: 3, window: "any" };
+      expect(await chat("Ubob", AT_ELEVEN)).toContain("เตือนประจำวัน");
+      const day = (n: number) => new Date(AT_ELEVEN.getTime() + n * 86_400_000);
+      expect(await chat("Ubob", day(1))).toBe("[]");
+      expect(await chat("Ubob", day(2))).toBe("[]");
+      expect(await chat("Ubob", day(3))).toContain("เตือนประจำวัน");
+    });
   });
 
   it("a read-only ledger (the owner's plan ended) sends no reminders", async () => {

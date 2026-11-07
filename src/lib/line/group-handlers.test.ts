@@ -36,6 +36,7 @@ vi.mock("@/lib/repo", async (original) => ({
 }));
 vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
+  getChaseSchedule: async () => ({ everyDays: 1, window: "any" }),
   getOwner: async () => ({ lineUserId: ownerLine, plan: ownerPlan, planExpiresAt: null }),
   countOwnedGroups: async () => ownedCount,
   openGroup: async (_db: unknown, lineGroupId: string, owner: string) => {

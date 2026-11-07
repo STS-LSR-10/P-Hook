@@ -195,13 +195,19 @@ export async function markAnnounced(db: SupabaseClient, billId: string): Promise
   return data === true;
 }
 
-/** True the first time on each day: this bill's reminder is due. */
+/** True when this bill's reminder is due: first time, or `every` days since the last. */
 export async function markReminded(
   db: SupabaseClient,
   billId: string,
   day: string,
+  every = 1,
 ): Promise<boolean> {
-  const { data, error } = await db.rpc("split_bill_mark_reminded", { p_bill: billId, p_day: day });
+  // p_every only goes along when it matters, so a database before migration 0060 still works
+  const { data, error } = await db.rpc("split_bill_mark_reminded", {
+    p_bill: billId,
+    p_day: day,
+    ...(every > 1 ? { p_every: every } : {}),
+  });
   if (error) fail("mark reminded", error);
   return data === true;
 }

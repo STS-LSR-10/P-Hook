@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { DEFAULT_CHASE, parseChase, type ChaseSchedule } from "@/lib/chase-schedule";
 import type { GroupEntryRow, GroupRow, TripRow } from "@/lib/group";
 import type { SplitMode } from "@/lib/trip";
 import { satangToString, toSatang } from "@/lib/money";
@@ -421,4 +422,64 @@ export async function tripEntries(db: SupabaseClient, tripId: string): Promise<G
     .order("occurred_at", { ascending: true });
   if (error) fail("load trip entries", error);
   return ((data ?? []) as EntryDb[]).map(toEntry);
+}
+
+/** How this group's unpaid bills are chased. The default when never set, or before migration 0060. */
+export async function getChaseSchedule(
+  db: SupabaseClient,
+  groupId: string,
+): Promise<ChaseSchedule> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .select("chase_every_days,chase_window")
+    .eq("id", groupId)
+    .maybeSingle();
+  // 42703: the column is not there yet (migration 0060 not run): the old daily reminder, as before
+  if (error?.code === "42703") return DEFAULT_CHASE;
+  if (error) fail("get chase schedule", error);
+  if (!data) return DEFAULT_CHASE;
+  const row = data as { chase_every_days: number; chase_window: string };
+  return parseChase({ everyDays: row.chase_every_days, window: row.chase_window }) ?? DEFAULT_CHASE;
+}
+
+export async function setChaseSchedule(
+  db: SupabaseClient,
+  groupId: string,
+  schedule: ChaseSchedule,
+): Promise<void> {
+  const { error } = await db
+    .from("bot_groups")
+    .update({ chase_every_days: schedule.everyDays, chase_window: schedule.window })
+    .eq("id", groupId);
+  if (error) fail("set chase schedule", error);
+}
+
+/** Fix the title or amount of a group entry that is still there; false when it is gone. */
+export async function updateEntry(
+  db: SupabaseClient,
+  groupId: string,
+  id: string,
+  patch: { title?: string; amountSatang?: number },
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("group_entries")
+    .update({
+      ...(patch.title !== undefined ? { title: patch.title } : {}),
+      // a new amount is no longer "original amount x rate", so the foreign-currency note goes
+      ...(patch.amountSatang !== undefined
+        ? {
+            amount: satangToString(patch.amountSatang),
+            orig_currency: null,
+            orig_amount: null,
+            fx_rate: null,
+          }
+        : {}),
+    })
+    .eq("group_id", groupId)
+    .eq("id", id)
+    .eq("status", "confirmed")
+    .select("id")
+    .maybeSingle();
+  if (error) fail("update group entry", error);
+  return data !== null;
 }

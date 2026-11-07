@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GroupRow } from "@/lib/group";
-import { memberNames } from "@/lib/group-repo";
+import { inChaseWindow } from "@/lib/chase-schedule";
+import { getChaseSchedule, memberNames } from "@/lib/group-repo";
 import { formatBaht } from "@/lib/money";
 import { resolveNames } from "@/lib/trip";
 import {
@@ -582,8 +583,6 @@ export const BILL_POSTBACKS = new Set([
   "gbn",
 ]);
 
-/** The reminder goes out from this hour (Bangkok) on, so nobody is poked at night. */
-export const REMINDER_HOUR = 10;
 /** A bill nobody settles stops being reminded about after this many days. */
 export const REMINDER_DAYS = 30;
 
@@ -594,7 +593,8 @@ export const REMINDER_DAYS = 30;
  */
 export async function runDailyReminder(ctx: BillContext, now: Date): Promise<void> {
   if (!ctx.writable) return;
-  if (bangkokParts(now).hour < REMINDER_HOUR) return;
+  const schedule = await getChaseSchedule(ctx.db, ctx.group.id);
+  if (schedule.everyDays === 0 || !inChaseWindow(bangkokParts(now).hour, schedule.window)) return;
   const day = bangkokDateKey(now);
   const bills = await listBills(ctx.db, ctx.group.id, ["collecting"], 10);
   const recent = bills.filter(
@@ -611,7 +611,7 @@ export async function runDailyReminder(ctx: BillContext, now: Date): Promise<voi
     const members = await billMembers(ctx.db, bill.id);
     if (unpaid(members, bill.payerLineUserId).length === 0) continue;
     // one reminder per bill per day, even when two messages arrive together
-    if (!(await markReminded(ctx.db, bill.id, day))) continue;
+    if (!(await markReminded(ctx.db, bill.id, day, schedule.everyDays))) continue;
     due.push({ bill, members, payerName: nameOf(bill.payerLineUserId) });
   }
   if (due.length === 0) return;

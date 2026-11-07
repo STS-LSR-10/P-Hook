@@ -45,6 +45,7 @@ let noteCalls: { userId?: string; body?: string; group?: unknown; q?: string }[]
 
 vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
+  getChaseSchedule: async () => ({ everyDays: 1, window: "any" }),
   getOwner: async () => ({ lineUserId: "Uowner", plan: ownerPlan, planExpiresAt: null }),
   memberNames: async () => new Map([["Uanna", { name: "แอน", updatedAt: NOW.toISOString() }]]),
   upsertMember: async () => undefined,
