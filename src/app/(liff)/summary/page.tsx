@@ -90,118 +90,124 @@ export default function SummaryPage() {
     <main>
       <PageHeader title={t("สรุปภาพรวม")} />
 
-      <div className="space-y-4 px-4 pb-4">
-        <section
-          aria-label={t("โปรไฟล์")}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 shadow-card"
-        >
-          {me.data?.pictureUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={me.data.pictureUrl}
-              alt=""
-              width={48}
-              height={48}
-              className="h-12 w-12 shrink-0 rounded-full border border-border object-cover"
-            />
-          ) : (
-            <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
-          )}
-          {me.data ? (
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-bold">{me.data.displayName}</p>
-              <span className="mt-0.5 inline-block rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
-                {PLAN_LABEL[me.data.plan]}
-              </span>
-            </div>
-          ) : (
-            <div className="flex-1 space-y-2" aria-hidden>
-              <Skeleton className="h-4 w-32 rounded-lg" />
-              <Skeleton className="h-4 w-20 rounded-full" />
-            </div>
-          )}
-        </section>
+      <div className="space-y-4 px-4 pb-4 lg:px-0">
+        <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+          <section
+            aria-label={t("โปรไฟล์")}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 shadow-card"
+          >
+            {me.data?.pictureUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={me.data.pictureUrl}
+                alt=""
+                width={48}
+                height={48}
+                className="h-12 w-12 shrink-0 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+            )}
+            {me.data ? (
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold">{me.data.displayName}</p>
+                <span className="mt-0.5 inline-block rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
+                  {PLAN_LABEL[me.data.plan]}
+                </span>
+              </div>
+            ) : (
+              <div className="flex-1 space-y-2" aria-hidden>
+                <Skeleton className="h-4 w-32 rounded-lg" />
+                <Skeleton className="h-4 w-20 rounded-full" />
+              </div>
+            )}
+          </section>
 
-        <section
-          aria-label={t("ช่วงเวลา")}
-          className="flex items-center justify-between rounded-2xl border border-border bg-surface p-1.5"
-        >
-          <button
-            type="button"
-            aria-label={t("รอบก่อนหน้า")}
-            disabled={offset <= -MAX_BACK}
-            onClick={() => setOffset((o) => o - 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-muted disabled:opacity-30"
+          <section
+            aria-label={t("ช่วงเวลา")}
+            className="flex items-center justify-between rounded-2xl border border-border bg-surface p-1.5"
           >
-            <ChevronLeft className="h-5 w-5" aria-hidden />
-          </button>
-          {rangeLabel ? (
-            <p className="num text-sm font-semibold" aria-live="polite">
-              {rangeLabel}
-            </p>
-          ) : (
-            <Skeleton className="h-4 w-40 rounded-lg" />
-          )}
-          <button
-            type="button"
-            aria-label={t("รอบถัดไป")}
-            disabled={offset >= 0}
-            onClick={() => setOffset((o) => o + 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-muted disabled:opacity-30"
-          >
-            <ChevronRight className="h-5 w-5" aria-hidden />
-          </button>
-        </section>
+            <button
+              type="button"
+              aria-label={t("รอบก่อนหน้า")}
+              disabled={offset <= -MAX_BACK}
+              onClick={() => setOffset((o) => o - 1)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-muted disabled:opacity-30"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden />
+            </button>
+            {rangeLabel ? (
+              <p className="num text-sm font-semibold" aria-live="polite">
+                {rangeLabel}
+              </p>
+            ) : (
+              <Skeleton className="h-4 w-40 rounded-lg" />
+            )}
+            <button
+              type="button"
+              aria-label={t("รอบถัดไป")}
+              disabled={offset >= 0}
+              onClick={() => setOffset((o) => o + 1)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-muted disabled:opacity-30"
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden />
+            </button>
+          </section>
+        </div>
 
         {summary.loading && !data ? (
           <SummarySkeleton />
         ) : summary.error && !data ? (
           <ErrorState message={summary.error} onRetry={summary.reload} />
         ) : data ? (
-          <>
-            <Hero
-              data={data}
-              accumulated={accumulated}
-              onToggle={() => setAccumulated((v) => !v)}
-              goal={goal}
-            />
-            <IncomeExpense data={data} />
-            <Spending data={data} open={open} onToggle={() => setOpen((v) => !v)} />
+          <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0">
+            <div className="space-y-4">
+              <Hero
+                data={data}
+                accumulated={accumulated}
+                onToggle={() => setAccumulated((v) => !v)}
+                goal={goal}
+              />
+              <IncomeExpense data={data} />
+              <Spending data={data} open={open} onToggle={() => setOpen((v) => !v)} />
+            </div>
 
-            <section aria-label={t("รายการล่าสุด")}>
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-base font-semibold">{t("รายการล่าสุด")}</h2>
-                <Link href="/transactions" className="text-sm font-medium text-primary">
-                  {t("ดูทั้งหมด")}
-                </Link>
-              </div>
-              {data.recent.length === 0 ? (
-                <div className="rounded-2xl border border-border bg-surface shadow-card">
-                  <EmptyState
-                    title={t("ยังไม่มีรายการเลย")}
-                    hint={t('ลองพิมพ์ "กาแฟ 30" ในแชท หรือกดเพิ่มที่หน้ารายการได้เลย')}
-                  />
+            <div className="space-y-4">
+              <section aria-label={t("รายการล่าสุด")}>
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="text-base font-semibold">{t("รายการล่าสุด")}</h2>
+                  <Link href="/transactions" className="text-sm font-medium text-primary">
+                    {t("ดูทั้งหมด")}
+                  </Link>
                 </div>
-              ) : (
-                <ul className="space-y-2">
-                  {data.recent.map((tx) => (
-                    <TxCard key={tx.id} tx={tx} showDate />
-                  ))}
-                </ul>
-              )}
-            </section>
+                {data.recent.length === 0 ? (
+                  <div className="rounded-2xl border border-border bg-surface shadow-card">
+                    <EmptyState
+                      title={t("ยังไม่มีรายการเลย")}
+                      hint={t('ลองพิมพ์ "กาแฟ 30" ในแชท หรือกดเพิ่มที่หน้ารายการได้เลย')}
+                    />
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {data.recent.map((tx) => (
+                      <TxCard key={tx.id} tx={tx} showDate />
+                    ))}
+                  </ul>
+                )}
+              </section>
 
-            <section
-              aria-label={t("ทิป")}
-              className="flex items-start gap-3 rounded-2xl border border-border bg-primary-soft p-3.5"
-            >
-              <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-              <div className="text-sm">
-                <p className="font-semibold">{t("ทิปน่ารู้")}</p>
-                <p className="text-primary">{tip}</p>
-              </div>
-            </section>
-          </>
+              <section
+                aria-label={t("ทิป")}
+                className="flex items-start gap-3 rounded-2xl border border-border bg-primary-soft p-3.5"
+              >
+                <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                <div className="text-sm">
+                  <p className="font-semibold">{t("ทิปน่ารู้")}</p>
+                  <p className="text-primary">{tip}</p>
+                </div>
+              </section>
+            </div>
+          </div>
         ) : null}
       </div>
     </main>

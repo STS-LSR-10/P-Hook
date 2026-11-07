@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
   return (
     <main>
       <PageHeader title={t("วิเคราะห์")} />
-      <div className="space-y-4 px-4 pb-4">
+      <div className="space-y-4 px-4 pb-4 lg:px-0">
         <Segmented
           label={t("หมวดวิเคราะห์")}
           value={tab}

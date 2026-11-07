@@ -446,7 +446,7 @@ export default function SettingsPage() {
   return (
     <main>
       <PageHeader title={t("ตั้งค่า")} />
-      <div className="space-y-4 px-4 pb-4">
+      <div className="space-y-4 px-4 pb-4 lg:px-0">
         {loading ? (
           <LoadingBlock rows={4} />
         ) : error || !current || !user ? (
@@ -501,7 +501,7 @@ export default function SettingsPage() {
               />
             ) : null}
             {/* every section stays in the page, so a search never loses what was typed in one */}
-            <div className="space-y-3">
+            <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
               {SECTIONS.map((s) => (
                 <SettingsSection
                   key={s.id}

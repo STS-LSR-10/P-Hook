@@ -229,7 +229,7 @@ function Vault() {
             : tr("ใช้พื้นที่ของเจ้าของสมุด");
 
   return (
-    <main className="-mb-24 flex min-h-screen flex-col bg-[#FAF7F2] pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800">
+    <main className="-mb-24 flex min-h-screen lg:-mb-10 flex-col bg-[#FAF7F2] pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800">
       <header className="flex items-center justify-between gap-2 px-4 pb-3 pt-5">
         <h1 className="text-xl font-bold text-stone-900">{tr("คลัง | พี่ฮูก")}</h1>
         <SpaceSwitch groupId={groupId} onChange={switchSpace} />
@@ -544,7 +544,7 @@ function VaultList({
           </p>
         </div>
       ) : tab === "image" && grid ? (
-        <ul aria-label={tr("รูปเล็ก")} className="grid grid-cols-3 gap-2">
+        <ul aria-label={tr("รูปเล็ก")} className="grid grid-cols-3 gap-2 lg:grid-cols-6">
           {fileItems.map((file) => (
             <li key={file.id}>
               <button
@@ -559,7 +559,10 @@ function VaultList({
           ))}
         </ul>
       ) : (
-        <ul aria-label={tr("รายการในคลัง")} className="space-y-2.5">
+        <ul
+          aria-label={tr("รายการในคลัง")}
+          className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:space-y-0"
+        >
           {entries.map(({ note, file }) =>
             note ? (
               <li key={`n-${note.id}`}>
