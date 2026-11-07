@@ -6,6 +6,7 @@ import {
   needsPersonalData,
   OWL_SYSTEM_PROMPT,
   owlUserPrompt,
+  splitChat,
 } from "./owl";
 
 function fakeFetch(body: unknown) {
@@ -180,5 +181,40 @@ describe("the manner the person chose", () => {
 
   it("is not used in a group, where there is no one person", () => {
     expect(owlUserPrompt({ ...base, group: true, persona: "spicy" })).not.toContain("MANNER");
+  });
+});
+
+describe("short chat answers", () => {
+  it("the rules ask for one short line, up to three, like a chat between friends", () => {
+    expect(OWL_SYSTEM_PROMPT).toContain("ONE short line");
+    expect(OWL_SYSTEM_PROMPT).toContain("never more than 3 lines");
+    expect(OWL_SYSTEM_PROMPT).not.toContain("3 to 8 lines");
+    expect(OWL_SYSTEM_PROMPT).not.toContain("900 characters");
+  });
+
+  it("the rules allow a longer text only when the person asks for one", () => {
+    expect(OWL_SYSTEM_PROMPT).toContain("explicitly asks");
+  });
+});
+
+describe("splitChat", () => {
+  it("keeps one line as one bubble", () => {
+    expect(splitChat("ร้อนมาก 🦉")).toEqual(["ร้อนมาก 🦉"]);
+  });
+
+  it("makes a bubble of each line, ignoring blank lines", () => {
+    expect(splitChat("บรรทัดหนึ่ง\n\nบรรทัดสอง\nบรรทัดสาม")).toEqual([
+      "บรรทัดหนึ่ง",
+      "บรรทัดสอง",
+      "บรรทัดสาม",
+    ]);
+  });
+
+  it("never sends more than three bubbles: the rest joins the last one", () => {
+    expect(splitChat("1\n2\n3\n4\n5")).toEqual(["1", "2", "3\n4\n5"]);
+  });
+
+  it("is empty for nothing", () => {
+    expect(splitChat("  \n \n")).toEqual([]);
   });
 });

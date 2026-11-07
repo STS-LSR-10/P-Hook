@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData, type Owl } from "@/lib/ai/owl";
+import {
+  cleanOwlAnswer,
+  MAX_QUESTION_LENGTH,
+  needsPersonalData,
+  splitChat,
+  type Owl,
+} from "@/lib/ai/owl";
 import { clearAskWait, isAskWaitLive, startAskWait } from "@/lib/ask-repo";
 import { log, safeMessage } from "@/lib/log";
 import { looksSecret } from "@/lib/secret-text";
@@ -209,7 +215,11 @@ async function askOwl(
         log.warn("ask_wait_extend_failed", { reason: safeMessage(e) }),
       );
     }
-    return [inMode ? withButtons(reply, false) : text(reply)];
+    // a bubble for each line, the way a friend chats; the buttons go under the last one
+    const parts = splitChat(reply);
+    return parts.map((t, i) =>
+      inMode && i === parts.length - 1 ? withButtons(t, false) : text(t),
+    );
   } catch (error) {
     log.warn("owl_failed", { owl: owl.name, reason: safeMessage(error) });
     return [text(OWL_FAILED_TEXT)];

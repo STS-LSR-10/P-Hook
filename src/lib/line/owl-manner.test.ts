@@ -50,4 +50,17 @@ describe("the AI answers in the manner the person chose", () => {
     const out = await owlAsk(deps({ manner }), user, "ทำไมฟ้าสีฟ้า", false, "U1");
     expect(JSON.stringify(out)).toContain("เพราะแสงกระเจิง");
   });
+
+  it("sends a reply of several lines as several chat bubbles, the buttons on the last", async () => {
+    answer.mockResolvedValueOnce("ร้อนมาก\nพกน้ำด้วยนะ\nเดินทางปลอดภัย");
+    const out = (await owlAsk(deps(), user, "วันนี้ร้อนไหม", true, "U1")) as unknown as {
+      type: string;
+      text: string;
+      quickReply?: unknown;
+    }[];
+    expect(out.map((m) => m.text)).toEqual(["ร้อนมาก", "พกน้ำด้วยนะ", "เดินทางปลอดภัย"]);
+    expect(out.every((m) => m.type === "text")).toBe(true);
+    expect(out.slice(0, 2).every((m) => m.quickReply === undefined)).toBe(true);
+    expect(out[2]?.quickReply).toBeDefined();
+  });
 });

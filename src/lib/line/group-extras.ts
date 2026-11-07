@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData } from "@/lib/ai/owl";
+import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData, splitChat } from "@/lib/ai/owl";
 import { fileCapacity, fileDayLimit, formatBytes, type FileDto } from "@/lib/file";
 import {
   listGroupFiles as listFilesOfGroup,
@@ -456,7 +456,7 @@ async function askOwl(
     const reply = cleanOwlAnswer(await owl.answer({ question: q, data, group: true }));
     if (!reply) return [text(OWL_FAILED_TEXT)];
     outcome.answered = true;
-    return [text(reply)];
+    return splitChat(reply).map((t) => text(t));
   } catch (error) {
     log.warn("owl_failed", { owl: owl.name, reason: safeMessage(error) });
     return [text(OWL_FAILED_TEXT)];

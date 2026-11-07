@@ -53,8 +53,12 @@ export const OWL_SYSTEM_PROMPT = [
   "2) Answer ordinary questions of any kind (knowledge, how-to, writing, ideas, translation, daily",
   "   life) from your general knowledge, like a good general assistant.",
   "Rules:",
-  "- Answer in the language of the question (Thai by default), warm and to the point. Keep it short:",
-  "  usually 3 to 8 lines, longer only when the question really needs it (never over ~900 characters).",
+  "- Answer in the language of the question (Thai by default), like a friend chatting in LINE: warm,",
+  "  casual, to the point. Thai people do not like reading long text, so the default is ONE short line",
+  "  (one sentence, about 60 characters). Only when one line really cannot hold the answer, use 2 or 3",
+  "  short lines, each on its own line, never more than 3 lines (about 200 characters in all). No lists,",
+  "  no preamble, no recap, no closing offer of more help. Go longer (still tight) only when the person",
+  "  explicitly asks for a long text, such as writing something, a translation or a step-by-step guide.",
   "  Plain text only: no markdown (no **, #, tables), bullets only as •, at most one emoji.",
   "- About the person's money: use ONLY numbers that appear in DATA or in the question (or plain",
   "  arithmetic on them, and a month taken as 30 days). Never invent or guess a number. Amounts are in",
@@ -141,7 +145,7 @@ export function createOwl(cfg: OwlConfig, fetchImpl: typeof fetch = fetch): Owl 
             {
               systemInstruction: { parts: [{ text: OWL_SYSTEM_PROMPT }] },
               contents: [{ role: "user", parts: [{ text: owlUserPrompt(input) }] }],
-              generationConfig: { temperature: 0.3, maxOutputTokens: 900 },
+              generationConfig: { temperature: 0.3, maxOutputTokens: 500 },
             },
             fetchImpl,
             TIMEOUT_MS,
@@ -159,7 +163,7 @@ export function createOwl(cfg: OwlConfig, fetchImpl: typeof fetch = fetch): Owl 
             { "x-api-key": cfg.apiKey, "anthropic-version": "2023-06-01" },
             {
               model,
-              max_tokens: 900,
+              max_tokens: 500,
               temperature: 0.3,
               system: OWL_SYSTEM_PROMPT,
               messages: [{ role: "user", content: owlUserPrompt(input) }],
@@ -184,7 +188,7 @@ export function createOwl(cfg: OwlConfig, fetchImpl: typeof fetch = fetch): Owl 
             {
               model,
               temperature: 0.3,
-              max_tokens: 900,
+              max_tokens: 500,
               messages: [
                 { role: "system", content: OWL_SYSTEM_PROMPT },
                 { role: "user", content: owlUserPrompt(input) },
@@ -238,4 +242,20 @@ export function cleanOwlAnswer(raw: string): string {
     text = `${(end > MAX_ANSWER_LENGTH * 0.6 ? cut.slice(0, end) : cut).trim()}…`;
   }
   return text;
+}
+
+/** Most chat bubbles one answer is sent as. */
+const MAX_BUBBLES = 3;
+
+/**
+ * An answer as chat bubbles, a bubble for each line (blank lines are dropped), so it reads like a
+ * conversation instead of one wall of text. Past three lines the rest joins the last bubble.
+ */
+export function splitChat(answer: string): string[] {
+  const lines = answer
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length <= MAX_BUBBLES) return lines;
+  return [...lines.slice(0, MAX_BUBBLES - 1), lines.slice(MAX_BUBBLES - 1).join("\n")];
 }
