@@ -6,6 +6,7 @@ import {
   type FeedbackQuery,
 } from "@/lib/admin/dashboard-data";
 import { AdminTabs } from "./tabs";
+import { DeleteFeedbackButton } from "./feedback/delete-button";
 import { COLORS, Missing, Panel } from "./panels";
 
 const PLAN_NAMES: Record<FeedbackItem["plan"], string> = {
@@ -71,7 +72,7 @@ export function FeedbackView({
         .admin-rise { animation: admin-rise .5s cubic-bezier(.2,.7,.2,1) both }
         @media (prefers-reduced-motion: reduce) { .admin-rise { animation: none } }
       `}</style>
-      <main className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+      <main className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
         <header className="admin-rise">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
             P-Hook · Admin
@@ -124,9 +125,12 @@ export function FeedbackView({
           ) : page.items.length === 0 ? (
             <p className="text-sm text-muted">ไม่มีข้อเสนอแนะที่ตรงกับตัวกรองนี้</p>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
               {page.items.map((f) => (
-                <li key={f.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+                <li
+                  key={f.id}
+                  className="space-y-1.5 rounded-md border border-border bg-background p-3"
+                >
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                     <span
                       className="rounded-full px-2 py-0.5 font-semibold text-white"
@@ -145,6 +149,7 @@ export function FeedbackView({
                         timeZone: "Asia/Bangkok",
                       })}
                     </time>
+                    <DeleteFeedbackButton id={f.id} back={feedbackHref(query)} />
                   </div>
                   <p className="whitespace-pre-wrap break-words text-sm">{f.body}</p>
                 </li>

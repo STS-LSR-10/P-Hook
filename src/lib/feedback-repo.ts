@@ -17,3 +17,10 @@ export async function addFeedback(db: SupabaseClient, input: NewFeedback): Promi
   });
   if (error) throw new Error(`add feedback: ${error.message}`);
 }
+
+/** Remove one suggestion for good; false when it was already gone. */
+export async function deleteFeedback(db: SupabaseClient, id: string): Promise<boolean> {
+  const { data, error } = await db.from("feedback").delete().eq("id", id).select("id");
+  if (error) throw new Error(`delete feedback: ${error.message}`);
+  return (data ?? []).length > 0;
+}
