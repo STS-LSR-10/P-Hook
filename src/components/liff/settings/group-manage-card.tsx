@@ -7,6 +7,7 @@ import { Segmented } from "@/components/liff/segmented";
 import { ErrorState, LoadingBlock } from "@/components/liff/states";
 import { CHASE_EVERY, CHASE_WINDOWS, type ChaseSchedule } from "@/lib/chase-schedule";
 import { money } from "@/lib/money";
+import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 import { cardClass, fieldClass } from "./types";
 import { t } from "@/lib/i18n";
@@ -18,6 +19,8 @@ interface OwnedGroup {
 }
 interface Manage {
   isActive: boolean;
+  /** Set once the bot was taken out of the group: when its data is deleted for good. */
+  purgeAt: string | null;
   summary: {
     totalSatang: number;
     count: number;
@@ -195,7 +198,12 @@ function GroupPanel({
         <>
           {!data.isActive ? (
             <p className="rounded-2xl bg-warn-soft px-4 py-2 text-xs text-warn">
-              {t("สมุดกลุ่มนี้ปิดอยู่ ดูได้อย่างเดียว เปิดสมุดในกลุ่มก่อนจึงจะแก้ได้")}
+              {data.purgeAt
+                ? t(
+                    'พี่ฮูกถูกลบออกจากกลุ่มนี้แล้ว ข้อมูลจะถูกลบถาวรวันที่ {0} เพิ่มพี่ฮูกกลับเข้ากลุ่มแล้วพิมพ์ "เปิดสมุดกลุ่ม" เพื่อเก็บไว้',
+                    formatThaiDate(new Date(data.purgeAt)),
+                  )
+                : t("สมุดกลุ่มนี้ปิดอยู่ ดูได้อย่างเดียว เปิดสมุดในกลุ่มก่อนจึงจะแก้ได้")}
             </p>
           ) : null}
           {tab === "summary" ? (

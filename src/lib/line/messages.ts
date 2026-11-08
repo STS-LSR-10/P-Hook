@@ -636,6 +636,13 @@ export const NOTE_EMPTY_TEXT = t('ยังไม่มีโน้ต พิม
 export const NOTE_SEARCH_USAGE_TEXT = t('พิมพ์คำที่ต้องการหาต่อท้าย เช่น "ค้นหาโน้ต ไวไฟ"');
 export const noteNotFoundText = (term: string) => t('ไม่เจอโน้ตที่มีคำว่า "{0}"', term);
 
+// ── a group the bot was taken out of ──
+export const GROUP_LEFT_TEXT = (until: string) =>
+  t(
+    'พี่ฮูกถูกลบออกจากกลุ่มหนึ่งที่คุณเปิดสมุดไว้แล้ว ข้อมูลของกลุ่มนั้นเก็บไว้ให้ถึง {0} หลังจากนั้นจะถูกลบถาวร ถ้าจะใช้ต่อ เพิ่มพี่ฮูกกลับเข้ากลุ่ม แล้วพิมพ์ "เปิดสมุดกลุ่ม" ก่อนวันนั้นนะ',
+    until,
+  );
+
 // ── feedback to the admin ──
 export const FEEDBACK_THANKS_TEXT = t("ขอบคุณที่ช่วยพี่ฮูกพัฒนา 🦉");
 export const FEEDBACK_USAGE_TEXT = t(

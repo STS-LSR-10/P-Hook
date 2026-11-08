@@ -3,7 +3,14 @@ import { calendarMonthRange } from "@/lib/budget-cycle";
 import { requireGroupOwner } from "@/lib/group-api";
 import { openDebts } from "@/lib/group-manage";
 import { summarizePayers } from "@/lib/group";
-import { getChaseSchedule, memberNames, payerTotals, recentEntries } from "@/lib/group-repo";
+import { GROUP_KEEP_DAYS } from "@/lib/group-lifecycle";
+import {
+  getChaseSchedule,
+  getLeftAt,
+  memberNames,
+  payerTotals,
+  recentEntries,
+} from "@/lib/group-repo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,14 +32,19 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
     const range = calendarMonthRange(new Date());
     const members = await memberNames(db, viewer.group.id);
     const names = new Map([...members].map(([id, v]) => [id, v.name]));
-    const [rows, entries, debts, schedule] = await Promise.all([
+    const [rows, entries, debts, schedule, leftAt] = await Promise.all([
       payerTotals(db, viewer.group.id, range.from, range.to),
       recentEntries(db, viewer.group.id, ENTRIES_SHOWN),
       openDebts(db, viewer.group.id, names),
       getChaseSchedule(db, viewer.group.id),
+      viewer.group.isActive ? null : getLeftAt(db, viewer.group.id),
     ]);
     return json({
       isActive: viewer.group.isActive,
+      // when the data of a group the bot was taken out of is deleted for good
+      purgeAt: leftAt
+        ? new Date(leftAt.getTime() + GROUP_KEEP_DAYS * 86_400_000).toISOString()
+        : null,
       summary: summarizePayers(rows, names),
       entries: entries.map((e) => ({
         id: e.id,

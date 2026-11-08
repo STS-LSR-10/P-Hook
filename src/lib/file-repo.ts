@@ -486,3 +486,20 @@ export async function purgeExpiredMedia(db: SupabaseClient, now: Date): Promise<
     .lte("expires_at", now.toISOString());
   if (groupWaits.error) fail("purge group file waits", groupWaits.error);
 }
+
+/** The bucket keys of every file kept in a group (for deleting the group for good). */
+export async function groupFileKeys(db: SupabaseClient, groupId: string): Promise<string[]> {
+  const keys: string[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db
+      .from("stored_files")
+      .select("r2_key")
+      .eq("group_id", groupId)
+      .order("id")
+      .range(from, from + 999);
+    if (error) fail("group file keys", error);
+    const rows = (data ?? []) as { r2_key: string | null }[];
+    for (const r of rows) if (r.r2_key) keys.push(r.r2_key);
+    if (rows.length < 1000) return keys;
+  }
+}

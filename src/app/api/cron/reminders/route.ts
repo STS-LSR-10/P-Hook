@@ -6,6 +6,7 @@ import { createLineClient } from "@/lib/line/client";
 import { runBillReminders } from "@/lib/bill-run";
 import { cleanupFiles } from "@/lib/file-cleanup";
 import { getFileStore } from "@/lib/file-store";
+import { purgeLeftGroups, reconcileGroups } from "@/lib/group-lifecycle";
 import { purgeExpiredIntents } from "@/lib/pending-intent-repo";
 import { runReminders } from "@/lib/reminder-run";
 import { runSummaries } from "@/lib/summary-run";
@@ -53,8 +54,16 @@ export async function GET(request: Request): Promise<Response> {
     await purgeExpiredIntents(db, now).catch((error: unknown) => {
       log.error("cron_pending_intents_failed", error);
     });
-    await cleanupFiles(db, await getFileStore(), now).catch((error: unknown) => {
+    const store = await getFileStore();
+    await cleanupFiles(db, store, now).catch((error: unknown) => {
       log.error("cron_file_cleanup_failed", error);
+    });
+    // groups the bot was taken out of: close any whose event was missed, delete those kept 30 days
+    await reconcileGroups(db, line.isBotInGroup, line.push, now).catch((error: unknown) => {
+      log.error("cron_group_reconcile_failed", error);
+    });
+    await purgeLeftGroups(db, store, now, line.isBotInGroup).catch((error: unknown) => {
+      log.error("cron_group_purge_failed", error);
     });
     return json({ ok: true, ...summary, summaries, bills });
   } catch (error) {

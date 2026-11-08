@@ -27,6 +27,7 @@ vi.mock("@/lib/group-repo", () => ({
     { id: E, title: "ข้าว", amountSatang: 30_000, occurredAt: "x", payerLineUserId: "Uanna" },
   ],
   getChaseSchedule: async () => ({ everyDays: 1, window: "any" }),
+  getLeftAt: async () => new Date("2026-11-08T05:00:00Z"),
   setChaseSchedule: async (_d: unknown, g: string, s: unknown) =>
     void calls.push(["schedule", g, s]),
   updateEntry: async (_d: unknown, g: string, id: string, p: unknown) => {
@@ -79,9 +80,11 @@ describe("owner only", () => {
     expect((await delEntry(req(), pe())).status).toBe(403);
     expect(calls).toEqual([]);
   });
-  it("a closed ledger can be read but not changed", async () => {
+  it("a closed ledger can be read but not changed; one the bot left says when its data goes", async () => {
     viewer = owner(false);
-    expect((await manage(req(), p)).status).toBe(200);
+    const res = await manage(req(), p);
+    expect(res.status).toBe(200);
+    expect((await res.json()).purgeAt).toBe("2026-12-08T05:00:00.000Z");
     expect((await debts(req({ kind: "all" }), p)).status).toBe(409);
     expect((await schedule(req({ everyDays: 1, window: "any" }), p)).status).toBe(409);
     expect(calls).toEqual([]);
@@ -103,6 +106,7 @@ describe("an owner who left Elite", () => {
 describe("the owner's card", () => {
   it("manage: month totals, entries with names, debts and the schedule", async () => {
     const body = await (await manage(req(), p)).json();
+    expect(body.purgeAt).toBeNull(); // an open ledger has no deletion date
     expect(body.summary.totalSatang).toBe(50_000);
     expect(body.entries).toEqual([
       { id: E, title: "ข้าว", amountSatang: 30_000, occurredAt: "x", payerName: "แอน" },

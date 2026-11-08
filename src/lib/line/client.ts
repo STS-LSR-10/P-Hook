@@ -73,6 +73,23 @@ export function createLineClient(accessToken: string) {
       return body.groupName ?? null;
     },
 
+    /**
+     * Is the bot still in this group? false only when LINE answers "not found"; any other failure (network,
+     * token, rate limit) is null, so a hiccup never closes a ledger.
+     */
+    async isBotInGroup(groupId: string): Promise<boolean | null> {
+      try {
+        const res = await fetch(`${API}/group/${encodeURIComponent(groupId)}/summary`, {
+          headers,
+          signal: AbortSignal.timeout(5_000),
+        });
+        if (res.ok) return true;
+        return res.status === 404 ? false : null;
+      } catch {
+        return null;
+      }
+    },
+
     /** How many members a group has (any account may ask), or null when LINE does not say. */
     async getGroupMemberCount(groupId: string): Promise<number | null> {
       const res = await fetch(`${API}/group/${encodeURIComponent(groupId)}/members/count`, {

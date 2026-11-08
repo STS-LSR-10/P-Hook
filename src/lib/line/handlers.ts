@@ -403,6 +403,8 @@ export interface HandlerDeps {
    * Absent -> the card has no calendar buttons.
    */
   calendarLink?: (reminderId: string) => Promise<string | undefined>;
+  /** Push to one person outside a reply (counts against the OA's quota). Absent in tests. */
+  push?: (lineUserId: string, messages: LineMessage[]) => Promise<void>;
   /** Per-user rate limiter (absent in tests -> no limiting). */
   limit?: (bucket: string, subject: string, rule: LimitRule) => Promise<RateLimitResult>;
   /** Slip reading (Phase 4). Absent -> image messages get a "coming soon" reply. */

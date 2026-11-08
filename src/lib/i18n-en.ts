@@ -2796,4 +2796,8 @@ export const EN: Record<string, string> = {
     "That suggestion is over {0} characters. Please shorten it",
   "ส่งข้อเสนอแนะครบวันนี้แล้ว ไว้ค่อยส่งใหม่ทีหลังได้นะ ขอบคุณมาก 🦉":
     "You have sent all the suggestions for today. Try again tomorrow. Thank you 🦉",
+  'พี่ฮูกถูกลบออกจากกลุ่มหนึ่งที่คุณเปิดสมุดไว้แล้ว ข้อมูลของกลุ่มนั้นเก็บไว้ให้ถึง {0} หลังจากนั้นจะถูกลบถาวร ถ้าจะใช้ต่อ เพิ่มพี่ฮูกกลับเข้ากลุ่ม แล้วพิมพ์ "เปิดสมุดกลุ่ม" ก่อนวันนั้นนะ':
+    "P'Hook was removed from a group you opened a ledger in. That group's data is kept until {0}, then deleted for good. To keep using it, add P'Hook back to the group and type \"เปิดสมุดกลุ่ม\" before then",
+  'พี่ฮูกถูกลบออกจากกลุ่มนี้แล้ว ข้อมูลจะถูกลบถาวรวันที่ {0} เพิ่มพี่ฮูกกลับเข้ากลุ่มแล้วพิมพ์ "เปิดสมุดกลุ่ม" เพื่อเก็บไว้':
+    "P'Hook was removed from this group. Its data will be deleted for good on {0}. Add P'Hook back to the group and type \"เปิดสมุดกลุ่ม\" to keep it",
 };

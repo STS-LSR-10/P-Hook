@@ -43,6 +43,10 @@ export async function getGroupById(db: SupabaseClient, id: string): Promise<Grou
   return data ? toGroup(data as GroupDb) : null;
 }
 
+/** The database does not know a column yet (migration not run): PostgREST says so in one of two ways. */
+const noSuchColumn = (error: { code?: string } | null): boolean =>
+  error?.code === "42703" || error?.code === "PGRST204";
+
 /** How many open ledgers this person owns. */
 export async function countOwnedGroups(db: SupabaseClient, ownerUserId: string): Promise<number> {
   const { count, error } = await db
@@ -60,24 +64,33 @@ export async function openGroup(
   lineGroupId: string,
   ownerUserId: string,
 ): Promise<GroupRow> {
-  const { data, error } = await db
-    .from("bot_groups")
-    .upsert(
-      { line_group_id: lineGroupId, owner_user_id: ownerUserId, is_active: true, closed_at: null },
-      { onConflict: "line_group_id" },
-    )
-    .select("id,line_group_id,owner_user_id,is_active")
-    .single();
+  const base = {
+    line_group_id: lineGroupId,
+    owner_user_id: ownerUserId,
+    is_active: true,
+    closed_at: null,
+  };
+  const run = (row: Record<string, unknown>) =>
+    db
+      .from("bot_groups")
+      .upsert(row, { onConflict: "line_group_id" })
+      .select("id,line_group_id,owner_user_id,is_active")
+      .single();
+  // the same write ends the countdown to deleting the group's data (the column only exists after 0062)
+  let { data, error } = await run({ ...base, left_at: null });
+  if (noSuchColumn(error)) ({ data, error } = await run(base));
   if (error) fail("open group", error);
   return toGroup(data as GroupDb);
 }
 
 /** Close the ledger (the data stays). Used when the owner says so or the bot leaves the group. */
 export async function closeGroup(db: SupabaseClient, lineGroupId: string): Promise<void> {
-  const { error } = await db
-    .from("bot_groups")
-    .update({ is_active: false, closed_at: new Date().toISOString() })
-    .eq("line_group_id", lineGroupId);
+  const close = { is_active: false, closed_at: new Date().toISOString() };
+  const run = (patch: Record<string, unknown>) =>
+    db.from("bot_groups").update(patch).eq("line_group_id", lineGroupId);
+  // closed by the owner: never a deletion date, whatever an earlier leave left behind
+  let { error } = await run({ ...close, left_at: null });
+  if (noSuchColumn(error)) ({ error } = await run(close));
   if (error) fail("close group", error);
 }
 
@@ -482,4 +495,100 @@ export async function updateEntry(
     .maybeSingle();
   if (error) fail("update group entry", error);
   return data !== null;
+}
+
+/**
+ * The bot is no longer in this group: close the ledger and start the 30 days its data is kept. Only an
+ * open ledger is touched, so one the owner closed themselves never gets a deletion date. False when
+ * nothing changed. Before migration 0062 it still closes, without the date.
+ */
+export async function markGroupLeft(
+  db: SupabaseClient,
+  lineGroupId: string,
+  now: Date,
+): Promise<boolean> {
+  const close = { is_active: false, closed_at: now.toISOString() };
+  const run = (patch: Record<string, unknown>) =>
+    db
+      .from("bot_groups")
+      .update(patch)
+      .eq("line_group_id", lineGroupId)
+      .eq("is_active", true)
+      .select("id");
+  let { data, error } = await run({ ...close, left_at: now.toISOString() });
+  if (noSuchColumn(error)) ({ data, error } = await run(close)); // column not there yet
+  if (error) fail("mark group left", error);
+  return (data ?? []).length > 0;
+}
+
+/** Every open ledger, oldest first (a few columns), for the hourly check that the bot is still in each group. */
+export async function listActiveGroups(
+  db: SupabaseClient,
+): Promise<{ id: string; lineGroupId: string; ownerUserId: string }[]> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .select("id,line_group_id,owner_user_id")
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(5000);
+  if (error) fail("list active groups", error);
+  return ((data ?? []) as { id: string; line_group_id: string; owner_user_id: string }[]).map(
+    (r) => ({ id: r.id, lineGroupId: r.line_group_id, ownerUserId: r.owner_user_id }),
+  );
+}
+
+/** Closed ledgers the bot left before `before` (their data is due to be deleted). */
+export async function listGroupsLeftBefore(
+  db: SupabaseClient,
+  before: Date,
+  limit: number,
+): Promise<{ id: string; lineGroupId: string; ownerUserId: string }[]> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .select("id,line_group_id,owner_user_id")
+    .eq("is_active", false)
+    .not("left_at", "is", null)
+    .lt("left_at", before.toISOString())
+    .order("left_at", { ascending: true })
+    .limit(limit);
+  if (noSuchColumn(error)) return []; // migration 0062 not run yet: nothing is ever due
+  if (error) fail("list groups to purge", error);
+  return ((data ?? []) as { id: string; line_group_id: string; owner_user_id: string }[]).map(
+    (r) => ({ id: r.id, lineGroupId: r.line_group_id, ownerUserId: r.owner_user_id }),
+  );
+}
+
+/**
+ * Delete a group for good: its entries, members, bills, notes, reminders and file rows go with it. Only
+ * a closed group the bot left before `before` and nobody has opened since: if it was opened again meanwhile,
+ * nothing is deleted. True when the row was removed.
+ */
+export async function deleteGroupRow(
+  db: SupabaseClient,
+  id: string,
+  before: Date,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .delete()
+    .eq("id", id)
+    .eq("is_active", false)
+    .not("left_at", "is", null)
+    .lt("left_at", before.toISOString())
+    .select("id");
+  if (error) fail("delete group", error);
+  return (data ?? []).length > 0;
+}
+
+/** When the bot left this group, or null (still in, closed by the owner, or before migration 0062). */
+export async function getLeftAt(db: SupabaseClient, groupId: string): Promise<Date | null> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .select("left_at")
+    .eq("id", groupId)
+    .maybeSingle();
+  if (error || !data) return null;
+  const at = (data as { left_at: string | null }).left_at;
+  return at ? new Date(at) : null;
 }

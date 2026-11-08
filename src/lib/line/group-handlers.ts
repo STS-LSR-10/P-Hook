@@ -43,6 +43,7 @@ import { ensureUser } from "@/lib/repo";
 import { buildGroupHelpCard, buildGroupWelcomeCard } from "./help-flex";
 import { buildGroupRecentCard, buildGroupTripsCard } from "./list-flex";
 import { formatThaiDate } from "@/lib/thai-date";
+import { handleBotLeft } from "@/lib/group-lifecycle";
 import type { LineMessage } from "@/lib/types";
 import { buildGroupSummaryCard, buildTripSummaryCard } from "./group-flex";
 import { convertForeignEntries, fxNoteOf } from "./fx-entries";
@@ -170,8 +171,8 @@ export async function handleGroupEvent(event: LineEvent, deps: HandlerDeps): Pro
       ]);
       return;
     case "leave":
-      await closeGroup(deps.db, groupId);
-      await endRemindersOf(groupId, deps);
+      // taken out of the group: the ledger closes, and its data is kept 30 days before it is deleted
+      await handleBotLeft(deps.db, groupId, deps.now(), deps.push);
       return;
     case "memberLeft": {
       // someone left: they no longer see the group's files and reminders
@@ -287,12 +288,6 @@ type Reply = (messages: LineMessage[]) => Promise<void>;
 
 /** LINE takes at most five messages in one reply. */
 const MAX_REPLY_MESSAGES = 5;
-
-/** A closed ledger's reminders stop, and stop taking the owner's limits. */
-async function endRemindersOf(lineGroupId: string, deps: HandlerDeps): Promise<void> {
-  const group = await getGroup(deps.db, lineGroupId);
-  if (group) await endGroupReminders(deps.db, group.id);
-}
 
 /** Ordinary chat in a group: if a bill still has people who have not paid, the day's reminder rides on it. */
 async function remindIfDue(groupId: string, deps: HandlerDeps, reply: Reply): Promise<void> {

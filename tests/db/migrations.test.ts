@@ -3270,3 +3270,51 @@ describe("feedback (0061)", () => {
     expect(left.n).toBe(0);
   });
 });
+
+describe("groups the bot was taken out of (0062)", () => {
+  async function makeGroup() {
+    const owner = await newUser(db, `lf-${Math.random()}`);
+    return (
+      await one<{ id: string }>(
+        db,
+        "insert into bot_groups (line_group_id, owner_user_id) values ($1,$2) returning id",
+        [`C${Math.random().toString(16).slice(2)}`, owner],
+      )
+    ).id;
+  }
+
+  it("a group starts with no left date", async () => {
+    const id = await makeGroup();
+    const row = await one<{ left_at: string | null }>(
+      db,
+      "select left_at from bot_groups where id = $1",
+      [id],
+    );
+    expect(row.left_at).toBeNull();
+  });
+
+  it("deleting the group takes its entries, members and bills with it", async () => {
+    const id = await makeGroup();
+    await db.query(
+      "insert into group_members (group_id, line_user_id, display_name) values ($1,'U1','a')",
+      [id],
+    );
+    await db.query(
+      "insert into group_entries (group_id, payer_line_user_id, title, amount) values ($1,'U1','x',5)",
+      [id],
+    );
+    await db.query(
+      "insert into split_bills (group_id, payer_line_user_id, title, amount_satang) values ($1,'U1','b',100)",
+      [id],
+    );
+    await db.query("delete from bot_groups where id = $1", [id]);
+    for (const table of ["group_members", "group_entries", "split_bills"]) {
+      const left = await one<{ n: number }>(
+        db,
+        `select count(*)::int as n from ${table} where group_id = $1`,
+        [id],
+      );
+      expect(left.n, table).toBe(0);
+    }
+  });
+});

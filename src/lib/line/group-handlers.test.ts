@@ -48,6 +48,12 @@ vi.mock("@/lib/group-repo", () => ({
     closed.push(lineGroupId);
     if (group) group = { ...group, isActive: false };
   },
+  markGroupLeft: async (_db: unknown, lineGroupId: string) => {
+    if (!group?.isActive) return false;
+    closed.push(lineGroupId);
+    group = { ...group, isActive: false };
+    return true;
+  },
   memberNames: async () => members,
   upsertMember: async (_db: unknown, _g: string, userId: string, name: string) => {
     upserts.push({ userId, name });
@@ -230,8 +236,18 @@ describe("the bot joining and leaving", () => {
     expect(card).toContain('"type":"carousel"'); // small cards to swipe, not one tall card
 
     ({ deps, reply } = setup());
+    // a ledger was opened in the group while the bot was there
+    group = { id: "g1", lineGroupId: GID, ownerUserId: "app-Uowner", isActive: true };
+    const pushed: { to: string; text: string }[] = [];
+    deps.push = async (to, messages) => {
+      pushed.push({ to, text: JSON.stringify(messages) });
+    };
     await handleEvent({ type: "leave", source: { type: "group", groupId: GID } }, deps);
     expect(closed).toEqual([GID]);
+    // the owner is told, and how long the data is kept
+    expect(pushed).toHaveLength(1);
+    expect(pushed[0]?.to).toBe(ownerLine);
+    expect(pushed[0]?.text).toContain("เปิดสมุดกลุ่ม");
   });
 });
 

@@ -105,4 +105,21 @@ test.describe("group management in settings (360px)", () => {
     await expect(page.getByText("หมูกระทะ")).toHaveCount(0);
     await expect(page.getByText("ค่าไฟ")).toBeVisible();
   });
+
+  test("a group the bot was taken out of says when its data is deleted", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/settings": SETTINGS,
+      "GET /api/me": ME_PLUS,
+      "GET /api/groups": { items: [{ id: GID, name: "กลุ่มเก่า", isActive: false }] },
+      [`GET /api/groups/${GID}/manage`]: {
+        ...MANAGE,
+        isActive: false,
+        purgeAt: "2026-12-08T05:00:00.000Z",
+      },
+    });
+    await page.goto("/settings");
+    await page.getByRole("button", { name: /จัดการกลุ่ม/ }).click();
+    await expect(page.getByText(/ข้อมูลจะถูกลบถาวรวันที่ 8 ธ\.ค\. 2569/)).toBeVisible();
+    await expect(page.getByText(/ปิดอยู่ ดูได้อย่างเดียว/)).toHaveCount(0);
+  });
 });
