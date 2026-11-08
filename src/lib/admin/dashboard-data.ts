@@ -185,31 +185,98 @@ export interface FeedbackItem {
   name: string | null;
 }
 
-/** The newest suggestions and comments from users. */
-export async function loadFeedback(db: SupabaseClient, limit = 50): Promise<FeedbackItem[]> {
-  const { data, error } = await db
-    .from("feedback")
-    .select("id,body,plan,source,created_at,users(display_name)")
+export const FEEDBACK_PAGE_SIZE = 20;
+
+export interface FeedbackQuery {
+  source: "all" | FeedbackItem["source"];
+  plan: "all" | FeedbackItem["plan"];
+  page: number;
+}
+
+/** The filters and page the admin asked for in the address, ignoring anything it does not know. */
+export function parseFeedbackQuery(
+  params: Record<string, string | string[] | undefined>,
+): FeedbackQuery {
+  const one = (k: string) => (typeof params[k] === "string" ? (params[k] as string) : undefined);
+  const source = one("source");
+  const plan = one("plan");
+  const page = Number(one("page"));
+  return {
+    source: source === "line" || source === "app" ? source : "all",
+    plan: plan === "free" || plan === "plus" || plan === "ultimate" ? plan : "all",
+    page: Number.isInteger(page) && page >= 1 ? page : 1,
+  };
+}
+
+export interface FeedbackPage {
+  items: FeedbackItem[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+/** One page of suggestions and comments, newest first; a page past the end gives the last one. */
+export async function loadFeedbackPage(
+  db: SupabaseClient,
+  query: FeedbackQuery,
+): Promise<FeedbackPage> {
+  const filters: [string, string][] = [];
+  if (query.source !== "all") filters.push(["source", query.source]);
+  if (query.plan !== "all") filters.push(["plan", query.plan]);
+  // the total first: asking for a range past the end is refused by the API, so the page is clamped
+  // before it is asked for
+  let countQuery = db.from("feedback").select("id", { count: "exact", head: true });
+  for (const [column, value] of filters) countQuery = countQuery.eq(column, value);
+  const counted = await countQuery;
+  if (counted.error) throw new Error(`feedback: ${counted.error.message}`);
+  const total = counted.count ?? 0;
+  const pages = Math.max(1, Math.ceil(total / FEEDBACK_PAGE_SIZE));
+  const page = Math.min(query.page, pages);
+  const from = (page - 1) * FEEDBACK_PAGE_SIZE;
+  let listQuery = db.from("feedback").select("id,body,plan,source,created_at,users(display_name)");
+  for (const [column, value] of filters) listQuery = listQuery.eq(column, value);
+  const { data, error } = await listQuery
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(from, from + FEEDBACK_PAGE_SIZE - 1);
   if (error) throw new Error(`feedback: ${error.message}`);
-  return (
-    (data ?? []) as unknown as {
-      id: string;
-      body: string;
-      plan: FeedbackItem["plan"];
-      source: FeedbackItem["source"];
-      created_at: string;
-      users: { display_name: string | null } | null;
-    }[]
-  ).map((r) => ({
-    id: r.id,
-    body: r.body,
-    plan: r.plan,
-    source: r.source,
-    createdAt: r.created_at,
-    name: r.users?.display_name ?? null,
-  }));
+  const rows = (data ?? []) as unknown as {
+    id: string;
+    body: string;
+    plan: FeedbackItem["plan"];
+    source: FeedbackItem["source"];
+    created_at: string;
+    users: { display_name: string | null } | null;
+  }[];
+  return {
+    total,
+    page,
+    pages,
+    items: rows.map((r) => ({
+      id: r.id,
+      body: r.body,
+      plan: r.plan,
+      source: r.source,
+      createdAt: r.created_at,
+      name: r.users?.display_name ?? null,
+    })),
+  };
+}
+
+/** How many there are for each source (under the chosen plan), for the filter buttons. */
+export async function feedbackCounts(
+  db: SupabaseClient,
+  plan: FeedbackQuery["plan"],
+): Promise<{ all: number; line: number; app: number }> {
+  const count = async (source?: FeedbackItem["source"]) => {
+    let q = db.from("feedback").select("id", { count: "exact", head: true });
+    if (source) q = q.eq("source", source);
+    if (plan !== "all") q = q.eq("plan", plan);
+    const { count: n, error } = await q;
+    if (error) throw new Error(`feedback: ${error.message}`);
+    return n ?? 0;
+  };
+  const [all, line, app] = await Promise.all([count(), count("line"), count("app")]);
+  return { all, line, app };
 }
 
 // ---------- LINE ----------

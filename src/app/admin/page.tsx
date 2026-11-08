@@ -6,7 +6,7 @@ import {
   getListableBucket,
   loadAiCosts,
   loadFeatureUses,
-  loadFeedback,
+  feedbackCounts,
   loadLineUsage,
   loadR2Operations,
   loadStoredFiles,
@@ -62,7 +62,7 @@ export default async function AdminPage() {
         ? loadR2Operations(env.CF_ACCOUNT_ID, env.CF_ANALYTICS_TOKEN, range.from, range.to)
         : null,
     ),
-    load("admin_feedback", () => loadFeedback(db)),
+    load("admin_feedback_count", async () => (await feedbackCounts(db, "all")).all),
     loadUsdThb(db, today).catch(() => null),
   ]);
   const scan = await load("admin_bucket_scan", async () => {
@@ -81,7 +81,7 @@ export default async function AdminPage() {
       stored={stored}
       scan={scan}
       ops={ops}
-      feedback={feedback}
+      feedbackTotal={feedback.ok ? feedback.value : null}
       rate={rate}
       plans={readPlanCosts()}
     />

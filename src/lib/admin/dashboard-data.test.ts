@@ -4,7 +4,10 @@ import {
   daysBefore,
   formatBytes,
   loadAiCosts,
-  loadFeedback,
+  FEEDBACK_PAGE_SIZE,
+  feedbackCounts,
+  loadFeedbackPage,
+  parseFeedbackQuery,
   loadFeatureUses,
   loadLineUsage,
   loadR2Operations,
@@ -327,63 +330,104 @@ describe("loadUsdThb", () => {
   });
 });
 
-describe("loadFeedback", () => {
-  const dbOf = (rows: unknown[], fail = false) => {
-    const seen: unknown[] = [];
+describe("parseFeedbackQuery", () => {
+  it("takes a known source, a known plan and a page number, and falls back to all / first page", () => {
+    expect(parseFeedbackQuery({ source: "line", plan: "plus", page: "3" })).toEqual({
+      source: "line",
+      plan: "plus",
+      page: 3,
+    });
+    expect(parseFeedbackQuery({})).toEqual({ source: "all", plan: "all", page: 1 });
+    expect(parseFeedbackQuery({ source: "mail", plan: "gold", page: "-2" })).toEqual({
+      source: "all",
+      plan: "all",
+      page: 1,
+    });
+    expect(parseFeedbackQuery({ page: "abc" }).page).toBe(1);
+    expect(parseFeedbackQuery({ source: ["line", "app"] }).source).toBe("all");
+  });
+});
+
+describe("feedback pages", () => {
+  const row = (n: number) => ({
+    id: `f${n}`,
+    body: `b${n}`,
+    plan: "plus",
+    source: "line",
+    created_at: `2026-11-08T03:${String(n).padStart(2, "0")}:00Z`,
+    users: { display_name: "สมชาย" },
+  });
+  /** Serves `total` rows; records the filters and range asked for. */
+  const dbOf = (total: number, fail = false) => {
+    const seen = { eq: [] as unknown[][], range: [] as unknown[], order: [] as unknown[] };
     const query = {
       select: () => query,
-      order: (...a: unknown[]) => (seen.push(a), query),
-      limit: (n: number) =>
+      eq: (...a: unknown[]) => (seen.eq.push(a), query),
+      order: (...a: unknown[]) => (seen.order.push(a), query),
+      range: (from: number, to: number) => {
+        seen.range.push([from, to]);
+        // like the real API: a range that starts past the end is refused
+        if (fail || (from > 0 && from >= total)) {
+          return Promise.resolve({ data: null, error: { message: "range not satisfiable" } });
+        }
+        const rows = Array.from({ length: total }, (_, n) => row(n)).slice(from, to + 1);
+        return Promise.resolve({ data: rows, error: null });
+      },
+      then: (done: (r: unknown) => unknown) =>
         Promise.resolve(
-          fail
-            ? { data: null, error: { message: "boom" } }
-            : { data: rows.slice(0, n), error: null },
-        ),
+          fail ? { count: null, error: { message: "boom" } } : { count: total, error: null },
+        ).then(done),
     };
     return { db: { from: () => query } as unknown as SupabaseClient, seen };
   };
 
-  it("lists the newest first with who sent it, their plan and where it came from", async () => {
-    const { db, seen } = dbOf([
-      {
-        id: "f1",
-        body: "อยากให้มีโหมดมืด",
-        plan: "plus",
-        source: "line",
-        created_at: "2026-11-08T03:00:00Z",
-        users: { display_name: "สมชาย" },
-      },
-      {
-        id: "f2",
-        body: "ขอส่งออก PDF",
-        plan: "free",
-        source: "app",
-        created_at: "2026-11-07T03:00:00Z",
-        users: null,
-      },
+  it("serves a page of twenty, newest first, with the total and the number of pages", async () => {
+    const { db, seen } = dbOf(45);
+    const page = await loadFeedbackPage(db, { source: "all", plan: "all", page: 2 });
+    expect(FEEDBACK_PAGE_SIZE).toBe(20);
+    expect(page.total).toBe(45);
+    expect(page.pages).toBe(3);
+    expect(page.page).toBe(2);
+    expect(page.items).toHaveLength(20);
+    expect(page.items[0]).toMatchObject({ id: "f20", name: "สมชาย", source: "line" });
+    expect(seen.range).toEqual([[20, 39]]);
+    expect(seen.order).toEqual([["created_at", { ascending: false }]]);
+    expect(seen.eq).toEqual([]);
+  });
+
+  it("filters by source and plan", async () => {
+    const { db, seen } = dbOf(3);
+    await loadFeedbackPage(db, { source: "app", plan: "ultimate", page: 1 });
+    // the count and the list are both narrowed the same way
+    expect(seen.eq).toEqual([
+      ["source", "app"],
+      ["plan", "ultimate"],
+      ["source", "app"],
+      ["plan", "ultimate"],
     ]);
-    expect(await loadFeedback(db)).toEqual([
-      {
-        id: "f1",
-        body: "อยากให้มีโหมดมืด",
-        plan: "plus",
-        source: "line",
-        createdAt: "2026-11-08T03:00:00Z",
-        name: "สมชาย",
-      },
-      {
-        id: "f2",
-        body: "ขอส่งออก PDF",
-        plan: "free",
-        source: "app",
-        createdAt: "2026-11-07T03:00:00Z",
-        name: null,
-      },
-    ]);
-    expect(seen).toEqual([["created_at", { ascending: false }]]);
+  });
+
+  it("a page past the end shows the last one; nothing at all is one empty page", async () => {
+    const { db, seen } = dbOf(45);
+    const last = await loadFeedbackPage(db, { source: "all", plan: "all", page: 9 });
+    expect(last.page).toBe(3);
+    expect(last.items).toHaveLength(5);
+    expect(seen.range).toEqual([[40, 59]]); // never asked for past the end
+    expect(
+      (await loadFeedbackPage(dbOf(45).db, { source: "all", plan: "all", page: 1e20 })).page,
+    ).toBe(3);
+    const none = await loadFeedbackPage(dbOf(0).db, { source: "all", plan: "all", page: 1 });
+    expect(none).toMatchObject({ total: 0, pages: 1, page: 1, items: [] });
+  });
+
+  it("counts for the source buttons", async () => {
+    expect(await feedbackCounts(dbOf(7).db, "all")).toEqual({ all: 7, line: 7, app: 7 });
   });
 
   it("fails loudly when the database does", async () => {
-    await expect(loadFeedback(dbOf([], true).db)).rejects.toThrow(/feedback/);
+    await expect(
+      loadFeedbackPage(dbOf(1, true).db, { source: "all", plan: "all", page: 1 }),
+    ).rejects.toThrow(/feedback/);
+    await expect(feedbackCounts(dbOf(1, true).db, "all")).rejects.toThrow(/feedback/);
   });
 });

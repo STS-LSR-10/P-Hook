@@ -2,7 +2,6 @@ import {
   formatBytes,
   type AiCosts,
   type BucketScan,
-  type FeedbackItem,
   type FeatureUse,
   type LineUsage,
   type R2Operations,
@@ -18,6 +17,7 @@ import {
   type LinePlan,
   type PlanCost,
 } from "@/lib/admin/pricing";
+import { AdminTabs } from "./tabs";
 
 export type Loaded<T> = { ok: true; value: T } | { ok: false; reason: "failed" | "not_configured" };
 
@@ -61,7 +61,7 @@ export const COLORS = { ai: "#7c3aed", line: "#06c755", r2: "#f38020", plan: "#0
 
 // ---------- small pieces ----------
 
-function Missing({ reason, hint }: { reason: "failed" | "not_configured"; hint?: string }) {
+export function Missing({ reason, hint }: { reason: "failed" | "not_configured"; hint?: string }) {
   return (
     <p className="rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs text-muted">
       {reason === "failed"
@@ -81,7 +81,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
   );
 }
 
-function Panel({
+export function Panel({
   title,
   tag,
   color,
@@ -128,60 +128,6 @@ function Note({ children }: { children: React.ReactNode }) {
 }
 
 // ---------- panels ----------
-
-const PLAN_NAMES: Record<FeedbackItem["plan"], string> = {
-  free: "Free",
-  plus: "Pro",
-  ultimate: "Elite",
-};
-
-/** Suggestions and comments users sent; each says where it came from (LINE chat or the app). */
-export function FeedbackPanel({ items }: { items: Loaded<FeedbackItem[]> }) {
-  const list = items.ok ? items.value : [];
-  return (
-    <Panel
-      title="ข้อเสนอแนะจากผู้ใช้"
-      tag="Feedback"
-      color={COLORS.line}
-      cost={items.ok ? `${int.format(list.length)}` : "—"}
-      costSub={items.ok ? "ล่าสุด (สูงสุด 50)" : undefined}
-      delay={280}
-    >
-      {!items.ok ? (
-        <Missing reason={items.reason} />
-      ) : list.length === 0 ? (
-        <p className="text-sm text-muted">ยังไม่มีข้อเสนอแนะ</p>
-      ) : (
-        <ul className="divide-y divide-border">
-          {list.map((f) => (
-            <li key={f.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                <span
-                  className="rounded-full px-2 py-0.5 font-semibold text-white"
-                  style={{ background: f.source === "line" ? COLORS.line : COLORS.plan }}
-                >
-                  {f.source === "line" ? "จาก LINE" : "จากแอป"}
-                </span>
-                <span className="font-semibold">{f.name ?? "ไม่ทราบชื่อ"}</span>
-                <span className="rounded bg-background px-1.5 py-0.5 text-muted">
-                  {PLAN_NAMES[f.plan]}
-                </span>
-                <time className="ml-auto text-muted tabular-nums" dateTime={f.createdAt}>
-                  {new Date(f.createdAt).toLocaleString("th-TH", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                    timeZone: "Asia/Bangkok",
-                  })}
-                </time>
-              </div>
-              <p className="whitespace-pre-wrap break-words text-sm">{f.body}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  );
-}
 
 export function AiPanel({
   costs,
@@ -565,7 +511,8 @@ export interface AdminViewProps {
   stored: Loaded<StoredFiles>;
   scan: Loaded<BucketScan>;
   ops: Loaded<R2Operations>;
-  feedback: Loaded<FeedbackItem[]>;
+  /** All suggestions so far, for the count on the tab (null when it could not be read). */
+  feedbackTotal: number | null;
   rate: UsdRate | null;
   plans: PlanCost[];
 }
@@ -579,7 +526,7 @@ export function AdminView({
   stored,
   scan,
   ops,
-  feedback,
+  feedbackTotal,
   rate,
   plans,
 }: AdminViewProps) {
@@ -639,6 +586,8 @@ export function AdminView({
               : "ไม่มีอัตราแลกเปลี่ยน USD"}
           </p>
         </header>
+
+        <AdminTabs active="cost" feedbackTotal={feedbackTotal} />
 
         <section
           className="admin-rise relative overflow-hidden rounded-lg p-6 text-[var(--hero-ink)] shadow-card sm:p-8"
@@ -710,9 +659,6 @@ export function AdminView({
           <R2Panel stored={stored} scan={scan} ops={ops} rate={rate} />
           <div className="md:col-span-2 xl:col-span-3">
             <PlanPanel plans={plans} rate={rate} />
-          </div>
-          <div className="md:col-span-2 xl:col-span-3">
-            <FeedbackPanel items={feedback} />
           </div>
         </div>
 
