@@ -443,3 +443,20 @@ describe("the reminders page tells the chat a reminder was changed", () => {
     expect(parseCommand("แก้ไขเตือนเสร็จแล้ว")).toBeNull();
   });
 });
+
+describe("เสนอแนะ", () => {
+  it("is a suggestion with its text, or the bare word", () => {
+    expect(parseCommand("เสนอแนะ อยากให้มีโหมดมืด")).toEqual({
+      kind: "feedback",
+      body: "อยากให้มีโหมดมืด",
+    });
+    expect(parseCommand("ข้อเสนอแนะ ข้อ 1\nข้อ 2")).toEqual({
+      kind: "feedback",
+      body: "ข้อ 1\nข้อ 2",
+    });
+    expect(parseCommand("เสนอแนะ")).toEqual({ kind: "feedback", body: null });
+  });
+  it("is not one when the word only starts something else", () => {
+    expect(parseCommand("เสนอแนะการใช้จ่าย 100")).toBeNull();
+  });
+});

@@ -2,6 +2,7 @@ import {
   formatBytes,
   type AiCosts,
   type BucketScan,
+  type FeedbackItem,
   type FeatureUse,
   type LineUsage,
   type R2Operations,
@@ -127,6 +128,60 @@ function Note({ children }: { children: React.ReactNode }) {
 }
 
 // ---------- panels ----------
+
+const PLAN_NAMES: Record<FeedbackItem["plan"], string> = {
+  free: "Free",
+  plus: "Pro",
+  ultimate: "Elite",
+};
+
+/** Suggestions and comments users sent; each says where it came from (LINE chat or the app). */
+export function FeedbackPanel({ items }: { items: Loaded<FeedbackItem[]> }) {
+  const list = items.ok ? items.value : [];
+  return (
+    <Panel
+      title="ข้อเสนอแนะจากผู้ใช้"
+      tag="Feedback"
+      color={COLORS.line}
+      cost={items.ok ? `${int.format(list.length)}` : "—"}
+      costSub={items.ok ? "ล่าสุด (สูงสุด 50)" : undefined}
+      delay={280}
+    >
+      {!items.ok ? (
+        <Missing reason={items.reason} />
+      ) : list.length === 0 ? (
+        <p className="text-sm text-muted">ยังไม่มีข้อเสนอแนะ</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {list.map((f) => (
+            <li key={f.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                <span
+                  className="rounded-full px-2 py-0.5 font-semibold text-white"
+                  style={{ background: f.source === "line" ? COLORS.line : COLORS.plan }}
+                >
+                  {f.source === "line" ? "จาก LINE" : "จากแอป"}
+                </span>
+                <span className="font-semibold">{f.name ?? "ไม่ทราบชื่อ"}</span>
+                <span className="rounded bg-background px-1.5 py-0.5 text-muted">
+                  {PLAN_NAMES[f.plan]}
+                </span>
+                <time className="ml-auto text-muted tabular-nums" dateTime={f.createdAt}>
+                  {new Date(f.createdAt).toLocaleString("th-TH", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone: "Asia/Bangkok",
+                  })}
+                </time>
+              </div>
+              <p className="whitespace-pre-wrap break-words text-sm">{f.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
 
 export function AiPanel({
   costs,
@@ -510,6 +565,7 @@ export interface AdminViewProps {
   stored: Loaded<StoredFiles>;
   scan: Loaded<BucketScan>;
   ops: Loaded<R2Operations>;
+  feedback: Loaded<FeedbackItem[]>;
   rate: UsdRate | null;
   plans: PlanCost[];
 }
@@ -523,6 +579,7 @@ export function AdminView({
   stored,
   scan,
   ops,
+  feedback,
   rate,
   plans,
 }: AdminViewProps) {
@@ -653,6 +710,9 @@ export function AdminView({
           <R2Panel stored={stored} scan={scan} ops={ops} rate={rate} />
           <div className="md:col-span-2 xl:col-span-3">
             <PlanPanel plans={plans} rate={rate} />
+          </div>
+          <div className="md:col-span-2 xl:col-span-3">
+            <FeedbackPanel items={feedback} />
           </div>
         </div>
 

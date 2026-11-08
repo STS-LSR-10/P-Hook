@@ -3234,3 +3234,39 @@ describe("group chase schedule (0060)", () => {
     expect(await remind(bill, "2026-10-22")).toBe(true); // the old call: every day
   });
 });
+
+describe("feedback (0061)", () => {
+  const add = (user: string, body: string, source = "line", plan = "plus") =>
+    db.query("insert into feedback (user_id, plan, body, source) values ($1,$2,$3,$4)", [
+      user,
+      plan,
+      body,
+      source,
+    ]);
+
+  it("takes a suggestion from the chat or the app, with a plan", async () => {
+    const u = await newUser(db, `fb-${Math.random()}`);
+    await add(u, "อยากให้มีโหมดมืด");
+    await add(u, "ขอส่งออก PDF", "app", "free");
+  });
+
+  it("refuses empty or over-long text, an unknown source and an unknown plan", async () => {
+    const u = await newUser(db, `fb-${Math.random()}`);
+    await expect(add(u, "")).rejects.toThrow();
+    await expect(add(u, "ก".repeat(1001))).rejects.toThrow();
+    await expect(add(u, "x", "email")).rejects.toThrow();
+    await expect(add(u, "x", "line", "gold")).rejects.toThrow();
+  });
+
+  it("goes away with the account", async () => {
+    const u = await newUser(db, `fb-${Math.random()}`);
+    await add(u, "ลาก่อน");
+    await db.query("delete from users where id = $1", [u]);
+    const left = await one<{ n: number }>(
+      db,
+      "select count(*)::int as n from feedback where user_id = $1",
+      [u],
+    );
+    expect(left.n).toBe(0);
+  });
+});

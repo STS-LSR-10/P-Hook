@@ -8,6 +8,9 @@
 /** Whole messages that are a command on their own. */
 const COMMANDS: Record<string, string> = {
   help: "วิธีใช้งาน",
+  suggest: "เสนอแนะ",
+  suggestion: "เสนอแนะ",
+  feedback: "เสนอแนะ",
   menu: "วิธีใช้งาน",
   "how to": "วิธีใช้งาน",
   summary: "สรุปวันนี้",
@@ -59,6 +62,12 @@ const PREFIXED: [RegExp, (m: RegExpExecArray) => string][] = [
   [/^daily budget\s+(.+)$/i, (m) => `งบวัน ${m[1]}`],
   [/^use code\s+(.+)$/i, (m) => `ใช้รหัส ${m[1]}`],
   [/^join wallet\s+(.+)$/i, (m) => `ร่วมกระเป๋า ${m[1]}`],
+  // "feedback: …" always; "feedback …" unless it reads as an entry ("suggestion box 120")
+  [/^(?:suggest|suggestion|feedback):\s*([\s\S]+)$/i, (m) => `เสนอแนะ ${m[1]}`],
+  [
+    /^(?:suggest|suggestion|feedback)\s+(?![^\n]*\s\d[\d,.]*$)([\s\S]+)$/i,
+    (m) => `เสนอแนะ ${m[1]}`,
+  ],
   [/^search notes?\s+([\s\S]+)$/i, (m) => `ค้นหาโน้ต ${m[1]}`],
   // "note: …" always; "note …" unless it reads as an entry ("note pad 50")
   [/^note:\s*([\s\S]+)$/i, (m) => `โน้ต ${m[1]}`],

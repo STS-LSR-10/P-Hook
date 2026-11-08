@@ -9,6 +9,7 @@ import {
   Gauge,
   Gift,
   Languages,
+  Lightbulb,
   MessageCircle,
   PiggyBank,
   Plus,
@@ -20,8 +21,9 @@ import {
   ShieldAlert,
   Wallet,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
+import { FeedbackSheet } from "@/components/liff/settings/feedback-sheet";
 import { GroupManageCard } from "@/components/liff/settings/group-manage-card";
 import { DeleteCard } from "@/components/liff/settings/delete-card";
 import { MemoryCard } from "@/components/liff/settings/memory-card";
@@ -160,7 +162,7 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState<{ at: SectionId; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [sheet, setSheet] = useState<
-    "recurring" | "memory" | "payments" | "zone" | "currency" | "language" | null
+    "recurring" | "memory" | "payments" | "zone" | "currency" | "language" | "feedback" | null
   >(null);
   const [opened, setOpened] = useState<Set<SectionId>>(new Set());
   // sections closed by hand while a search is on (it opens everything it finds)
@@ -521,20 +523,32 @@ export default function SettingsPage() {
             {/* every section stays in the page, so a search never loses what was typed in one */}
             <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
               {sections.map((s) => (
-                <SettingsSection
-                  key={s.id}
-                  hidden={!found.includes(s)}
-                  id={`settings-${s.id}`}
-                  icon={s.icon}
-                  title={s.title}
-                  sub={s.sub}
-                  tone={s.tone}
-                  badge={badgeOf(s.id)}
-                  open={isOpen(s.id)}
-                  onToggle={() => toggle(s.id)}
-                >
-                  {contentOf(s.id, current, user)}
-                </SettingsSection>
+                <Fragment key={s.id}>
+                  <SettingsSection
+                    hidden={!found.includes(s)}
+                    id={`settings-${s.id}`}
+                    icon={s.icon}
+                    title={s.title}
+                    sub={s.sub}
+                    tone={s.tone}
+                    badge={badgeOf(s.id)}
+                    open={isOpen(s.id)}
+                    onToggle={() => toggle(s.id)}
+                  >
+                    {contentOf(s.id, current, user)}
+                  </SettingsSection>
+                  {/* right after "ตั้งค่าทั่วไป": a way to tell the team what you would like */}
+                  {s.id === "general" && !term ? (
+                    <MenuGroup label={t("เสนอแนะ")}>
+                      <MenuButton
+                        onClick={() => setSheet("feedback")}
+                        icon={<Lightbulb className="h-[18px] w-[18px]" />}
+                        title={t("💡 เสนอแนะ")}
+                        sub={t("บอกทีมงานว่าอยากให้มีหรือปรับอะไร")}
+                      />
+                    </MenuGroup>
+                  ) : null}
+                </Fragment>
               ))}
             </div>
           </>
@@ -550,6 +564,7 @@ export default function SettingsPage() {
           <MemoryCard me={me.data} embedded />
         </Sheet>
       ) : null}
+      {sheet === "feedback" ? <FeedbackSheet onClose={() => setSheet(null)} /> : null}
       {sheet === "language" ? (
         <LanguageSheet current={settings.data?.locale} onClose={() => setSheet(null)} />
       ) : null}

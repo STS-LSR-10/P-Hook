@@ -4,6 +4,7 @@ import {
   daysBefore,
   formatBytes,
   loadAiCosts,
+  loadFeedback,
   loadFeatureUses,
   loadLineUsage,
   loadR2Operations,
@@ -323,5 +324,66 @@ describe("loadUsdThb", () => {
     } finally {
       globalThis.fetch = realFetch;
     }
+  });
+});
+
+describe("loadFeedback", () => {
+  const dbOf = (rows: unknown[], fail = false) => {
+    const seen: unknown[] = [];
+    const query = {
+      select: () => query,
+      order: (...a: unknown[]) => (seen.push(a), query),
+      limit: (n: number) =>
+        Promise.resolve(
+          fail
+            ? { data: null, error: { message: "boom" } }
+            : { data: rows.slice(0, n), error: null },
+        ),
+    };
+    return { db: { from: () => query } as unknown as SupabaseClient, seen };
+  };
+
+  it("lists the newest first with who sent it, their plan and where it came from", async () => {
+    const { db, seen } = dbOf([
+      {
+        id: "f1",
+        body: "อยากให้มีโหมดมืด",
+        plan: "plus",
+        source: "line",
+        created_at: "2026-11-08T03:00:00Z",
+        users: { display_name: "สมชาย" },
+      },
+      {
+        id: "f2",
+        body: "ขอส่งออก PDF",
+        plan: "free",
+        source: "app",
+        created_at: "2026-11-07T03:00:00Z",
+        users: null,
+      },
+    ]);
+    expect(await loadFeedback(db)).toEqual([
+      {
+        id: "f1",
+        body: "อยากให้มีโหมดมืด",
+        plan: "plus",
+        source: "line",
+        createdAt: "2026-11-08T03:00:00Z",
+        name: "สมชาย",
+      },
+      {
+        id: "f2",
+        body: "ขอส่งออก PDF",
+        plan: "free",
+        source: "app",
+        createdAt: "2026-11-07T03:00:00Z",
+        name: null,
+      },
+    ]);
+    expect(seen).toEqual([["created_at", { ascending: false }]]);
+  });
+
+  it("fails loudly when the database does", async () => {
+    await expect(loadFeedback(dbOf([], true).db)).rejects.toThrow(/feedback/);
   });
 });

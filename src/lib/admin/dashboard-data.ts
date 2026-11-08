@@ -172,6 +172,46 @@ export async function loadFeatureUses(db: SupabaseClient, month: string): Promis
     .sort((a, b) => b.used - a.used);
 }
 
+// ---------- feedback ----------
+
+export interface FeedbackItem {
+  id: string;
+  body: string;
+  plan: "free" | "plus" | "ultimate";
+  /** Where it was written: the LINE chat or the app's settings page. */
+  source: "line" | "app";
+  createdAt: string;
+  /** The name the sender shows in LINE; null when we have none. */
+  name: string | null;
+}
+
+/** The newest suggestions and comments from users. */
+export async function loadFeedback(db: SupabaseClient, limit = 50): Promise<FeedbackItem[]> {
+  const { data, error } = await db
+    .from("feedback")
+    .select("id,body,plan,source,created_at,users(display_name)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`feedback: ${error.message}`);
+  return (
+    (data ?? []) as unknown as {
+      id: string;
+      body: string;
+      plan: FeedbackItem["plan"];
+      source: FeedbackItem["source"];
+      created_at: string;
+      users: { display_name: string | null } | null;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    body: r.body,
+    plan: r.plan,
+    source: r.source,
+    createdAt: r.created_at,
+    name: r.users?.display_name ?? null,
+  }));
+}
+
 // ---------- LINE ----------
 
 export interface LineUsage {

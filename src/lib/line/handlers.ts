@@ -43,6 +43,8 @@ import {
 import { bangkokParts, formatThaiDate, fromBangkok, isValidYmd } from "@/lib/thai-date";
 import type { LineMessage, TxType } from "@/lib/types";
 import type { SlipImage, SlipOcrProvider } from "@/lib/ocr/provider";
+import { MAX_FEEDBACK_LENGTH, cleanFeedback } from "@/lib/feedback";
+import { addFeedback } from "@/lib/feedback-repo";
 import { can, effectivePlan } from "@/lib/plan";
 import {
   applyTheme,
@@ -278,6 +280,10 @@ import {
   REMINDER_USAGE_TEXT,
   NOTE_EMPTY_TEXT,
   NOTE_FULL_TEXT,
+  FEEDBACK_LIMIT_TEXT,
+  FEEDBACK_THANKS_TEXT,
+  FEEDBACK_TOO_LONG_TEXT,
+  FEEDBACK_USAGE_TEXT,
   FILE_EXPIRED_TEXT,
   FILE_UNAVAILABLE_TEXT,
   FILE_VIDEO_ELSEWHERE_TEXT,
@@ -2604,6 +2610,24 @@ async function runCommand(
       if (command.kind === "file-rename") return runFileRename(files, user, command.name);
       if (command.kind === "file-search") return runFileSearch(files, user, command.term, false);
       return runFileList(files, user);
+    }
+
+    case "feedback": {
+      const body = command.body === null ? "" : cleanFeedback(command.body);
+      if (!body) return [text(FEEDBACK_USAGE_TEXT)];
+      if (body.length > MAX_FEEDBACK_LENGTH)
+        return [text(FEEDBACK_TOO_LONG_TEXT(MAX_FEEDBACK_LENGTH))];
+      if (deps.limit) {
+        const day = await deps.limit("feedback_day", user.line_user_id, LIMITS.feedbackDay);
+        if (!day.allowed) return [text(FEEDBACK_LIMIT_TEXT)];
+      }
+      await addFeedback(db, {
+        userId: user.id,
+        plan: effectivePlan(user.plan, user.plan_expires_at, deps.now()),
+        body,
+        source: "line",
+      });
+      return [text(FEEDBACK_THANKS_TEXT)];
     }
 
     case "note-add": {

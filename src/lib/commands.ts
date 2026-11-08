@@ -21,6 +21,8 @@ export type Command =
   | { kind: "search"; term: string; start?: DaySpec; end?: DaySpec | "today" }
   | { kind: "search-usage" }
   | { kind: "note-add"; body: string }
+  /** `body` null: just the word, so the person is told how to use it. */
+  | { kind: "feedback"; body: string | null }
   | { kind: "file-save"; name: string | null }
   | { kind: "file-search"; term: string }
   | { kind: "file-list" }
@@ -80,6 +82,11 @@ export function parseCommand(input: string): Command | null {
   const note = /^โน[้๊็]ต(?:\s+([\s\S]+))?$/.exec(raw);
   if (note)
     return note[1]?.trim() ? { kind: "note-add", body: note[1].trim() } : { kind: "note-list" };
+
+  // A suggestion to the admin: "เสนอแนะ อยากให้มีโหมดมืด". The word must stand alone ("เสนอแนะการใช้จ่าย 100"
+  // is still an entry); the text keeps its case and line breaks.
+  const feedback = /^(?:ข้อ)?เสนอแนะ(?:\s+([\s\S]+))?$/.exec(raw);
+  if (feedback) return { kind: "feedback", body: feedback[1]?.trim() || null };
 
   // Kept files: "เก็บไว้" keeps what was just sent. Only these whole phrases count ("เก็บไว้กินเย็น 80"
   // is still an entry).

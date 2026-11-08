@@ -2778,4 +2778,22 @@ export const EN: Record<string, string> = {
   ตั้งเวลาทวงตัง: "Chase schedule",
   "เจ้าของสมุดไม่ได้ใช้แผน Elite แล้ว แก้ไขไม่ได้ ดูได้อย่างเดียวนะ":
     "The ledger owner is no longer on Elite, so this is view only",
+  เสนอแนะ: "Suggestions",
+  "💡 เสนอแนะ": "💡 Suggest",
+  บอกทีมงานว่าอยากให้มีหรือปรับอะไร: "Tell the team what you would like added or changed",
+  "เขียนข้อเสนอแนะให้ไม่ว่างและไม่เกิน 1,000 ตัวอักษรนะ":
+    "Write a suggestion that is not empty and at most 1,000 characters",
+  "ส่งไม่สำเร็จ ลองใหม่อีกครั้งนะ": "That did not send. Please try again",
+  "ขอบคุณที่ช่วยพี่ฮูกพัฒนา 🦉": "Thanks for helping P'Hook improve 🦉",
+  "บอกทีมงานได้เลยว่าอยากให้มีหรือปรับอะไร ทีมงานเห็นว่าใครส่ง จึงตอบกลับทาง LINE ได้":
+    "Tell the team what you would like added or changed. They can see who sent it, so they can reply on LINE",
+  ข้อเสนอแนะ: "Suggestion",
+  "เช่น อยากให้มีโหมดมืด": "e.g. I would like a dark mode",
+  ส่งข้อเสนอแนะ: "Send suggestion",
+  'พิมพ์ข้อเสนอแนะต่อท้ายได้เลย เช่น "เสนอแนะ อยากให้มีโหมดมืด" พี่ฮูกจะส่งให้ทีมงานอ่านนะ':
+    'Type your suggestion after it, like "suggest I would like a dark mode". P\'Hook passes it to the team',
+  "ข้อเสนอแนะยาวเกิน {0} ตัวอักษร ช่วยย่อให้สั้นลงหน่อยนะ":
+    "That suggestion is over {0} characters. Please shorten it",
+  "ส่งข้อเสนอแนะครบวันนี้แล้ว ไว้ค่อยส่งใหม่ทีหลังได้นะ ขอบคุณมาก 🦉":
+    "You have sent all the suggestions for today. Try again tomorrow. Thank you 🦉",
 };

@@ -54,6 +54,8 @@ export const LIMITS = {
   joinWallet: { limit: 10, windowSeconds: 3600 },
   /** Account deletion attempts per user. */
   deleteAccount: { limit: 3, windowSeconds: 3600 },
+  /** Suggestions to the admin per user (they are read by a person). */
+  feedbackDay: { limit: 5, windowSeconds: 86_400 },
   /** Erasing history / a month (each is permanent) per user. */
   eraseData: { limit: 5, windowSeconds: 3600 },
 } as const satisfies Record<string, LimitRule>;

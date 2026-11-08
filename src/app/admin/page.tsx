@@ -6,6 +6,7 @@ import {
   getListableBucket,
   loadAiCosts,
   loadFeatureUses,
+  loadFeedback,
   loadLineUsage,
   loadR2Operations,
   loadStoredFiles,
@@ -51,7 +52,7 @@ export default async function AdminPage() {
   const prices = readAiPrices();
   const env = process.env;
 
-  const [aiCosts, uses, line, stored, ops, rate] = await Promise.all([
+  const [aiCosts, uses, line, stored, ops, feedback, rate] = await Promise.all([
     load("admin_ai_costs", () => loadAiCosts(db, month, prices)),
     load("admin_feature_uses", () => loadFeatureUses(db, month)),
     load("admin_line_usage", () => loadLineUsage(getServerEnv().LINE_CHANNEL_ACCESS_TOKEN, today)),
@@ -61,6 +62,7 @@ export default async function AdminPage() {
         ? loadR2Operations(env.CF_ACCOUNT_ID, env.CF_ANALYTICS_TOKEN, range.from, range.to)
         : null,
     ),
+    load("admin_feedback", () => loadFeedback(db)),
     loadUsdThb(db, today).catch(() => null),
   ]);
   const scan = await load("admin_bucket_scan", async () => {
@@ -79,6 +81,7 @@ export default async function AdminPage() {
       stored={stored}
       scan={scan}
       ops={ops}
+      feedback={feedback}
       rate={rate}
       plans={readPlanCosts()}
     />

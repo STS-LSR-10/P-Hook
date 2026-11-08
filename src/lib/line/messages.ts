@@ -636,6 +636,17 @@ export const NOTE_EMPTY_TEXT = t('ยังไม่มีโน้ต พิม
 export const NOTE_SEARCH_USAGE_TEXT = t('พิมพ์คำที่ต้องการหาต่อท้าย เช่น "ค้นหาโน้ต ไวไฟ"');
 export const noteNotFoundText = (term: string) => t('ไม่เจอโน้ตที่มีคำว่า "{0}"', term);
 
+// ── feedback to the admin ──
+export const FEEDBACK_THANKS_TEXT = t("ขอบคุณที่ช่วยพี่ฮูกพัฒนา 🦉");
+export const FEEDBACK_USAGE_TEXT = t(
+  'พิมพ์ข้อเสนอแนะต่อท้ายได้เลย เช่น "เสนอแนะ อยากให้มีโหมดมืด" พี่ฮูกจะส่งให้ทีมงานอ่านนะ',
+);
+export const FEEDBACK_TOO_LONG_TEXT = (max: number) =>
+  t("ข้อเสนอแนะยาวเกิน {0} ตัวอักษร ช่วยย่อให้สั้นลงหน่อยนะ", max.toLocaleString("en-US"));
+export const FEEDBACK_LIMIT_TEXT = t(
+  "ส่งข้อเสนอแนะครบวันนี้แล้ว ไว้ค่อยส่งใหม่ทีหลังได้นะ ขอบคุณมาก 🦉",
+);
+
 // ── reminders ──
 export const REMINDER_USAGE_TEXT = [
   t("ตั้งเตือน พิมพ์วันเวลาแล้วตามด้วยเรื่องที่ให้เตือน เช่น"),
