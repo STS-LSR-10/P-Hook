@@ -57,7 +57,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
 
 export function PageHeader({ title, right }: { title: string; right?: ReactNode }) {
   return (
-    <header className="flex items-center justify-between px-4 pb-2 pt-5 lg:px-0">
+    <header className="flex items-center justify-between px-4 pb-2 pt-5 rail:pt-3 wide:px-0">
       <h1 className="text-xl font-bold">{title}</h1>
       {right}
     </header>

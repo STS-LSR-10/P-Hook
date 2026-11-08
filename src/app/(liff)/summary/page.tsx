@@ -90,8 +90,8 @@ export default function SummaryPage() {
     <main>
       <PageHeader title={t("สรุปภาพรวม")} />
 
-      <div className="space-y-4 px-4 pb-4 lg:px-0">
-        <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+      <div className="space-y-4 px-4 pb-4 wide:px-0">
+        <div className="space-y-4 wide:grid wide:grid-cols-2 wide:gap-4 wide:space-y-0">
           <section
             aria-label={t("โปรไฟล์")}
             className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 shadow-card"
@@ -160,7 +160,7 @@ export default function SummaryPage() {
         ) : summary.error && !data ? (
           <ErrorState message={summary.error} onRetry={summary.reload} />
         ) : data ? (
-          <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0">
+          <div className="space-y-4 wide:grid wide:grid-cols-2 wide:items-start wide:gap-4 wide:space-y-0">
             <div className="space-y-4">
               <Hero
                 data={data}

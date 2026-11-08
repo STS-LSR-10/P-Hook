@@ -17,11 +17,15 @@ export function ContentFrame({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        "mx-auto min-h-screen max-w-md pb-24 lg:max-w-none lg:pb-10 lg:pl-60",
-        pathname === "/vault" && "lg:bg-[#FAF7F2]",
+        "mx-auto min-h-screen max-w-md pb-24 wide:max-w-none wide:pb-10 lg:pl-60",
+        // the narrow rail of a sideways phone (the safe-area parts only matter once the viewport covers the notch)
+        "rail:pl-[calc(4rem+env(safe-area-inset-left))] rail:pr-[env(safe-area-inset-right)]",
+        pathname === "/vault" && "wide:bg-[#FAF7F2]",
       )}
     >
-      <div className={cn("lg:mx-auto lg:px-8", wide ? "lg:max-w-6xl" : "lg:max-w-2xl")}>
+      <div
+        className={cn("wide:mx-auto lg:px-8 rail:px-4", wide ? "wide:max-w-6xl" : "wide:max-w-2xl")}
+      >
         {children}
       </div>
     </div>

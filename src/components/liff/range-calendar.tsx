@@ -91,7 +91,7 @@ export function RangeCalendar({
       aria-label={t("เลือกช่วงวันที่")}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-sm space-y-3 rounded-3xl border border-border bg-surface p-5 shadow-card">
+      <div className="max-h-full w-full max-w-sm space-y-3 overflow-y-auto rounded-3xl border border-border bg-surface p-5 shadow-card">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <button
             type="button"

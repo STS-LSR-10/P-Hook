@@ -427,7 +427,7 @@ function TransactionsView() {
     <main>
       <PageHeader title={tr("รายการบันทึก")} />
 
-      <div className="space-y-3.5 px-4 pb-28 lg:px-0">
+      <div className="space-y-3.5 px-4 pb-28 wide:px-0">
         <button
           type="button"
           onClick={() => setCalendarOpen(true)}
@@ -699,7 +699,7 @@ function TransactionsView() {
                       {money(Math.abs(g.netSatang))}
                     </span>
                   </div>
-                  <ul className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-2 lg:space-y-0">
+                  <ul className="space-y-2 wide:grid wide:grid-cols-2 wide:gap-2 wide:space-y-0">
                     {g.items.map((tx) => (
                       <TxCard
                         key={tx.id}
@@ -748,7 +748,7 @@ function TransactionsView() {
           type="button"
           onClick={() => setFormOpen(true)}
           aria-label={tr("เพิ่มรายการใหม่")}
-          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-5 z-20 lg:bottom-8 lg:right-10 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-surface shadow-card"
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-5 z-20 wide:bottom-8 wide:right-10 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-surface shadow-card"
         >
           <Plus className="h-6 w-6" aria-hidden />
         </button>
@@ -1137,13 +1137,13 @@ function AddSheet({
 
   return (
     <div
-      className="fixed inset-0 z-30 flex items-end bg-foreground/40 lg:items-center lg:justify-center lg:p-6"
+      className="fixed inset-0 z-30 flex items-end bg-foreground/40 wide:items-center wide:justify-center wide:p-6"
       role="dialog"
       aria-modal
     >
       <form
         onSubmit={submit}
-        className="mx-auto w-full max-w-md space-y-3 rounded-t-3xl bg-surface p-4 lg:max-w-lg lg:rounded-3xl pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        className="mx-auto max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-3xl bg-surface p-4 wide:max-w-lg wide:rounded-3xl pb-[calc(1rem+env(safe-area-inset-bottom))]"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">{tr("เพิ่มรายการ")}</h2>

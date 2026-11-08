@@ -492,7 +492,7 @@ export default function BudgetsPage() {
     <main>
       <PageHeader title={tr("จัดการหมวดและงบ")} />
 
-      <div className="space-y-4 px-4 pb-4 lg:px-0">
+      <div className="space-y-4 px-4 pb-4 wide:px-0">
         <div
           role="tablist"
           aria-label={tr("ประเภทหมวด")}
@@ -662,7 +662,7 @@ export default function BudgetsPage() {
                 />
               </div>
             ) : (
-              <ul className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:space-y-0">
+              <ul className="space-y-2.5 wide:grid wide:grid-cols-2 wide:gap-2.5 wide:space-y-0">
                 {list.map((c) => {
                   const index = all.findIndex((x) => x.id === c.id);
                   const b = budgetOf(c.id);

@@ -6,6 +6,20 @@ const config: Config = {
   content: ["./src/**/*.{ts,tsx,mdx}"],
   theme: {
     extend: {
+      screens: {
+        // a phone turned sideways: wide but short (a big screen is already >= 1024px). The 560px floor keeps
+        // an upright phone out of it when its keyboard squeezes the page short (sideways phones are >= 568px)
+        rail: {
+          raw: "(orientation: landscape) and (min-width: 560px) and (max-height: 500px) and (max-width: 1023px)",
+        },
+        // room for columns: a desktop window, or a phone turned sideways
+        wide: [
+          { min: "1024px" },
+          {
+            raw: "(orientation: landscape) and (min-width: 560px) and (max-height: 500px) and (max-width: 1023px)",
+          },
+        ],
+      },
       colors: {
         primary: { DEFAULT: "var(--primary)", soft: "var(--primary-soft)" },
         accent: "var(--accent)",
