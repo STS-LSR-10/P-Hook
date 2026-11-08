@@ -839,7 +839,7 @@ function BudgetHero({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/50 blur-2xl"
+        className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/50 dark:bg-white/10 blur-2xl"
       />
       <div className="relative space-y-3">
         <div className="flex items-center justify-between gap-2">
@@ -852,7 +852,7 @@ function BudgetHero({
               aria-haspopup="menu"
               aria-expanded={menu}
               onClick={() => setMenu((v) => !v)}
-              className="flex h-9 items-center gap-1.5 rounded-xl border border-white/70 bg-white/60 px-3 text-xs font-medium text-[var(--hero-ink)]"
+              className="flex h-9 items-center gap-1.5 rounded-xl border border-white/70 dark:border-white/15 bg-white/60 dark:bg-white/10 px-3 text-xs font-medium text-[var(--hero-ink)]"
             >
               {modeText}
               <ChevronDown className="h-3 w-3 text-[var(--hero-ink)]" aria-hidden />
@@ -933,7 +933,7 @@ function BudgetHero({
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.min(pct, 100)}
-              className="h-2.5 overflow-hidden rounded-full bg-white/70 p-0.5"
+              className="h-2.5 overflow-hidden rounded-full bg-white/70 dark:bg-white/10 p-0.5"
             >
               <div
                 className="h-full rounded-full bg-primary"
@@ -954,7 +954,7 @@ function BudgetHero({
           </p>
         )}
 
-        <div className="flex items-center justify-between gap-2 border-t border-white/70 pt-2 text-xs text-[var(--hero-ink-soft)]">
+        <div className="flex items-center justify-between gap-2 border-t border-white/70 dark:border-white/15 pt-2 text-xs text-[var(--hero-ink-soft)]">
           <span>
             {tr("รอบงบ:")}{" "}
             <strong className="font-semibold text-[var(--hero-ink)]">

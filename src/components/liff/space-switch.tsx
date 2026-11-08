@@ -24,7 +24,9 @@ export function SpaceSwitch({
   const items = groups.data?.items ?? [];
   const chip = cn(
     "rounded-full px-3 py-1 text-xs font-semibold",
-    groupId ? "bg-[#FCE9C8] text-[#7A4A06]" : "bg-[#E1F3DB] text-[#2F672B]",
+    groupId
+      ? "bg-[#FCE9C8] dark:bg-warn-soft text-[#7A4A06] dark:text-warn"
+      : "bg-[#E1F3DB] dark:bg-primary-soft text-[#2F672B] dark:text-primary",
     className,
   );
 

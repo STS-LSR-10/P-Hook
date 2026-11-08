@@ -20,7 +20,7 @@ export function ContentFrame({ children }: { children: ReactNode }) {
         "mx-auto min-h-screen max-w-md pb-24 wide:max-w-none wide:pb-10 lg:pl-60",
         // the narrow rail of a sideways phone (the safe-area parts only matter once the viewport covers the notch)
         "rail:pl-[calc(4rem+env(safe-area-inset-left))] rail:pr-[env(safe-area-inset-right)]",
-        pathname === "/vault" && "wide:bg-[#FAF7F2]",
+        pathname === "/vault" && "wide:bg-[#FAF7F2] dark:wide:bg-background",
       )}
     >
       <div

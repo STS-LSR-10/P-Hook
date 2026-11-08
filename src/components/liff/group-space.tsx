@@ -14,7 +14,8 @@ interface RemindersResponse {
   isOwner: boolean;
 }
 
-const CARD = "rounded-2xl border border-[#E7DFD2] bg-[#F6EFE6] text-left";
+const CARD =
+  "rounded-2xl border border-[#E7DFD2] dark:border-border bg-[#F6EFE6] dark:bg-surface text-left";
 
 /** A LINE group's reminders, for its owner and its members. Each may cancel the ones they set. */
 export function GroupReminders({ groupId }: { groupId: string }) {
@@ -47,11 +48,11 @@ export function GroupReminders({ groupId }: { groupId: string }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-slate-600 dark:text-muted">
         {t("เตือนของกลุ่มส่งเข้ากลุ่มตามเวลา และนับรวมกับเตือนส่วนตัวของเจ้าของสมุด")}
       </p>
       {notice ? (
-        <p role="status" className="text-sm text-slate-700">
+        <p role="status" className="text-sm text-slate-700 dark:text-foreground">
           {notice}
         </p>
       ) : null}
@@ -66,14 +67,14 @@ export function GroupReminders({ groupId }: { groupId: string }) {
             const Icon = r.repeat ? Repeat : Bell;
             return (
               <li key={r.id} className={cn(CARD, "flex items-start gap-3 p-3.5")}>
-                <span className="shrink-0 rounded-xl bg-emerald-100 p-2.5 text-emerald-800">
+                <span className="shrink-0 rounded-xl bg-emerald-100 dark:bg-primary-soft p-2.5 text-emerald-800 dark:text-primary">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block break-words text-sm font-semibold text-stone-900">
+                  <span className="block break-words text-sm font-semibold text-stone-900 dark:text-foreground">
                     {r.body}
                   </span>
-                  <span className="mt-0.5 block text-xs text-stone-600">
+                  <span className="mt-0.5 block text-xs text-stone-600 dark:text-muted">
                     {describeReminder(new Date(r.remindAt), r.repeat)}
                   </span>
                 </span>
@@ -83,7 +84,7 @@ export function GroupReminders({ groupId }: { groupId: string }) {
                     onClick={() => void cancel(r)}
                     disabled={busy === r.id}
                     aria-label={t("ยกเลิกเตือน {0}", r.body)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-expense disabled:opacity-60"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface text-expense disabled:opacity-60"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
                   </button>

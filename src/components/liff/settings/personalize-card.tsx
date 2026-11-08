@@ -87,7 +87,7 @@ export function PersonalizeCard({
               </p>
             </div>
             <span
-              className="num shrink-0 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-semibold"
+              className="num shrink-0 rounded-full bg-white/70 dark:bg-white/10 px-2.5 py-0.5 text-xs font-semibold"
               style={{ color: palette.headTitle }}
             >
               ฿ 350.00
@@ -198,7 +198,9 @@ export function PersonalizeCard({
                   aria-hidden
                   className={cn(
                     "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-                    persona === id ? "border-primary bg-primary text-white" : "border-border",
+                    persona === id
+                      ? "border-primary bg-primary text-white dark:text-surface"
+                      : "border-border",
                   )}
                 >
                   {persona === id ? <Check className="h-2.5 w-2.5" aria-hidden /> : null}

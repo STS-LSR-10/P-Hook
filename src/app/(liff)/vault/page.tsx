@@ -118,7 +118,8 @@ const GROUP_EMPTY: Record<Tab, { title: string; hint: string }> = {
 const isTab = (value: string | null): value is Tab => TABS.some((t) => t.key === value);
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
-const CARD = "rounded-2xl border border-[#E7DFD2] bg-[#F6EFE6] text-left";
+const CARD =
+  "rounded-2xl border border-[#E7DFD2] dark:border-border bg-[#F6EFE6] dark:bg-surface text-left";
 const isPicture = (file: FileDto) => file.mimeType.startsWith("image/");
 const viewUrl = (id: string, token: string, thumb = false) =>
   `/api/files/${id}/view?t=${encodeURIComponent(token)}${thumb ? "&size=thumb" : ""}`;
@@ -229,9 +230,11 @@ function Vault() {
             : tr("ใช้พื้นที่ของเจ้าของสมุด");
 
   return (
-    <main className="-mb-24 flex min-h-screen wide:-mb-10 flex-col bg-[#FAF7F2] pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800">
+    <main className="-mb-24 flex min-h-screen wide:-mb-10 flex-col bg-[#FAF7F2] dark:bg-background pb-[calc(4rem+env(safe-area-inset-bottom))] text-stone-800 dark:text-foreground">
       <header className="flex items-center justify-between gap-2 px-4 pb-3 pt-5">
-        <h1 className="text-xl font-bold text-stone-900">{tr("คลัง | พี่ฮูก")}</h1>
+        <h1 className="text-xl font-bold text-stone-900 dark:text-foreground">
+          {tr("คลัง | พี่ฮูก")}
+        </h1>
         <SpaceSwitch groupId={groupId} onChange={switchSpace} />
       </header>
 
@@ -249,7 +252,7 @@ function Vault() {
             placeholder={
               groupId ? tr("รหัสไวไฟ, เมนูร้าน, สัญญา") : tr("บิลค่าไฟ, รหัสคอม, ใบเสนอราคา")
             }
-            className="h-11 min-w-0 flex-1 rounded-xl bg-[#EFEBE3] px-4 text-sm text-stone-800 placeholder:text-stone-500"
+            className="h-11 min-w-0 flex-1 rounded-xl bg-[#EFEBE3] dark:bg-surface px-4 text-sm text-stone-800 dark:text-foreground placeholder:text-stone-500 dark:placeholder:text-muted"
           />
           <button
             type="submit"
@@ -260,7 +263,7 @@ function Vault() {
           </button>
         </form>
         {search ? (
-          <p className="flex items-center gap-2 text-sm text-stone-600">
+          <p className="flex items-center gap-2 text-sm text-stone-600 dark:text-muted">
             {tr("ค้นหา “")}
             {search}”
             <button
@@ -269,7 +272,7 @@ function Vault() {
                 setSearch("");
                 setTyped("");
               }}
-              className="flex items-center gap-1 font-semibold text-[#2D7347]"
+              className="flex items-center gap-1 font-semibold text-[#2D7347] dark:text-primary"
             >
               <X className="h-4 w-4" aria-hidden /> {tr("ล้าง")}
             </button>
@@ -279,7 +282,7 @@ function Vault() {
 
       <nav
         aria-label={tr("หมวดในคลัง")}
-        className="mt-1 flex justify-between border-b border-stone-200 px-4"
+        className="mt-1 flex justify-between border-b border-stone-200 dark:border-border px-4"
       >
         {TABS.map(({ key, label }) => (
           <button
@@ -290,8 +293,8 @@ function Vault() {
             className={cn(
               "border-b-2 px-2 py-2.5 text-sm",
               tab === key
-                ? "border-stone-900 font-semibold text-stone-950"
-                : "border-transparent text-stone-600",
+                ? "border-stone-900 dark:border-foreground font-semibold text-stone-950 dark:text-foreground"
+                : "border-transparent text-stone-600 dark:text-muted",
             )}
           >
             {label}
@@ -301,7 +304,10 @@ function Vault() {
 
       <div className="flex-1 space-y-2.5 px-4 py-3">
         {notice ? (
-          <p role="status" className="rounded-2xl bg-[#E1F3DB] px-4 py-2 text-sm text-[#2F672B]">
+          <p
+            role="status"
+            className="rounded-2xl bg-[#E1F3DB] dark:bg-primary-soft px-4 py-2 text-sm text-[#2F672B] dark:text-primary"
+          >
             {notice}
           </p>
         ) : null}
@@ -319,12 +325,12 @@ function Vault() {
         />
       </div>
 
-      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-stone-200 bg-[#FAF7F2] px-4 py-2.5">
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-stone-200 dark:border-border bg-[#FAF7F2] dark:bg-background px-4 py-2.5">
         <div className="flex items-center justify-between gap-2">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-900">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-900 dark:text-foreground">
             <Archive className="h-4 w-4" aria-hidden /> {tr("พื้นที่เก็บไฟล์")}
           </p>
-          <p className="num text-xs text-stone-700">{spaceText}</p>
+          <p className="num text-xs text-stone-700 dark:text-foreground">{spaceText}</p>
           <button
             type="button"
             aria-label={groupId ? tr("เพิ่มโน้ตของกลุ่ม") : tr("เพิ่มโน้ต")}
@@ -341,13 +347,13 @@ function Vault() {
             aria-valuenow={percent}
             aria-valuemin={0}
             aria-valuemax={100}
-            className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#E8E2D6]"
+            className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#E8E2D6] dark:bg-border"
           >
             <div className="h-full bg-[#2D7347]" style={{ width: `${percent}%` }} />
           </div>
         ) : null}
         {groupId && bar ? (
-          <p className="num mt-1 text-xs text-stone-600">
+          <p className="num mt-1 text-xs text-stone-600 dark:text-muted">
             {tr("ไฟล์ในกลุ่มของคุณ")} {formatBytes(bar.groupBytes)}{" "}
             {tr("· ใช้พื้นที่เดียวกับไฟล์ส่วนตัว")}
           </p>
@@ -496,7 +502,7 @@ function VaultList({
   return (
     <>
       {partial ? (
-        <div className="flex items-center justify-between gap-2 rounded-2xl bg-amber-100 px-4 py-2 text-sm text-amber-900">
+        <div className="flex items-center justify-between gap-2 rounded-2xl bg-amber-100 dark:bg-warn-soft px-4 py-2 text-sm text-amber-900 dark:text-warn">
           <span>{partial}</span>
           <button type="button" onClick={reload} className="font-semibold">
             {tr("ลองอีกครั้ง")}
@@ -506,7 +512,7 @@ function VaultList({
 
       {tab === "image" && entries.length > 0 ? (
         <div className="flex justify-end">
-          <div className="flex rounded-lg bg-[#EAE3D6] p-0.5 text-xs">
+          <div className="flex rounded-lg bg-[#EAE3D6] dark:bg-border p-0.5 text-xs">
             {[
               { on: false, label: tr("รายการ"), Icon: List },
               { on: true, label: tr("รูปเล็ก"), Icon: LayoutGrid },
@@ -517,8 +523,9 @@ function VaultList({
                 aria-pressed={grid === on}
                 onClick={() => setGrid(on)}
                 className={cn(
-                  "flex items-center gap-1 rounded-md px-2.5 py-1 text-stone-700",
-                  grid === on && "bg-white font-semibold text-stone-900",
+                  "flex items-center gap-1 rounded-md px-2.5 py-1 text-stone-700 dark:text-foreground",
+                  grid === on &&
+                    "bg-white dark:bg-surface font-semibold text-stone-900 dark:text-foreground",
                 )}
               >
                 <Icon className="h-3.5 w-3.5" aria-hidden />
@@ -536,10 +543,10 @@ function VaultList({
       ) : entries.length === 0 && !partial ? (
         <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
           <Logo size={140} />
-          <h2 className="mt-2 text-lg font-bold text-stone-950">
+          <h2 className="mt-2 text-lg font-bold text-stone-950 dark:text-foreground">
             {search ? tr("ไม่พบรายการที่ค้นหา") : empty.title}
           </h2>
-          <p className="text-sm text-stone-700">
+          <p className="text-sm text-stone-700 dark:text-foreground">
             {search ? tr("ลองเปลี่ยนคำค้นนะครับ") : empty.hint}
           </p>
         </div>
@@ -551,7 +558,7 @@ function VaultList({
                 type="button"
                 aria-label={file.name}
                 onClick={() => openItem(file)}
-                className="block aspect-square w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-100"
+                className="block aspect-square w-full overflow-hidden rounded-xl border border-stone-200 dark:border-border bg-stone-100 dark:bg-surface"
               >
                 <Thumb file={file} token={token} className="h-full w-full" />
               </button>
@@ -587,7 +594,7 @@ function VaultList({
           type="button"
           disabled={loadingMore}
           onClick={() => void loadMore()}
-          className="h-11 w-full rounded-2xl border border-stone-300 text-sm font-semibold text-[#2D7347] disabled:opacity-60"
+          className="h-11 w-full rounded-2xl border border-stone-300 dark:border-border text-sm font-semibold text-[#2D7347] dark:text-primary disabled:opacity-60"
         >
           {loadingMore ? tr("กำลังโหลด…") : tr("ดูเพิ่ม")}
         </button>
@@ -637,14 +644,14 @@ function NoteRow({ note, onOpen }: { note: NoteDto; onOpen: () => void }) {
       onClick={onOpen}
       className={cn(CARD, "flex w-full items-start gap-3 p-3.5")}
     >
-      <span className="shrink-0 rounded-xl bg-emerald-100 p-2.5 text-emerald-800">
+      <span className="shrink-0 rounded-xl bg-emerald-100 dark:bg-primary-soft p-2.5 text-emerald-800 dark:text-primary">
         <Icon className="h-5 w-5" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-stone-900">
+        <span className="block truncate text-sm font-semibold text-stone-900 dark:text-foreground">
           {secret ? tr("ซ่อนเนื้อหาไว้ กดเพื่อดู") : noteTitle(note.body)}
         </span>
-        <span className="mt-0.5 block text-xs text-stone-600">
+        <span className="mt-0.5 block text-xs text-stone-600 dark:text-muted">
           {url ? tr("ลิงก์") : tr("โน้ต")} · {formatThaiDate(new Date(note.createdAt))}
         </span>
       </span>
@@ -661,8 +668,10 @@ function FileRow({ file, token, onOpen }: { file: FileDto; token: string; onOpen
     >
       <Thumb file={file} token={token} className="h-12 w-12 shrink-0 rounded-xl" />
       <span className="min-w-0 flex-1">
-        <span className="block break-words text-sm font-semibold text-stone-900">{file.name}</span>
-        <span className="num mt-0.5 block text-xs text-stone-600">
+        <span className="block break-words text-sm font-semibold text-stone-900 dark:text-foreground">
+          {file.name}
+        </span>
+        <span className="num mt-0.5 block text-xs text-stone-600 dark:text-muted">
           {formatBytes(file.sizeBytes)} · {formatThaiDate(new Date(file.createdAt))}
         </span>
       </span>
@@ -687,7 +696,12 @@ function Thumb({ file, token, className }: { file: FileDto; token: string; class
   }
   const Icon = isPicture(file) ? ImageIcon : file.mimeType.startsWith("video/") ? Video : FileText;
   return (
-    <span className={cn("flex items-center justify-center bg-amber-100 text-amber-800", className)}>
+    <span
+      className={cn(
+        "flex items-center justify-center bg-amber-100 dark:bg-warn-soft text-amber-800 dark:text-warn",
+        className,
+      )}
+    >
       <Icon className="h-5 w-5" aria-hidden />
     </span>
   );
@@ -739,7 +753,7 @@ function AddNoteSheet({
           className={`${fieldClass} h-auto resize-none py-3`}
         />
         {space.group ? (
-          <p className="text-xs text-stone-600">
+          <p className="text-xs text-stone-600 dark:text-muted">
             {tr("ทุกคนในกลุ่มเห็นโน้ตนี้ ไม่ควรจดรหัสผ่านสำคัญไว้")}
           </p>
         ) : null}
@@ -870,7 +884,7 @@ function NoteSheet({
             </button>
           </>
         ) : (
-          <p className="text-xs text-stone-600">
+          <p className="text-xs text-stone-600 dark:text-muted">
             {tr("แก้หรือลบได้เฉพาะคนที่จดโน้ตนี้ หรือเจ้าของสมุด")}
           </p>
         )}
@@ -981,7 +995,7 @@ function FileSheet({
             <Trash2 className="h-4 w-4" aria-hidden /> {tr("ลบไฟล์")}
           </button>
         ) : (
-          <p className="text-xs text-stone-600">
+          <p className="text-xs text-stone-600 dark:text-muted">
             {tr("ลบได้เฉพาะคนที่เก็บไฟล์นี้ หรือเจ้าของสมุด")}
           </p>
         )}
@@ -1023,11 +1037,13 @@ function Lightbox({
       }}
       className="fixed inset-0 z-30 flex items-center justify-center bg-black/85 p-3"
     >
-      <div className="flex max-h-full w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-[#FAF7F2]">
-        <div className="flex items-center justify-between gap-2 bg-[#F2ECE2] px-4 py-3">
+      <div className="flex max-h-full w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-[#FAF7F2] dark:bg-background">
+        <div className="flex items-center justify-between gap-2 bg-[#F2ECE2] dark:bg-surface px-4 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-stone-900">{file.name}</p>
-            <p className="num text-xs text-stone-600">
+            <p className="truncate text-sm font-bold text-stone-900 dark:text-foreground">
+              {file.name}
+            </p>
+            <p className="num text-xs text-stone-600 dark:text-muted">
               {formatThaiDate(new Date(file.createdAt), true)} · {formatBytes(file.sizeBytes)}
             </p>
           </div>
@@ -1035,7 +1051,7 @@ function Lightbox({
             type="button"
             onClick={onClose}
             aria-label={tr("ปิด")}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-stone-700"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface text-stone-700 dark:text-foreground"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
@@ -1064,7 +1080,7 @@ function Lightbox({
           <button
             type="button"
             onClick={onMore}
-            className="h-11 rounded-xl bg-stone-200 px-4 text-sm font-semibold text-stone-800"
+            className="h-11 rounded-xl bg-stone-200 dark:bg-border px-4 text-sm font-semibold text-stone-800 dark:text-foreground"
           >
             {tr("ชื่อ/ลบ")}
           </button>

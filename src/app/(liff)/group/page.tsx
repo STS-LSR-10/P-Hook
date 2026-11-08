@@ -37,7 +37,7 @@ function ToGroupSpace() {
 
   if (target) return <LoadingBlock rows={4} />;
   return (
-    <main className="min-h-screen bg-[#FAF7F2] px-4 pt-10">
+    <main className="min-h-screen bg-[#FAF7F2] dark:bg-background px-4 pt-10">
       <EmptyState
         title={t("ไม่พบกลุ่มนี้")}
         hint={t('เปิดหน้านี้จากการ์ดในกลุ่ม LINE เช่น พิมพ์ "ไฟล์กลุ่ม" ในกลุ่ม')}

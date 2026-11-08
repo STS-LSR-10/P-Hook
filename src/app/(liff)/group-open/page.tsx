@@ -70,7 +70,7 @@ export default function GroupOpenPage() {
             </p>
             <a
               href={data.addFriendUrl}
-              className="flex h-12 items-center justify-center rounded-2xl bg-primary font-semibold text-white"
+              className="flex h-12 items-center justify-center rounded-2xl bg-primary font-semibold text-white dark:text-surface"
             >
               {t("เพิ่มเพื่อน")}
             </a>
@@ -84,7 +84,7 @@ export default function GroupOpenPage() {
             </p>
             <Link
               href="/upgrade"
-              className="flex h-12 items-center justify-center rounded-2xl bg-primary font-semibold text-white"
+              className="flex h-12 items-center justify-center rounded-2xl bg-primary font-semibold text-white dark:text-surface"
             >
               {t("ดูแผนและทดลองใช้ฟรี")}
             </Link>
@@ -106,7 +106,7 @@ export default function GroupOpenPage() {
               type="button"
               onClick={open}
               disabled={busy}
-              className="h-12 w-full rounded-2xl bg-primary font-semibold text-white disabled:opacity-50"
+              className="h-12 w-full rounded-2xl bg-primary font-semibold text-white dark:text-surface disabled:opacity-50"
             >
               {busy ? t("กำลังส่ง…") : t("📒 เปิดสมุดกลุ่ม")}
             </button>

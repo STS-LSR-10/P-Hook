@@ -584,7 +584,7 @@ function TransactionsView() {
                 type="button"
                 disabled={selected.size === 0 || bulkBusy}
                 onClick={() => setMoveOpen(true)}
-                className="flex h-9 items-center gap-1 rounded-lg bg-white/70 px-2.5 text-[11px] font-semibold disabled:opacity-50"
+                className="flex h-9 items-center gap-1 rounded-lg bg-white/70 dark:bg-white/10 px-2.5 text-[11px] font-semibold disabled:opacity-50"
               >
                 <FolderInput className="h-3.5 w-3.5" aria-hidden /> {tr("ย้ายหมวด")}
               </button>
@@ -599,7 +599,7 @@ function TransactionsView() {
               <button
                 type="button"
                 onClick={stopSelecting}
-                className="h-9 rounded-lg bg-white/70 px-2.5 text-[11px] font-medium"
+                className="h-9 rounded-lg bg-white/70 dark:bg-white/10 px-2.5 text-[11px] font-medium"
               >
                 {tr("ยกเลิก")}
               </button>

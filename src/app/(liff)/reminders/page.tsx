@@ -155,13 +155,15 @@ function Reminders() {
   const groupId = UUID_RE.test(requested) ? requested : null;
   // one page and one header either way, so the switch stays put (and does not ask again) as it changes
   return (
-    <main className="-mb-24 min-h-screen bg-[#FAF8F3] pb-44 text-slate-800">
-      <header className="flex items-center justify-between gap-2 bg-[#82C392] px-4 py-3">
-        <h1 className="text-lg font-bold text-slate-900">{t("เตือน | พี่ฮูก")}</h1>
+    <main className="-mb-24 min-h-screen bg-[#FAF8F3] dark:bg-background pb-44 text-slate-800 dark:text-foreground">
+      <header className="flex items-center justify-between gap-2 bg-[#82C392] px-4 py-3 dark:bg-[#1d3a2b]">
+        <h1 className="text-lg font-bold text-slate-900 dark:text-foreground">
+          {t("เตือน | พี่ฮูก")}
+        </h1>
         <SpaceSwitch
           groupId={groupId}
           onChange={(next) => router.replace(next ? `/reminders?g=${next}` : "/reminders")}
-          className="bg-white/80"
+          className="bg-white/80 dark:bg-surface"
         />
       </header>
       {groupId ? (
@@ -306,7 +308,7 @@ function PersonalReminders() {
   return (
     <>
       <div className="px-4 pb-1 pt-3">
-        <div className="flex rounded-2xl bg-[#EBE7DC] p-1">
+        <div className="flex rounded-2xl bg-[#EBE7DC] dark:bg-border p-1">
           {[
             { key: "calendar" as const, text: t("แสดงเป็นปฏิทิน"), Icon: CalendarDays },
             { key: "all" as const, text: t("รายการทั้งหมด"), Icon: ListChecks },
@@ -318,7 +320,9 @@ function PersonalReminders() {
               onClick={() => setView(key)}
               className={cn(
                 "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl px-1 text-xs",
-                view === key ? "bg-white font-semibold text-[#BF360C]" : "text-slate-700",
+                view === key
+                  ? "bg-white dark:bg-surface font-semibold text-[#BF360C] dark:text-[#FF9E6B]"
+                  : "text-slate-700 dark:text-foreground",
               )}
             >
               <Icon className="h-4 w-4" aria-hidden />
@@ -356,7 +360,7 @@ function PersonalReminders() {
                   "h-9 shrink-0 rounded-full px-3.5 text-xs",
                   filter === key
                     ? "bg-[#BF4A00] font-bold text-white"
-                    : "border border-slate-200 bg-white text-slate-700",
+                    : "border border-slate-200 dark:border-border bg-white dark:bg-surface text-slate-700 dark:text-foreground",
                 )}
               >
                 {text}
@@ -368,7 +372,7 @@ function PersonalReminders() {
       ) : (
         <>
           <div className="flex items-center justify-between px-4 py-2">
-            <div className="inline-flex rounded-xl bg-[#EBE7DC] p-0.5">
+            <div className="inline-flex rounded-xl bg-[#EBE7DC] dark:bg-border p-0.5">
               {[
                 { key: "day" as const, text: t("วัน") },
                 { key: "week" as const, text: t("สัปดาห์") },
@@ -384,7 +388,9 @@ function PersonalReminders() {
                   }}
                   className={cn(
                     "h-9 rounded-lg px-3.5 text-xs",
-                    period === key ? "bg-[#FFD180] font-bold text-[#8A2B00]" : "text-slate-700",
+                    period === key
+                      ? "bg-[#FFD180] font-bold text-[#8A2B00] dark:bg-warn-soft dark:text-[#FFB38A]"
+                      : "text-slate-700 dark:text-foreground",
                   )}
                 >
                   {text}
@@ -394,7 +400,7 @@ function PersonalReminders() {
             <button
               type="button"
               onClick={() => pick(today)}
-              className="h-9 rounded-xl border border-emerald-200 bg-emerald-100 px-3 text-xs font-semibold text-emerald-900"
+              className="h-9 rounded-xl border border-emerald-200 dark:border-border bg-emerald-100 dark:bg-primary-soft px-3 text-xs font-semibold text-emerald-900 dark:text-primary"
             >
               {t("วันนี้")}
             </button>
@@ -405,26 +411,28 @@ function PersonalReminders() {
               type="button"
               aria-label={t("ก่อนหน้า")}
               onClick={() => step(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 dark:border-border bg-white dark:bg-surface text-slate-700 dark:text-foreground"
             >
               <ChevronLeft className="h-4 w-4" aria-hidden />
             </button>
-            <p className="min-w-0 flex-1 text-center text-base font-bold text-slate-800">{label}</p>
+            <p className="min-w-0 flex-1 text-center text-base font-bold text-slate-800 dark:text-foreground">
+              {label}
+            </p>
             <button
               type="button"
               aria-label={t("ถัดไป")}
               onClick={() => step(1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 dark:border-border bg-white dark:bg-surface text-slate-700 dark:text-foreground"
             >
               <ChevronRight className="h-4 w-4" aria-hidden />
             </button>
           </div>
 
           {period === "month" ? (
-            <div className="mx-3 mt-1 rounded-3xl border border-slate-200 bg-white p-3">
+            <div className="mx-3 mt-1 rounded-3xl border border-slate-200 dark:border-border bg-white dark:bg-surface p-3">
               <div
                 aria-hidden
-                className="mb-1 grid grid-cols-7 text-center text-[11px] font-bold text-slate-500"
+                className="mb-1 grid grid-cols-7 text-center text-[11px] font-bold text-slate-500 dark:text-muted"
               >
                 {WEEKDAYS.map((d) => (
                   <span key={d}>{d}</span>
@@ -446,8 +454,8 @@ function PersonalReminders() {
           ) : null}
 
           {period === "week" ? (
-            <div className="mx-3 mt-1 rounded-3xl border border-slate-200 bg-white p-3">
-              <p className="mb-2 text-center text-xs font-bold text-emerald-800">
+            <div className="mx-3 mt-1 rounded-3xl border border-slate-200 dark:border-border bg-white dark:bg-surface p-3">
+              <p className="mb-2 text-center text-xs font-bold text-emerald-800 dark:text-primary">
                 {dayLabel(week)} - {dayLabel(addDays(week, 6))}
               </p>
               <div className="grid grid-cols-7 gap-1">
@@ -455,7 +463,10 @@ function PersonalReminders() {
                   const ymd = addDays(week, i);
                   return (
                     <div key={name} className="text-center">
-                      <p aria-hidden className="mb-1 text-[11px] font-bold text-slate-500">
+                      <p
+                        aria-hidden
+                        className="mb-1 text-[11px] font-bold text-slate-500 dark:text-muted"
+                      >
                         {name}
                       </p>
                       <DayCell
@@ -472,12 +483,16 @@ function PersonalReminders() {
             </div>
           ) : null}
 
-          <div className="mx-3.5 mt-3 flex items-center justify-between gap-2 rounded-3xl border border-emerald-200 bg-gradient-to-r from-[#D9EFE0] via-[#EEF6EF] to-[#FEF5E7] p-3">
+          <div className="mx-3.5 mt-3 flex items-center justify-between gap-2 rounded-3xl border border-emerald-200 dark:border-border bg-gradient-to-r from-[#D9EFE0] dark:from-primary-soft via-[#EEF6EF] dark:via-surface to-[#FEF5E7] dark:to-surface p-3">
             <div className="min-w-0 flex-1">
-              <p className="mb-1 inline-block rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-900">
+              <p className="mb-1 inline-block rounded-full bg-white/80 dark:bg-surface px-2.5 py-0.5 text-[11px] font-semibold text-emerald-900 dark:text-primary">
                 {t("พี่ฮูกพร้อมเตือนทุกเรื่อง")}
               </p>
-              <p data-testid="owl-word" aria-live="polite" className="text-xs text-slate-700">
+              <p
+                data-testid="owl-word"
+                aria-live="polite"
+                className="text-xs text-slate-700 dark:text-foreground"
+              >
                 {word}
               </p>
             </div>
@@ -494,19 +509,19 @@ function PersonalReminders() {
 
           <section className="mt-3.5 px-4" aria-label={t("รายการเตือนของวันที่เลือก")}>
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-800">
+              <h2 className="text-sm font-bold text-slate-800 dark:text-foreground">
                 {t("รายการเตือน:")} {dayLabel(selected)}
               </h2>
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+              <span className="rounded-full bg-slate-200 dark:bg-border px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:text-foreground">
                 {entries.length} {t("รายการ")}
               </span>
             </div>
             {entries.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-5 text-center">
-                <p className="text-sm font-bold text-slate-700">
+              <div className="rounded-3xl border border-dashed border-slate-300 dark:border-border bg-white/70 dark:bg-surface p-5 text-center">
+                <p className="text-sm font-bold text-slate-700 dark:text-foreground">
                   {t("ไม่มีรายการเตือนในวันที่เลือก")}
                 </p>
-                <p className="mt-0.5 text-xs text-slate-600">
+                <p className="mt-0.5 text-xs text-slate-600 dark:text-muted">
                   {t("กดปุ่ม + เพื่อเพิ่มการแจ้งเตือนได้เลยครับ")}
                 </p>
               </div>
@@ -601,7 +616,11 @@ function DayCell({
       onClick={() => onPick(ymd)}
       className={cn(
         "flex h-11 w-full flex-col items-center justify-center rounded-xl text-xs font-semibold",
-        selected ? "bg-[#3F7A4B] text-white" : muted ? "text-slate-500" : "text-slate-800",
+        selected
+          ? "bg-[#3F7A4B] text-white"
+          : muted
+            ? "text-slate-500 dark:text-muted"
+            : "text-slate-800 dark:text-foreground",
         ymd === today && !selected && "ring-2 ring-[#FFB74D]",
       )}
     >
@@ -610,7 +629,13 @@ function DayCell({
         aria-hidden
         className={cn(
           "mt-0.5 h-1.5 w-1.5 rounded-full",
-          !entries ? "" : selected ? "bg-white" : waiting ? "bg-[#FF8800]" : "bg-[#5F9E6B]",
+          !entries
+            ? ""
+            : selected
+              ? "bg-white dark:bg-surface"
+              : waiting
+                ? "bg-[#FF8800]"
+                : "bg-[#5F9E6B]",
         )}
       />
     </button>
@@ -639,8 +664,8 @@ function ReminderRow({
   return (
     <li
       className={cn(
-        "flex items-center gap-1 rounded-2xl border border-slate-200 bg-white pl-2.5 pr-1",
-        done && "bg-slate-50",
+        "flex items-center gap-1 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-surface pl-2.5 pr-1",
+        done && "bg-slate-50 dark:bg-surface",
       )}
     >
       <button
@@ -652,7 +677,9 @@ function ReminderRow({
           aria-hidden
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm",
-            done ? "bg-emerald-100 text-emerald-800" : "bg-orange-100",
+            done
+              ? "bg-emerald-100 dark:bg-primary-soft text-emerald-800 dark:text-primary"
+              : "bg-orange-100 dark:bg-warn-soft",
           )}
         >
           {done ? "✓" : icon}
@@ -667,18 +694,20 @@ function ReminderRow({
             className={cn(
               "min-w-0 truncate text-sm font-semibold",
               !showDay && "flex-1",
-              done ? "text-slate-600 line-through" : "text-slate-800",
+              done
+                ? "text-slate-600 dark:text-muted line-through"
+                : "text-slate-800 dark:text-foreground",
             )}
           >
             {reminder.body}
           </span>
           <span className="flex shrink-0 items-center gap-1.5">
-            <span className="whitespace-nowrap rounded-md border border-emerald-200 bg-[#E1EFE3] px-1.5 py-0.5 text-[11px] font-bold text-emerald-900">
+            <span className="whitespace-nowrap rounded-md border border-emerald-200 dark:border-border bg-[#E1EFE3] dark:bg-primary-soft px-1.5 py-0.5 text-[11px] font-bold text-emerald-900 dark:text-primary">
               {showDay ? `${shortDay(at)} · ` : ""}
               {t("เวลา")} {clock(at)} {t("น.")}
             </span>
             {reminder.repeat ? (
-              <span className="text-slate-500">
+              <span className="text-slate-500 dark:text-muted">
                 <RepeatIcon className="h-3.5 w-3.5" aria-hidden />
                 <span className="sr-only">{REPEAT_LABEL[reminder.repeat]}</span>
               </span>
@@ -696,7 +725,9 @@ function ReminderRow({
           <span
             className={cn(
               "flex h-5 w-5 items-center justify-center rounded border",
-              done ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-400",
+              done
+                ? "border-emerald-700 bg-emerald-700 text-white"
+                : "border-slate-400 dark:border-border",
             )}
           >
             {done ? <Check className="h-3.5 w-3.5" aria-hidden /> : null}
@@ -707,7 +738,7 @@ function ReminderRow({
         type="button"
         aria-label={t("ลบ {0}", reminder.body)}
         onClick={() => onDelete(reminder)}
-        className="flex h-10 w-9 shrink-0 items-center justify-center text-slate-500"
+        className="flex h-10 w-9 shrink-0 items-center justify-center text-slate-500 dark:text-muted"
       >
         <Trash2 className="h-4 w-4" aria-hidden />
       </button>
@@ -740,7 +771,7 @@ function AllList({
     );
   if (shown.length === 0) {
     return (
-      <p className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">
+      <p className="rounded-3xl border border-slate-200 dark:border-border bg-white dark:bg-surface p-6 text-center text-sm text-slate-600 dark:text-muted">
         {t("ไม่มีรายการเตือนในหมวดนี้")}
       </p>
     );
@@ -863,7 +894,7 @@ function ReminderSheet({
     <Sheet title={reminder ? t("แก้การเตือน") : t("ตั้งเตือนใหม่กับพี่ฮูก")} onClose={onClose}>
       <form onSubmit={save} className="space-y-3">
         {series ? (
-          <p className="rounded-xl bg-amber-100 px-3 py-2 text-sm text-amber-900">
+          <p className="rounded-xl bg-amber-100 dark:bg-warn-soft px-3 py-2 text-sm text-amber-900 dark:text-warn">
             {t("แก้ทุกรอบ · รอบถัดไป")} {formatThaiDate(new Date(series.remindAt))}
           </p>
         ) : null}
@@ -918,7 +949,7 @@ function ReminderSheet({
                 className={cn(
                   "min-h-11 rounded-xl border px-1 text-xs",
                   category === key
-                    ? "border-emerald-600 bg-emerald-50 font-semibold text-emerald-900"
+                    ? "border-emerald-600 bg-emerald-50 dark:bg-primary-soft font-semibold text-emerald-900 dark:text-primary"
                     : "border-border",
                 )}
               >

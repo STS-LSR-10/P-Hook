@@ -224,7 +224,7 @@ export default function SplitBillPage() {
                 type="button"
                 onClick={confirm}
                 disabled={busy || count < 2}
-                className="h-12 w-full rounded-2xl bg-primary font-semibold text-white disabled:opacity-50"
+                className="h-12 w-full rounded-2xl bg-primary font-semibold text-white dark:text-surface disabled:opacity-50"
               >
                 {busy ? t("กำลังบันทึก…") : t("ยืนยัน และส่ง QR เข้ากลุ่ม")}
               </button>

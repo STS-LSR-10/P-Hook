@@ -125,7 +125,7 @@ export function CallNameCard({
           type="button"
           disabled={locked || busy || !dirty || tooLong}
           onClick={() => save(draft)}
-          className="min-h-11 flex-1 rounded-2xl bg-primary px-4 font-semibold text-white disabled:opacity-50"
+          className="min-h-11 flex-1 rounded-2xl bg-primary px-4 font-semibold text-white dark:text-surface disabled:opacity-50"
         >
           {busy ? tr("กำลังบันทึก…") : tr("บันทึกชื่อ")}
         </button>

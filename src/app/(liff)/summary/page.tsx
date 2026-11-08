@@ -233,7 +233,7 @@ function Hero({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/50 blur-2xl"
+        className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/50 dark:bg-white/10 blur-2xl"
       />
       <div className="relative">
         <div className="flex items-center justify-between gap-2">
@@ -244,7 +244,7 @@ function Hero({
             type="button"
             aria-pressed={accumulated}
             onClick={onToggle}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/70 bg-white/60 px-3 text-xs font-semibold text-[var(--hero-ink)]"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/70 dark:border-white/15 bg-white/60 dark:bg-white/10 px-3 text-xs font-semibold text-[var(--hero-ink)]"
           >
             <Repeat className="h-3.5 w-3.5 text-[var(--hero-ink)]" aria-hidden />
             {accumulated ? t("รอบนี้") : t("สะสม")}
@@ -264,7 +264,7 @@ function Hero({
             : t("รายรับ − รายจ่ายของรอบนี้")}
         </p>
         {goal ? (
-          <div className="mt-4 border-t border-white/70 pt-3">
+          <div className="mt-4 border-t border-white/70 dark:border-white/15 pt-3">
             <div className="mb-1.5 flex justify-between gap-2 text-xs">
               <span className="min-w-0 truncate text-[var(--hero-ink-soft)]">
                 {t("เป้าหมาย")} {goal.emoji ?? "🎯"} {goal.name}
@@ -279,7 +279,7 @@ function Hero({
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.min(100, goal.percent)}
-              className="h-2 overflow-hidden rounded-full bg-white/70 p-0.5"
+              className="h-2 overflow-hidden rounded-full bg-white/70 dark:bg-white/10 p-0.5"
             >
               <div
                 className="h-full rounded-full bg-primary"
