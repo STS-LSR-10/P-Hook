@@ -84,10 +84,10 @@ test.describe("analytics page (360px)", () => {
     });
     await page.goto("/analytics");
 
-    const teaser = page.getByRole("region", { name: "ฟีเจอร์ของแผน Pro" });
-    await expect(teaser.getByText("สำหรับแผน Pro")).toBeVisible();
+    const teaser = page.getByRole("region", { name: "ฟีเจอร์ของแผน Starter ขึ้นไป" });
+    await expect(teaser.getByText("สำหรับแผน Starter")).toBeVisible();
     await expect(
-      teaser.getByRole("link", { name: /อัปเกรดเป็น Pro เริ่มต้น ฿\d+\/เดือน/ }),
+      teaser.getByRole("link", { name: /อัปเกรดเป็น Starter เริ่มต้น ฿\d+\/เดือน/ }),
     ).toHaveAttribute("href", "/upgrade");
     await expect(page.getByRole("region", { name: "กราฟรายรับรายจ่าย" })).toHaveCount(0);
     expect(seen.some((s) => s.includes("/api/analytics"))).toBe(false);
@@ -184,11 +184,8 @@ test.describe("custom categories (360px)", () => {
     await page.getByRole("button", { name: /เพิ่มหมวด/ }).click();
 
     const dialog = page.getByRole("dialog", { name: "หมวดของตัวเอง" });
-    await expect(dialog.getByText("สร้างหมวดของตัวเองสำหรับแผน Pro")).toBeVisible();
-    await expect(dialog.getByRole("link", { name: "ดูแผน Pro" })).toHaveAttribute(
-      "href",
-      "/upgrade",
-    );
+    await expect(dialog.getByText("สร้างหมวดของตัวเองสำหรับแผน Starter")).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "ดูแผน" })).toHaveAttribute("href", "/upgrade");
     await expect(page.getByLabel("ชื่อหมวด")).toHaveCount(0);
     expect(seen.some((s) => s.startsWith("POST"))).toBe(false);
   });
@@ -200,7 +197,7 @@ test.describe("custom categories (360px)", () => {
 
     const dialog = page.getByRole("dialog", { name: "แก้ไขหมวด" });
     await expect(dialog.getByLabel("ชื่อหมวด")).toBeDisabled();
-    await expect(dialog.getByText("แก้หมวดของตัวเองได้ในแผน Pro ขึ้นไป")).toBeVisible();
+    await expect(dialog.getByText("แก้หมวดของตัวเองได้ในแผน Starter ขึ้นไป")).toBeVisible();
     await expect(dialog.getByRole("button", { name: "บันทึก" })).toHaveCount(0);
     await expect(dialog.getByRole("button", { name: "ลบหมวดนี้" })).toBeVisible();
     await expect(dialog.getByRole("radiogroup", { name: "เลือกอีโมจิ" })).toHaveCount(0);
@@ -328,7 +325,7 @@ test.describe("category budgets are Pro and above (360px)", () => {
     await expect(page.getByRole("menuitemradio", { name: "แยกตามหมวด" })).toBeDisabled();
     await expect(page.getByRole("menuitemradio", { name: "รวมก้อนเดียว" })).toBeEnabled();
     await page.keyboard.press("Escape");
-    await expect(page.getByText("สำหรับแผน Pro").first()).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Starter").first()).toBeVisible();
     await expect(page.getByRole("progressbar", { name: "การใช้งบ" })).toBeVisible();
   });
 
@@ -514,13 +511,15 @@ test.describe("daily budget (360px)", () => {
 
     const section = page.getByRole("region", { name: "งบรายวัน" });
     await expect(section.getByLabel("งบรายวัน")).toBeDisabled();
-    await expect(section.getByText("สำหรับแผน Pro")).toBeVisible();
+    await expect(section.getByText("สำหรับแผน Starter")).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 });
 
 test.describe("budget cycle sheet (360px)", () => {
-  test("ตั้งค่า opens a sheet that saves the cycle and shows it straight away", async ({ page }) => {
+  test("ตั้งค่า opens a sheet that saves the cycle and shows it straight away", async ({
+    page,
+  }) => {
     const bodies: unknown[] = [];
     let cycle: Record<string, unknown> = { cycle: "monthly", cycleStartDay: 1 };
     await mockApi(page, {

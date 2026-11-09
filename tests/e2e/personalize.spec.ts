@@ -22,7 +22,7 @@ test.describe("theme and bot manner (360px)", () => {
 
     const card = page.getByRole("region", { name: "ธีมการ์ดและนิสัยบอท" });
     await expect(card).toBeVisible();
-    await expect(card.getByText("สำหรับแผน Pro")).toBeVisible();
+    await expect(card.getByText("สำหรับแผน Starter")).toBeVisible();
     await expect(card.getByRole("radio", { name: "เขียวมิ้นต์" })).toBeEnabled();
     await expect(card.getByRole("radio", { name: "ฟ้าทะเล" })).toBeDisabled();
     await expect(card.getByRole("radio", { name: /ฮูกปากแจ๋ว/ })).toBeDisabled();
@@ -84,7 +84,7 @@ test.describe("photo offer after a save (360px)", () => {
     await mockApi(page, { ...COMMON, "GET /api/settings": SETTINGS, "GET /api/me": ME_FREE });
     await openSettings(page);
     const free = page.getByRole("region", { name: "ปุ่มแนบรูปบนการ์ด" });
-    await expect(free.getByText("สำหรับแผน Pro")).toBeVisible();
+    await expect(free.getByText("สำหรับแผน Starter")).toBeVisible();
     await expect(free.getByRole("switch")).toBeDisabled();
     await expectNoHorizontalScroll(page);
   });

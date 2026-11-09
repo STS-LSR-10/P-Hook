@@ -98,7 +98,7 @@ test.describe("summary page (360px)", () => {
     await expect(profile.getByText("Free", { exact: true })).toBeVisible();
     await expect(page.getByText("ยังไม่ตั้ง")).toBeVisible();
     await expect(page.getByRole("link", { name: "ตั้งงบ" })).toBeVisible();
-    await expect(page.getByText("ใช้ได้ในแผน Pro ขึ้นไป")).toBeVisible();
+    await expect(page.getByText("ใช้ได้ในแผน Starter ขึ้นไป")).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 

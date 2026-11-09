@@ -28,7 +28,6 @@ export async function GET(request: Request): Promise<Response> {
     const { plan, expiresAt } = await getPlanInfo(db, auth.userId, now);
     const paid = plan !== "free";
     const month = monthKey(now);
-    const day = dayKey(now);
 
     const [
       storageBytes,

@@ -1,11 +1,11 @@
 import Link from "next/link";
 
-/** The admin's two pages: what the system costs, and what users wrote to us. */
+/** The admin's pages: what the system costs, who the members are, and what users wrote to us. */
 export function AdminTabs({
   active,
   feedbackTotal,
 }: {
-  active: "cost" | "feedback";
+  active: "cost" | "members" | "feedback";
   feedbackTotal: number | null;
 }) {
   const tab = (on: boolean) =>
@@ -22,6 +22,13 @@ export function AdminTabs({
         className={tab(active === "cost")}
       >
         ค่าใช้จ่ายระบบ
+      </Link>
+      <Link
+        href="/admin/members"
+        aria-current={active === "members" ? "page" : undefined}
+        className={tab(active === "members")}
+      >
+        สมาชิก
       </Link>
       <Link
         href="/admin/feedback"

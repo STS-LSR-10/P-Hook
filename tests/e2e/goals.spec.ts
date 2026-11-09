@@ -82,7 +82,7 @@ test.describe("goals page (360px)", () => {
       "GET /api/goals": { items: [], limit: 0, canAdd: false },
     });
     await page.goto("/goals");
-    await expect(page.getByText("สำหรับแผน Pro")).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Starter")).toBeVisible();
     await expect(page.getByRole("button", { name: "เพิ่มเป้าหมาย" })).toHaveCount(0);
   });
 

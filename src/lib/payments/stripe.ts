@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { log } from "@/lib/log";
-import { buildChangeFields, buildCheckoutFields, productName, resultUrls } from "./stripe-checkout";
+import {
+  buildChangeFields,
+  buildCheckoutFields,
+  earlyBirdCouponFields,
+  productName,
+  resultUrls,
+} from "./stripe-checkout";
 import { applyAction, interpretEvent, type StripeEvent } from "./stripe-events";
 import { StripeApiError, stripeGet, stripePost } from "./stripe-api";
 import { verifyStripeSignature } from "./stripe-signature";
@@ -31,10 +37,18 @@ export function createStripeProvider(
 
     async createCheckout(request) {
       try {
+        const coupon =
+          request.earlyBird && request.method === "card" && !request.upgrade
+            ? await stripePost<{ id: string }>(
+                config.secretKey,
+                "/coupons",
+                earlyBirdCouponFields(request.plan, request.period),
+              )
+            : null;
         const session = await stripePost<{ id: string; url: string | null }>(
           config.secretKey,
           "/checkout/sessions",
-          buildCheckoutFields(request, config.baseUrl),
+          buildCheckoutFields(request, config.baseUrl, new Date(), coupon?.id),
         );
         if (!session.url) return { status: "unavailable", message: PAYMENT_FAILED_TEXT };
         return { status: "redirect", url: session.url, reference: session.id };

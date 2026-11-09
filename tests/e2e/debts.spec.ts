@@ -3,6 +3,7 @@ import {
   expectNoHorizontalScroll,
   expectNoSeriousA11yViolations,
   mockApi,
+  ME_FREE,
   ME_PLUS,
 } from "./helpers";
 
@@ -79,15 +80,15 @@ test.describe("debts page (360px)", () => {
     await expect(page.getByText("ยังไม่มีหนี้ค้าง")).toBeVisible();
   });
 
-  test("not Elite: a note with an upgrade link and the add button is off", async ({ page }) => {
+  test("Free: a note with an upgrade link and the add button is off", async ({ page }) => {
     await mockApi(page, {
-      "GET /api/me": ME_PLUS,
+      "GET /api/me": ME_FREE,
       "GET /api/debts": LIST,
       "GET /api/wallets": WALLETS,
     });
     await page.goto("/debts");
 
-    await expect(page.getByText("สำหรับแผน Elite")).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Starter")).toBeVisible();
     await expect(page.getByRole("button", { name: "เพิ่มหนี้" })).toBeDisabled();
   });
 

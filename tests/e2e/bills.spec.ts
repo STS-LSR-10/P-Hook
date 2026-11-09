@@ -3,6 +3,7 @@ import {
   expectNoHorizontalScroll,
   expectNoSeriousA11yViolations,
   mockApi,
+  ME_FREE,
   ME_PLUS,
 } from "./helpers";
 
@@ -71,11 +72,11 @@ test.describe("bills page (360px)", () => {
     await expect(page.getByText("ยังไม่มีบิลที่ตั้งเตือน")).toBeVisible();
   });
 
-  test("not Elite: an upgrade note, buttons off, no add button", async ({ page }) => {
-    await mockApi(page, { "GET /api/me": ME_PLUS, "GET /api/bills": LIST });
+  test("Free: an upgrade note, buttons off, no add button", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/bills": LIST });
     await page.goto("/bills");
 
-    await expect(page.getByText("สำหรับแผน Elite")).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Pro")).toBeVisible();
     await expect(page.getByRole("button", { name: "เพิ่มบิล" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "แก้ไข ค่าไฟ" })).toBeDisabled();
   });

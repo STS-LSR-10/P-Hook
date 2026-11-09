@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCheckoutFields, resultUrls } from "./stripe-checkout";
+import { buildCheckoutFields, earlyBirdCouponFields, resultUrls } from "./stripe-checkout";
 
 const USER = "11111111-1111-1111-1111-111111111111";
 const BASE = "https://jodtang.example.com/";
@@ -35,7 +35,11 @@ describe("buildCheckoutFields", () => {
   });
 
   it("each plan is charged its normal price, on any day", () => {
-    const price = (plan: "starter" | "plus" | "ultimate", period: "monthly" | "yearly", now: Date) =>
+    const price = (
+      plan: "starter" | "plus" | "ultimate",
+      period: "monthly" | "yearly",
+      now: Date,
+    ) =>
       buildCheckoutFields({ userId: USER, plan, period, method: "card" }, BASE, now)[
         "line_items[0][price_data][unit_amount]"
       ];
@@ -114,5 +118,66 @@ describe("buildCheckoutFields", () => {
     expect(f.success_url).toBe("https://jodtang.example.com/pay/result?status=success");
     expect(f.cancel_url).toBe(resultUrls(BASE).cancel);
     expect(f.locale).toBe("th");
+  });
+});
+
+describe("Early Bird checkout", () => {
+  it("a card subscription keeps the normal price and takes the difference off with one coupon", () => {
+    const f = buildCheckoutFields(
+      { userId: USER, plan: "plus", period: "yearly", method: "card", earlyBird: true },
+      BASE,
+      AFTER,
+      "coupon_1",
+    );
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("69900"); // renews at the normal price
+    expect(f["discounts[0][coupon]"]).toBe("coupon_1");
+    expect(f["subscription_data[metadata][early_bird]"]).toBe("1");
+    expect(earlyBirdCouponFields("plus", "yearly", AFTER)).toMatchObject({
+      amount_off: String((699 - 499) * 100),
+      duration: "once",
+      max_redemptions: "1",
+    });
+    expect(earlyBirdCouponFields("starter", "monthly", AFTER).amount_off).toBe(
+      String((49 - 29) * 100),
+    );
+  });
+
+  it("the page lapses with the seat reservation, and the coupon cannot outlive it", () => {
+    const f = buildCheckoutFields(
+      { userId: USER, plan: "plus", period: "yearly", method: "card", earlyBird: true },
+      BASE,
+      AFTER,
+      "coupon_1",
+    );
+    const t0 = Math.floor(AFTER.getTime() / 1000);
+    expect(Number(f.expires_at)).toBe(t0 + 31 * 60);
+    expect(Number(earlyBirdCouponFields("plus", "yearly", AFTER).redeem_by)).toBe(t0 + 3600);
+    expect(
+      buildCheckoutFields(
+        { userId: USER, plan: "plus", period: "yearly", method: "card" },
+        BASE,
+        AFTER,
+      ).expires_at,
+    ).toBeUndefined();
+  });
+
+  it("PromptPay (yearly) is charged the Early Bird price itself", () => {
+    const f = buildCheckoutFields(
+      { userId: USER, plan: "ultimate", period: "yearly", method: "promptpay", earlyBird: true },
+      BASE,
+      AFTER,
+    );
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("149000");
+    expect(f["metadata[early_bird]"]).toBe("1");
+  });
+
+  it("without a seat, or on an upgrade quote, nothing changes", () => {
+    const f = buildCheckoutFields(
+      { userId: USER, plan: "starter", period: "yearly", method: "card" },
+      BASE,
+      AFTER,
+    );
+    expect(f["discounts[0][coupon]"]).toBeUndefined();
+    expect(f["subscription_data[metadata][early_bird]"]).toBeUndefined();
   });
 });

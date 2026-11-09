@@ -2801,92 +2801,150 @@ export const EN: Record<string, string> = {
   'พี่ฮูกถูกลบออกจากกลุ่มนี้แล้ว ข้อมูลจะถูกลบถาวรวันที่ {0} เพิ่มพี่ฮูกกลับเข้ากลุ่มแล้วพิมพ์ "เปิดสมุดกลุ่ม" เพื่อเก็บไว้':
     "P'Hook was removed from this group. Its data will be deleted for good on {0}. Add P'Hook back to the group and type \"เปิดสมุดกลุ่ม\" to keep it",
   "พิมพ์ประโยคยาวๆ ให้ AI ช่วยอ่าน": "Type long sentences and let AI read them",
-  "การจดเงินต่างสกุล (เช่น 1500 JPY) แปลงเป็นสกุลเงินของคุณให้อัตโนมัติ เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ตอนนี้พิมพ์ยอดเป็นสกุลเงินของคุณได้เลย": "Recording foreign currency (like 1500 JPY), converted to your currency automatically, is for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu. For now you can type the amount in your own currency",
-  "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน {1}) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น {2} ได้ {3} ครั้ง/เดือน หรือรอต้นเดือนหน้านะ": "You have used all {0} Ask AI uses this month ({1} plan). You can still record as usual. Upgrade to {2} for {3} a month, or wait until next month",
+  'การจดเงินต่างสกุล (เช่น 1500 JPY) แปลงเป็นสกุลเงินของคุณให้อัตโนมัติ เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ยอดเป็นสกุลเงินของคุณได้เลย':
+    'Recording foreign currency (like 1500 JPY), converted to your currency automatically, is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can type the amount in your own currency',
+  "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน {1}) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น {2} ได้ {3} ครั้ง/เดือน หรือรอต้นเดือนหน้านะ":
+    "You have used all {0} Ask AI uses this month ({1} plan). You can still record as usual. Upgrade to {2} for {3} a month, or wait until next month",
   "กระเป๋า 5 ใบ · เป้าหมายออม 2 ใบ · 1 กลุ่ม LINE": "5 wallets · 2 savings goals · 1 LINE group",
   "ส่งออก CSV/Excel · หลายสกุลเงิน": "CSV/Excel export · multiple currencies",
-  "การจดย้อนหลังเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ตอนนี้พิมพ์จดเป็นวันนี้ได้เลย": "Recording an earlier day is for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu. For now you can record it as today",
+  'การจดย้อนหลังเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์จดเป็นวันนี้ได้เลย':
+    'Recording an earlier day is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can record it as today',
   "อ่านสลิป {0} ใบ/เดือน + จดด้วยเสียง {1} ครั้ง": "{0} slip reads a month + {1} voice records",
-  "Starter ฿{0}/เดือน จดด้วยเสียงได้ {1} ครั้ง/เดือน · Pro ฿{2}/เดือน {3} ครั้ง/เดือน{4}": "Starter ฿{0}/month records {1} voice messages a month · Pro ฿{2}/month {3} a month{4}",
-  "วงเงินและยอดตามรอบบิลของบัตรเครดิตเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "Credit card limits and statement balances are for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu",
-  "กลุ่มนี้ยังไม่ได้เปิดสมุด สมาชิกที่เป็นแผน Starter ขึ้นไปพิมพ์ \"เปิดสมุดกลุ่ม\" ได้เลย": "This group has no ledger yet. A member on the Starter plan or above can type \"open group ledger\"",
-  "*ไม่จำกัดสำหรับการใช้งานตามปกติ: สูงสุดราว {0} ครั้ง/เดือน (AI อ่านประโยคยาว) ครบแล้วพิมพ์จดได้ตามปกติ และใช้ได้ใหม่ต้นเดือนหน้า": "*Unlimited for normal use: up to about {0} a month (AI reading long sentences). After that you can still type entries, and it resets next month",
+  "Starter ฿{0}/เดือน จดด้วยเสียงได้ {1} ครั้ง/เดือน · Pro ฿{2}/เดือน {3} ครั้ง/เดือน{4}":
+    "Starter ฿{0}/month records {1} voice messages a month · Pro ฿{2}/month {3} a month{4}",
+  'วงเงินและยอดตามรอบบิลของบัตรเครดิตเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Credit card limits and statement balances are for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
+  'กลุ่มนี้ยังไม่ได้เปิดสมุด สมาชิกที่เป็นแผน Starter ขึ้นไปพิมพ์ "เปิดสมุดกลุ่ม" ได้เลย':
+    'This group has no ledger yet. A member on the Starter plan or above can type "open group ledger"',
+  "*ไม่จำกัดสำหรับการใช้งานตามปกติ: สูงสุดราว {0} ครั้ง/เดือน (AI อ่านประโยคยาว) ครบแล้วพิมพ์จดได้ตามปกติ และใช้ได้ใหม่ต้นเดือนหน้า":
+    "*Unlimited for normal use: up to about {0} a month (AI reading long sentences). After that you can still type entries, and it resets next month",
   "จดด้วยเสียงสำหรับสมาชิก Starter ขึ้นไป": "Voice recording is for Starter members and above",
-  "การแนบรูปเป็นฟีเจอร์ของแผน Starter ขึ้นไป": "Attaching a photo is for the Starter plan and above",
+  "การแนบรูปเป็นฟีเจอร์ของแผน Starter ขึ้นไป":
+    "Attaching a photo is for the Starter plan and above",
   "อัปเกรดเป็น Starter เริ่มต้น ฿": "Upgrade to Starter from ฿",
-  "การค้นหาพร้อมยอดรวมเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ตอนนี้ค้นหาในหน้ารายการของแอปได้เลย": "Search with totals is for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu. For now you can search on the app's entries page",
-  "เดือนนี้จดด้วยเสียงครบ {0} ครั้งแล้ว (แผน {1}) พิมพ์จดแทนได้เลย อัปเกรดเป็น {2} เพื่อจดด้วยเสียงได้ {3} ครั้ง/เดือน หรือรอรีเซ็ตต้นเดือนหน้านะ": "You have used {0} voice records this month ({1} plan). You can type instead. Upgrade to {2} for {3} a month, or wait for the reset next month",
-  "คลังเก็บไฟล์": "File storage",
-  "สร้างหมวดของตัวเองสำหรับแผน Starter ขึ้นไป": "Creating your own categories is for the Starter plan and above",
+  'การค้นหาพร้อมยอดรวมเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้ค้นหาในหน้ารายการของแอปได้เลย':
+    'Search with totals is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can search on the app\'s entries page',
+  "เดือนนี้จดด้วยเสียงครบ {0} ครั้งแล้ว (แผน {1}) พิมพ์จดแทนได้เลย อัปเกรดเป็น {2} เพื่อจดด้วยเสียงได้ {3} ครั้ง/เดือน หรือรอรีเซ็ตต้นเดือนหน้านะ":
+    "You have used {0} voice records this month ({1} plan). You can type instead. Upgrade to {2} for {3} a month, or wait for the reset next month",
+  คลังเก็บไฟล์: "File storage",
+  "สร้างหมวดของตัวเองสำหรับแผน Starter ขึ้นไป":
+    "Creating your own categories is for the Starter plan and above",
   "อ่านสลิป {0} ใบ/เดือน + นำเข้า PDF Statement": "{0} slip reads a month + PDF statement import",
-  "อ่านสลิปฟรีครบ {0} ใบแล้ว การอ่านสลิปต่อเดือนเป็นของแผน Starter ขึ้นไป (Starter {1} ใบ/เดือน, Pro {2}, Elite {3}) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" ตอนนี้พิมพ์จดเองได้เลย เช่น \"ค่าไฟ 1200\" นะ": "You have used all {0} free slip reads. Monthly slip reading is on the Starter plan and above (Starter {1} a month, Pro {2}, Elite {3}). Try it free for 7 days from the \"Upgrade\" menu. For now you can type it yourself, like \"electricity 1200\"",
+  'อ่านสลิปฟรีครบ {0} ใบแล้ว การอ่านสลิปต่อเดือนเป็นของแผน Starter ขึ้นไป (Starter {1} ใบ/เดือน, Pro {2}, Elite {3}) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ตอนนี้พิมพ์จดเองได้เลย เช่น "ค่าไฟ 1200" นะ':
+    'You have used all {0} free slip reads. Monthly slip reading is on the Starter plan and above (Starter {1} a month, Pro {2}, Elite {3}). Try it free for 7 days from the "Upgrade" menu. For now you can type it yourself, like "electricity 1200"',
   "ใช้ได้ในแผน Starter ขึ้นไป": "Available on the Starter plan and above",
   "สำหรับแผน Starter ขึ้นไป": "For the Starter plan and above",
-  "กระปุกออมสิน ตั้งเป้า ดูความคืบหน้า · Starter ขึ้นไป": "Piggy banks: set a goal and watch it grow · Starter and above",
+  "กระปุกออมสิน ตั้งเป้า ดูความคืบหน้า · Starter ขึ้นไป":
+    "Piggy banks: set a goal and watch it grow · Starter and above",
   "ฟีเจอร์ของแผน Starter ขึ้นไป": "Starter plan and above feature",
   "{0} กลุ่ม · {1} คน/กลุ่ม": "{0} groups · {1} people each",
-  "บอทเตือนก่อนวันครบกำหนด · แผน Pro ขึ้นไป": "The bot reminds you before the due date · Pro plan and above",
-  "Pro ฿{0}/เดือน อ่าน PDF ได้ {1} ไฟล์/เดือน · Elite {2} ไฟล์/เดือน{3}": "Pro ฿{0}/month reads {1} PDFs a month · Elite {2} a month{3}",
-  "เดือนนี้อ่านสลิปครบ {0} ใบแล้ว (แผน {1}) พิมพ์จดเองได้ไม่จำกัด เช่น \"ค่าไฟ 1200\" และอ่านสลิปได้ใหม่ต้นเดือนหน้านะ": "You have read {0} slips this month ({1} plan). You can still type entries, like \"electricity 1200\", and slip reading resets next month",
-  "สมุดกลุ่มนี้ปิดอยู่ หรือเจ้าของสมุดไม่ได้ใช้แผนที่มีสมุดกลุ่มแล้ว จดเพิ่มไม่ได้": "This group ledger is closed, or its owner is no longer on a plan with group ledgers, so nothing more can be added",
-  "เดือนนี้จดด้วยเสียงครบ {0} ครั้งแล้ว พิมพ์จดแทนได้เลย และจะใช้เสียงได้ใหม่ต้นเดือนหน้านะ": "You have used {0} voice records this month. You can type instead, and voice resets next month",
+  "บอทเตือนก่อนวันครบกำหนด · แผน Pro ขึ้นไป":
+    "The bot reminds you before the due date · Pro plan and above",
+  "Pro ฿{0}/เดือน อ่าน PDF ได้ {1} ไฟล์/เดือน · Elite {2} ไฟล์/เดือน{3}":
+    "Pro ฿{0}/month reads {1} PDFs a month · Elite {2} a month{3}",
+  'เดือนนี้อ่านสลิปครบ {0} ใบแล้ว (แผน {1}) พิมพ์จดเองได้ไม่จำกัด เช่น "ค่าไฟ 1200" และอ่านสลิปได้ใหม่ต้นเดือนหน้านะ':
+    'You have read {0} slips this month ({1} plan). You can still type entries, like "electricity 1200", and slip reading resets next month',
+  "สมุดกลุ่มนี้ปิดอยู่ หรือเจ้าของสมุดไม่ได้ใช้แผนที่มีสมุดกลุ่มแล้ว จดเพิ่มไม่ได้":
+    "This group ledger is closed, or its owner is no longer on a plan with group ledgers, so nothing more can be added",
+  "เดือนนี้จดด้วยเสียงครบ {0} ครั้งแล้ว พิมพ์จดแทนได้เลย และจะใช้เสียงได้ใหม่ต้นเดือนหน้านะ":
+    "You have used {0} voice records this month. You can type instead, and voice resets next month",
   "งบรายวัน/สัปดาห์ + เตือนเมื่อใกล้เกินงบ": "Daily and weekly budgets + warnings near the limit",
-  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Starter ขึ้นไป (แลกวัน Pro ด้วยเหรียญสะสมได้ที่หน้าตั้งค่า)": "Category saved. Remembering a payee → category automatically is for the Starter plan and above (you can swap coins for Pro days on the settings page)",
-  "นี่คือสลิปฟรีใบสุดท้ายของ {0} ใบแรกแล้ว อยากอ่านได้ทุกเดือน ลองทดลองใช้แผนฟรี 7 วันที่เมนู \"อัปเกรด\" นะ": "That was the last of your first {0} free slip reads. To read slips every month, try a plan free for 7 days from the \"Upgrade\" menu",
-  "การจดย้อนหลัง (เช่น \"เมื่อวาน กาแฟ 60\") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" หรือพิมพ์จดเป็นวันนี้ได้เลย": "Recording an earlier day (like \"yesterday coffee 60\") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the \"Upgrade\" menu, or record it as today",
-  "10 กลุ่ม LINE (20 คน/กลุ่ม) · กระเป๋าไม่จำกัด · ส่งออก PDF": "10 LINE groups (20 people each) · unlimited wallets · PDF export",
-  "การติดแท็ก (เช่น \"หมูกระทะ 500 #ปาร์ตี้\") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" หรือพิมพ์จดโดยไม่ใส่แท็กได้เลย": "Tagging (like \"bbq 500 #party\") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the \"Upgrade\" menu, or record it without the tag",
-  "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Starter ขึ้นไป ทดลองใช้ฟรี 7 วันได้": "Friends in the group can record for free; only the person who opens the ledger must be on Starter or above. You can try it free for 7 days",
+  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Starter ขึ้นไป (แลกวัน Pro ด้วยเหรียญสะสมได้ที่หน้าตั้งค่า)":
+    "Category saved. Remembering a payee → category automatically is for the Starter plan and above (you can swap coins for Pro days on the settings page)",
+  'นี่คือสลิปฟรีใบสุดท้ายของ {0} ใบแรกแล้ว อยากอ่านได้ทุกเดือน ลองทดลองใช้แผนฟรี 7 วันที่เมนู "อัปเกรด" นะ':
+    'That was the last of your first {0} free slip reads. To read slips every month, try a plan free for 7 days from the "Upgrade" menu',
+  'การจดย้อนหลัง (เช่น "เมื่อวาน กาแฟ 60") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือพิมพ์จดเป็นวันนี้ได้เลย':
+    'Recording an earlier day (like "yesterday coffee 60") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the "Upgrade" menu, or record it as today',
+  "10 กลุ่ม LINE (20 คน/กลุ่ม) · กระเป๋าไม่จำกัด · ส่งออก PDF":
+    "10 LINE groups (20 people each) · unlimited wallets · PDF export",
+  'การติดแท็ก (เช่น "หมูกระทะ 500 #ปาร์ตี้") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือพิมพ์จดโดยไม่ใส่แท็กได้เลย':
+    'Tagging (like "bbq 500 #party") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the "Upgrade" menu, or record it without the tag',
+  "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Starter ขึ้นไป ทดลองใช้ฟรี 7 วันได้":
+    "Friends in the group can record for free; only the person who opens the ledger must be on Starter or above. You can try it free for 7 days",
   "เตือนในกลุ่ม LINE": "Reminders in LINE groups",
-  "งบรายวัน (บอทเตือนทันทีเมื่อวันนี้ใช้เกิน) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "A daily budget (the bot warns you the moment today goes over) is for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu",
+  'งบรายวัน (บอทเตือนทันทีเมื่อวันนี้ใช้เกิน) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'A daily budget (the bot warns you the moment today goes over) is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
   "ทุกอย่างใน Starter": "Everything in Starter",
-  "คุณเป็นเจ้าของสมุดกลุ่มครบ {0} กลุ่มแล้ว (แผน {1}) ปิดกลุ่มที่ไม่ใช้ หรืออัปเกรดแผนก่อนนะ": "You already own {0} group ledgers ({1} plan). Close one you no longer use, or upgrade your plan",
-  "ส่งออก Excel / CSV สำหรับแผน Starter ขึ้นไป": "Excel / CSV export is for the Starter plan and above",
-  "Starter ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Pro ฿{2}/เดือน {3} ครั้ง/เดือน{4}": "Starter ฿{0}/month gives {1} Ask AI uses a month · Pro ฿{2}/month {3} a month{4}",
-  "เตือนและคลังไฟล์": "Reminders and file storage",
+  "คุณเป็นเจ้าของสมุดกลุ่มครบ {0} กลุ่มแล้ว (แผน {1}) ปิดกลุ่มที่ไม่ใช้ หรืออัปเกรดแผนก่อนนะ":
+    "You already own {0} group ledgers ({1} plan). Close one you no longer use, or upgrade your plan",
+  "ส่งออก Excel / CSV สำหรับแผน Starter ขึ้นไป":
+    "Excel / CSV export is for the Starter plan and above",
+  "Starter ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Pro ฿{2}/เดือน {3} ครั้ง/เดือน{4}":
+    "Starter ฿{0}/month gives {1} Ask AI uses a month · Pro ฿{2}/month {3} a month{4}",
+  เตือนและคลังไฟล์: "Reminders and file storage",
   "(Starter 2 ใบ · Pro 10 ใบ · Elite ไม่จำกัด)": "(Starter 2 · Pro 10 · Elite unlimited)",
-  "ผู้เปิดต้องเป็น Starter ขึ้นไป (ทดลองฟรี 7 วัน)": "The opener must be on Starter or above (7-day free trial)",
-  "ผู้เปิดสมุดกลุ่มต้องเป็นแผน Starter ขึ้นไป": "Whoever opens the group ledger must be on the Starter plan or above",
-  "การสรุปรายปีเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ตอนนี้พิมพ์ \"สรุปเดือนนี้\" ได้เลย": "The yearly summary is for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu. For now you can type \"this month\"",
+  "ผู้เปิดต้องเป็น Starter ขึ้นไป (ทดลองฟรี 7 วัน)":
+    "The opener must be on Starter or above (7-day free trial)",
+  "ผู้เปิดสมุดกลุ่มต้องเป็นแผน Starter ขึ้นไป":
+    "Whoever opens the group ledger must be on the Starter plan or above",
+  'การสรุปรายปีเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ "สรุปเดือนนี้" ได้เลย':
+    'The yearly summary is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can type "this month"',
   "ส่งออก Excel พร้อมชีตสรุป + ZIP แนบรูป": "Export Excel with summary sheets + ZIP with pictures",
-  "การแนบรูปประกอบรายการเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "Attaching a photo to an entry is for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu",
-  "พิมพ์ \"เมื่อวาน ข้าว 80\" เพื่อจดย้อนหลัง (Starter ขึ้นไป)": "Type \"yesterday rice 80\" to record an earlier day (Starter and above)",
-  "AI Insight (วิเคราะห์การใช้จ่ายด้วย AI) เป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ตอนนี้ดูได้ด้วย \"เทียบเดือน\" หรือ \"สรุปหมวด\"": "AI Insight (spending analysis by AI) is for the Pro plan and above. Try it free for 7 days from the \"Upgrade\" menu. For now you can use \"compare months\" or \"by category\"",
-  "เดือนนี้อ่านสลิปครบ {0} ใบแล้ว (แผน {1}) พิมพ์จดเองได้ไม่จำกัด เช่น \"ค่าไฟ 1200\" อัปเกรดเป็น {2} เพื่ออ่านได้ {3} ใบ/เดือน หรือรอโควตารีเซ็ตต้นเดือนหน้านะ": "You have read {0} slips this month ({1} plan). You can still type entries, like \"electricity 1200\". Upgrade to {2} to read {3} a month, or wait for the quota to reset next month",
-  "ระบบตรวจพบการระบุวันที่ย้อนหลัง (เช่น “เมื่อวาน”) ฟังก์ชันนี้สำหรับสมาชิกแพ็กเกจ Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ": "It looks like you gave an earlier date (like “yesterday”). This is for the Starter package and above, so this entry was not saved",
-  "การจดหนี้สิน (ให้ยืม/ยืม) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "Recording debts (lending and borrowing) is for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu",
+  'การแนบรูปประกอบรายการเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Attaching a photo to an entry is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
+  'พิมพ์ "เมื่อวาน ข้าว 80" เพื่อจดย้อนหลัง (Starter ขึ้นไป)':
+    'Type "yesterday rice 80" to record an earlier day (Starter and above)',
+  'AI Insight (วิเคราะห์การใช้จ่ายด้วย AI) เป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้ดูได้ด้วย "เทียบเดือน" หรือ "สรุปหมวด"':
+    'AI Insight (spending analysis by AI) is for the Pro plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can use "compare months" or "by category"',
+  'เดือนนี้อ่านสลิปครบ {0} ใบแล้ว (แผน {1}) พิมพ์จดเองได้ไม่จำกัด เช่น "ค่าไฟ 1200" อัปเกรดเป็น {2} เพื่ออ่านได้ {3} ใบ/เดือน หรือรอโควตารีเซ็ตต้นเดือนหน้านะ':
+    'You have read {0} slips this month ({1} plan). You can still type entries, like "electricity 1200". Upgrade to {2} to read {3} a month, or wait for the quota to reset next month',
+  "ระบบตรวจพบการระบุวันที่ย้อนหลัง (เช่น “เมื่อวาน”) ฟังก์ชันนี้สำหรับสมาชิกแพ็กเกจ Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ":
+    "It looks like you gave an earlier date (like “yesterday”). This is for the Starter package and above, so this entry was not saved",
+  'การจดหนี้สิน (ให้ยืม/ยืม) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Recording debts (lending and borrowing) is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
   "(Starter 5 ใบ · Pro 20 ใบ · Elite ไม่จำกัด)": "(Starter 5 · Pro 20 · Elite unlimited)",
   "{0} ครั้ง": "{0}",
   "ลองอ่านสลิป {0} ใบ + จดด้วยเสียง {1} ครั้ง": "Try {0} slip reads + {1} voice records",
-  "การสรุปช่วงวันเองเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ตอนนี้พิมพ์ \"สรุปเดือนนี้\" ได้เลย": "Summaries for a date range you choose are for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu. For now you can type \"this month\"",
-  "การโอนระหว่างกระเป๋าเป็นฟีเจอร์ของแผน Starter ขึ้นไป (มีกระเป๋าได้ถึง 5 ใบ) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "Transfers between wallets are for the Starter plan and above (up to 5 wallets). Try it free for 7 days from the \"Upgrade\" menu",
-  "จดย้อนหลังสำหรับสมาชิก Starter ขึ้นไป": "Recording earlier days is for Starter members and above",
-  "เตือนที่ตั้งไว้ได้": "Reminders you can keep",
-  "สมุดกลุ่มนี้มีคนใช้ครบ {0} คนแล้วตามแผนของเจ้าของสมุด เจ้าของอัปเกรดแผนเพื่อเพิ่มคนได้นะ": "This group ledger already has {0} people using it, which is what its owner's plan allows. The owner can upgrade to add more",
-  "เป้าหมายการออม (กระปุก) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "Savings goals (piggy banks) are for the Starter plan and above. Try it free for 7 days from the \"Upgrade\" menu",
-  "กระเป๋าร่วมกับคนอื่นเป็นฟีเจอร์ของแผน Starter ขึ้นไป (Starter 2 คน, Pro 5 คน, Elite สูงสุด 10 คน) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ส่วนการถูกชวนเข้ากระเป๋าร่วม ใช้แผนไหนก็ร่วมได้ฟรี": "Sharing a wallet with others is for the Starter plan and above (Starter 2 people, Pro 5, Elite up to 10). Try it free for 7 days from the \"Upgrade\" menu. Being invited to someone else's shared wallet is free on any plan",
+  'การสรุปช่วงวันเองเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ "สรุปเดือนนี้" ได้เลย':
+    'Summaries for a date range you choose are for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can type "this month"',
+  'การโอนระหว่างกระเป๋าเป็นฟีเจอร์ของแผน Starter ขึ้นไป (มีกระเป๋าได้ถึง 5 ใบ) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Transfers between wallets are for the Starter plan and above (up to 5 wallets). Try it free for 7 days from the "Upgrade" menu',
+  "จดย้อนหลังสำหรับสมาชิก Starter ขึ้นไป":
+    "Recording earlier days is for Starter members and above",
+  เตือนที่ตั้งไว้ได้: "Reminders you can keep",
+  "สมุดกลุ่มนี้มีคนใช้ครบ {0} คนแล้วตามแผนของเจ้าของสมุด เจ้าของอัปเกรดแผนเพื่อเพิ่มคนได้นะ":
+    "This group ledger already has {0} people using it, which is what its owner's plan allows. The owner can upgrade to add more",
+  'เป้าหมายการออม (กระปุก) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Savings goals (piggy banks) are for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
+  'กระเป๋าร่วมกับคนอื่นเป็นฟีเจอร์ของแผน Starter ขึ้นไป (Starter 2 คน, Pro 5 คน, Elite สูงสุด 10 คน) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ส่วนการถูกชวนเข้ากระเป๋าร่วม ใช้แผนไหนก็ร่วมได้ฟรี':
+    'Sharing a wallet with others is for the Starter plan and above (Starter 2 people, Pro 5, Elite up to 10). Try it free for 7 days from the "Upgrade" menu. Being invited to someone else\'s shared wallet is free on any plan',
   "AI Insight + พยากรณ์เงินปลายเดือน": "AI Insight + end-of-month forecast",
-  "Starter ฿{0}/เดือน อ่านสลิปได้ {1} ใบ/เดือน · Pro ฿{2}/เดือน {3} ใบ/เดือน{4}": "Starter ฿{0}/month reads {1} slips a month · Pro ฿{2}/month {3} a month{4}",
+  "Starter ฿{0}/เดือน อ่านสลิปได้ {1} ใบ/เดือน · Pro ฿{2}/เดือน {3} ใบ/เดือน{4}":
+    "Starter ฿{0}/month reads {1} slips a month · Pro ฿{2}/month {3} a month{4}",
   "{0} ใบ/เดือน": "{0} a month",
   "ลองฟรี {0} ใบแรก": "First {0} free",
-  "ใช้สิทธิ์ลองจดด้วยเสียงฟรีครบ 10 ครั้งแล้ว จดด้วยเสียงเป็นฟีเจอร์ของแผน Starter ขึ้นไป (Starter 30 ครั้ง/เดือน, Pro 200, Elite 400) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" ตอนนี้พิมพ์จดได้เลย เช่น \"กาแฟ 30\"": "You have used all 10 free voice tries. Voice recording is for the Starter plan and above (Starter 30 a month, Pro 200, Elite 400). Try it free for 7 days from the \"Upgrade\" menu. For now you can type, like \"coffee 30\"",
+  'ใช้สิทธิ์ลองจดด้วยเสียงฟรีครบ 10 ครั้งแล้ว จดด้วยเสียงเป็นฟีเจอร์ของแผน Starter ขึ้นไป (Starter 30 ครั้ง/เดือน, Pro 200, Elite 400) ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ตอนนี้พิมพ์จดได้เลย เช่น "กาแฟ 30"':
+    'You have used all 10 free voice tries. Voice recording is for the Starter plan and above (Starter 30 a month, Pro 200, Elite 400). Try it free for 7 days from the "Upgrade" menu. For now you can type, like "coffee 30"',
   "ส่งออก PDF": "Export PDF",
-  "นี่คือสิทธิ์ลองจดด้วยเสียงฟรี (ลองได้ 10 ครั้งแรก) ชอบไหม? ลองทดลองใช้ Pro ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "That was a free voice try (the first 10 are free). Like it? Try Pro free for 7 days from the \"Upgrade\" menu",
-  "เจ้าของสมุดไม่ได้ใช้แผนที่มีสมุดกลุ่มแล้ว แก้ไขไม่ได้ ดูได้อย่างเดียวนะ": "The ledger's owner is no longer on a plan with group ledgers, so it is view only",
-  "การเตือนวันครบกำหนดจ่ายบิลเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ": "Bill due-date reminders are for the Pro plan and above. Try it free for 7 days from the \"Upgrade\" menu",
-  "การจดหลายรายการในข้อความเดียว (เช่น \"ข้าวเช้า 50 / กาแฟ 45\") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดข้อความนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" หรือส่งทีละรายการได้เลย": "Recording several entries in one message (like \"breakfast 50 / coffee 45\") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the \"Upgrade\" menu, or send them one at a time",
+  'นี่คือสิทธิ์ลองจดด้วยเสียงฟรี (ลองได้ 10 ครั้งแรก) ชอบไหม? ลองทดลองใช้ Pro ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'That was a free voice try (the first 10 are free). Like it? Try Pro free for 7 days from the "Upgrade" menu',
+  "เจ้าของสมุดไม่ได้ใช้แผนที่มีสมุดกลุ่มแล้ว แก้ไขไม่ได้ ดูได้อย่างเดียวนะ":
+    "The ledger's owner is no longer on a plan with group ledgers, so it is view only",
+  'การเตือนวันครบกำหนดจ่ายบิลเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
+    'Bill due-date reminders are for the Pro plan and above. Try it free for 7 days from the "Upgrade" menu',
+  'การจดหลายรายการในข้อความเดียว (เช่น "ข้าวเช้า 50 / กาแฟ 45") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดข้อความนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือส่งทีละรายการได้เลย':
+    'Recording several entries in one message (like "breakfast 50 / coffee 45") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the "Upgrade" menu, or send them one at a time',
   " หรืออัปเกรดเป็น {0} เพื่อมีได้ไม่จำกัด": " or upgrade to {0} to have unlimited",
   "อ่านสลิป {0} ใบ/เดือน + แยกรายการจากใบเสร็จ": "{0} slip reads a month + itemised receipts",
   "เตือนจ่ายบิล · 5 กลุ่ม LINE · ส่งออก ZIP": "Bill reminders · 5 LINE groups · ZIP export",
-  "สมุดกลุ่มเป็นฟีเจอร์ของแผน Starter ขึ้นไป เฉพาะคนที่เปิดสมุดต้องเป็น Starter ขึ้นไป เพื่อน ๆ ในกลุ่มใช้ได้ฟรี ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" ของบอทในแชทส่วนตัวนะ": "The group ledger is for the Starter plan and above. Only the person who opens it needs Starter or above; friends in the group use it free. Try it free for 7 days from the bot's \"Upgrade\" menu in a private chat",
-  "อ่านสลิปฟรีได้อีก {0} ใบ (ลองฟรี {1} ใบแรก) อยากอ่านได้ทุกเดือน ลองทดลองใช้แผนฟรี 7 วันที่เมนู \"อัปเกรด\" นะ": "{0} free slip reads left (the first {1} are free). To read slips every month, try a plan free for 7 days from the \"Upgrade\" menu",
-  "สมุดกลุ่มนี้หยุดจดชั่วคราว เพราะแผนของเจ้าของสมุดหมดอายุ ดูสรุปได้ตามปกติ ต่ออายุแผนแล้วจดต่อได้เลยนะ": "This group ledger is paused because its owner's plan has ended. You can still see summaries; renew the plan to carry on recording",
+  'สมุดกลุ่มเป็นฟีเจอร์ของแผน Starter ขึ้นไป เฉพาะคนที่เปิดสมุดต้องเป็น Starter ขึ้นไป เพื่อน ๆ ในกลุ่มใช้ได้ฟรี ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ของบอทในแชทส่วนตัวนะ':
+    'The group ledger is for the Starter plan and above. Only the person who opens it needs Starter or above; friends in the group use it free. Try it free for 7 days from the bot\'s "Upgrade" menu in a private chat',
+  'อ่านสลิปฟรีได้อีก {0} ใบ (ลองฟรี {1} ใบแรก) อยากอ่านได้ทุกเดือน ลองทดลองใช้แผนฟรี 7 วันที่เมนู "อัปเกรด" นะ':
+    '{0} free slip reads left (the first {1} are free). To read slips every month, try a plan free for 7 days from the "Upgrade" menu',
+  "สมุดกลุ่มนี้หยุดจดชั่วคราว เพราะแผนของเจ้าของสมุดหมดอายุ ดูสรุปได้ตามปกติ ต่ออายุแผนแล้วจดต่อได้เลยนะ":
+    "This group ledger is paused because its owner's plan has ended. You can still see summaries; renew the plan to carry on recording",
   "สำหรับแผน Pro ขึ้นไป": "For the Pro plan and above",
-  "การพยากรณ์เงินปลายเดือนเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู \"อัปเกรด\" นะ ตอนนี้ดูสรุปได้ด้วย \"สรุปเดือนนี้\" หรือ \"เทียบเดือน\"": "The end-of-month forecast is for the Pro plan and above. Try it free for 7 days from the \"Upgrade\" menu. For now you can use \"this month\" or \"compare months\"",
-  "แก้หมวดของตัวเองได้ในแผน Starter ขึ้นไป": "You can edit your own categories on the Starter plan and above",
+  'การพยากรณ์เงินปลายเดือนเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้ดูสรุปได้ด้วย "สรุปเดือนนี้" หรือ "เทียบเดือน"':
+    'The end-of-month forecast is for the Pro plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can use "this month" or "compare months"',
+  "แก้หมวดของตัวเองได้ในแผน Starter ขึ้นไป":
+    "You can edit your own categories on the Starter plan and above",
   "ส่งออก CSV / Excel": "Export CSV / Excel",
   " หรืออัปเกรดเป็น {0} เพื่อมีได้ {1} ใบ": " or upgrade to {0} to have {1}",
   "นำเข้าไฟล์รายการ (PDF Statement)": "Import a statement file (PDF)",
-  "จดให้ยืม/ยืม ตัดยอดกระเป๋าให้ · แผน Starter ขึ้นไป": "Record loans in and out, with the wallet balance adjusted · Starter plan and above",
+  "จดให้ยืม/ยืม ตัดยอดกระเป๋าให้ · แผน Starter ขึ้นไป":
+    "Record loans in and out, with the wallet balance adjusted · Starter plan and above",
   "ลองฟรี {0} ครั้งแรก": "First {0} free",
+  ปีแรก: "first year",
+  เดือนแรก: "first month",
+  สิทธิ์: "seats",
 };

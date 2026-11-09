@@ -173,3 +173,109 @@ describe("apply_prepaid_upgrade", () => {
     expect(latest[0]?.months).toBe(12);
   });
 });
+
+describe("Early Bird seats (0065)", () => {
+  const claim = async (u: string, plan: string, period: string) =>
+    (
+      await one<{ ok: boolean }>(db, "select claim_early_bird($1::uuid, $2::plan_tier, $3) as ok", [
+        u,
+        plan,
+        period,
+      ])
+    ).ok;
+
+  it("seeds the offers with their seat counts", async () => {
+    const r = await rows<{ plan: string; period: string; total: number | null }>(
+      db,
+      "select plan::text, period, total from early_bird_seats order by plan, period",
+    );
+    expect(r).toEqual([
+      { plan: "plus", period: "monthly", total: 200 },
+      { plan: "plus", period: "yearly", total: 100 },
+      { plan: "starter", period: "monthly", total: null },
+      { plan: "starter", period: "yearly", total: 500 },
+      { plan: "ultimate", period: "monthly", total: 50 },
+      { plan: "ultimate", period: "yearly", total: 30 },
+    ]);
+  });
+
+  it("stops at the seat count, and a released seat can be taken again", async () => {
+    await db.query(
+      "update early_bird_seats set total = 2 where plan = 'ultimate' and period = 'yearly'",
+    );
+    const [a, b, c] = [
+      await newUser(db, "eb-a"),
+      await newUser(db, "eb-b"),
+      await newUser(db, "eb-c"),
+    ];
+    expect(await claim(a, "ultimate", "yearly")).toBe(true);
+    expect(await claim(b, "ultimate", "yearly")).toBe(true);
+    expect(await claim(c, "ultimate", "yearly")).toBe(false);
+    await db.query(
+      "update early_bird_claims set reserved_at = now() - interval '2 hours' where user_id = $1",
+      [a],
+    );
+    expect((await one<{ n: number }>(db, "select release_early_bird(30) as n")).n).toBe(1);
+    expect(await claim(c, "ultimate", "yearly")).toBe(true);
+    await db.query(
+      "update early_bird_seats set total = 30 where plan = 'ultimate' and period = 'yearly'",
+    );
+  });
+
+  it("is one seat per account: asking again keeps one, and a paid seat blocks another", async () => {
+    const u = await newUser(db, "eb-d");
+    expect(await claim(u, "plus", "yearly")).toBe(true);
+    expect(await claim(u, "plus", "yearly")).toBe(true); // a double tap
+    expect(await claim(u, "starter", "yearly")).toBe(true); // switching plan moves the reservation
+    expect(await rows(db, "select 1 from early_bird_claims where user_id = $1", [u])).toHaveLength(
+      1,
+    );
+    await db.query("select confirm_early_bird($1::uuid, 'starter', 'yearly')", [u]);
+    expect(await claim(u, "plus", "yearly")).toBe(false);
+    expect(await claim(u, "starter", "yearly")).toBe(false);
+  });
+
+  it("asking for a full offer keeps the seat already held elsewhere", async () => {
+    await db.query(
+      "update early_bird_seats set total = 0 where plan = 'ultimate' and period = 'monthly'",
+    );
+    const u = await newUser(db, "eb-g");
+    expect(await claim(u, "plus", "monthly")).toBe(true);
+    expect(await claim(u, "ultimate", "monthly")).toBe(false);
+    const r = await one<{ plan: string }>(
+      db,
+      "select plan::text from early_bird_claims where user_id = $1",
+      [u],
+    );
+    expect(r.plan).toBe("plus");
+    await db.query(
+      "update early_bird_seats set total = 50 where plan = 'ultimate' and period = 'monthly'",
+    );
+  });
+
+  it("confirming twice, or for another plan, never moves a paid seat", async () => {
+    const u = await newUser(db, "eb-f");
+    await db.query("select confirm_early_bird($1::uuid, 'plus', 'yearly')", [u]);
+    await db.query("select confirm_early_bird($1::uuid, 'ultimate', 'monthly')", [u]);
+    const r = await one<{ plan: string; period: string }>(
+      db,
+      "select plan::text, period from early_bird_claims where user_id = $1",
+      [u],
+    );
+    expect(r).toEqual({ plan: "plus", period: "yearly" });
+  });
+
+  it("an offer with no seat limit never fills", async () => {
+    const u = await newUser(db, "eb-e");
+    expect(await claim(u, "starter", "monthly")).toBe(true);
+  });
+
+  it("browser roles cannot call the seat functions", async () => {
+    await expect(
+      db.transaction(async (tx) => {
+        await tx.query("set local role authenticated");
+        await tx.query("select release_early_bird(0)");
+      }),
+    ).rejects.toThrow();
+  });
+});

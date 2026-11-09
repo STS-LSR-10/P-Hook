@@ -314,11 +314,8 @@ test.describe("transactions page (360px)", () => {
 
     const dialog = page.getByRole("dialog", { name: "ส่งออกข้อมูลรายการ" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("ส่งออก Excel / CSV / PDF สำหรับแผน Pro")).toBeVisible();
-    await expect(dialog.getByRole("link", { name: "ดูแผน Pro" })).toHaveAttribute(
-      "href",
-      "/upgrade",
-    );
+    await expect(dialog.getByText("ส่งออก Excel / CSV สำหรับแผน Starter ขึ้นไป")).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "ดูแผน" })).toHaveAttribute("href", "/upgrade");
     await expect(dialog.getByRole("button", { name: "สร้างไฟล์และส่งออก" })).toHaveCount(0);
     expect(seen.some((s) => s.includes("/api/export"))).toBe(false);
   });
@@ -329,7 +326,7 @@ test.describe("transactions page (360px)", () => {
     const bodies: unknown[] = [];
     await mockApi(page, {
       "GET /api/transactions": LIST,
-      "GET /api/me": ME_PLUS,
+      "GET /api/me": { ...ME_PLUS, features: { ...ME_PLUS.features, pdfExport: true } },
       "POST /api/export/link": (route: Route) => {
         bodies.push(route.request().postDataJSON());
         return { url: "http://localhost/api/export/download?t=x", expiresIn: 120 };
@@ -443,7 +440,9 @@ test.describe("transactions page (360px)", () => {
     expect(bodies[0]).toEqual({ title: "กาแฟเย็น" });
     await expect(page.getByText("✅ แก้ไขรายการสำเร็จ")).toBeVisible();
     // outside LINE nothing can be sent: the page says why and offers the button (never a server push)
-    await expect(page.getByText("ส่งการ์ดเข้าแชทได้เมื่อเปิดหน้านี้จากปุ่มในแชทของ LINE")).toBeVisible();
+    await expect(
+      page.getByText("ส่งการ์ดเข้าแชทได้เมื่อเปิดหน้านี้จากปุ่มในแชทของ LINE"),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "ส่งการ์ดเข้าแชท" })).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
@@ -488,7 +487,7 @@ test.describe("transactions page (360px)", () => {
       "GET /api/me": ME_FREE,
     });
     await page.goto(`/transactions?edit=${id}`);
-    await expect(page.getByText("ใช้ได้ในแผน Pro ขึ้นไป")).toBeVisible();
+    await expect(page.getByText("ใช้ได้ในแผน Starter ขึ้นไป")).toBeVisible();
     await expect(page.getByLabel("เลือกรูปแนบ")).toHaveCount(0);
     await expectNoHorizontalScroll(page);
   });

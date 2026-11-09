@@ -24,6 +24,8 @@ export interface CheckoutRequest {
    * (amount in satang, computed on the server; the end date does not change).
    */
   upgrade?: { amountSatang: number; days: number };
+  /** The server reserved an Early Bird seat for this checkout: the first period costs less. */
+  earlyBird?: boolean;
 }
 
 export type CheckoutResult =

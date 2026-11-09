@@ -70,6 +70,8 @@ interface MeLite {
   plan: Plan;
   /** Prices as the server sees them now (launch or normal), so a wrong phone clock cannot mislead. */
   pricing?: PricingNow;
+  /** Early Bird seats left, per plan and period (empty when none or already used). */
+  earlyBird?: { plan: PaidPlan; period: Period; remaining: number | null; price: number }[];
   planExpiresAt: string | null;
   trial?: { days: number; available: Record<PaidPlan, boolean> };
   payments?: {
@@ -272,6 +274,16 @@ export default function UpgradePage() {
               current={current}
               pricing={pricing}
               period={period}
+              early={
+                method === "card" || period === "yearly"
+                  ? me.data?.earlyBird?.find(
+                      (o) =>
+                        o.plan === plan &&
+                        o.period === period &&
+                        (o.remaining === null || o.remaining > 0),
+                    )
+                  : undefined
+              }
               selected={picked === plan}
               onSelect={() => setPicked(plan)}
             />
@@ -397,6 +409,7 @@ function PlanCard({
   current,
   pricing,
   period,
+  early,
   selected,
   onSelect,
 }: {
@@ -404,6 +417,7 @@ function PlanCard({
   current: Plan;
   pricing: PricingNow;
   period?: Period;
+  early?: { remaining: number | null; price: number };
   selected?: boolean;
   onSelect?: () => void;
 }) {
@@ -445,6 +459,18 @@ function PlanCard({
               /{period === "monthly" ? t("เดือน") : t("ปี")}
             </span>
           </p>
+          {early && period ? (
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded-full bg-accent/20 px-2 py-0.5 font-semibold text-foreground">
+                Early Bird {period === "yearly" ? t("ปีแรก") : t("เดือนแรก")} ฿{early.price}
+              </span>
+              {early.remaining !== null ? (
+                <span className="text-foreground/80">
+                  {t("เหลือ")} {early.remaining} {t("สิทธิ์")}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
           {period === "yearly" ? (
             <p className="text-xs text-foreground/80">
               {t("≈ ฿")}
@@ -568,6 +594,8 @@ function Comparison() {
   return (
     <section
       aria-label={t("เปรียบเทียบแผน")}
+      // focusable so a keyboard can scroll the wide table
+      tabIndex={0}
       className="overflow-x-auto rounded-3xl border border-border bg-surface"
     >
       <table className="w-full min-w-[500px] table-fixed border-collapse text-sm">

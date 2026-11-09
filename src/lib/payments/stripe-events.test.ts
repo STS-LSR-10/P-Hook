@@ -34,6 +34,27 @@ describe("interpretEvent", () => {
     });
   });
 
+  it("a paid session with an Early Bird seat says so", () => {
+    const a = interpretEvent(
+      ev("checkout.session.completed", {
+        id: "cs_eb",
+        mode: "payment",
+        payment_status: "paid",
+        amount_total: 49900,
+        currency: "thb",
+        customer: null,
+        metadata: {
+          user_id: USER,
+          plan: "plus",
+          period: "yearly",
+          method: "promptpay",
+          early_bird: "1",
+        },
+      }),
+    );
+    expect(a).toMatchObject({ kind: "prepaid", earlyBird: true });
+  });
+
   it("a paid session marked as an upgrade becomes a prepaid upgrade, not a new period", () => {
     const a = interpretEvent(
       ev("checkout.session.completed", {

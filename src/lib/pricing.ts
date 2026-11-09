@@ -6,8 +6,6 @@ import {
   FREE_VOICE_TOTAL,
   GROUP_LEDGER_LIMIT,
   GROUP_REMINDS_PER_MONTH,
-  MIN_PLAN,
-  PLAN_ORDER,
   SHARED_MEMBER_LIMIT,
   SLIP_LIMIT,
   VOICE_LIMIT,
@@ -48,6 +46,16 @@ export const LAUNCH_PRICES: Record<PaidPlan, PlanPrice> = PRICES;
 export const LAUNCH_ENDS_TEXT = "";
 
 export const launchActive = (_now: Date): boolean => false;
+
+/**
+ * Early Bird (limited seats, one per account). Yearly: the first year at this price, then the normal
+ * price. Monthly: the first month only. Seat counts live in the database (early_bird_seats).
+ */
+export const EARLY_BIRD: Record<PaidPlan, { yearly: number; monthly: number }> = {
+  starter: { yearly: 199, monthly: 29 },
+  plus: { yearly: 499, monthly: 89 },
+  ultimate: { yearly: 1490, monthly: 199 },
+};
 
 /** What a plan costs right now. */
 export function priceFor(plan: PaidPlan, now: Date): PlanPrice {

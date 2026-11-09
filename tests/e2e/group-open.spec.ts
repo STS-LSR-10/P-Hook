@@ -39,7 +39,7 @@ test.describe("open the group ledger page (360px)", () => {
   test("a friend without Elite is told, with a link to the plans", async ({ page }) => {
     await mockApi(page, { "GET /api/group-open": { ...CHECK, plan: "free", canOpen: false } });
     await page.goto("/group-open");
-    await expect(page.getByRole("heading", { name: /ต้องเป็นแผน Elite/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /ต้องเป็นแผน Starter/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /ดูแผนและทดลองใช้ฟรี/ })).toHaveAttribute(
       "href",
       "/upgrade",

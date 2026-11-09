@@ -3,6 +3,7 @@ import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPaymentProvider } from "@/lib/payments";
 import { loadBillingState } from "@/lib/payments/billing-state";
+import { claimEarlyBird, releaseEarlyBird } from "@/lib/early-bird-repo";
 import { planAction, prepaidUpgradeFor } from "@/lib/payments/policy";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -62,14 +63,27 @@ export async function POST(request: Request): Promise<Response> {
       upgrade = { amountSatang: quote.amountBaht * 100, days: quote.days };
       period = (state.prepaidMonths ?? 1) >= 12 ? "yearly" : "monthly";
     }
+    // Early Bird: a seat is reserved for this checkout when there is one (a card subscription gets the
+    // first month or year cheaper; PromptPay is one prepaid period, so only the yearly one qualifies)
+    let earlyBird = false;
+    if (!upgrade && (period === "yearly" || choice.method === "card")) {
+      await releaseEarlyBird(db).catch(() => undefined);
+      earlyBird = await claimEarlyBird(db, auth.userId, choice.plan, period);
+    }
     const result = await getPaymentProvider().createCheckout({
       userId: auth.userId,
       ...choice,
       period,
       customerId: state.customerId,
       ...(upgrade ? { upgrade } : {}),
+      ...(earlyBird ? { earlyBird } : {}),
     });
     if (result.status === "unavailable") return json({ available: false, message: result.message });
-    return json({ available: true, url: result.url, reference: result.reference });
+    return json({
+      available: true,
+      url: result.url,
+      reference: result.reference,
+      earlyBird,
+    });
   });
 }

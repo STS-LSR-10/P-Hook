@@ -19,6 +19,7 @@ export type PaymentAction =
       amountSatang: number;
       method: string;
       customer: string | null;
+      earlyBird?: boolean;
     }
   | {
       /** PromptPay: pay the difference to raise the tier of prepaid time that is already running. */
@@ -37,6 +38,7 @@ export type PaymentAction =
       period: Period;
       customer: string | null;
       subscription: string;
+      earlyBird?: boolean;
     }
   | {
       kind: "invoice";
@@ -105,6 +107,7 @@ export function interpretEvent(event: StripeEvent): PaymentAction {
         amountSatang: amount,
         method: str(obj(o.metadata)?.method) ?? "promptpay",
         customer: idOf(o.customer),
+        ...(obj(o.metadata)?.early_bird === "1" ? { earlyBird: true } : {}),
       };
     }
 
@@ -126,6 +129,7 @@ export function interpretEvent(event: StripeEvent): PaymentAction {
         period: meta.period,
         customer: idOf(o.customer),
         subscription: id,
+        ...(obj(o.metadata)?.early_bird === "1" ? { earlyBird: true } : {}),
       };
     }
 
@@ -187,6 +191,13 @@ export async function applyAction(
           .eq("id", action.userId)
           .is("stripe_customer_id", null);
       }
+      if (action.earlyBird) {
+        await rpc(db, "confirm_early_bird", {
+          p_user: action.userId,
+          p_plan: action.plan,
+          p_period: action.months >= 12 ? "yearly" : "monthly",
+        });
+      }
       return { handled: true, userId: action.userId };
     }
 
@@ -211,6 +222,13 @@ export async function applyAction(
         p_subscription: action.subscription,
         p_period: action.period,
       });
+      if (action.earlyBird) {
+        await rpc(db, "confirm_early_bird", {
+          p_user: action.userId,
+          p_plan: action.plan,
+          p_period: action.period,
+        });
+      }
       return { handled: true, userId: action.userId };
     }
 

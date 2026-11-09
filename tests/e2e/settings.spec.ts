@@ -20,7 +20,7 @@ test.describe("settings page (360px)", () => {
     await openSettings(page);
 
     await expect(page.getByText("สมชาย ทดสอบ")).toBeVisible();
-    await expect(page.getByText("สำหรับแผน Pro").first()).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Starter").first()).toBeVisible();
     await expect(page.getByRole("switch", { name: "เปิดเตือนจดประจำวัน" })).toBeDisabled();
     await expect(page.getByRole("switch", { name: "เปิดสรุปรายสัปดาห์" })).toBeDisabled();
     await expect(page.getByRole("switch", { name: "เปิดสรุปรายเดือน" })).toBeDisabled();
@@ -505,7 +505,7 @@ test.describe("settings sections and search (360px)", () => {
   });
 });
 
-type Plan = "free" | "plus" | "ultimate";
+type Plan = "free" | "starter" | "plus" | "ultimate";
 const each = (
   free: number | null,
   plus: number | null,
@@ -513,6 +513,7 @@ const each = (
   period = "total",
 ) => ({
   free: { limit: free, period },
+  starter: { limit: plus, period },
   plus: { limit: plus, period },
   ultimate: { limit: ultimate, period },
 });
@@ -543,9 +544,10 @@ const QUOTA = (plan: Plan) => ({
   planExpiresAt: plan === "free" ? null : "2027-10-17T00:00:00Z",
   main: [
     row(plan, "slips", "จดด้วยสลิป/ใบเสร็จ", "receipt", "ครั้ง", 2, {
-      free: { limit: 3, period: "week" },
-      plus: { limit: 30, period: "month" },
-      ultimate: { limit: null, period: "month" },
+      free: { limit: 10, period: "once" },
+      starter: { limit: 60, period: "month" },
+      plus: { limit: 250, period: "month" },
+      ultimate: { limit: 600, period: "month" },
     }),
     row(plan, "pdf", "จดด้วย PDF", "pdf", "ไฟล์", 9, each(0, 10, 30, "month")),
     row(plan, "groups", "กลุ่ม", "group", "กลุ่ม", 0, each(0, 0, 5)),
@@ -568,6 +570,7 @@ const QUOTA = (plan: Plan) => ({
     {
       ...row(plan, "voice", "จดด้วยเสียง", "voice", "ครั้ง", 0, {
         free: { limit: 1, period: "once" },
+        starter: { limit: 10, period: "month" },
         plus: { limit: 20, period: "month" },
         ultimate: { limit: 200, period: "month" },
       }),
@@ -585,7 +588,7 @@ test.describe("quota page (360px)", () => {
     await expect(page.getByRole("heading", { name: "โควตาการใช้งาน" })).toBeVisible();
     const main = page.getByRole("list", { name: "รายการโควตาหลัก" });
     await expect(main.getByRole("listitem")).toHaveCount(7);
-    await expect(main.getByText("2 / 3 ครั้ง (เหลือ 1)")).toBeVisible(); // slips
+    await expect(main.getByText("2 / 10 ครั้ง (เหลือ 8)")).toBeVisible(); // slips
     await expect(main.getByText("50 MB / 500 MB (เหลือ 450 MB)")).toBeVisible();
     await expect(main.getByText("3 / 3 รายการ (เต็มแล้ว)")).toBeVisible();
     await expect(main.getByText("เต็มแล้ว", { exact: true }).first()).toBeVisible();
@@ -612,11 +615,11 @@ test.describe("quota page (360px)", () => {
     await page.goto("/settings/quota");
     await page.getByRole("button", { name: /^จดด้วยสลิป/ }).click();
     const sheet = page.getByRole("dialog", { name: "จดด้วยสลิป/ใบเสร็จ" });
-    await expect(sheet.getByText("นับใหม่ทุกวันจันทร์")).toBeVisible();
+    await expect(sheet.getByText("ใช้ได้ครั้งเดียวตลอดการใช้งาน")).toBeVisible();
     await expect(sheet.getByText("Free (แผนของคุณ)")).toBeVisible();
-    await expect(sheet.getByText("3 ครั้ง ต่อสัปดาห์")).toBeVisible();
-    await expect(sheet.getByText("30 ครั้ง ต่อเดือน")).toBeVisible();
-    await expect(sheet.getByText("ไม่จำกัด")).toBeVisible();
+    await expect(sheet.getByText("60 ครั้ง ต่อเดือน")).toBeVisible();
+    await expect(sheet.getByText("250 ครั้ง ต่อเดือน")).toBeVisible();
+    await expect(sheet.getByText("600 ครั้ง ต่อเดือน")).toBeVisible();
   });
 
   test("the other quotas open below, and PDF near its limit is marked", async ({ page }) => {
@@ -638,11 +641,10 @@ test.describe("quota page (360px)", () => {
     await expect(page.getByText("มีอยู่ 2 กลุ่ม · แผนนี้เพิ่มไม่ได้")).toBeVisible();
   });
 
-  test("Elite: slips read ไม่จำกัด and there is no upgrade button", async ({ page }) => {
+  test("Elite: no upgrade button", async ({ page }) => {
     await mockApi(page, { "GET /api/quota": QUOTA("ultimate") });
     await page.goto("/settings/quota");
     await expect(page.getByText("แผน Elite")).toBeVisible();
-    await expect(page.getByText("ไม่จำกัด", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: /อัปเกรด/ })).toHaveCount(0);
   });
 

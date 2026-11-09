@@ -124,6 +124,7 @@ export const ME_FREE = {
     forecast: false,
     insight: false,
     customCategory: false,
+    pdfExport: false,
   },
   slips: { used: 0, limit: 0, remaining: 0 },
   points: 7,
@@ -134,7 +135,7 @@ export const ME_FREE = {
   referred: false,
   limits: { recurringRules: 20, wallets: 1 },
   payments: { available: false, history: [] },
-  trial: { days: 7, available: { plus: true, ultimate: true } },
+  trial: { days: 7, available: { starter: true, plus: true, ultimate: true } },
 };
 
 export const ME_PLUS = {
@@ -144,17 +145,14 @@ export const ME_PLUS = {
   features: {
     ...Object.fromEntries(Object.keys(ME_FREE.features).map((k) => [k, true])),
 
+    // Pro has everything but what only Elite adds
     smartParse: false,
-    forecast: false,
-    insight: false,
-    debts: false,
-    billReminder: false,
-    foreignCurrency: false,
+    pdfExport: false,
   },
   slips: { used: 3, limit: 5, remaining: 2 },
   points: 25,
   redeem: { pointsPerDay: 10, days: 2, cost: 20 },
-  trial: { days: 7, available: { plus: false, ultimate: false } },
+  trial: { days: 7, available: { starter: false, plus: false, ultimate: false } },
 };
 
 export const SETTINGS = {

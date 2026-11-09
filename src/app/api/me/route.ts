@@ -14,7 +14,8 @@ import {
 import { getPaymentProvider } from "@/lib/payments";
 import { loadBillingState } from "@/lib/payments/billing-state";
 import { trialBlock } from "@/lib/payments/policy";
-import { pricingAt, TRIAL_DAYS } from "@/lib/pricing";
+import { EARLY_BIRD, pricingAt, TRIAL_DAYS } from "@/lib/pricing";
+import { earlyBirdOffers, hasPaidEarlyBird } from "@/lib/early-bird-repo";
 import { currentStreak, recentDailyKeys, redeemable } from "@/lib/points";
 import { countSlipsThisMonth } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -114,6 +115,15 @@ export async function GET(request: Request): Promise<Response> {
       referrals,
       limits: { recurringRules: recurringLimit(plan), wallets: walletCapacity(plan) },
       pricing: pricingAt(now),
+      // Early Bird seats left, per plan and period (none once this person has used theirs)
+      earlyBird: (await hasPaidEarlyBird(db, auth.userId))
+        ? []
+        : (await earlyBirdOffers(db)).map((o) => ({
+            plan: o.plan,
+            period: o.period,
+            remaining: o.remaining,
+            price: EARLY_BIRD[o.plan][o.period],
+          })),
       // free trials still available (once per account, and only while no plan is running)
       trial: {
         days: TRIAL_DAYS,

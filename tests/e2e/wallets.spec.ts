@@ -162,7 +162,7 @@ test.describe("wallets page (360px)", () => {
     await page.goto("/wallets");
 
     await expect(page.getByRole("button", { name: "โอน", exact: true })).toBeDisabled();
-    await expect(page.getByText("สำหรับแผน Pro")).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Starter")).toBeVisible();
   });
 
   test("the same wallet on both sides is refused before sending", async ({ page }) => {
@@ -269,7 +269,7 @@ test.describe("credit-card wallets (360px)", () => {
 
     await page.getByRole("button", { name: "แก้ไข KTC" }).click();
     await expect(page.getByLabel("วงเงิน", { exact: true })).toHaveCount(0);
-    await expect(page.getByText("สำหรับแผน Pro").last()).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Starter").last()).toBeVisible();
   });
 });
 
@@ -403,7 +403,7 @@ test.describe("shared wallets (360px)", () => {
     });
     await page.goto("/wallets");
     await page.getByRole("button", { name: "เพิ่มกระเป๋า" }).click();
-    await expect(page.getByText("สำหรับแผน Pro").last()).toBeVisible();
+    await expect(page.getByText("สำหรับแผน Starter").last()).toBeVisible();
     await expect(page.getByLabel("กระเป๋าร่วมกับคนอื่น", { exact: false })).toHaveCount(0);
   });
 
