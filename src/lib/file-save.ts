@@ -4,7 +4,6 @@ import {
   defaultFileName,
   extensionOfType,
   fileCapacity,
-  fileDayLimit,
   isBlockedFile,
   MAX_FILE_BYTES,
   thumbKey,
@@ -17,10 +16,8 @@ import { ImageError } from "@/lib/line/content";
 import { log, safeMessage } from "@/lib/log";
 import { effectivePlan } from "@/lib/plan";
 import type { UserRow } from "@/lib/repo";
-import { dayKey, refundUsage, takeUsage } from "@/lib/usage";
 
-export type SaveFailure =
-  "blocked" | "too_large" | "day_limit" | "full" | "gone" | "failed" | "unavailable";
+export type SaveFailure = "blocked" | "too_large" | "full" | "gone" | "failed" | "unavailable";
 export type SaveResult = { ok: true; file: FileDto } | { ok: false; reason: SaveFailure };
 
 export interface SaveDeps {
@@ -87,17 +84,6 @@ export async function saveFile(
 
   const now = deps.now();
   const plan = effectivePlan(user.plan, user.plan_expires_at, now);
-  const day = dayKey(now);
-  try {
-    if (!(await takeUsage(db, user.id, "file_save", fileDayLimit(plan), day))) {
-      return { ok: false, reason: "day_limit" };
-    }
-  } catch (error) {
-    log.error("file_quota_failed", error);
-    return { ok: false, reason: "failed" };
-  }
-
-  const giveBack = () => refundUsage(db, user.id, "file_save", day).catch(() => undefined);
   const id = crypto.randomUUID();
   const r2Key = `u/${user.id}/${id}`;
   let reserved = false;
@@ -115,7 +101,6 @@ export async function saveFile(
       ...(group ? { groupId: group.groupId, savedBy: group.savedBy } : {}),
     });
     if (!reserved) {
-      await giveBack();
       return { ok: false, reason: "full" };
     }
     await store.put(r2Key, bytes, mimeType);
@@ -141,7 +126,6 @@ export async function saveFile(
       );
       if (removed) await dropFileRow(db, user.id, id).catch(() => undefined);
     }
-    await giveBack();
     if (error instanceof ImageError && error.reason === "gone") {
       return { ok: false, reason: "gone" };
     }

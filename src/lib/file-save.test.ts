@@ -7,10 +7,9 @@ import type { UserRow } from "./repo";
 
 const order: string[] = [];
 let reserved = true;
-let dayLeft = true;
 const reservations: Record<string, unknown>[] = [];
+const take = vi.fn(async () => true);
 const refund = vi.fn(async () => undefined);
-const take = vi.fn(async () => dayLeft);
 const drop = vi.fn(async () => undefined);
 const ready = vi.fn(async () => void order.push("ready"));
 
@@ -53,7 +52,6 @@ beforeEach(() => {
   order.length = 0;
   reservations.length = 0;
   reserved = true;
-  dayLeft = true;
 });
 
 describe("saveFile", () => {
@@ -113,7 +111,7 @@ describe("saveFile", () => {
     const r = await saveFile(deps({ store }), user, picture, null);
     expect(r).toEqual({ ok: false, reason: "full" });
     expect(store.keys()).toEqual([]);
-    expect(refund).toHaveBeenCalledOnce();
+    expect(refund).not.toHaveBeenCalled();
   });
 
   it("still refuses when a plan was lowered below the space used", async () => {
@@ -202,16 +200,14 @@ describe("saveFile", () => {
     const r = await saveFile(deps({ store }), user, picture, null);
     expect(r).toEqual({ ok: false, reason: "failed" });
     expect(drop).toHaveBeenCalledOnce();
-    expect(refund).toHaveBeenCalledOnce();
   });
 
-  it("gives the day's use back when it fails", async () => {
+  it("fails cleanly when the download times out", async () => {
     const fetchFile = async () => {
       throw new Error("timeout");
     };
     const r = await saveFile(deps({ fetchFile }), user, picture, null);
     expect(r).toEqual({ ok: false, reason: "failed" });
-    expect(refund).toHaveBeenCalledWith(db, "u1", "file_save", "2026-11-01");
   });
 
   it("says gone when LINE no longer has the content", async () => {
@@ -241,17 +237,8 @@ describe("saveFile", () => {
     expect(take).not.toHaveBeenCalled();
   });
 
-  it("takes the day's use by plan", async () => {
+  it("counts nothing per day: the space is the only limit", async () => {
     await saveFile(deps(), user, picture, null);
-    expect(take).toHaveBeenCalledWith(db, "u1", "file_save", 20, "2026-11-01");
-  });
-
-  it("stops at the day's limit", async () => {
-    dayLeft = false;
-    await expect(saveFile(deps(), user, picture, null)).resolves.toEqual({
-      ok: false,
-      reason: "day_limit",
-    });
-    expect(order).toEqual([]);
+    expect(take).not.toHaveBeenCalled();
   });
 });

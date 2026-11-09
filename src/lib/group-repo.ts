@@ -48,6 +48,19 @@ const noSuchColumn = (error: { code?: string } | null): boolean =>
   error?.code === "42703" || error?.code === "PGRST204";
 
 /** How many open ledgers this person owns. */
+/** The owner's open ledgers, oldest first. */
+export async function ownedGroupIds(db: SupabaseClient, ownerUserId: string): Promise<string[]> {
+  const { data, error } = await db
+    .from("bot_groups")
+    .select("id")
+    .eq("owner_user_id", ownerUserId)
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  if (error) fail("list owned groups", error);
+  return ((data ?? []) as { id: string }[]).map((r) => r.id);
+}
+
 export async function countOwnedGroups(db: SupabaseClient, ownerUserId: string): Promise<number> {
   const { count, error } = await db
     .from("bot_groups")
@@ -128,6 +141,19 @@ export async function upsertMember(
 }
 
 /** Known members of the group: LINE user id -> the name shown. */
+/** Who has written to the ledger (paid for something): the people the member cap counts. */
+export async function groupWriters(db: SupabaseClient, groupId: string): Promise<Set<string>> {
+  const { data, error } = await db
+    .from("group_entries")
+    .select("payer_line_user_id")
+    .eq("group_id", groupId)
+    .limit(5000);
+  if (error) fail("load group writers", error);
+  return new Set(
+    ((data ?? []) as { payer_line_user_id: string }[]).map((r) => r.payer_line_user_id),
+  );
+}
+
 export async function memberNames(
   db: SupabaseClient,
   groupId: string,

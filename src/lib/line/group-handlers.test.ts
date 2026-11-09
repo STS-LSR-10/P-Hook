@@ -12,6 +12,7 @@ let ownerLine = "Uowner";
 let entries: (GroupEntryRow & { deleted?: boolean })[] = [];
 let members = new Map<string, { name: string; updatedAt: string }>();
 let ownedCount = 0;
+let ownedIds: string[] = [];
 let todayCount = 0;
 let userPlan = "ultimate";
 let trip: TripRow | null = null;
@@ -55,6 +56,8 @@ vi.mock("@/lib/group-repo", () => ({
     return true;
   },
   memberNames: async () => members,
+  groupWriters: async () => new Set(members.keys()),
+  ownedGroupIds: async () => ownedIds,
   upsertMember: async (_db: unknown, _g: string, userId: string, name: string) => {
     upserts.push({ userId, name });
     members.set(userId, { name, updatedAt: NOW.toISOString() });
@@ -205,6 +208,7 @@ beforeEach(() => {
   entries = [];
   members = new Map();
   ownedCount = 0;
+  ownedIds = [];
   todayCount = 0;
   userPlan = "ultimate";
   trip = null;
@@ -232,7 +236,7 @@ describe("the bot joining and leaving", () => {
     // two buttons: open the ledger (a LIFF page when the LIFF id is known), and how to use it
     expect(card).toContain('"label":"📒 เปิดสมุดกลุ่ม"');
     expect(card).toContain('"label":"📖 วิธีใช้งาน","text":"วิธีใช้งาน"');
-    expect(card).toContain("Elite");
+    expect(card).toContain("Starter");
     expect(card).toContain('"type":"carousel"'); // small cards to swipe, not one tall card
 
     ({ deps, reply } = setup());
@@ -275,12 +279,12 @@ describe("เปิดสมุดกลุ่ม", () => {
     expect(said(reply)).toContain("เปิดสมุดกลุ่มแล้ว");
   });
 
-  it("a member who is not Elite is told it needs Elite", async () => {
-    userPlan = "plus";
+  it("a member on Free is told it needs Starter or above", async () => {
+    userPlan = "free";
     const { deps, reply } = setup();
-    await handleEvent(inGroup("Uplus", "เปิดสมุดกลุ่ม"), deps);
+    await handleEvent(inGroup("Ufree", "เปิดสมุดกลุ่ม"), deps);
     expect(opened).toHaveLength(0);
-    expect(said(reply)).toContain("Elite");
+    expect(said(reply)).toContain("Starter");
   });
 
   it("already open by the same person, or by someone else with a running plan", async () => {
@@ -307,18 +311,64 @@ describe("เปิดสมุดกลุ่ม", () => {
     expect(movedNotes).toEqual([{ groupId: "g1", owner: "app-Uother" }]);
   });
 
-  it("an owner of five ledgers cannot open a sixth", async () => {
-    ownedCount = 5;
+  it.each([
+    ["starter", 1],
+    ["plus", 5],
+    ["ultimate", 10],
+  ])("an owner on %s with %i ledgers cannot open one more", async (plan, n) => {
+    userPlan = plan;
+    ownedCount = n;
     const { deps, reply } = setup();
     await handleEvent(inGroup("Uowner", "เปิดสมุดกลุ่ม"), deps);
     expect(opened).toHaveLength(0);
-    expect(said(reply)).toContain("ครบ 5 กลุ่ม");
+    expect(said(reply)).toContain(`ครบ ${n} กลุ่ม`);
+  });
+
+  it("a Starter owner may open the first one", async () => {
+    userPlan = "starter";
+    ownedCount = 0;
+    const { deps } = setup();
+    await handleEvent(inGroup("Uowner", "เปิดสมุดกลุ่ม"), deps);
+    expect(opened).toHaveLength(1);
   });
 
   it("no LINE user id on the message: asks them to add the bot", async () => {
     const { deps, reply } = setup();
     await handleEvent(inGroup(undefined, "เปิดสมุดกลุ่ม"), deps);
     expect(said(reply)).toContain("เพิ่มบอทเป็นเพื่อน");
+  });
+});
+
+describe("the plan's group and member limits on a ledger already open", () => {
+  it("after a downgrade, only the oldest ledgers within the limit stay writable", async () => {
+    openBook();
+    ownerPlan = "starter"; // one group
+    ownedIds = ["g0", "g1"]; // this ledger (g1) is the newer one
+    const { deps, reply } = setup();
+    await handleEvent(inGroup("Uowner", "จดค่าน้ำ 200"), deps);
+    expect(entries).toHaveLength(0);
+    expect(said(reply).length).toBeGreaterThan(0);
+  });
+
+  it("the oldest ledger stays writable", async () => {
+    openBook();
+    ownerPlan = "starter";
+    ownedIds = ["g1", "g2"];
+    const { deps } = setup();
+    await handleEvent(inGroup("Uowner", "จดค่าน้ำ 200"), deps);
+    expect(entries).toHaveLength(1);
+  });
+
+  it("a newcomer past the plan's people is told the ledger is full", async () => {
+    openBook();
+    ownerPlan = "starter"; // 5 people, the owner counts as one
+    members = new Map(
+      ["A", "B", "C", "D"].map((u) => [u, { name: u, updatedAt: NOW.toISOString() }]),
+    );
+    const { deps, reply } = setup();
+    await handleEvent(inGroup("Unew", "จดค่าน้ำ 200"), deps);
+    expect(said(reply)).toContain("5 คน");
+    expect(entries).toHaveLength(0);
   });
 });
 

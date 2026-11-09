@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { can, effectivePlan, FAIR_USE, recurringLimit, slipsRemaining, VOICE_LIMIT } from "./plan";
+import {
+  can,
+  effectivePlan,
+  FREE_SLIPS_TOTAL,
+  FREE_VOICE_TOTAL,
+  GROUP_LEDGER_LIMIT,
+  MIN_PLAN,
+  nextPlanUp,
+  planAtLeast,
+  PLAN_ORDER,
+  recurringLimit,
+  slipsRemaining,
+  SLIP_LIMIT,
+  VOICE_LIMIT,
+  type Feature,
+} from "./plan";
 
 const NOW = new Date("2026-10-15T08:00:00Z");
 
@@ -33,42 +48,84 @@ describe("limits", () => {
     expect(slipsRemaining("free", 99)).toBe(0);
   });
 
-  it("professional has 30 slips a month", () => {
-    expect(slipsRemaining("plus", 0)).toBe(30);
-    expect(slipsRemaining("plus", 29)).toBe(1);
-    expect(slipsRemaining("plus", 30)).toBe(0);
-    expect(slipsRemaining("plus", 99)).toBe(0);
+  it("every paid plan has its own monthly slip number; Free has a taste for life instead", () => {
+    expect(SLIP_LIMIT).toEqual({ free: 0, starter: 60, plus: 250, ultimate: 600 });
+    expect(FREE_SLIPS_TOTAL).toBe(10);
+    expect(slipsRemaining("starter", 0)).toBe(60);
+    expect(slipsRemaining("starter", 59)).toBe(1);
+    expect(slipsRemaining("starter", 60)).toBe(0);
+    expect(slipsRemaining("starter", 99)).toBe(0);
+    expect(slipsRemaining("ultimate", 599)).toBe(1);
   });
 
-  it("voice logging is Pro and above, with a monthly number each", () => {
+  it("voice logging is Starter and above, with a monthly number each", () => {
     expect(can("free", "voiceLog")).toBe(false);
-    expect(can("plus", "voiceLog")).toBe(true);
-    expect(can("ultimate", "voiceLog")).toBe(true);
-    expect(VOICE_LIMIT.plus).toBe(20);
-    expect(VOICE_LIMIT.ultimate).toBe(FAIR_USE.voice);
+    for (const p of ["starter", "plus", "ultimate"] as const) expect(can(p, "voiceLog")).toBe(true);
+    expect(VOICE_LIMIT).toEqual({ free: 0, starter: 30, plus: 200, ultimate: 400 });
+    expect(FREE_VOICE_TOTAL).toBe(10);
   });
 
-  it("Elite has more recurring entries than Pro", () => {
-    expect(recurringLimit("free")).toBe(0);
-    expect(recurringLimit("plus")).toBe(20);
-    expect(recurringLimit("ultimate")).toBe(100);
+  it("recurring entries grow with the plan", () => {
+    expect(PLAN_ORDER.map(recurringLimit)).toEqual([0, 20, 100, 300]);
   });
 
-  it("ultimate is unlimited and has every paid feature", () => {
-    expect(slipsRemaining("ultimate", 500)).toBeNull();
-    expect(can("ultimate", "savingsChart")).toBe(true);
+  it("group ledgers: how many groups and people each plan has", () => {
+    expect(GROUP_LEDGER_LIMIT).toEqual({
+      free: { groups: 0, members: 0 },
+      starter: { groups: 1, members: 5 },
+      plus: { groups: 5, members: 10 },
+      ultimate: { groups: 10, members: 20 },
+    });
+  });
+
+  it("Elite has every feature", () => {
+    for (const f of Object.keys(MIN_PLAN) as Feature[]) expect(can("ultimate", f)).toBe(true);
   });
 
   it("feature flags", () => {
     expect(can("free", "savingsChart")).toBe(false);
+    expect(can("starter", "savingsChart")).toBe(true);
     expect(can("plus", "savingsChart")).toBe(true);
   });
 });
 
+describe("the four plans", () => {
+  it("are ordered, and a higher plan has everything a lower one has", () => {
+    expect(PLAN_ORDER).toEqual(["free", "starter", "plus", "ultimate"]);
+    expect(planAtLeast("plus", "starter")).toBe(true);
+    expect(planAtLeast("starter", "plus")).toBe(false);
+    expect(planAtLeast("free", "free")).toBe(true);
+    for (const f of Object.keys(MIN_PLAN) as Feature[]) {
+      const has = PLAN_ORDER.map((p) => can(p, f));
+      expect(has, f).toEqual([...has].sort((a, b) => Number(a) - Number(b))); // never true then false
+    }
+  });
+
+  it("nextPlanUp says what to offer; nothing above Elite", () => {
+    expect(PLAN_ORDER.map(nextPlanUp)).toEqual(["starter", "plus", "ultimate", null]);
+  });
+
+  it("the gates sit where the plan table puts them", () => {
+    const at = (f: Feature) => MIN_PLAN[f];
+    expect(at("export")).toBe("starter");
+    expect(at("foreignCurrency")).toBe("starter");
+    expect(at("debts")).toBe("starter");
+    expect(at("groupLedger")).toBe("starter");
+    expect(at("savingsGoal")).toBe("starter");
+    expect(at("insight")).toBe("plus");
+    expect(at("forecast")).toBe("plus");
+    expect(at("billReminder")).toBe("plus");
+    expect(at("advancedExport")).toBe("plus");
+    expect(at("pdfExport")).toBe("ultimate");
+    expect(at("smartParse")).toBe("ultimate");
+  });
+});
+
 describe("export and dashboard", () => {
-  it("are Pro and above, never Free", () => {
+  it("are Starter and above, never Free", () => {
     for (const feature of ["export", "dashboard"] as const) {
       expect(can("free", feature)).toBe(false);
+      expect(can("starter", feature)).toBe(true);
       expect(can("plus", feature)).toBe(true);
       expect(can("ultimate", feature)).toBe(true);
     }

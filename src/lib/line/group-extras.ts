@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData, splitChat } from "@/lib/ai/owl";
-import { fileCapacity, fileDayLimit, formatBytes, type FileDto } from "@/lib/file";
+import { fileCapacity, formatBytes, type FileDto } from "@/lib/file";
 import {
   listGroupFiles as listFilesOfGroup,
   startGroupFileWait,
@@ -60,7 +60,6 @@ import {
   REMINDER_NO_TEXT_TEXT,
   REMINDER_PAST_TEXT,
   REMINDER_TOO_FAR_TEXT,
-  groupFileDayLimitText,
   groupFileFullText,
   groupFileListText,
   groupFileNotFoundText,
@@ -182,8 +181,6 @@ async function saveFailureText(
       return text(FILE_BLOCKED_TEXT);
     case "too_large":
       return text(FILE_TOO_LARGE_TEXT);
-    case "day_limit":
-      return text(groupFileDayLimitText(fileDayLimit(plan)));
     case "full":
       return text(groupFileFullText(formatBytes(fileCapacity(plan))));
     case "gone":

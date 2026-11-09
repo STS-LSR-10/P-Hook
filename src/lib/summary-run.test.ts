@@ -106,11 +106,17 @@ describe("runSummaries and the AI Insight", () => {
     expect(write).toHaveBeenCalledTimes(1);
   });
 
-  it("Pro gets the summary only, and no AI is called", async () => {
-    await runSummaries(fakeDb("plus"), push, NOW, undefined, { insightWriter: writer });
+  it("Starter gets the summary only, and no AI is called", async () => {
+    await runSummaries(fakeDb("starter"), push, NOW, undefined, { insightWriter: writer });
     expect(sentMessages()).toHaveLength(1);
     expect(write).not.toHaveBeenCalled();
     expect(loadFacts).not.toHaveBeenCalled();
+  });
+
+  it("Pro gets the AI Insight too (it is a Pro feature now)", async () => {
+    await runSummaries(fakeDb("plus"), push, NOW, undefined, { insightWriter: writer });
+    expect(sentMessages()).toHaveLength(2);
+    expect(write).toHaveBeenCalledTimes(1);
   });
 
   it("without an AI configured Elite still gets observations written by plain code", async () => {

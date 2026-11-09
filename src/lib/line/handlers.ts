@@ -468,7 +468,10 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
                 ? (["chat_file", LIMITS.chatFile] as const)
                 : (["chat_pdf", LIMITS.chatPdf] as const)
               : (["chat", LIMITS.chat] as const);
-    const result = await deps.limit(bucket, lineUserId, rule);
+    let result = await deps.limit(bucket, lineUserId, rule);
+    if (result.allowed && bucket === "chat_file") {
+      result = await deps.limit("chat_file_day", lineUserId, LIMITS.fileDay);
+    }
     if (!result.allowed) {
       if (result.hits === result.limit + 1 && event.replyToken) {
         await deps.reply(event.replyToken, [text(TOO_MANY_MESSAGES_TEXT)]);
@@ -1177,7 +1180,7 @@ async function runGoal(
   const goals = (await listGoals(db, user.id, deps.now())).filter((g) => !g.archived);
 
   if (command.kind === "goal-new") {
-    if (goals.length >= goalCapacity(plan)) return [text(goalFullText(goalCapacity(plan)))];
+    if (goals.length >= goalCapacity(plan)) return [text(goalFullText(plan))];
     const dueOn = command.due ? dueSpecToDate(command.due, (s) => resolveDue(s, deps.now())) : null;
     if (command.due && !dueOn) return [text(GOAL_BAD_DUE_TEXT)];
     const id = await createGoal(db, user.id, {

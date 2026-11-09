@@ -43,7 +43,7 @@ describe("POST /api/export/link", () => {
     expect(sign).not.toHaveBeenCalled();
   });
 
-  it.each(["plus", "ultimate"])("%s gets a download link", async (p) => {
+  it.each(["starter", "plus", "ultimate"])("%s gets a download link", async (p) => {
     plan = p;
     const res = await post({ format: "xlsx", type: "expense" });
     expect(res.status).toBe(200);
@@ -57,8 +57,22 @@ describe("POST /api/export/link", () => {
     expect((await post({ format: "docx" })).status).toBe(400);
   });
 
+  it("the PDF summary is for Elite only; Starter and Pro get Excel and CSV", async () => {
+    for (const p of ["starter", "plus"]) {
+      plan = p;
+      const res = await post({ format: "pdf" });
+      expect(res.status).toBe(403);
+      expect(await res.json()).toMatchObject({ upgrade: true });
+      expect((await post({ format: "csv" })).status).toBe(200);
+    }
+    expect(sign).toHaveBeenCalledTimes(2); // the two csv links, never a pdf one
+    sign.mockClear();
+    plan = "ultimate";
+    expect((await post({ format: "pdf" })).status).toBe(200);
+  });
+
   it("passes the columns and the attachments option into the signed link; an empty column list is refused", async () => {
-    plan = "plus";
+    plan = "ultimate";
     expect(
       (await post({ format: "pdf", groups: ["date", "amount"], attachments: true })).status,
     ).toBe(200);

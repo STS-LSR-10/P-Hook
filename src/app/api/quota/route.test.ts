@@ -15,7 +15,7 @@ vi.mock("@/lib/auth/require-user", () => ({
 vi.mock("@/lib/slip-repo", () => ({
   getUserPlanRow: async () => ({ plan, plan_expires_at: expires }),
   countSlipsThisMonth: async () => 4,
-  countSlipsThisWeek: async () => 1,
+  countSlipsEver: async () => 1,
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
 vi.mock("@/lib/file-repo", () => ({
@@ -101,7 +101,7 @@ describe("GET /api/quota", () => {
     expect(q.voice).toMatchObject({ used: 5 });
     expect(q.owl).toMatchObject({ used: 8 });
     expect(q.ai).toMatchObject({ used: 9 });
-    expect(q.fileSaves).toMatchObject({ used: 1 });
+    expect(q.fileSaves).toBeUndefined(); // no daily limit on saving files any more
     expect(q.pdf).toMatchObject({ used: 2 });
     // each counter in the period its limit counts: the month, or today
     expect(usageAsked[0]).toEqual([
@@ -109,7 +109,6 @@ describe("GET /api/quota", () => {
       { kind: "pdf", month: "2026-11-01" },
       { kind: "owl", month: "2026-11-01" },
       { kind: "ai_chat", month: "2026-11-01" },
-      { kind: "file_save", month: "2026-11-02" },
       { kind: "group_remind", month: "2026-11-01" },
     ]);
   });
@@ -126,11 +125,11 @@ describe("GET /api/quota", () => {
     expect((await get()).status).toBe(401);
   });
 
-  it("Free counts slips this week and the one voice try for life", async () => {
+  it("Free counts its slips and voice tries for life, not by the month", async () => {
     plan = "free";
     expires = null;
     const q = await items(await get());
-    expect(q.slips).toMatchObject({ used: 1, period: "week" });
+    expect(q.slips).toMatchObject({ used: 1, limit: 10, period: "once" });
     expect(q.voice).toMatchObject({ used: 1, period: "once" });
     expect(usageAsked[0]).toContainEqual({ kind: "teaser_voice", month: "2000-01-01" });
   });

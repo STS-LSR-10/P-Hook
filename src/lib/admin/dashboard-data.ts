@@ -1,3 +1,4 @@
+import type { Plan } from "@/lib/plan";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRate } from "@/lib/fx-repo";
@@ -177,7 +178,7 @@ export async function loadFeatureUses(db: SupabaseClient, month: string): Promis
 export interface FeedbackItem {
   id: string;
   body: string;
-  plan: "free" | "plus" | "ultimate";
+  plan: Plan;
   /** Where it was written: the LINE chat or the app's settings page. */
   source: "line" | "app";
   createdAt: string;
@@ -203,7 +204,10 @@ export function parseFeedbackQuery(
   const page = Number(one("page"));
   return {
     source: source === "line" || source === "app" ? source : "all",
-    plan: plan === "free" || plan === "plus" || plan === "ultimate" ? plan : "all",
+    plan:
+      plan === "free" || plan === "starter" || plan === "plus" || plan === "ultimate"
+        ? plan
+        : "all",
     page: Number.isInteger(page) && page >= 1 ? page : 1,
   };
 }

@@ -87,22 +87,28 @@ describe("POST /api/goals", () => {
     });
   });
 
-  it("Pro stops at 5 live goals, Elite goes on to 20", async () => {
-    goals = [1, 2, 3, 4, 5].map((n) => goal(n));
-    const res = await POST(req({ name: "ที่ 6", target: "100" }));
+  it("Starter stops at 2 live goals, Pro at 10, Elite only at a hard cap of 100", async () => {
+    plan = "starter";
+    goals = [1, 2].map((n) => goal(n));
+    const res = await POST(req({ name: "ที่ 3", target: "100" }));
     expect(res.status).toBe(403);
     expect(await res.json()).toMatchObject({ upgrade: true });
 
+    plan = "plus";
+    expect((await POST(req({ name: "ที่ 3", target: "100" }))).status).toBe(201);
+    goals = Array.from({ length: 10 }, (_, i) => goal(i + 1));
+    expect((await POST(req({ name: "ที่ 11", target: "100" }))).status).toBe(403);
+
     plan = "ultimate";
-    expect((await POST(req({ name: "ที่ 6", target: "100" }))).status).toBe(201);
-    goals = Array.from({ length: 20 }, (_, i) => goal(i + 1));
-    const full = await POST(req({ name: "ที่ 21", target: "100" }));
+    expect((await POST(req({ name: "ที่ 11", target: "100" }))).status).toBe(201);
+    goals = Array.from({ length: 100 }, (_, i) => goal(i + 1));
+    const full = await POST(req({ name: "ที่ 101", target: "100" }));
     expect(full.status).toBe(403);
     expect(await full.json()).toMatchObject({ upgrade: false });
   });
 
   it("archived goals do not count towards the limit", async () => {
-    goals = [1, 2, 3, 4, 5].map((n) => ({ ...goal(n), archived: true }));
+    goals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ ...goal(n), archived: true }));
     expect((await POST(req({ name: "ใหม่", target: "100" }))).status).toBe(201);
   });
 
@@ -126,7 +132,7 @@ describe("POST /api/goals", () => {
 describe("GET /api/goals", () => {
   it("says what the plan allows", async () => {
     goals = [goal(1), goal(2)];
-    expect(await (await GET(req())).json()).toMatchObject({ limit: 5, canAdd: true });
+    expect(await (await GET(req())).json()).toMatchObject({ limit: 10, canAdd: true });
     plan = "free";
     expect(await (await GET(req())).json()).toMatchObject({ limit: 0, canAdd: false });
   });

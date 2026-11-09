@@ -118,7 +118,7 @@ describe("เป้าหมาย", () => {
     expect(json).toContain("40%");
   });
 
-  it("explains how to start when there are none; Free is told it needs Pro", async () => {
+  it("explains how to start when there are none; Free is told it needs Starter", async () => {
     goals = [];
     let { deps, reply } = setup();
     await handleEvent(say("เป้าหมาย"), deps);
@@ -127,7 +127,7 @@ describe("เป้าหมาย", () => {
     plan = "free";
     ({ deps, reply } = setup());
     await handleEvent(say("เป้าหมาย"), deps);
-    expect(sent(reply)).toContain("Pro");
+    expect(sent(reply)).toContain("Starter");
   });
 });
 
@@ -148,20 +148,21 @@ describe("เป้าหมาย ใหม่", () => {
     await handleEvent(say("เป้าหมาย ใหม่ ซ้ำ 100"), deps);
     expect(sent(reply)).toContain("มีเป้าหมายชื่อนี้อยู่แล้ว");
 
-    goals = [1, 2, 3, 4, 5].map((n) => goal(`g${n}`, 0));
+    goals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => goal(`g${n}`, 0));
     created.length = 0;
     ({ deps, reply } = setup());
     await handleEvent(say("เป้าหมาย ใหม่ ที่หก 100"), deps);
     expect(created).toHaveLength(0);
-    expect(sent(reply)).toContain("มีเป้าหมายได้ 5 ใบแล้ว");
+    expect(sent(reply)).toContain("มีเป้าหมายได้ 10 ใบแล้ว");
+    expect(sent(reply)).toContain("Elite"); // what the next plan up has
   });
 
-  it("Free is told it needs Pro", async () => {
+  it("Free is told it needs Starter", async () => {
     plan = "free";
     const { deps, reply } = setup();
     await handleEvent(say("เป้าหมาย ใหม่ บ้าน 1000"), deps);
     expect(created).toHaveLength(0);
-    expect(sent(reply)).toContain("Pro");
+    expect(sent(reply)).toContain("Starter");
   });
 });
 

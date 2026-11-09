@@ -51,6 +51,8 @@ vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
   getChaseSchedule: async () => ({ everyDays: 1, window: "any" }),
   getOwner: async () => ({ lineUserId: "Uowner", plan: ownerPlan, planExpiresAt: null }),
+  groupWriters: async () => new Set<string>(),
+  ownedGroupIds: async () => [] as string[],
   memberNames: async () => new Map(),
   upsertMember: async () => undefined,
   addEntries: async (

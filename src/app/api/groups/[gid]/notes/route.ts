@@ -78,7 +78,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     const [{ plan }, count] = await Promise.all([getPlanInfo(db, owner), countNotes(db, owner)]);
     if (!viewer.group.isActive || !can(plan, "groupLedger")) {
       return apiError(
-        "สมุดกลุ่มนี้ปิดอยู่ หรือเจ้าของสมุดไม่ได้ใช้แผน Elite แล้ว จดเพิ่มไม่ได้",
+        "สมุดกลุ่มนี้ปิดอยู่ หรือเจ้าของสมุดไม่ได้ใช้แผนที่มีสมุดกลุ่มแล้ว จดเพิ่มไม่ได้",
         403,
       );
     }

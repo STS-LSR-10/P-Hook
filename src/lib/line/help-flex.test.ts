@@ -88,7 +88,7 @@ describe("help topics", () => {
   });
 
   it("only what the plan has can be tapped", () => {
-    const taps = (plan: "free" | "plus" | "ultimate") =>
+    const taps = (plan: "free" | "starter" | "plus" | "ultimate") =>
       HELP_TOPICS.reduce(
         (n, t) =>
           n +
@@ -96,8 +96,9 @@ describe("help topics", () => {
         0,
       );
     expect(taps("free")).toBeGreaterThan(0);
-    expect(taps("plus")).toBeGreaterThan(taps("free"));
-    expect(taps("ultimate")).toBeGreaterThan(taps("plus"));
+    expect(taps("starter")).toBeGreaterThan(taps("free"));
+    expect(taps("plus")).toBeGreaterThan(taps("starter")); // the forecast and the bills start at Pro
+    expect(taps("ultimate")).toBeGreaterThanOrEqual(taps("plus"));
   });
 
   it("is a plain, narrow page: a one-row header with its icon, rows of a command and a short line", () => {
@@ -297,7 +298,7 @@ describe("group welcome card", () => {
     expect(card).toContain('"label":"📒 เปิดสมุดกลุ่ม"');
     expect(card).toContain('"label":"📖 วิธีใช้งาน","text":"วิธีใช้งาน"');
     expect(card).toContain("https://x.test/logo.png");
-    expect(card).toContain("Elite"); // the opener must be Elite; the rest are free
+    expect(card).toContain("Starter"); // the opener must be Starter or above; the rest are free
     expect(card.length).toBeLessThan(50_000);
   });
 

@@ -78,7 +78,7 @@ export async function POST(
     const now = new Date();
     const row = await getUserPlanRow(db, auth.userId);
     if (!can(effectivePlan(row.plan, row.plan_expires_at, now), "entryPhoto")) {
-      return apiError("การแนบรูปเป็นฟีเจอร์ของแผน Pro ขึ้นไป", 403);
+      return apiError("การแนบรูปเป็นฟีเจอร์ของแผน Starter ขึ้นไป", 403);
     }
 
     const tx = await getPhotoTx(db, auth.userId, id);

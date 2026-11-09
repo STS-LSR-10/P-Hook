@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
-  plan: z.enum(["plus", "ultimate"]),
+  plan: z.enum(["starter", "plus", "ultimate"]),
   period: z.enum(["monthly", "yearly"]),
 });
 

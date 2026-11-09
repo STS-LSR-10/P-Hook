@@ -97,6 +97,11 @@ async function download(request: Request): Promise<Response> {
     const f = claims.filters;
     const { plan } = await getPlanInfo(db, claims.userId);
 
+    // the link was signed a moment ago, but the plan is checked again: PDF is for Elite only
+    if (claims.format === "pdf" && !can(plan, "pdfExport")) {
+      return new Response("pdf export needs the Elite plan", { status: 403, headers });
+    }
+
     let main: { name: string; bytes: Uint8Array };
     if (claims.format === "csv") {
       main = {

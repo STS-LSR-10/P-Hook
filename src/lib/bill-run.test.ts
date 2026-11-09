@@ -37,7 +37,7 @@ import { billReminderMessage, runBillReminders } from "./bill-run";
 const db = {
   from: () => ({
     select: () => ({
-      in: () => ({ limit: async () => ({ data: users, error: null }) }),
+      or: () => ({ limit: async () => ({ data: users, error: null }) }),
     }),
   }),
 } as unknown as SupabaseClient;

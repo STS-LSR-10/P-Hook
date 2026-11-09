@@ -8,7 +8,7 @@ import { countPhotosThisMonth } from "@/lib/photo-repo";
 import { getPlanInfo } from "@/lib/plan-server";
 import { buildQuota } from "@/lib/quota";
 import { countRules } from "@/lib/recurring-repo";
-import { countSlipsThisMonth, countSlipsThisWeek } from "@/lib/slip-repo";
+import { countSlipsEver, countSlipsThisMonth } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { dayKey, LIFETIME, monthKey, readUsage } from "@/lib/usage";
 import { countActiveReminders } from "@/lib/user-reminder-repo";
@@ -53,18 +53,17 @@ export async function GET(request: Request): Promise<Response> {
       countActiveReminders(db, auth.userId, "repeat"),
       countOwnedGroups(db, auth.userId),
       countRules(db, auth.userId),
-      paid ? countSlipsThisMonth(db, auth.userId, now) : countSlipsThisWeek(db, auth.userId, now),
+      paid ? countSlipsThisMonth(db, auth.userId, now) : countSlipsEver(db, auth.userId),
       countPhotosThisMonth(db, auth.userId, now),
       readUsage(db, auth.userId, [
         paid ? { kind: "voice", month } : { kind: "teaser_voice", month: LIFETIME },
         { kind: "pdf", month },
         { kind: "owl", month },
         { kind: "ai_chat", month },
-        { kind: "file_save", month: day },
         { kind: "group_remind", month },
       ]),
     ]);
-    const [voice = 0, pdf = 0, owl = 0, ai = 0, fileSaves = 0, groupReminders = 0] = counters;
+    const [voice = 0, pdf = 0, owl = 0, ai = 0, groupReminders = 0] = counters;
 
     return json({
       plan,
@@ -87,7 +86,6 @@ export async function GET(request: Request): Promise<Response> {
         pdf,
         owl,
         ai,
-        fileSaves,
       }),
     });
   });

@@ -71,7 +71,7 @@ interface MeLite {
   /** Prices as the server sees them now (launch or normal), so a wrong phone clock cannot mislead. */
   pricing?: PricingNow;
   planExpiresAt: string | null;
-  trial?: { days: number; available: { plus: boolean; ultimate: boolean } };
+  trial?: { days: number; available: Record<PaidPlan, boolean> };
   payments?: {
     available: boolean;
     canManage?: boolean;
@@ -106,11 +106,12 @@ const PERIODS: { value: Period; label: string }[] = [
 // gets the green frame and the green fill (so the choice is never ambiguous).
 const TIER_STYLE: Record<Plan, { chip: string }> = {
   free: { chip: "bg-border text-foreground" },
+  starter: { chip: "bg-primary-soft text-primary" },
   plus: { chip: "bg-primary text-surface" },
   ultimate: { chip: "bg-accent text-foreground" },
 };
 
-const PAID: PaidPlan[] = ["plus", "ultimate"];
+const PAID: PaidPlan[] = ["starter", "plus", "ultimate"];
 
 export default function UpgradePage() {
   const { api, openExternal } = useLiff();
@@ -567,17 +568,18 @@ function Comparison() {
   return (
     <section
       aria-label={t("เปรียบเทียบแผน")}
-      className="overflow-hidden rounded-3xl border border-border bg-surface"
+      className="overflow-x-auto rounded-3xl border border-border bg-surface"
     >
-      <table className="w-full table-fixed border-collapse text-sm">
+      <table className="w-full min-w-[500px] table-fixed border-collapse text-sm">
         <caption className="px-4 pb-1 pt-4 text-left text-base font-bold">
           {t("ทำอะไรได้บ้าง?")}
         </caption>
         <colgroup>
           <col />
-          <col className="w-[62px]" />
-          <col className="w-[68px]" />
-          <col className="w-[68px]" />
+          <col className="w-[64px]" />
+          <col className="w-[72px]" />
+          <col className="w-[64px]" />
+          <col className="w-[64px]" />
         </colgroup>
         <thead>
           <tr className="text-xs">
@@ -586,6 +588,9 @@ function Comparison() {
             </th>
             <th scope="col" className="py-2 font-semibold">
               Free
+            </th>
+            <th scope="col" className="py-2 font-semibold">
+              Starter
             </th>
             <th scope="col" className="py-2 font-semibold text-primary">
               Pro
@@ -599,7 +604,7 @@ function Comparison() {
           <tbody key={group.title}>
             <tr>
               <th
-                colSpan={4}
+                colSpan={5}
                 scope="colgroup"
                 className="px-4 pb-1 pt-4 text-left text-xs font-bold text-muted"
               >
@@ -610,7 +615,10 @@ function Comparison() {
               const Icon = ICONS[row.icon];
               return (
                 <tr key={row.label} className="border-t border-border">
-                  <th scope="row" className="py-3 pl-4 pr-1 text-left text-sm font-normal">
+                  <th
+                    scope="row"
+                    className="sticky left-0 bg-surface py-3 pl-4 pr-1 text-left text-sm font-normal"
+                  >
                     <span className="flex items-center gap-2">
                       <Icon className="h-4 w-4 shrink-0 text-muted" aria-hidden />
                       <span>{row.label}</span>
@@ -618,7 +626,7 @@ function Comparison() {
                   </th>
                   {row.cells.map((cell, i) => (
                     <td key={i} className="px-1 py-3 text-center">
-                      <CellView cell={cell} tone={i === 1 ? "pro" : "plain"} />
+                      <CellView cell={cell} tone={i === 2 ? "pro" : "plain"} />
                     </td>
                   ))}
                 </tr>

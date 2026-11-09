@@ -10,7 +10,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({ plan: z.enum(["plus", "ultimate"]) });
+const bodySchema = z.object({ plan: z.enum(["starter", "plus", "ultimate"]) });
 
 /**
  * POST /api/plan/trial { plan } — start the free trial of a tier (once per person and tier, only

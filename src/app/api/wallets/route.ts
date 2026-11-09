@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
-import { sharedWalletCapacity, walletCapacity } from "@/lib/plan";
+import { sharedWalletCapacity, walletCapacity, PLAN_LABEL } from "@/lib/plan";
 import { getPlanInfo } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -108,9 +108,9 @@ export async function POST(request: Request): Promise<Response> {
         {
           error:
             plan === "free"
-              ? "แผน Free มีกระเป๋าได้ 1 ใบ อัปเกรดเป็น Pro เพื่อมีได้ถึง 5 ใบนะ"
-              : `มีกระเป๋าได้สูงสุด ${capacity} ใบ`,
-          upgrade: plan === "free" || plan === "plus",
+              ? "แผน Free มีกระเป๋าได้ 1 ใบ อัปเกรดเป็น Starter เพื่อมีได้ถึง 5 ใบนะ"
+              : `แผน ${PLAN_LABEL[plan]} มีกระเป๋าได้สูงสุด ${capacity} ใบ`,
+          upgrade: plan !== "ultimate",
         },
         { status: 403, headers: { "Cache-Control": "no-store" } },
       );
@@ -128,7 +128,7 @@ export async function POST(request: Request): Promise<Response> {
             error:
               plan === "ultimate"
                 ? `มีกระเป๋าร่วมได้สูงสุด ${sharedWalletCapacity(plan)} ใบ`
-                : `แผน Pro มีกระเป๋าร่วมได้ ${sharedWalletCapacity(plan)} ใบ อัปเกรดเป็น Elite เพื่อมีได้ ${sharedWalletCapacity("ultimate")} ใบนะ`,
+                : `แผน ${PLAN_LABEL[plan]} มีกระเป๋าร่วมได้ ${sharedWalletCapacity(plan)} ใบ อัปเกรดแผนเพื่อมีได้มากขึ้นนะ`,
             upgrade: plan !== "ultimate",
           },
           { status: 403, headers: { "Cache-Control": "no-store" } },

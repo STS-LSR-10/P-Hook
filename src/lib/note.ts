@@ -3,7 +3,7 @@ import type { Plan } from "@/lib/plan";
 export const MAX_NOTE_LENGTH = 2000;
 
 /** Notes a plan may keep (a cost / bloat guard; reading and deleting never need a plan). */
-const NOTE_LIMIT: Record<Plan, number> = { free: 30, plus: 500, ultimate: 2000 };
+const NOTE_LIMIT: Record<Plan, number> = { free: 30, starter: 150, plus: 500, ultimate: 2000 };
 export const noteCapacity = (plan: Plan): number => NOTE_LIMIT[plan];
 
 /** A note as the web app receives it. */

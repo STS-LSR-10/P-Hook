@@ -8,12 +8,13 @@ export const MAX_FILE_BYTES = 20 * MB;
 export const MAX_NAME_LENGTH = 200;
 
 /** Space a plan may keep. Files stay when a plan is lowered; only new ones are refused. */
-const FILE_CAPACITY: Record<Plan, number> = { free: 500 * MB, plus: 5 * GB, ultimate: 50 * GB };
+const FILE_CAPACITY: Record<Plan, number> = {
+  free: 500 * MB,
+  starter: 5 * GB,
+  plus: 20 * GB,
+  ultimate: 100 * GB,
+};
 export const fileCapacity = (plan: Plan): number => FILE_CAPACITY[plan];
-
-/** Files a plan may keep per day (a guard, because anybody can sign up for Free). */
-const FILE_DAY_LIMIT: Record<Plan, number> = { free: 20, plus: 100, ultimate: 200 };
-export const fileDayLimit = (plan: Plan): number => FILE_DAY_LIMIT[plan];
 
 export type MediaKind = "image" | "video" | "file";
 

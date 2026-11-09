@@ -1,4 +1,4 @@
-import { fileCapacity, fileDayLimit, formatBytes, isBlockedFile, cleanFileName } from "@/lib/file";
+import { fileCapacity, formatBytes, isBlockedFile, cleanFileName } from "@/lib/file";
 import type { FileDto } from "@/lib/file";
 import {
   getMediaById,
@@ -30,7 +30,6 @@ import {
   FILE_SEND_NOW_TEXT,
   FILE_TOO_LARGE_TEXT,
   FILE_UNAVAILABLE_TEXT,
-  fileDayLimitText,
   fileFullText,
   fileNotFoundText,
   fileRenamedText,
@@ -90,8 +89,6 @@ async function failureText(
       return text(FILE_BLOCKED_TEXT);
     case "too_large":
       return text(FILE_TOO_LARGE_TEXT);
-    case "day_limit":
-      return text(fileDayLimitText(fileDayLimit(plan)));
     case "full":
       return text(fileFullText(formatBytes(fileCapacity(plan))));
     case "gone":

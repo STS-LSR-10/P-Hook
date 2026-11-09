@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
-import { sharedMemberLimit } from "@/lib/plan";
+import { sharedMemberLimit, PLAN_LABEL } from "@/lib/plan";
 import { getPlanInfo, requireFeature } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { createInvite, membersOf } from "@/lib/shared-wallet-repo";
@@ -39,7 +39,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
           error:
             plan === "ultimate"
               ? `ร่วมกระเป๋าเดียวกันได้สูงสุด ${sharedMemberLimit(plan)} คน`
-              : "แผน Pro ร่วมกระเป๋าได้ 2 คน อัปเกรดเป็น Elite เพื่อชวนได้มากขึ้นนะ",
+              : `แผน ${PLAN_LABEL[plan]} ร่วมกระเป๋าได้ ${sharedMemberLimit(plan)} คน อัปเกรดแผนเพื่อชวนได้มากขึ้นนะ`,
           upgrade: plan !== "ultimate",
         },
         { status: 403, headers: { "Cache-Control": "no-store" } },

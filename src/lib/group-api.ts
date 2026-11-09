@@ -52,7 +52,10 @@ export async function requireGroupOwner(
   if (options.writable) {
     const { plan } = await getPlanInfo(found.db, found.viewer.group.ownerUserId);
     if (!can(plan, "groupLedger")) {
-      return apiError("เจ้าของสมุดไม่ได้ใช้แผน Elite แล้ว แก้ไขไม่ได้ ดูได้อย่างเดียวนะ", 403);
+      return apiError(
+        "เจ้าของสมุดไม่ได้ใช้แผนที่มีสมุดกลุ่มแล้ว แก้ไขไม่ได้ ดูได้อย่างเดียวนะ",
+        403,
+      );
     }
   }
   return found;

@@ -284,12 +284,12 @@ describe("transfers between wallets", () => {
     expect(json).toContain("a=tc&id=tr1");
   });
 
-  it("Free is told it needs Pro and nothing is moved", async () => {
+  it("Free is told it needs Starter and nothing is moved", async () => {
     plan = "free";
     const { deps, reply } = setup();
     await handleEvent(text("โอน 500 เงินสด>ktc"), deps);
     expect(transfers).toHaveLength(0);
-    expect(sent(reply)).toContain("Pro");
+    expect(sent(reply)).toContain("Starter");
   });
 
   it("the same wallet on both sides is refused", async () => {
@@ -360,12 +360,12 @@ describe("the บัตร command", () => {
     expect(sent(reply)).toContain("💳 KTC");
   });
 
-  it("Free is told it needs Pro", async () => {
+  it("Free is told it needs Starter", async () => {
     withCard();
     plan = "free";
     const { deps, reply } = setup();
     await handleEvent(text("บัตร"), deps);
-    expect(sent(reply)).toContain("Pro");
+    expect(sent(reply)).toContain("Starter");
   });
 
   it("without a card it explains how to add one", async () => {
@@ -439,7 +439,7 @@ describe("card limit alerts after recording", () => {
   });
 });
 
-describe("debts by chat (Elite)", () => {
+describe("debts by chat (Starter and above)", () => {
   const owed = (over: Partial<import("@/lib/debt").DebtDto>): import("@/lib/debt").DebtDto => ({
     id: "d1",
     direction: "lent",
@@ -483,12 +483,12 @@ describe("debts by chat (Elite)", () => {
     expect(sent(reply)).toContain("กำหนดคืน");
   });
 
-  it("not Elite: told it is an Elite feature, nothing saved", async () => {
-    plan = "plus";
+  it("Free: told it is a Starter feature, nothing saved", async () => {
+    plan = "free";
     const { deps, reply } = setup();
     await handleEvent(text("ให้ยืม สมชาย 500"), deps);
     expect(newDebts).toHaveLength(0);
-    expect(sent(reply)).toContain("Elite");
+    expect(sent(reply)).toContain("Starter");
   });
 
   it("an unknown wallet saves nothing", async () => {
@@ -553,11 +553,11 @@ describe("debts by chat (Elite)", () => {
     expect(json).toContain("เราติดใคร");
   });
 
-  it("the หนี้ command is for Elite, and says so when there is nothing", async () => {
-    plan = "plus";
+  it("the หนี้ command is for Starter and above, and says so when there is nothing", async () => {
+    plan = "free";
     let { deps, reply } = setup();
     await handleEvent(text("หนี้"), deps);
-    expect(sent(reply)).toContain("Elite");
+    expect(sent(reply)).toContain("Starter");
 
     plan = "ultimate";
     ({ deps, reply } = setup());
@@ -578,7 +578,7 @@ describe("debts by chat (Elite)", () => {
   });
 });
 
-describe("foreign currency by chat (Elite)", () => {
+describe("foreign currency by chat (Starter and above)", () => {
   beforeEach(() => {
     plan = "ultimate";
   });
@@ -644,13 +644,13 @@ describe("foreign currency by chat (Elite)", () => {
     expect(sent(reply)).toContain("น้อยกว่า 0.01");
   });
 
-  it.each(["free", "plus"])("%s is told it is an Elite feature and nothing is saved", async (p) => {
+  it.each(["free"])("%s is told it is a Starter feature and nothing is saved", async (p) => {
     plan = p;
     const { deps, reply } = setup();
     await handleEvent(text("ราเมน 1500 JPY"), deps);
     expect(inserted).toHaveLength(0);
     expect(fxAsked).toHaveLength(0);
-    expect(sent(reply)).toContain("Elite");
+    expect(sent(reply)).toContain("Starter");
   });
 
   it("in a dollar book, dollars are not foreign: any plan records them as they are", async () => {

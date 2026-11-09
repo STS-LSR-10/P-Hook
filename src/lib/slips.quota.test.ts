@@ -1,18 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SLIP_FAIR_USE_TEXT, SLIP_LOCKED_TEXT, SLIP_QUOTA_TEXT } from "@/lib/line/messages";
+import { SLIP_LOCKED_TEXT, slipQuotaText } from "@/lib/line/messages";
 import type { UserRow } from "@/lib/repo";
 import { handleSlipImage, type SlipDeps } from "./slips";
 
 let plan = "free";
 let used = 0;
-let usedWeek = 0;
+let usedEver = 0;
 vi.mock("@/lib/upsell", () => ({ claimUpsellCard: async () => false }));
 vi.mock("@/lib/slip-repo", async (original) => ({
   ...(await original<typeof import("@/lib/slip-repo")>()),
   getUserPlanRow: async () => ({ plan, plan_expires_at: null }),
   countSlipsThisMonth: async () => used,
-  countSlipsThisWeek: async () => usedWeek,
+  countSlipsEver: async () => usedEver,
 }));
 
 const fetchImage = vi.fn(async () => {
@@ -35,45 +35,59 @@ const run = async () => {
 beforeEach(() => {
   plan = "free";
   used = 0;
-  usedWeek = 0;
+  usedEver = 0;
   fetchImage.mockClear();
 });
 
 describe("slip quota by plan", () => {
-  it("Free reads the 1st, 2nd and 3rd photo of the week", async () => {
-    for (usedWeek = 0; usedWeek < 3; usedWeek++) {
+  it("Free reads its first ten slips, ever", async () => {
+    for (usedEver = 0; usedEver < 10; usedEver++) {
       fetchImage.mockClear();
       await expect(run()).rejects.toThrow("stop after the quota check");
       expect(fetchImage).toHaveBeenCalledTimes(1);
     }
   });
 
-  it("Free with 3 photos already this week is pitched an upgrade, and nothing is downloaded", async () => {
-    usedWeek = 3;
+  it("Free with ten slips already read is pitched an upgrade, and nothing is downloaded", async () => {
+    usedEver = 10;
     expect(await run()).toBe(SLIP_LOCKED_TEXT);
     expect(fetchImage).not.toHaveBeenCalled();
   });
 
-  it("Pro is stopped at 30 slips a month", async () => {
-    plan = "plus";
-    used = 30;
-    expect(await run()).toBe(SLIP_QUOTA_TEXT);
-    expect(fetchImage).not.toHaveBeenCalled();
+  it("Free's slips never reset with the month: only the lifetime count matters", async () => {
+    used = 0; // none this month, but ten ever
+    usedEver = 10;
+    expect(await run()).toBe(SLIP_LOCKED_TEXT);
   });
 
-  it("Pro can still read the 30th slip", async () => {
-    plan = "plus";
-    used = 29;
+  it.each([
+    ["starter", 60],
+    ["plus", 250],
+    ["ultimate", 600],
+  ] as const)(
+    "%s is stopped at %i slips a month, and told what the next plan has",
+    async (p, n) => {
+      plan = p;
+      used = n;
+      expect(await run()).toBe(slipQuotaText(p, n));
+      expect(fetchImage).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ["starter", 59],
+    ["plus", 249],
+    ["ultimate", 599],
+  ] as const)("%s can still read its last slip (the %ith)", async (p, n) => {
+    plan = p;
+    used = n;
     await expect(run()).rejects.toThrow("stop after the quota check");
     expect(fetchImage).toHaveBeenCalledTimes(1);
   });
 
-  it("Elite reads far more than Pro, up to the fair-use ceiling", async () => {
-    plan = "ultimate";
-    used = 299;
-    await expect(run()).rejects.toThrow("stop after the quota check");
-    used = 300;
-    expect(await run()).toBe(SLIP_FAIR_USE_TEXT(300));
-    expect(fetchImage).toHaveBeenCalledTimes(1);
+  it("the wording points at the next plan, and Elite has none above it", () => {
+    expect(slipQuotaText("starter", 60)).toContain("Pro");
+    expect(slipQuotaText("plus", 250)).toContain("Elite");
+    expect(slipQuotaText("ultimate", 600)).not.toContain("อัปเกรด");
   });
 });

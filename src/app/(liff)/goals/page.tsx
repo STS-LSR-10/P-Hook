@@ -82,7 +82,7 @@ export default function GoalsPage() {
           <>
             {locked ? (
               <div className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                <span className="font-semibold">{t("สำหรับแผน Pro")}</span>{" "}
+                <span className="font-semibold">{t("สำหรับแผน Starter ขึ้นไป")}</span>{" "}
                 {t("· สร้างกระปุกออมสิน ตั้งเป้าและดูความคืบหน้า")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
                   {t("ดูแผนอัปเกรด")}
@@ -211,7 +211,7 @@ export default function GoalsPage() {
                 <Link href="/upgrade" className="font-semibold underline">
                   {t("ดูแผนอัปเกรด")}
                 </Link>{" "}
-                {t("(Elite มีได้ 20 ใบ)")}
+                {t("(Starter 2 ใบ · Pro 10 ใบ · Elite ไม่จำกัด)")}
               </p>
             )}
           </>

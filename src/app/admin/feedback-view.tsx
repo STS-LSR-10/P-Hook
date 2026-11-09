@@ -11,6 +11,7 @@ import { COLORS, Missing, Panel } from "./panels";
 
 const PLAN_NAMES: Record<FeedbackItem["plan"], string> = {
   free: "Free",
+  starter: "Starter",
   plus: "Pro",
   ultimate: "Elite",
 };
@@ -49,6 +50,7 @@ const SOURCES: { value: FeedbackQuery["source"]; label: string }[] = [
 const PLANS: { value: FeedbackQuery["plan"]; label: string }[] = [
   { value: "all", label: "ทุกแพ็กเกจ" },
   { value: "free", label: "Free" },
+  { value: "starter", label: "Starter" },
   { value: "plus", label: "Pro" },
   { value: "ultimate", label: "Elite" },
 ];

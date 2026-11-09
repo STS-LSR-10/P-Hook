@@ -321,7 +321,7 @@ describe("a file in the chat", () => {
   it("a document counts as a file arriving, not as a paid reading", async () => {
     const { deps } = setup();
     await handleEvent(fileEvent("งาน.docx"), deps);
-    expect(limitCalls).toEqual(["chat_file"]);
+    expect(limitCalls).toEqual(["chat_file", "chat_file_day"]);
   });
 
   it("reading counts against the paid limit", async () => {

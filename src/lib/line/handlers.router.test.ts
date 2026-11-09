@@ -676,7 +676,7 @@ describe("moving a reminder", () => {
   });
 
   it("turning a one-off into a repeat needs room among the repeats", async () => {
-    repeating = 1; // Free holds 1
+    repeating = 5; // Free holds 5
     reminders = [reminder(ID, "กินยา")];
     moved = reminder(ID, "กินยา", "daily");
     route.mockResolvedValue({ ...edit, whenText: "ทุกวัน 8 โมง" });

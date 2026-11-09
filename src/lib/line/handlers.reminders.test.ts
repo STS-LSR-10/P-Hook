@@ -144,19 +144,19 @@ describe("setting a reminder from the chat", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("Free holds 3 waiting reminders, Pro 30", async () => {
-    active = 3;
+  it("Free holds 10 waiting reminders, Pro more", async () => {
+    active = 10;
     const free = setup();
     await handleEvent(say("เตือน พรุ่งนี้ 9 โมง อีกอัน"), free.deps);
     expect(created).toHaveLength(0);
-    expect(said(free.reply)).toContain("ครบ 3 รายการ");
+    expect(said(free.reply)).toContain("ครบ 10 รายการ");
     plan = "plus";
     await handleEvent(say("เตือน พรุ่งนี้ 9 โมง อีกอัน"), setup().deps);
     expect(created).toHaveLength(1);
   });
 
-  it("a repeating reminder has its own limit: Free holds 1", async () => {
-    repeating = 1;
+  it("a repeating reminder has its own limit: Free holds 5", async () => {
+    repeating = 5;
     const full = setup();
     await handleEvent(say("เตือน ทุกวัน 8 โมง กินยา"), full.deps);
     expect(created).toHaveLength(0);
@@ -289,11 +289,11 @@ describe("the buttons under a reminder that was sent", () => {
 
   it("a repeating one's extra round needs room for a one-off", async () => {
     stored = once({ repeat: "daily", status: "active" });
-    active = 3;
+    active = 10;
     const { deps, reply } = setup();
     await handleEvent(tap(`a=rms&id=${ID}&s=10`), deps);
     expect(created).toHaveLength(0);
-    expect(said(reply)).toContain("ครบ 3 รายการ");
+    expect(said(reply)).toContain("ครบ 10 รายการ");
   });
 
   it("a second tap, or a reminder that has gone, is already handled", async () => {

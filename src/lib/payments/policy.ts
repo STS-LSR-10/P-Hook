@@ -1,5 +1,5 @@
-import { effectivePlan, type Plan } from "@/lib/plan";
-import { prepaidUpgradeQuote, type Period, type UpgradeQuote } from "@/lib/pricing";
+import { effectivePlan, planAtLeast, type Plan } from "@/lib/plan";
+import { prepaidUpgradeQuote, type PaidPlan, type Period, type UpgradeQuote } from "@/lib/pricing";
 import type { PaymentMethod } from "./provider";
 import { t } from "@/lib/i18n";
 
@@ -55,10 +55,8 @@ export function billingState(i: BillingInputs, now: Date = new Date()): BillingS
   };
 }
 
-const RANK: Record<Plan, number> = { free: 0, plus: 1, ultimate: 2 };
-
 export interface PlanRequest {
-  plan: "plus" | "ultimate";
+  plan: PaidPlan;
   period: Period;
   method: PaymentMethod;
 }
@@ -86,7 +84,7 @@ const blocked = (message: string, manage = false): PlanAction => ({
  *  - buying a lower tier than the current one would take away features already paid for.
  */
 export function planAction(state: BillingState, request: PlanRequest): PlanAction {
-  if (RANK[request.plan] < RANK[state.plan]) {
+  if (!planAtLeast(request.plan, state.plan)) {
     return blocked(t("คุณใช้แผนที่สูงกว่านี้อยู่แล้ว"));
   }
 
@@ -99,7 +97,7 @@ export function planAction(state: BillingState, request: PlanRequest): PlanActio
         true,
       );
     }
-    const higherTier = RANK[request.plan] > RANK[state.plan];
+    const higherTier = request.plan !== state.plan && planAtLeast(request.plan, state.plan);
     const toYearly =
       request.plan === state.plan && state.period === "monthly" && request.period === "yearly";
     if (higherTier || toYearly) return { kind: "change" };
@@ -125,12 +123,13 @@ export function planAction(state: BillingState, request: PlanRequest): PlanActio
 }
 
 /** Why a free trial of `plan` cannot start now, or null when it can. */
-export function trialBlock(state: BillingState, plan: "plus" | "ultimate"): string | null {
+export function trialBlock(state: BillingState, _plan: PaidPlan): string | null {
   if (state.plan !== "free") {
     return "ทดลองใช้ฟรีได้เฉพาะตอนที่ยังไม่มีแผนที่ใช้งานอยู่";
   }
-  if (state.trialsUsed.includes(plan)) {
-    return "คุณเคยทดลองใช้แผนนี้แล้ว";
+  // one trial per account, whichever tier it was
+  if (state.trialsUsed.length > 0) {
+    return "คุณเคยทดลองใช้ฟรีแล้ว (ทดลองได้ครั้งเดียวต่อบัญชี)";
   }
   return null;
 }
@@ -138,7 +137,7 @@ export function trialBlock(state: BillingState, plan: "plus" | "ultimate"): stri
 /** The quote for upgrading running prepaid time to `to`, or null when that is not possible. */
 export function prepaidUpgradeFor(
   state: BillingState,
-  to: "plus" | "ultimate",
+  to: PaidPlan,
   now: Date = new Date(),
 ): UpgradeQuote | null {
   if (!state.prepaidRunning || !state.expiresAt || state.prepaidMonths === null) return null;

@@ -48,6 +48,8 @@ vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
   getChaseSchedule: async () => chase,
   getOwner: async () => ({ lineUserId: "Uowner", plan: ownerPlan, planExpiresAt: null }),
+  groupWriters: async () => new Set<string>(),
+  ownedGroupIds: async () => [] as string[],
   memberNames: async () => members,
   upsertMember: async (_db: unknown, _g: string, userId: string, name: string) => {
     members.set(userId, { name, updatedAt: NOW.toISOString() });
@@ -552,13 +554,13 @@ describe("the daily reminder (free: it rides on ordinary chat)", () => {
     expect(await chat("Uchom", tomorrow)).toContain("เตือนประจำวัน");
   });
 
-  it("counts each reminder sent against the owner's month, and stops at 200", async () => {
+  it("counts each reminder sent against the owner's month, and stops at 500 (the owner's plan: Elite)", async () => {
     expect(await chat("Ubob", AT_ELEVEN)).toContain("เตือนประจำวัน");
     expect(usage.get("group_remind|2026-10-01")).toBe(1);
     reminded.clear();
-    usage.set("group_remind|2026-10-01", 200);
+    usage.set("group_remind|2026-10-01", 500);
     expect(await chat("Ubob", AT_ELEVEN)).toBe("[]");
-    expect(usage.get("group_remind|2026-10-01")).toBe(200);
+    expect(usage.get("group_remind|2026-10-01")).toBe(500);
   });
 
   it("a counter that cannot be read lets the reminder go", async () => {
@@ -917,7 +919,7 @@ describe("a slip sent into the group", () => {
     slipLimited = true;
     expect(await run(photo("Ubob"))).toBe("[]");
     slipLimited = false;
-    usage.set("group_slip|2026-10-01", 300);
+    usage.set("group_slip|2026-10-01", 600);
     expect(await run(photo("Ubob"))).toContain("ครบเกณฑ์แล้ว");
     expect(slipImages).toHaveLength(0);
   });

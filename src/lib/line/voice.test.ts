@@ -139,42 +139,43 @@ describe("handleVoiceMessage", () => {
     expect(inserted).toHaveLength(1);
   });
 
-  it("a Pro user past 20 a month is told so, and nothing is downloaded", async () => {
-    counters.set("voice|2026-10-01", 20);
+  it("a Pro user past 200 a month is told so, and nothing is downloaded", async () => {
+    counters.set("voice|2026-10-01", 200);
     const d = deps();
     const out = await run(d, PROFESSIONAL_USER as never);
-    expect(textOf(out[0])).toBe(voiceQuotaText("plus", 20));
+    expect(textOf(out[0])).toBe(voiceQuotaText("plus", 200));
     expect(textOf(out[0])).toContain("Elite");
     expect(d.fetchAudio).not.toHaveBeenCalled();
     expect(inserted).toHaveLength(0);
   });
 
-  it("Elite stops at the fair-use ceiling with its own wording", async () => {
-    counters.set("voice|2026-10-01", 200);
+  it("Elite stops at its 400 with its own wording (no plan above it)", async () => {
+    counters.set("voice|2026-10-01", 400);
     const d = deps();
     const out = await run(d, ULTIMATE_USER);
-    expect(textOf(out[0])).toBe(voiceQuotaText("ultimate", 200));
+    expect(textOf(out[0])).toBe(voiceQuotaText("ultimate", 400));
     expect(textOf(out[0])).toContain("ต้นเดือนหน้า");
     expect(d.fetchAudio).not.toHaveBeenCalled();
   });
 
   it("a new month starts the count again", async () => {
-    counters.set("voice|2026-10-01", 20);
+    counters.set("voice|2026-10-01", 200);
     const d = deps();
     d.now = () => new Date("2026-11-02T08:00:00Z");
     const out = await run(d, PROFESSIONAL_USER as never);
     expect(textOf(out[0])).toBe('ได้ยินว่า: "กาแฟ 30 บาท"');
   });
 
-  it("a Free user gets one free taste for life, then the upgrade card", async () => {
+  it("a Free user gets ten free tastes for life, then the upgrade card", async () => {
     const first = await run(deps(), FREE_USER as never);
     expect(textOf(first[0])).toBe('ได้ยินว่า: "กาแฟ 30 บาท"');
     expect(textOf(first[first.length - 1])).toBe(VOICE_TASTE_TEXT);
     expect(used("teaser_voice", "2000-01-01")).toBe(1);
 
+    counters.set("teaser_voice|2000-01-01", 10); // the tenth is used
     const d = deps();
-    const second = await run(d, FREE_USER as never);
-    expect(JSON.stringify(second)).toContain("จดด้วยเสียงสำหรับสมาชิก Pro");
+    const after = await run(d, FREE_USER as never);
+    expect(JSON.stringify(after)).toContain("จดด้วยเสียงสำหรับสมาชิก Starter");
     expect(d.fetchAudio).not.toHaveBeenCalled();
     expect(inserted).toHaveLength(1);
   });

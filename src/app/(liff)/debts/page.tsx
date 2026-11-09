@@ -118,7 +118,8 @@ export default function DebtsPage() {
           <>
             {locked ? (
               <div className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                <span className="font-semibold">{t("สำหรับแผน Elite")}</span> {t("· จดให้ยืม/ยืม")}
+                <span className="font-semibold">{t("สำหรับแผน Starter ขึ้นไป")}</span>{" "}
+                {t("· จดให้ยืม/ยืม")}
                 {t("และตัดยอดกระเป๋าให้อัตโนมัติ")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
                   {t("ดูแผนอัปเกรด")}

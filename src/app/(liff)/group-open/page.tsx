@@ -1,5 +1,6 @@
 "use client";
 
+import type { Plan } from "@/lib/plan";
 import { BookOpen, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -13,7 +14,7 @@ import { t } from "@/lib/i18n";
 interface OpenCheck {
   /** null = LINE could not tell */
   friend: boolean | null;
-  plan: "free" | "plus" | "ultimate";
+  plan: Plan;
   canOpen: boolean;
   addFriendUrl: string;
 }
@@ -78,9 +79,11 @@ export default function GroupOpenPage() {
         ) : !data.canOpen ? (
           <section className={cn(cardClass, "space-y-3 text-center")}>
             <BookOpen className="mx-auto h-8 w-8 text-primary" aria-hidden />
-            <h2 className="text-lg font-bold">{t("ผู้เปิดสมุดกลุ่มต้องเป็นแผน Elite")}</h2>
+            <h2 className="text-lg font-bold">{t("ผู้เปิดสมุดกลุ่มต้องเป็นแผน Starter ขึ้นไป")}</h2>
             <p className="text-sm text-muted">
-              {t("เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Elite ทดลองใช้ฟรี 7 วันได้")}
+              {t(
+                "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Starter ขึ้นไป ทดลองใช้ฟรี 7 วันได้",
+              )}
             </p>
             <Link
               href="/upgrade"

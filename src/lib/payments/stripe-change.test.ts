@@ -6,16 +6,17 @@ import { createStripeProvider } from "./stripe";
 const USER = "11111111-1111-1111-1111-111111111111";
 
 describe("buildChangeFields", () => {
-  it("a switch during the launch is charged the launch price", () => {
+  it("a switch to Starter is charged Starter's price", () => {
     const f = buildChangeFields({
       userId: USER,
       itemId: "si_1",
       productId: "prod_1",
-      plan: "ultimate",
-      period: "yearly",
+      plan: "starter",
+      period: "monthly",
       now: new Date("2026-11-01T00:00:00Z"),
     });
-    expect(f["items[0][price_data][unit_amount]"]).toBe("69900");
+    expect(f["items[0][price_data][unit_amount]"]).toBe("4900");
+    expect(f["metadata[plan]"]).toBe("starter");
   });
 
   it("swaps the item for the new price and settles the difference immediately", () => {
@@ -29,7 +30,7 @@ describe("buildChangeFields", () => {
     });
     expect(f["items[0][id]"]).toBe("si_1");
     expect(f["items[0][price_data][product]"]).toBe("prod_1");
-    expect(f["items[0][price_data][unit_amount]"]).toBe("79900");
+    expect(f["items[0][price_data][unit_amount]"]).toBe("199000");
     expect(f["items[0][price_data][recurring][interval]"]).toBe("year");
     expect(f.proration_behavior).toBe("always_invoice");
     // if the card fails the subscription must stay as it was

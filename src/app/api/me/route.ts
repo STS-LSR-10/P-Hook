@@ -41,6 +41,7 @@ const FEATURES: Feature[] = [
   "yearSummary",
   "categoryCompare",
   "export",
+  "pdfExport",
   "dashboard",
   "forecast",
   "insight",
@@ -113,10 +114,11 @@ export async function GET(request: Request): Promise<Response> {
       referrals,
       limits: { recurringRules: recurringLimit(plan), wallets: walletCapacity(plan) },
       pricing: pricingAt(now),
-      // free trials still available (once per tier, and only while no plan is running)
+      // free trials still available (once per account, and only while no plan is running)
       trial: {
         days: TRIAL_DAYS,
         available: {
+          starter: trialBlock(billing, "starter") === null,
           plus: trialBlock(billing, "plus") === null,
           ultimate: trialBlock(billing, "ultimate") === null,
         },

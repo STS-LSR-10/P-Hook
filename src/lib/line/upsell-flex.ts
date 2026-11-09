@@ -19,17 +19,15 @@ export interface UpsellCardInput {
   now?: Date;
 }
 
-const SLIP_PRO = SLIP_LIMIT.plus;
-
 const COPY = {
   backdate: {
-    title: t("จดย้อนหลังสำหรับสมาชิก Pro"),
+    title: t("จดย้อนหลังสำหรับสมาชิก Starter ขึ้นไป"),
     body: t(
-      "ระบบตรวจพบการระบุวันที่ย้อนหลัง (เช่น “เมื่อวาน”) ฟังก์ชันนี้สำหรับสมาชิกแพ็กเกจ Pro ขึ้นไป ยังไม่ได้จดรายการนี้นะ",
+      "ระบบตรวจพบการระบุวันที่ย้อนหลัง (เช่น “เมื่อวาน”) ฟังก์ชันนี้สำหรับสมาชิกแพ็กเกจ Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ",
     ),
   },
   voice: {
-    title: t("จดด้วยเสียงสำหรับสมาชิก Pro"),
+    title: t("จดด้วยเสียงสำหรับสมาชิก Starter ขึ้นไป"),
     body: t(
       "พูดสั้น ๆ เช่น “กาแฟสามสิบบาท” แล้วบอทจดให้ ไม่ต้องพิมพ์ ใช้สิทธิ์ลองจดด้วยเสียงฟรีครบแล้ว",
     ),
@@ -65,45 +63,46 @@ const button = (label: string, action: Record<string, unknown>, primary: boolean
 export function buildUpsellCard(input: UpsellCardInput): LineMessage {
   const copy = COPY[input.feature];
   const now = input.now ?? new Date();
+  const starter = priceFor("starter", now).monthly;
   const plus = priceFor("plus", now).monthly;
-  const ultimate = priceFor("ultimate", now).monthly;
   const launch = launchActive(now) ? t(" (ราคาเปิดตัวถึง {0})", LAUNCH_ENDS_TEXT) : "";
   const price =
     input.feature === "slip"
       ? t(
-          "Pro ฿{0}/เดือน อ่านสลิปได้ {1} ใบ/เดือน · Elite ฿{2}/เดือน อ่านสลิปไม่จำกัด{3}",
+          "Starter ฿{0}/เดือน อ่านสลิปได้ {1} ใบ/เดือน · Pro ฿{2}/เดือน {3} ใบ/เดือน{4}",
+          starter,
+          SLIP_LIMIT.starter,
           plus,
-          SLIP_PRO,
-          ultimate,
+          SLIP_LIMIT.plus,
           launch,
         )
       : input.feature === "owl"
         ? t(
-            "Pro ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}",
+            "Starter ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Pro ฿{2}/เดือน {3} ครั้ง/เดือน{4}",
+            starter,
+            AI_CHAT_LIMIT.starter.toLocaleString("en-US"),
             plus,
             AI_CHAT_LIMIT.plus.toLocaleString("en-US"),
-            ultimate,
-            AI_CHAT_LIMIT.ultimate.toLocaleString("en-US"),
             launch,
           )
         : input.feature === "pdf"
           ? t(
-              "Pro ฿{0}/เดือน อ่าน PDF ได้ {1} ไฟล์/เดือน · Elite ฿{2}/เดือน {3} ไฟล์/เดือน{4}",
+              "Pro ฿{0}/เดือน อ่าน PDF ได้ {1} ไฟล์/เดือน · Elite {2} ไฟล์/เดือน{3}",
               plus,
               PDF_LIMIT.plus,
-              ultimate,
               PDF_LIMIT.ultimate,
               launch,
             )
           : input.feature === "voice"
             ? t(
-                "Pro ฿{0}/เดือน จดด้วยเสียงได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน ไม่จำกัด{3}",
+                "Starter ฿{0}/เดือน จดด้วยเสียงได้ {1} ครั้ง/เดือน · Pro ฿{2}/เดือน {3} ครั้ง/เดือน{4}",
+                starter,
+                VOICE_LIMIT.starter,
                 plus,
                 VOICE_LIMIT.plus,
-                ultimate,
                 launch,
               )
-            : `อัปเกรดวันนี้เพียง ฿${plus}/เดือน${launch}${input.trialAvailable ? ` หรือทดลองใช้ฟรี ${TRIAL_DAYS} วัน!` : ""}`;
+            : `อัปเกรดวันนี้เริ่มเพียง ฿${starter}/เดือน${launch}${input.trialAvailable ? ` หรือทดลองใช้ฟรี ${TRIAL_DAYS} วัน!` : ""}`;
 
   const buttons: unknown[] = [];
   if (input.trialAvailable) {

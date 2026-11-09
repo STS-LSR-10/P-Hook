@@ -46,7 +46,7 @@ interface QuotaResponse {
   others: QuotaItem[];
 }
 
-const PLANS: Plan[] = ["free", "plus", "ultimate"];
+const PLANS: Plan[] = ["free", "starter", "plus", "ultimate"];
 const DAY_MS = 86_400_000;
 
 const ICON: Record<QuotaIcon, { Icon: LucideIcon; tint: string; bar: string }> = {

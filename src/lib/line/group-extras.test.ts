@@ -47,6 +47,8 @@ vi.mock("@/lib/group-repo", () => ({
   getGroup: async () => group,
   getChaseSchedule: async () => ({ everyDays: 1, window: "any" }),
   getOwner: async () => ({ lineUserId: "Uowner", plan: ownerPlan, planExpiresAt: null }),
+  groupWriters: async () => new Set<string>(),
+  ownedGroupIds: async () => [] as string[],
   memberNames: async () => new Map([["Uanna", { name: "แอน", updatedAt: NOW.toISOString() }]]),
   upsertMember: async () => undefined,
   removeMembers: async (_db: unknown, _g: string, ids: string[]) => {
@@ -324,8 +326,8 @@ describe("files in a group", () => {
     expect(said(reply)).toContain("พื้นที่เก็บไฟล์ของเจ้าของสมุดเต็มแล้ว");
   });
 
-  it("is paused when the owner is no longer on Elite", async () => {
-    ownerPlan = "plus";
+  it("is paused when the owner no longer has a plan with group ledgers", async () => {
+    ownerPlan = "free";
     const { deps, reply } = setup();
     await handleEvent(say("Uanna", "เก็บไฟล์"), deps);
     expect(said(reply)).toContain("หยุดจดชั่วคราว");
@@ -408,11 +410,11 @@ describe("reminders in a group", () => {
   });
 
   it("is refused when the owner's one-off reminders are full", async () => {
-    activeCount = 100;
+    activeCount = 250; // Elite holds 250
     const { deps, reply } = setup();
     await handleEvent(say("Uanna", "เตือน พรุ่งนี้ 9 โมง ประชุม"), deps);
     expect(created).toEqual([]);
-    expect(said(reply)).toContain("ครบ 100 รายการแล้ว");
+    expect(said(reply)).toContain("ครบ 250 รายการแล้ว");
   });
 
   const waiting = (id: string, createdBy: string, body: string) => ({

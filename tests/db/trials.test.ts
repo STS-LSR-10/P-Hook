@@ -60,18 +60,14 @@ describe("start_plan_trial", () => {
     expect(await trial(u, "ultimate")).toBeNull();
   });
 
-  it("the other tier can be tried after the first trial has ended", async () => {
+  it("no other tier can be tried after the first trial has ended (one per account)", async () => {
     const u = await newUser(db, "trial-f");
     await trial(u, "plus");
     await db.query("update users set plan_expires_at = now() - interval '1 day' where id = $1", [
       u,
     ]);
-    expect(await trial(u, "ultimate")).not.toBeNull();
-    expect(await state(u)).toEqual({ plan: "ultimate", days: 7 });
-    // ... but the first tier is used up
-    await db.query("update users set plan_expires_at = now() - interval '1 day' where id = $1", [
-      u,
-    ]);
+    expect(await trial(u, "ultimate")).toBeNull();
+    expect(await trial(u, "starter")).toBeNull();
     expect(await trial(u, "plus")).toBeNull();
   });
 

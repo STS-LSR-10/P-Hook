@@ -5,7 +5,7 @@ import { parseEmoji } from "@/lib/category-emoji";
 import { MAX_GOAL_NAME } from "@/lib/goal";
 import { createGoal, listGoals } from "@/lib/goal-repo";
 import { toSatang } from "@/lib/money";
-import { goalCapacity } from "@/lib/plan";
+import { goalCapacity, PLAN_LABEL } from "@/lib/plan";
 import { getPlanInfo, requireFeature } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -71,7 +71,7 @@ export async function POST(request: Request): Promise<Response> {
           error:
             plan === "ultimate"
               ? `มีเป้าหมายได้สูงสุด ${goalCapacity(plan)} ใบ`
-              : `แผน Pro มีเป้าหมายได้ ${goalCapacity(plan)} ใบ อัปเกรดเป็น Elite เพื่อมีได้ ${20} ใบนะ`,
+              : `แผน ${PLAN_LABEL[plan]} มีเป้าหมายได้ ${goalCapacity(plan)} ใบ อัปเกรดแผนเพื่อมีได้มากขึ้นนะ`,
           upgrade: plan !== "ultimate",
         },
         { status: 403, headers: { "Cache-Control": "no-store" } },

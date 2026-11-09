@@ -156,12 +156,12 @@ describe("บิล ใหม่", () => {
     expect(sent(reply)).toContain("บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15");
   });
 
-  it("Pro is told it is an Elite feature; a used name is refused", async () => {
-    plan = "plus";
+  it("Starter is told it is a Pro feature; a used name is refused", async () => {
+    plan = "starter";
     let { deps, reply } = setup();
     await handleEvent(say("บิล ใหม่ ค่าน้ำ 300 ทุกวันที่ 25"), deps);
     expect(created).toHaveLength(0);
-    expect(sent(reply)).toContain("Elite");
+    expect(sent(reply)).toContain("Pro");
 
     plan = "ultimate";
     createResult = "duplicate";
@@ -180,7 +180,7 @@ describe("บิล", () => {
     expect(text).toContain("฿1,250");
   });
 
-  it("says how to start when there are none, and that it is Elite for others", async () => {
+  it("says how to start when there are none, and that it is Pro and above for others", async () => {
     bills = [];
     let { deps, reply } = setup();
     await handleEvent(say("บิล"), deps);
@@ -189,7 +189,7 @@ describe("บิล", () => {
     plan = "free";
     ({ deps, reply } = setup());
     await handleEvent(say("บิล"), deps);
-    expect(sent(reply)).toContain("Elite");
+    expect(sent(reply)).toContain("Pro");
   });
 });
 

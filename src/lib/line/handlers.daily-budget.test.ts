@@ -162,11 +162,11 @@ describe("the งบวัน command", () => {
     let { deps, reply } = setup();
     await handleEvent(say("งบวัน 500"), deps);
     expect(saved).toHaveLength(0);
-    expect(everything(reply)).toContain("Pro");
+    expect(everything(reply)).toContain("Starter");
 
     ({ deps, reply } = setup());
     await handleEvent(say("งบวัน"), deps);
-    expect(everything(reply)).toContain("Pro");
+    expect(everything(reply)).toContain("Starter");
   });
 
   it("a bad amount shows the usage", async () => {

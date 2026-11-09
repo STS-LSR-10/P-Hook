@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { reminderCapacity, repeatCapacity } from "@/lib/user-reminder";
 
 let plan = "plus";
+const FREE_ONCE = reminderCapacity("free");
+const PRO_ONCE = reminderCapacity("plus");
+const ULT_ONCE = reminderCapacity("ultimate");
+const FREE_REPEAT = repeatCapacity("free");
+const PRO_REPEAT = repeatCapacity("plus");
+const ULT_REPEAT = repeatCapacity("ultimate");
+
 let active = 0;
 /** Repeating reminders waiting (their own limit); `active` is the one-offs. */
 let repeating = 0;
@@ -92,13 +100,16 @@ beforeEach(() => {
 
 describe("GET /api/reminders", () => {
   it("says what the plan allows", async () => {
-    active = 3;
+    active = FREE_ONCE;
     plan = "free";
-    expect(await (await GET(req("GET"))).json()).toMatchObject({ limit: 3, canAddOnce: false });
-    repeating = 1;
+    expect(await (await GET(req("GET"))).json()).toMatchObject({
+      limit: FREE_ONCE,
+      canAddOnce: false,
+    });
+    repeating = FREE_REPEAT;
     expect(await (await GET(req("GET"))).json()).toMatchObject({ canAdd: false });
     plan = "plus";
-    expect(await (await GET(req("GET"))).json()).toMatchObject({ limit: 30, canAdd: true });
+    expect(await (await GET(req("GET"))).json()).toMatchObject({ limit: PRO_ONCE, canAdd: true });
   });
 });
 
@@ -131,19 +142,19 @@ describe("POST /api/reminders", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("Free stops at 3 waiting reminders, Pro at 30, Elite at 100", async () => {
+  it("each plan stops at its own number of waiting reminders (Free 10, Pro 100, Elite 250)", async () => {
     plan = "free";
-    active = 3;
+    active = FREE_ONCE;
     const free = await POST(req("POST", { body: "ก", remindAt: soon() }));
     expect(free.status).toBe(409);
     expect(await free.json()).toMatchObject({ upgrade: true });
     plan = "plus";
-    active = 29;
+    active = PRO_ONCE - 1;
     expect((await POST(req("POST", { body: "ก", remindAt: soon() }))).status).toBe(201);
-    active = 30;
+    active = PRO_ONCE;
     expect((await POST(req("POST", { body: "ก", remindAt: soon() }))).status).toBe(409);
     plan = "ultimate";
-    active = 100;
+    active = ULT_ONCE;
     expect(await (await POST(req("POST", { body: "ก", remindAt: soon() }))).json()).toMatchObject({
       upgrade: false,
     });
@@ -151,25 +162,25 @@ describe("POST /api/reminders", () => {
 });
 
 describe("repeating reminders have their own limit", () => {
-  it("Free has 1, Pro 10, Elite 30, apart from the one-offs", async () => {
+  it("each plan has its own number of repeating ones (Free 5, Pro 50, Elite 100), apart from the one-offs", async () => {
     plan = "free";
-    repeating = 1;
+    repeating = FREE_REPEAT;
     const full = await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "daily" }));
     expect(full.status).toBe(409);
     expect(((await full.json()) as { error: string }).error).toContain("เตือนประจำ");
     // a one-off still fits
     expect((await POST(req("POST", { body: "ก", remindAt: soon() }))).status).toBe(201);
     plan = "plus";
-    repeating = 9;
+    repeating = PRO_REPEAT - 1;
     expect(
       (await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "weekly" }))).status,
     ).toBe(201);
-    repeating = 10;
+    repeating = PRO_REPEAT;
     expect(
       (await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "weekly" }))).status,
     ).toBe(409);
     plan = "ultimate";
-    repeating = 30;
+    repeating = ULT_REPEAT;
     expect(
       (await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "monthly" }))).status,
     ).toBe(409);
@@ -177,7 +188,7 @@ describe("repeating reminders have their own limit", () => {
 
   it("one-offs full do not stop a repeating one", async () => {
     plan = "free";
-    active = 3;
+    active = FREE_ONCE;
     expect((await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "daily" }))).status).toBe(
       201,
     );
@@ -185,12 +196,12 @@ describe("repeating reminders have their own limit", () => {
 
   it("GET gives each kind's count and limit; it can add while either has room", async () => {
     plan = "free";
-    active = 3;
+    active = FREE_ONCE;
     repeating = 0;
     expect(await (await GET(req("GET"))).json()).toMatchObject({
-      limit: 3,
-      repeatLimit: 1,
-      active: 3,
+      limit: FREE_ONCE,
+      repeatLimit: FREE_REPEAT,
+      active: FREE_ONCE,
       repeating: 0,
       canAdd: true,
       canAddOnce: false,
@@ -200,7 +211,7 @@ describe("repeating reminders have their own limit", () => {
 
   it("turning a waiting one-off into a repeat needs room among the repeats", async () => {
     plan = "free";
-    repeating = 1;
+    repeating = FREE_REPEAT;
     const res = await PATCH(
       new Request(`https://app.example.com/api/reminders/${R}`, {
         method: "PATCH",
@@ -215,7 +226,7 @@ describe("repeating reminders have their own limit", () => {
 
   it("an edit that keeps a waiting repeat a repeat needs no more room", async () => {
     plan = "free";
-    repeating = 1;
+    repeating = FREE_REPEAT;
     stored = { ...stored, repeat: "daily" };
     const res = await PATCH(
       new Request(`https://app.example.com/api/reminders/${R}`, {
@@ -258,7 +269,7 @@ describe("reminders on the page", () => {
     expect(await res.json()).toMatchObject({
       items: pageItems,
       active: 1,
-      limit: 30,
+      limit: PRO_ONCE,
       canAdd: true,
     });
   });
@@ -289,7 +300,7 @@ describe("reminders on the page", () => {
   it("an edit that brings a done one back needs room in the plan", async () => {
     stored = { ...stored, status: "done" };
     plan = "free";
-    active = 3;
+    active = FREE_ONCE;
     expect((await patch({ body: "a", remindAt: future() })).status).toBe(409);
     expect(edits).toEqual([]);
   });
@@ -372,35 +383,35 @@ describe("reminders on the page", () => {
   it("taking a tick back needs room in the plan", async () => {
     stored = { ...stored, status: "done" };
     plan = "free";
-    active = 3;
+    active = FREE_ONCE;
     expect((await patch({ action: "undo" })).status).toBe(409);
   });
 
   it("a done one-off edited into a repeat needs room among the repeats", async () => {
     stored = { ...stored, status: "done" };
     plan = "free";
-    repeating = 1;
+    repeating = FREE_REPEAT;
     expect((await patch({ body: "a", remindAt: future(), repeat: "daily" })).status).toBe(409);
     repeating = 0;
-    active = 3; // the one-offs being full does not matter for a repeat
+    active = FREE_ONCE; // the one-offs being full does not matter for a repeat
     expect((await patch({ body: "a", remindAt: future(), repeat: "daily" })).status).toBe(200);
   });
 
   it("taking a tick back on a repeat needs room among the repeats", async () => {
     stored = { ...stored, status: "done", repeat: "weekly" };
     plan = "free";
-    repeating = 1;
+    repeating = FREE_REPEAT;
     expect((await patch({ action: "undo" })).status).toBe(409);
     repeating = 0;
-    active = 3;
+    active = FREE_ONCE;
     expect((await patch({ action: "undo" })).status).toBe(200);
   });
 
   it("fixing the name of a ticked one needs no room, even when full", async () => {
     stored = { ...stored, status: "done" };
     plan = "free";
-    active = 3;
-    repeating = 1;
+    active = FREE_ONCE;
+    repeating = FREE_REPEAT;
     const res = await patch({ body: "ชื่อใหม่", remindAt: String(stored?.remindAt) });
     expect(res.status).toBe(200);
     expect(edits[0]).toMatchObject({ status: "done" });

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { categorizeByRules } from "@/lib/categorize/rules";
 import { log, safeMessage } from "@/lib/log";
 import { MAX_AUDIO_MS, ImageError } from "@/lib/line/content";
-import { can, effectivePlan, VOICE_LIMIT } from "@/lib/plan";
+import { can, effectivePlan, FREE_VOICE_TOTAL, VOICE_LIMIT } from "@/lib/plan";
 import { LIFETIME, monthKey, refundUsage, takeUsage } from "@/lib/usage";
 import { upsellReply } from "./upsell-reply";
 import { parseMessage, type ParseResult } from "@/lib/parse/text-parser";
@@ -69,11 +69,11 @@ export async function handleVoiceMessage(
     if (!day.allowed) return [text(VOICE_DAY_LIMIT_TEXT)];
   }
 
-  // 3. quota: Pro and Elite have a monthly number; Free has one free taste for life
+  // 3. quota: the paid plans have a monthly number; Free has a few free tastes for life
   // (and after that the upgrade pitch). Work that fails gives its use back (see `spent`).
   const kind = paid ? "voice" : "teaser_voice";
   const month = paid ? monthKey(now) : LIFETIME;
-  const limit = paid ? VOICE_LIMIT[plan] : 1;
+  const limit = paid ? VOICE_LIMIT[plan] : FREE_VOICE_TOTAL;
   let allowed = false;
   try {
     allowed = await takeUsage(deps.db, user.id, kind, limit, month);

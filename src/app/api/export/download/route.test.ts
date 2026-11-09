@@ -88,6 +88,7 @@ describe("GET /api/export/download", () => {
   });
 
   it("PDF: a PDF file, named by the date", async () => {
+    plan = "ultimate";
     claims = { userId: "u1", format: "pdf", filters: { type: "expense", categoryId: "c1" } };
     const res = await get();
     expect(res.headers.get("content-type")).toBe("application/pdf");
@@ -97,6 +98,12 @@ describe("GET /api/export/download", () => {
         .subarray(0, 5)
         .toString(),
     ).toBe("%PDF-");
+  });
+
+  it("PDF: refused again at download time when the plan is not Elite", async () => {
+    plan = "plus";
+    claims = { userId: "u1", format: "pdf", filters: {} };
+    expect((await get()).status).toBe(403);
   });
 
   it("with attachments it is a zip: the file at the top and the pictures in a folder", async () => {

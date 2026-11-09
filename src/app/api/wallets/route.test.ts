@@ -85,8 +85,8 @@ describe("POST /api/wallets: how many each plan may have", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("Pro can reach five, not six", async () => {
-    plan = "plus";
+  it("Starter can reach five, not six", async () => {
+    plan = "starter";
     existing = wallets(4);
     expect((await post({ name: "ใบที่ 5" })).status).toBe(201);
     existing = wallets(5);
@@ -95,10 +95,18 @@ describe("POST /api/wallets: how many each plan may have", () => {
     expect(await res.json()).toMatchObject({ upgrade: true });
   });
 
-  it("Elite is not limited to five", async () => {
+  it("Pro can reach twenty, not twenty-one", async () => {
+    plan = "plus";
+    existing = wallets(19);
+    expect((await post({ name: "ใบที่ 20" })).status).toBe(201);
+    existing = wallets(20);
+    expect((await post({ name: "ใบที่ 21" })).status).toBe(403);
+  });
+
+  it("Elite is not limited to twenty", async () => {
     plan = "ultimate";
-    existing = wallets(8);
-    expect((await post({ name: "ใบที่ 9" })).status).toBe(201);
+    existing = wallets(25);
+    expect((await post({ name: "ใบที่ 26" })).status).toBe(201);
   });
 });
 
@@ -127,7 +135,7 @@ describe("POST /api/wallets: the input", () => {
 
 describe("GET /api/wallets", () => {
   it("returns the wallets, the total and what the plan allows", async () => {
-    plan = "plus";
+    plan = "starter";
     existing = wallets(2);
     const body = await (await get()).json();
     expect(body).toMatchObject({ limit: 5, canAdd: true });
@@ -232,8 +240,8 @@ describe("shared wallets in the wallets API", () => {
     expect(sharedCreated).toHaveLength(0);
   });
 
-  it("Pro starts one (a new wallet, with its opening balance); a second needs Elite", async () => {
-    plan = "plus";
+  it("Starter starts one (a new wallet, with its opening balance); a second needs Pro", async () => {
+    plan = "starter";
     existing = [wallet(1)];
     const res = await post({
       name: "กองกลาง",

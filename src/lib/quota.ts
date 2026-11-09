@@ -1,13 +1,14 @@
-import { fileCapacity, fileDayLimit, formatBytes } from "@/lib/file";
-import { MAX_GROUPS_PER_OWNER } from "@/lib/group";
+import { fileCapacity, formatBytes } from "@/lib/file";
 import { noteCapacity } from "@/lib/note";
 import {
   can,
-  FAIR_USE,
-  FREE_SLIPS_PER_WEEK,
-  goalCapacity,
+  FREE_SLIPS_TOTAL,
+  FREE_VOICE_TOTAL,
+  GROUP_LEDGER_LIMIT,
+  goalLimit,
   GROUP_REMINDS_PER_MONTH,
   OWL_LIMIT,
+  PLAN_ORDER,
   PDF_LIMIT,
   PHOTOS_PER_MONTH,
   recurringLimit,
@@ -22,7 +23,7 @@ import { reminderCapacity, repeatCapacity } from "@/lib/user-reminder";
 /** How a quota counts: what you keep ("total"), per day / week / month, or once for life. */
 export type QuotaPeriod = "total" | "day" | "week" | "month" | "once";
 
-const PLANS: Plan[] = ["free", "plus", "ultimate"];
+const PLANS: Plan[] = [...PLAN_ORDER];
 
 export interface QuotaItem {
   key: string;
@@ -87,7 +88,6 @@ export interface QuotaUsage {
   owl: number;
   /** "ถาม AI" this month. */
   ai: number;
-  fileSaves: number;
 }
 
 export interface Quota {
@@ -134,17 +134,13 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
     {
       key: "slips",
       label: "จดด้วยสลิป/ใบเสร็จ",
-      // Elite has no plan limit, only normal use
-      hint:
-        plan === "ultimate"
-          ? `รูปสลิปหรือใบเสร็จที่ให้บอทอ่าน · ใช้ได้ตามปกติ ไม่เกิน ${FAIR_USE.slips} ใบต่อเดือน`
-          : "รูปสลิปหรือใบเสร็จที่ให้บอทอ่านเป็นรายการ",
+      hint: "รูปสลิปหรือใบเสร็จที่ให้บอทอ่านเป็นรายการ (Free ลองฟรี 10 ใบแรก)",
       word: "ครั้ง",
       icon: "receipt",
       used: used.slips,
       on: (p) =>
         p === "free"
-          ? { limit: FREE_SLIPS_PER_WEEK, period: "week" }
+          ? { limit: FREE_SLIPS_TOTAL, period: "once" }
           : { limit: SLIP_LIMIT[p], period: "month" },
     },
     {
@@ -163,7 +159,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       word: "กลุ่ม",
       icon: "group",
       used: used.groups,
-      on: (p) => ({ limit: can(p, "groupLedger") ? MAX_GROUPS_PER_OWNER : 0, period: "total" }),
+      on: (p) => ({ limit: GROUP_LEDGER_LIMIT[p].groups, period: "total" }),
     },
     {
       key: "reminders",
@@ -190,7 +186,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       word: "ครั้ง",
       icon: "megaphone",
       used: used.groupReminders,
-      on: (p) => ({ limit: can(p, "groupLedger") ? GROUP_REMINDS_PER_MONTH : 0, period: "month" }),
+      on: (p) => ({ limit: GROUP_REMINDS_PER_MONTH[p], period: "month" }),
     },
     {
       key: "storage",
@@ -234,7 +230,9 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       icon: "voice",
       used: used.voice,
       on: (p) =>
-        p === "free" ? { limit: 1, period: "once" } : { limit: VOICE_LIMIT[p], period: "month" },
+        p === "free"
+          ? { limit: FREE_VOICE_TOTAL, period: "once" }
+          : { limit: VOICE_LIMIT[p], period: "month" },
     },
     {
       key: "photos",
@@ -244,15 +242,6 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       icon: "photo",
       used: used.photos,
       on: (p) => ({ limit: can(p, "entryPhoto") ? PHOTOS_PER_MONTH : 0, period: "month" }),
-    },
-    {
-      key: "fileSaves",
-      label: "ฝากไฟล์ในแชท",
-      hint: "ไฟล์และรูปที่ส่งให้บอทเก็บ",
-      word: "ไฟล์",
-      icon: "upload",
-      used: used.fileSaves,
-      on: (p) => ({ limit: fileDayLimit(p), period: "day" }),
     },
     {
       key: "notes",
@@ -288,7 +277,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       word: "เป้า",
       icon: "goal",
       used: used.goals,
-      on: (p) => ({ limit: goalCapacity(p), period: "total" }),
+      on: (p) => ({ limit: goalLimit(p), period: "total" }),
     },
   ];
 

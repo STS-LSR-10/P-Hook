@@ -1,15 +1,12 @@
 import type { PersonaId } from "@/lib/personalize";
-import type { Plan } from "@/lib/plan";
+import { planAtLeast, type Plan } from "@/lib/plan";
 import type { LineMessage } from "@/lib/types";
 import { compactHeader, outlinePill } from "./card-style";
 import { COLOR } from "./flex";
 import { t as tr } from "@/lib/i18n";
 
 /** The lowest plan that has a thing (Elite includes everything Pro has). */
-type Need = "free" | "plus" | "ultimate";
-
-const RANK: Record<Plan, number> = { free: 0, plus: 1, ultimate: 2 };
-const NEED_RANK: Record<Need, number> = { free: 0, plus: 1, ultimate: 2 };
+type Need = Plan;
 
 export interface HelpItem {
   /** An emoji for the round icon at the left of the row. */
@@ -68,19 +65,19 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: "📅",
         cmd: "เมื่อวาน กาแฟ 45",
         desc: tr("จดย้อนหลัง"),
-        need: "plus",
+        need: "starter",
       },
       {
         icon: "🧾",
         cmd: "ข้าว 50, กาแฟ 45",
         desc: tr("หลายรายการในครั้งเดียว"),
-        need: "plus",
+        need: "starter",
       },
       {
         icon: "🏷️",
         cmd: "หมูกระทะ 500 #ปาร์ตี้",
         desc: tr("ติดแท็กไว้ค้นหา"),
-        need: "plus",
+        need: "starter",
       },
     ],
   },
@@ -97,14 +94,14 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: "🎤",
         cmd: "ส่งข้อความเสียง",
         desc: tr("พูดแล้วบอทจดให้"),
-        need: "plus",
+        need: "starter",
       },
-      { icon: "👛", cmd: "กาแฟ 45 @KTC", desc: tr("จดลงกระเป๋าที่เลือก"), need: "plus" },
+      { icon: "👛", cmd: "กาแฟ 45 @KTC", desc: tr("จดลงกระเป๋าที่เลือก"), need: "starter" },
       {
         icon: "💴",
         cmd: "ราเมน 1500 JPY",
         desc: tr("แปลงสกุลเงินให้"),
-        need: "ultimate",
+        need: "starter",
       },
       {
         icon: "✨",
@@ -144,7 +141,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         send: "สรุปหมวด",
       },
       { icon: "🕘", cmd: "ล่าสุด", desc: tr("5 รายการล่าสุด"), need: "free", send: "ล่าสุด" },
-      { icon: "📆", cmd: "สรุปปี", desc: tr("ภาพรวมทั้งปี"), need: "plus", send: "สรุปปี" },
+      { icon: "📆", cmd: "สรุปปี", desc: tr("ภาพรวมทั้งปี"), need: "starter", send: "สรุปปี" },
       {
         icon: "⚖️",
         cmd: "เทียบเดือน",
@@ -166,11 +163,11 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: "🗓️",
         cmd: "สรุป 20/10-30/10",
         desc: tr("สรุปช่วงวันที่เลือก"),
-        need: "plus",
+        need: "starter",
       },
-      { icon: "🔎", cmd: "ค้นหา กาแฟ", desc: tr("หารายการพร้อมยอดรวม"), need: "plus" },
-      { icon: "🔮", cmd: "พยากรณ์", desc: tr("คาดเงินปลายรอบ"), need: "ultimate", send: "พยากรณ์" },
-      { icon: "🧠", cmd: "วิเคราะห์", desc: tr("AI วิเคราะห์การใช้จ่าย"), need: "ultimate" },
+      { icon: "🔎", cmd: "ค้นหา กาแฟ", desc: tr("หารายการพร้อมยอดรวม"), need: "starter" },
+      { icon: "🔮", cmd: "พยากรณ์", desc: tr("คาดเงินปลายรอบ"), need: "plus", send: "พยากรณ์" },
+      { icon: "🧠", cmd: "วิเคราะห์", desc: tr("AI วิเคราะห์การใช้จ่าย"), need: "plus" },
       {
         icon: "🧭",
         cmd: "หน้ารายการ",
@@ -206,20 +203,20 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: "🔁",
         cmd: "โอน 500 เงินสด>KTC",
         desc: tr("โอนระหว่างกระเป๋า"),
-        need: "plus",
+        need: "starter",
       },
       {
         icon: "💳",
         cmd: "บัตร",
         desc: tr("วงเงินและยอดรอบบิล"),
-        need: "plus",
+        need: "starter",
         send: "บัตร",
       },
       {
         icon: "💞",
         cmd: "เชิญ กองกลาง",
         desc: tr("ชวนแฟนใช้กระเป๋าร่วม"),
-        need: "plus",
+        need: "starter",
       },
       {
         icon: "🔑",
@@ -237,32 +234,32 @@ export const HELP_TOPICS: HelpTopic[] = [
     subtitle: tr("คุมรายจ่ายและเก็บเงิน"),
     tagline: tr("ค่อย ๆ เก็บ ถึงเป้าแน่นอน"),
     items: [
-      { icon: "⏰", cmd: "งบวัน 500", desc: tr("ตั้งงบรายวัน"), need: "plus" },
+      { icon: "⏰", cmd: "งบวัน 500", desc: tr("ตั้งงบรายวัน"), need: "starter" },
       {
         icon: "📉",
         cmd: "งบวัน",
         desc: tr("ดูงบวันนี้ · ปิด: งบวัน ปิด"),
-        need: "plus",
+        need: "starter",
         send: "งบวัน",
       },
       {
         icon: "🐷",
         cmd: "เป้าหมาย",
         desc: tr("ดูกระปุกออมทั้งหมด"),
-        need: "plus",
+        need: "starter",
         send: "เป้าหมาย",
       },
       {
         icon: "🌱",
         cmd: "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000",
         desc: tr("สร้างกระปุกใหม่"),
-        need: "plus",
+        need: "starter",
       },
       {
         icon: "🪙",
         cmd: "ออม เที่ยวญี่ปุ่น 2000",
         desc: tr("หยอดเงิน · ถอน … 500"),
-        need: "plus",
+        need: "starter",
       },
     ],
   },
@@ -278,27 +275,27 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: "🤲",
         cmd: "ให้ยืม สมชาย 500",
         desc: tr("จดเงินที่ให้ยืม"),
-        need: "ultimate",
+        need: "starter",
       },
       {
         icon: "✅",
         cmd: "สมชายคืน 200",
         desc: tr("จดเงินที่ได้คืน"),
-        need: "ultimate",
+        need: "starter",
       },
-      { icon: "📒", cmd: "หนี้", desc: tr("ยอดค้างทั้งหมด"), need: "ultimate", send: "หนี้" },
+      { icon: "📒", cmd: "หนี้", desc: tr("ยอดค้างทั้งหมด"), need: "starter", send: "หนี้" },
       {
         icon: "🧾",
         cmd: "บิล",
         desc: tr("บิลและวันครบกำหนด"),
-        need: "ultimate",
+        need: "plus",
         send: "บิล",
       },
       {
         icon: "🔔",
         cmd: "บิล ใหม่ ค่าไฟ 1250 ทุกวันที่ 15",
         desc: tr("ตั้งบิล บอทเตือนก่อนถึงวัน"),
-        need: "ultimate",
+        need: "plus",
       },
     ],
   },
@@ -404,7 +401,7 @@ export function buildHelpPrompt(persona: PersonaId = "plain"): LineMessage {
  * rows. Only what the person's plan has can be tapped (and only read-only commands have `send`).
  */
 function row(item: HelpItem, index: number, plan: Plan) {
-  const tappable = RANK[plan] >= NEED_RANK[item.need] && item.send !== undefined;
+  const tappable = planAtLeast(plan, item.need) && item.send !== undefined;
   return [
     ...(index > 0 ? [{ type: "separator", margin: "md" }] : []),
     {
@@ -879,7 +876,11 @@ export function buildGroupWelcomeCard(input: { appUrl?: string; openUrl?: string
           tagline: tr("เพื่อน ๆ จดได้ฟรี"),
           appUrl: input.appUrl,
           body: [
-            step("1", tr("กด “เปิดสมุดกลุ่ม”"), tr("ผู้เปิดต้องเป็น Elite (ทดลองฟรี 7 วัน)")),
+            step(
+              "1",
+              tr("กด “เปิดสมุดกลุ่ม”"),
+              tr("ผู้เปิดต้องเป็น Starter ขึ้นไป (ทดลองฟรี 7 วัน)"),
+            ),
             step("2", tr("พิมพ์ จด ข้าวเที่ยง 350"), tr("หรือ ค่าน้ำ 200 จด · หารบิลข้าว 900")),
             step("3", tr("พิมพ์ สรุป"), tr("ดูยอดรวมและใครจ่ายเท่าไร")),
           ],

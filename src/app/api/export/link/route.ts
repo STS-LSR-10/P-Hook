@@ -47,6 +47,11 @@ export async function POST(request: Request): Promise<Response> {
     const parsed = bodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return apiError("ตัวเลือกส่งออกไม่ถูกต้อง", 400);
     const { format, groups, attachments, ...filters } = parsed.data;
+    // the PDF summary is an Elite feature (the Excel and CSV files are for every paid plan)
+    if (format === "pdf") {
+      const noPdf = await requireFeature(getAdminClient(), auth.userId, "pdfExport");
+      if (noPdf) return noPdf;
+    }
 
     const token = await signExportToken(
       // the file is made in the phone's browser, outside this request: it takes the zone along

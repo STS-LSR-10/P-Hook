@@ -5,7 +5,6 @@ import {
   defaultFileName,
   extensionOfType,
   fileCapacity,
-  fileDayLimit,
   formatBytes,
   isBlockedFile,
   MAX_FILE_BYTES,
@@ -75,12 +74,9 @@ describe("file rules", () => {
 
   it("gives each plan its space", () => {
     expect(fileCapacity("free")).toBe(500 * 1024 * 1024);
-    expect(fileCapacity("plus")).toBe(5 * 1024 ** 3);
-    expect(fileCapacity("ultimate")).toBe(50 * 1024 ** 3);
-  });
-
-  it("gives each plan its daily number", () => {
-    expect((["free", "plus", "ultimate"] as const).map(fileDayLimit)).toEqual([20, 100, 200]);
+    expect(fileCapacity("starter")).toBe(5 * 1024 ** 3);
+    expect(fileCapacity("plus")).toBe(20 * 1024 ** 3);
+    expect(fileCapacity("ultimate")).toBe(100 * 1024 ** 3);
   });
 
   it("tidies a name", () => expect(cleanFileName('  a\n"b"\t.pdf  ')).toBe('a "b" .pdf'));

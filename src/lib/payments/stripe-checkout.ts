@@ -1,4 +1,4 @@
-import { PERIOD_MONTHS, priceFor } from "@/lib/pricing";
+import { PERIOD_MONTHS, priceFor, type PaidPlan } from "@/lib/pricing";
 import { PLAN_LABEL } from "@/lib/plan";
 import type { CheckoutRequest } from "./provider";
 
@@ -70,7 +70,7 @@ export function buildCheckoutFields(
   return f;
 }
 
-export function productName(plan: "plus" | "ultimate", period: "monthly" | "yearly"): string {
+export function productName(plan: PaidPlan, period: "monthly" | "yearly"): string {
   return `พี่ฮูก ${PLAN_LABEL[plan]} (${period === "yearly" ? "รายปี" : "รายเดือน"})`;
 }
 
@@ -84,7 +84,7 @@ export function buildChangeFields(input: {
   userId: string;
   itemId: string;
   productId: string;
-  plan: "plus" | "ultimate";
+  plan: PaidPlan;
   period: "monthly" | "yearly";
   now?: Date;
 }): Record<string, string> {

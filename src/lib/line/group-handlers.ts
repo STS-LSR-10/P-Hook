@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calendarMonthRange, dayRange } from "@/lib/budget-cycle";
 import {
-  MAX_GROUPS_PER_OWNER,
   MAX_GROUP_ENTRIES_PER_DAY,
   MAX_RECORDS_PER_MESSAGE,
   RECENT_COUNT,
@@ -23,11 +22,13 @@ import {
   tripMembers,
   countEntriesSince,
   countOwnedGroups,
+  ownedGroupIds,
   deleteEntry,
   getEntry,
   getGroup,
   getOwner,
   memberNames,
+  groupWriters,
   openGroup,
   payerTotals,
   removeMembers,
@@ -37,7 +38,7 @@ import {
 import { log } from "@/lib/log";
 import { formatBaht } from "@/lib/money";
 import { parseMessage } from "@/lib/parse/text-parser";
-import { can, effectivePlan } from "@/lib/plan";
+import { can, effectivePlan, GROUP_LEDGER_LIMIT, type Plan } from "@/lib/plan";
 import { LIMITS } from "@/lib/rate-limit";
 import { ensureUser } from "@/lib/repo";
 import { buildGroupHelpCard, buildGroupWelcomeCard } from "./help-flex";
@@ -100,7 +101,8 @@ import {
   GROUP_RECENT_EMPTY_TEXT,
   GROUP_RECORD_USAGE_TEXT,
   GROUP_TOO_MANY_ENTRIES_TEXT,
-  GROUP_TOO_MANY_TEXT,
+  groupFullText,
+  groupTooManyText,
   GROUP_NO_TRIP_TEXT,
   GROUP_SPLIT_NEEDS_TRIP_TEXT,
   GROUP_TRIP_CLOSE_DENIED_TEXT,
@@ -294,13 +296,14 @@ async function remindIfDue(groupId: string, deps: HandlerDeps, reply: Reply): Pr
   try {
     const group = await getGroup(deps.db, groupId);
     if (!group || !group.isActive) return;
-    const { writable } = await ownerState(deps.db, group, deps.now());
+    const { writable, plan: ownerPlan } = await ownerState(deps.db, group, deps.now());
     await runDailyReminder(
       {
         db: deps.db,
         group,
         userId: undefined,
         writable,
+        ownerPlan,
         isOwner: false,
         knownName: (id) => knownName(deps.db, group, id, deps),
         appUrl: appBaseUrl(),
@@ -344,13 +347,14 @@ async function handleGroupImage(
   if (!userId || !deps.slip) return;
   const group = await getGroup(deps.db, groupId);
   if (!group || !group.isActive) return;
-  const { owner, writable } = await ownerState(deps.db, group, deps.now());
+  const { owner, writable, plan: ownerPlan } = await ownerState(deps.db, group, deps.now());
   await checkGroupSlip(
     {
       db: deps.db,
       group,
       userId,
       writable,
+      ownerPlan,
       isOwner: owner !== null && owner.lineUserId === userId,
       knownName: (id) => knownName(deps.db, group, id, deps),
       appUrl: appBaseUrl(),
@@ -361,16 +365,18 @@ async function handleGroupImage(
   );
 }
 
-/** Is the ledger usable for writing: its owner still on Elite? */
+/** Is the ledger usable for writing: its owner still on a plan that has group ledgers? */
 async function ownerState(db: SupabaseClient, group: GroupRow, now: Date) {
   const owner = await getOwner(db, group.ownerUserId);
-  const writable =
-    owner !== null &&
-    can(
-      effectivePlan(owner.plan as "free" | "plus" | "ultimate", owner.planExpiresAt, now),
-      "groupLedger",
-    );
-  return { owner, writable };
+  const plan: Plan = owner ? effectivePlan(owner.plan as Plan, owner.planExpiresAt, now) : "free";
+  let writable = can(plan, "groupLedger");
+  if (writable) {
+    // a plan that dropped to fewer groups keeps the oldest ledgers writable and the rest view-only
+    const limit = GROUP_LEDGER_LIMIT[plan].groups;
+    const mine = await ownedGroupIds(db, group.ownerUserId);
+    if (mine.length > limit) writable = mine.slice(0, limit).includes(group.id);
+  }
+  return { owner, plan, writable };
 }
 
 async function runGroupCommand(
@@ -390,7 +396,8 @@ async function runGroupCommand(
   if (command.kind === "open") {
     if (!userId) return reply([text(GROUP_NO_USER_TEXT)]);
     const user = await ensureUser(db, userId, () => deps.getProfile(userId));
-    if (!can(effectivePlan(user.plan, user.plan_expires_at, now), "groupLedger")) {
+    const userPlan = effectivePlan(user.plan, user.plan_expires_at, now);
+    if (!can(userPlan, "groupLedger")) {
       return reply([text(GROUP_LOCKED_TEXT)]);
     }
     const existing = await getGroup(db, groupId);
@@ -402,9 +409,9 @@ async function runGroupCommand(
     }
     if (
       existing?.ownerUserId !== user.id &&
-      (await countOwnedGroups(db, user.id)) >= MAX_GROUPS_PER_OWNER
+      (await countOwnedGroups(db, user.id)) >= GROUP_LEDGER_LIMIT[userPlan].groups
     ) {
-      return reply([text(GROUP_TOO_MANY_TEXT)]);
+      return reply([text(groupTooManyText(GROUP_LEDGER_LIMIT[userPlan].groups, userPlan))]);
     }
     const opened = await openGroup(db, groupId, user.id);
     // a ledger that changed hands: the old owner's reminders stop (they used the old owner's limits),
@@ -422,7 +429,15 @@ async function runGroupCommand(
     if (command.kind === "note-add" || command.kind === "note-list") return;
     return reply([text(GROUP_NOT_OPEN_TEXT)]);
   }
-  const { owner, writable } = await ownerState(db, group, now);
+  const { owner, writable, plan: ownerPlan } = await ownerState(db, group, now);
+  // the ledger serves as many people as the owner's plan says: a newcomer past that is told, not served
+  if (writable && userId && owner?.lineUserId !== userId) {
+    // counted by who has written, so people who only looked (or were listed by LINE) take no seat
+    const writers = await groupWriters(db, group.id);
+    if (owner) writers.add(owner.lineUserId);
+    const cap = GROUP_LEDGER_LIMIT[ownerPlan].members;
+    if (!writers.has(userId) && writers.size >= cap) return reply([text(groupFullText(cap))]);
+  }
   const isOwner = owner !== null && userId !== undefined && owner.lineUserId === userId;
 
   switch (command.kind) {
@@ -495,6 +510,7 @@ async function runGroupCommand(
         group,
         userId,
         writable,
+        ownerPlan,
         isOwner,
         knownName: (id) => knownName(db, group, id, deps),
         appUrl: appBaseUrl(),
@@ -870,12 +886,13 @@ async function handleGroupPostback(
   if (action && BILL_POSTBACKS.has(action)) {
     const group = await getGroup(db, groupId);
     if (!group || !group.isActive) return reply([text(GROUP_NOT_OPEN_TEXT)]);
-    const { owner, writable } = await ownerState(db, group, deps.now());
+    const { owner, writable, plan: ownerPlan } = await ownerState(db, group, deps.now());
     return handleBillPostback(action, params, {
       db,
       group,
       userId,
       writable,
+      ownerPlan,
       isOwner: owner !== null && owner.lineUserId === userId,
       knownName: (id) => knownName(db, group, id, deps),
       appUrl: appBaseUrl(),

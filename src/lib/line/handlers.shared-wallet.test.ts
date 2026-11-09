@@ -165,14 +165,15 @@ describe("เชิญ <กระเป๋าร่วม>", () => {
     expect(invitesMade).toHaveLength(0);
   });
 
-  it("a full wallet (Pro: two people) cannot invite more; Elite can", async () => {
+  it("a full wallet (Starter: two people) cannot invite more; Pro (five) can", async () => {
+    plan = "starter";
     memberCount = 2;
     let { deps, reply } = setup();
     await handleEvent(say("เชิญ กองกลาง"), deps);
     expect(invitesMade).toHaveLength(0);
     expect(said(reply)).toContain("เต็ม");
 
-    plan = "ultimate";
+    plan = "plus";
     ({ deps, reply } = setup());
     await handleEvent(say("เชิญ กองกลาง"), deps);
     expect(invitesMade).toEqual(["ws"]);
@@ -183,7 +184,7 @@ describe("เชิญ <กระเป๋าร่วม>", () => {
     const { deps, reply } = setup();
     await handleEvent(say("เชิญ กองกลาง"), deps);
     expect(invitesMade).toHaveLength(0);
-    expect(said(reply)).toContain("Pro");
+    expect(said(reply)).toContain("Starter");
   });
 });
 

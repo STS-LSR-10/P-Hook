@@ -87,7 +87,7 @@ beforeEach(() => {
 });
 
 describe("POST /api/bills", () => {
-  it.each(["free", "plus"])("is Elite only: %s gets a 403", async (p) => {
+  it.each(["free", "starter"])("is Pro and above: %s gets a 403", async (p) => {
     plan = p;
     const res = await POST(req("POST", { name: "ค่าไฟ", cadence: "monthly", dayOfMonth: 15 }));
     expect(res.status).toBe(403);
@@ -180,10 +180,10 @@ describe("PATCH /api/bills/:id", () => {
     expect(patched[0]?.nextDueOn).toBeUndefined();
   });
 
-  it("an unknown bill is a 404; Pro is refused", async () => {
+  it("an unknown bill is a 404; Starter is refused", async () => {
     expect((await PATCH(req("PATCH", { name: "x" }), params)).status).toBe(404);
     bills = [bill()];
-    plan = "plus";
+    plan = "starter";
     expect((await PATCH(req("PATCH", { name: "x" }), params)).status).toBe(403);
   });
 });

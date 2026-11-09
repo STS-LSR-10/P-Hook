@@ -868,6 +868,7 @@ function ExportSheet({
   const [error, setError] = useState<string | null>(null);
   const allowed = me.data?.features.export === true;
   const zipAllowed = me.data?.features.advancedExport === true;
+  const pdfAllowed = me.data?.features.pdfExport === true;
   const all = groups.size === COLUMN_GROUPS.length;
 
   function toggleGroup(g: ColumnGroup) {
@@ -906,7 +907,7 @@ function ExportSheet({
   const FORMATS = [
     { value: "xlsx", label: "Excel (.xlsx)", Icon: FileSpreadsheet },
     { value: "csv", label: "CSV", Icon: FileText },
-    { value: "pdf", label: tr("PDF สรุป"), Icon: FileBarChart },
+    ...(pdfAllowed ? [{ value: "pdf", label: tr("PDF สรุป"), Icon: FileBarChart } as const] : []),
   ] as const;
 
   return (
@@ -917,7 +918,9 @@ function ExportSheet({
         <ErrorState message={me.error} onRetry={me.reload} />
       ) : !allowed ? (
         <div className="space-y-3 text-center">
-          <p className="text-base font-semibold">{tr("ส่งออก Excel / CSV / PDF สำหรับแผน Pro")}</p>
+          <p className="text-base font-semibold">
+            {tr("ส่งออก Excel / CSV สำหรับแผน Starter ขึ้นไป")}
+          </p>
           <p className="text-sm text-muted">
             {tr(
               "ดาวน์โหลดรายการไปทำบัญชีต่อในคอมพิวเตอร์หรือ Google Sheets ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด",
@@ -927,7 +930,7 @@ function ExportSheet({
             href="/upgrade"
             className="inline-flex h-11 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-semibold text-surface"
           >
-            {tr("ดูแผน Pro")}
+            {tr("ดูแผน")}
           </Link>
         </div>
       ) : (
@@ -1613,7 +1616,7 @@ function EditForm({
           <span className="inline-flex items-center gap-1.5">
             {tr("รูปแนบ")}
             <span className="rounded-lg bg-primary-soft px-2 py-0.5 text-[11px] text-primary">
-              Pro
+              Starter
             </span>
           </span>
         }
@@ -1669,7 +1672,7 @@ function EditForm({
             <Lock className="h-5 w-5 shrink-0 text-muted" aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold">{tr("แนบรูปใบเสร็จหรือสินค้า")}</span>
-              <span className="block text-xs text-muted">{tr("ใช้ได้ในแผน Pro ขึ้นไป")}</span>
+              <span className="block text-xs text-muted">{tr("ใช้ได้ในแผน Starter ขึ้นไป")}</span>
             </span>
             <span className="text-sm font-semibold text-primary">{tr("ดูแผน")}</span>
           </Link>

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { FAIR_USE } from "@/lib/plan";
+import { SLIP_LIMIT } from "@/lib/plan";
 import { log } from "@/lib/log";
 import { formatBaht } from "@/lib/money";
 import { sanitizeSlip } from "@/lib/ocr/slip-schema";
@@ -69,7 +69,13 @@ export async function checkGroupSlip(
   const month = monthKey(now);
   let counted = false;
   try {
-    counted = await takeUsage(db, group.ownerUserId, "group_slip", FAIR_USE.slips, month);
+    counted = await takeUsage(
+      db,
+      group.ownerUserId,
+      "group_slip",
+      Math.floor(SLIP_LIMIT[ctx.ownerPlan] / 2), // shortcut: half the owner's own allowance, so both together stay within the plan's cost
+      month,
+    );
   } catch (error) {
     log.error("group_slip_quota_failed", error);
     return;

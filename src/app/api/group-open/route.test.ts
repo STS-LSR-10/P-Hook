@@ -41,11 +41,13 @@ describe("GET /api/group-open", () => {
     expect(await (await get()).json()).toMatchObject({ friend: false, canOpen: true });
   });
 
-  it("a friend without Elite cannot open it", async () => {
-    plan = "plus";
-    expect(await (await get()).json()).toMatchObject({ friend: true, canOpen: false });
+  it("a friend on Free cannot open it; Starter and above can", async () => {
     plan = "free";
-    expect(await (await get()).json()).toMatchObject({ canOpen: false });
+    expect(await (await get()).json()).toMatchObject({ friend: true, canOpen: false });
+    for (const p of ["starter", "plus", "ultimate"]) {
+      plan = p;
+      expect(await (await get()).json()).toMatchObject({ canOpen: true });
+    }
   });
 
   it("when LINE cannot be asked, friend is null (the page lets them try) instead of an error", async () => {

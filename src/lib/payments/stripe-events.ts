@@ -67,7 +67,7 @@ function readMeta(metadata: unknown): { userId: string; plan: PaidPlan; period: 
   const plan = m?.plan;
   const period = m?.period;
   if (!userId || !UUID_RE.test(userId)) return null;
-  if (plan !== "plus" && plan !== "ultimate") return null;
+  if (plan !== "starter" && plan !== "plus" && plan !== "ultimate") return null;
   if (period !== "monthly" && period !== "yearly") return null;
   return { userId, plan, period };
 }
@@ -226,7 +226,11 @@ export async function applyAction(
         if (error) throw new Error(`find payer: ${error.message}`);
         if (data) {
           userId = userId ?? (data.id as string);
-          if (!plan && (data.plan === "plus" || data.plan === "ultimate")) plan = data.plan;
+          if (
+            !plan &&
+            (data.plan === "starter" || data.plan === "plus" || data.plan === "ultimate")
+          )
+            plan = data.plan;
         }
       }
       if (!userId || !plan) return { handled: false }; // history only; the plan is set elsewhere

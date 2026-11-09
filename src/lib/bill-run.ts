@@ -65,7 +65,7 @@ export async function runBillReminders(
   const users = await db
     .from("users")
     .select("id,line_user_id,plan,plan_expires_at,timezone,currency,locale")
-    .in("plan", ["ultimate"])
+    .or(`plan.neq.free,plan_expires_at.gt.${now.toISOString()}`)
     .limit(BATCH);
   if (users.error) throw new Error(`load bill users: ${users.error.message}`);
   const ultimate = (

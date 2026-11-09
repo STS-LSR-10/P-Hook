@@ -238,7 +238,7 @@ test.describe("upgrade page (360px)", () => {
     await expect(page.getByText("คุณใช้แผนที่สูงกว่านี้อยู่แล้ว")).toBeVisible();
     await expect(page.getByRole("button", { name: /ต่ออายุ · Pro|ชำระเงิน · Pro/ })).toBeDisabled();
   });
-  test("a new user can start a 7-day free trial of either paid tier", async ({ page }) => {
+  test("a new user can start a 7-day free trial", async ({ page }) => {
     const bodies: unknown[] = [];
     await mockApi(page, {
       "GET /api/me": ME_FREE,

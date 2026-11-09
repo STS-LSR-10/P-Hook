@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FeedbackSource } from "@/lib/feedback";
+import type { Plan } from "@/lib/plan";
 
 export interface NewFeedback {
   userId: string;
-  plan: "free" | "plus" | "ultimate";
+  plan: Plan;
   body: string;
   source: FeedbackSource;
 }

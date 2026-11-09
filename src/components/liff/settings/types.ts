@@ -1,3 +1,4 @@
+import type { Plan } from "@/lib/plan";
 /** One payment in the history (integer satang). */
 export interface PaymentItem {
   id: string;
@@ -12,7 +13,7 @@ export interface Me {
   displayName: string | null;
   pictureUrl: string | null;
   /** The plan in force now (an expired paid plan reads as "free"). */
-  plan: "free" | "plus" | "ultimate";
+  plan: Plan;
   planExpiresAt: string | null;
   features: Record<string, boolean>;
   slips: { used: number; limit: number | null; remaining: number | null };

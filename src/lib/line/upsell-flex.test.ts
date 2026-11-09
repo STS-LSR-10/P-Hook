@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { LAUNCH_PRICES, PRICES } from "@/lib/pricing";
+import { PRICES } from "@/lib/pricing";
+import { buildUpsellCard } from "./upsell-flex";
 
 const AFTER = new Date("2027-02-01T00:00:00Z");
-const LAUNCH = new Date("2026-11-01T00:00:00Z");
-import { buildUpsellCard } from "./upsell-flex";
 
 const json = (m: unknown) => JSON.stringify(m);
 
@@ -19,30 +18,30 @@ describe("upgrade card", () => {
       }),
     );
     expect(card).toContain("เมื่อวาน");
-    expect(card).toContain(`฿${PRICES.plus.monthly}/เดือน`);
+    expect(card).toContain(`฿${PRICES.starter.monthly}/เดือน`); // the cheapest way in
     expect(card).toContain("a=trial&p=plus");
     expect(card).toContain("https://x.test/upgrade");
     expect(card).toContain(`a=bdt&t=${encodeURIComponent("เมื่อวาน ข้าวผัด 60")}`);
   });
 
-  it("slip: shows both tiers and no 'as today' button", () => {
+  it("slip: shows Starter and Pro with their real numbers, and no 'as today' button", () => {
     const card = json(buildUpsellCard({ feature: "slip", trialAvailable: true, now: AFTER }));
+    expect(card).toContain(`฿${PRICES.starter.monthly}`);
     expect(card).toContain(`฿${PRICES.plus.monthly}`);
-    expect(card).toContain(`฿${PRICES.ultimate.monthly}`);
+    expect(card).toContain("60 ใบ/เดือน");
+    expect(card).toContain("250 ใบ/เดือน");
     expect(card).not.toContain("a=bdt");
   });
 
-  it("during the launch it shows the launch price and when it ends", () => {
-    const card = json(buildUpsellCard({ feature: "slip", trialAvailable: true, now: LAUNCH }));
-    expect(card).toContain(`฿${LAUNCH_PRICES.plus.monthly}`);
-    expect(card).toContain(`฿${LAUNCH_PRICES.ultimate.monthly}`);
-    expect(card).toContain("31 ธ.ค. 2569");
-    expect(card).not.toContain(`฿${PRICES.ultimate.monthly}/`);
+  it("there is no launch price to show for now", () => {
+    const card = json(buildUpsellCard({ feature: "slip", trialAvailable: true, now: AFTER }));
+    expect(card).not.toContain("ราคาเปิดตัว");
   });
 
-  it("voice: names the Pro allowance", () => {
+  it("voice: names the Starter and Pro allowances", () => {
     const card = json(buildUpsellCard({ feature: "voice", trialAvailable: true, now: AFTER }));
-    expect(card).toContain("20 ครั้ง/เดือน");
+    expect(card).toContain("30 ครั้ง/เดือน");
+    expect(card).toContain("200 ครั้ง/เดือน");
     expect(card).toContain("a=trial&p=plus");
   });
 
@@ -71,7 +70,7 @@ describe("the AI quota card", () => {
       }),
     );
     expect(out).toContain("ถาม AI");
+    expect(out).toContain("600");
     expect(out).toContain("1,500");
-    expect(out).toContain("5,000");
   });
 });

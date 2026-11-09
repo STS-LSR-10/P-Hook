@@ -147,7 +147,9 @@ function CustomCategoryLockedSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title={tr("หมวดของตัวเอง")} onClose={onClose}>
       <div className="space-y-3 text-center">
-        <p className="text-base font-semibold">{tr("สร้างหมวดของตัวเองสำหรับแผน Pro")}</p>
+        <p className="text-base font-semibold">
+          {tr("สร้างหมวดของตัวเองสำหรับแผน Starter ขึ้นไป")}
+        </p>
         <p className="text-sm text-muted">
           {tr(
             "เพิ่มหมวดเฉพาะตัว เช่น “ค่าอาหารแมว” พร้อมเลือกอีโมจิ ลองใช้ฟรี 7 วันได้ที่หน้าอัปเกรด",
@@ -158,7 +160,7 @@ function CustomCategoryLockedSheet({ onClose }: { onClose: () => void }) {
           href="/upgrade"
           className="inline-flex h-11 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-semibold text-surface"
         >
-          {tr("ดูแผน Pro")}
+          {tr("ดูแผน")}
         </Link>
       </div>
     </Sheet>
@@ -1399,7 +1401,7 @@ function CategorySheet({
           </div>
           {frozen ? (
             <p className="text-xs text-muted">
-              {tr("แก้หมวดของตัวเองได้ในแผน Pro ขึ้นไป")}{" "}
+              {tr("แก้หมวดของตัวเองได้ในแผน Starter ขึ้นไป")}{" "}
               <Link href="/upgrade" className="font-semibold text-primary underline">
                 {tr("ดูแผน")}
               </Link>{" "}

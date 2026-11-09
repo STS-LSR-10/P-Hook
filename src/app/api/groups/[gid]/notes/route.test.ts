@@ -100,11 +100,11 @@ describe("POST /api/groups/:gid/notes", () => {
     ]);
   });
 
-  it("is refused when the owner's notes are full, the owner left Elite, or the ledger is closed", async () => {
+  it("is refused when the owner's notes are full, the owner is back on Free, or the ledger is closed", async () => {
     count = 2000;
     expect((await list.POST(req("POST", { body: "x" }), ctx)).status).toBe(409);
     count = 0;
-    ownerPlan = "plus";
+    ownerPlan = "free";
     expect((await list.POST(req("POST", { body: "x" }), ctx)).status).toBe(403);
     ownerPlan = "ultimate";
     viewer.group.isActive = false;

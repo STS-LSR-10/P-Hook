@@ -33,7 +33,7 @@ import {
 } from "@/lib/split-bill-repo";
 import { bangkokDateKey } from "@/lib/points";
 import { bangkokParts } from "@/lib/thai-date";
-import { GROUP_REMINDS_PER_MONTH } from "@/lib/plan";
+import { GROUP_REMINDS_PER_MONTH, type Plan } from "@/lib/plan";
 import { log } from "@/lib/log";
 import { monthKey, refundUsage, takeUsage } from "@/lib/usage";
 import type { LineMessage } from "@/lib/types";
@@ -54,8 +54,10 @@ export interface BillContext {
   group: GroupRow;
   /** The person who typed or tapped (absent when LINE did not say who). */
   userId: string | undefined;
-  /** The ledger's owner is still on Elite (read-only otherwise). */
+  /** The ledger's owner is still on a plan with group ledgers (read-only otherwise). */
   writable: boolean;
+  /** The owner's plan: it sets the group's limits. */
+  ownerPlan: Plan;
   isOwner: boolean;
   /** The name to show for a member, fetching it from LINE when it is not known yet. */
   knownName: (userId: string) => Promise<string>;
@@ -70,8 +72,7 @@ export const BILL_USAGE_TEXT =
   'คนที่จ่ายก่อนพิมพ์ เช่น "หารบิล หมูกระทะ 1200" (ใส่ชื่อคนที่หารต่อท้ายได้ เช่น "หารบิล หมูกระทะ 1200 แอน บ๊อบ") เพื่อนที่ไปด้วยกดปุ่ม "ร่วมหาร" แล้วคนจ่ายกด "ปิดรายชื่อ" บอทจะหารเท่ากันให้';
 const NO_USER_TEXT =
   "บอทยังไม่รู้ว่าใครพิมพ์ ให้เพิ่มบอทเป็นเพื่อน (และยอมรับข้อกำหนดของ LINE OA) ก่อน แล้วลองใหม่นะ";
-const PAUSED_TEXT =
-  "สมุดกลุ่มนี้หยุดจดชั่วคราว เพราะแผน Elite ของเจ้าของสมุดหมดอายุ ดูยอดค้างได้ตามปกติ";
+const PAUSED_TEXT = "สมุดกลุ่มนี้หยุดจดชั่วคราว เพราะแผนของเจ้าของสมุดหมดอายุ ดูยอดค้างได้ตามปกติ";
 const TOO_MANY_TEXT = "มีบิลที่ยังไม่เสร็จครบ 10 บิลแล้ว ปิดหรือยกเลิกบิลเก่าก่อนนะ";
 const NO_BILL_TEXT = "ไม่เจอบิลของคุณที่รออยู่ ลองพิมพ์ “หารบิล ชื่อ ยอด” เพื่อเริ่มบิลใหม่นะ";
 const NOT_PAYER_TEXT = "เฉพาะคนที่จ่ายบิลนี้ (หรือเจ้าของสมุด) ทำได้นะ";
@@ -621,7 +622,8 @@ export async function runDailyReminder(ctx: BillContext, now: Date): Promise<voi
   const owner = ctx.group.ownerUserId;
   let counted = false;
   try {
-    if (!(await takeUsage(ctx.db, owner, "group_remind", GROUP_REMINDS_PER_MONTH, month))) return;
+    const cap = GROUP_REMINDS_PER_MONTH[ctx.ownerPlan];
+    if (!(await takeUsage(ctx.db, owner, "group_remind", cap, month))) return;
     counted = true;
   } catch (error) {
     log.error("group_remind_quota_failed", error);

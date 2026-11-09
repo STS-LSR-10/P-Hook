@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { apiError } from "@/lib/api";
 import type { MemoryLite } from "@/lib/categorize/rules";
-import { can, effectivePlan, type Feature, type Plan } from "@/lib/plan";
+import { can, effectivePlan, MIN_PLAN, PLAN_LABEL, type Feature, type Plan } from "@/lib/plan";
 import { loadMemory } from "@/lib/repo";
 import { getUserPlanRow } from "@/lib/slip-repo";
 
@@ -24,7 +24,13 @@ export async function getPlanInfo(
 }
 
 export const PLUS_ONLY_MESSAGE =
-  "ฟีเจอร์นี้สำหรับแผน Pro ใช้เหรียญสะสมแลกวัน Pro ได้ที่หน้าตั้งค่านะ";
+  "ฟีเจอร์นี้สำหรับแผน Starter ขึ้นไป ใช้เหรียญสะสมแลกวัน Pro ได้ที่หน้าตั้งค่านะ";
+
+/** The locked message names the plan this feature really starts at. */
+export const lockedMessage = (feature: Feature): string =>
+  MIN_PLAN[feature] === "starter"
+    ? PLUS_ONLY_MESSAGE
+    : `ฟีเจอร์นี้สำหรับแผน ${PLAN_LABEL[MIN_PLAN[feature]]} ขึ้นไป ใช้เหรียญสะสมแลกวัน Pro ได้ที่หน้าตั้งค่านะ`;
 
 /**
  * Server-side feature gate for API routes (the UI hides things too, but this is the real check).
@@ -38,7 +44,7 @@ export async function requireFeature(
   const { plan } = await getPlanInfo(db, userId);
   if (can(plan, feature)) return null;
   return Response.json(
-    { error: PLUS_ONLY_MESSAGE, upgrade: true },
+    { error: lockedMessage(feature), upgrade: true },
     { status: 403, headers: { "Cache-Control": "no-store" } },
   );
 }

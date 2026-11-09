@@ -97,13 +97,13 @@ beforeEach(() => {
 });
 
 describe("วิเคราะห์", () => {
-  it.each(["free", "plus"])(
-    "is for Elite only: %s gets the upsell and nothing is loaded",
+  it.each(["free", "starter"])(
+    "is for Pro and above: %s gets the upsell and nothing is loaded",
     async (p) => {
       plan = p;
       const { deps, reply } = setup();
       await handleEvent(say("วิเคราะห์"), deps);
-      expect(first(reply).text).toContain("Elite");
+      expect(first(reply).text).toContain("Pro");
       expect(factCalls).toHaveLength(0);
       expect(write).not.toHaveBeenCalled();
     },

@@ -181,11 +181,9 @@ describe("what it refuses", () => {
 
 describe("reminderCapacity and describeReminder", () => {
   it("grows with the plan", () => {
-    expect([
-      reminderCapacity("free"),
-      reminderCapacity("plus"),
-      reminderCapacity("ultimate"),
-    ]).toEqual([3, 30, 100]);
+    expect(
+      (["free", "starter", "plus", "ultimate"] as const).map(reminderCapacity),
+    ).toEqual([10, 50, 100, 250]);
   });
   it("shows the date, the time and how often", () => {
     expect(describeReminder(new Date("2026-10-29T02:00:00Z"), null)).toBe("29 ต.ค. 2569 09:00");

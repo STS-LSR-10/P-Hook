@@ -104,7 +104,7 @@ export default function BillsPage() {
           <>
             {locked ? (
               <div className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
-                <span className="font-semibold">{t("สำหรับแผน Elite")}</span> ·
+                <span className="font-semibold">{t("สำหรับแผน Pro ขึ้นไป")}</span> ·
                 {t("บอทเตือนล่วงหน้าก่อนวันครบกำหนดจ่ายบิล")}{" "}
                 <Link href="/upgrade" className="font-semibold underline">
                   {t("ดูแผนอัปเกรด")}

@@ -10,7 +10,7 @@ import { useApi } from "@/components/liff/liff-provider";
 import { sliceColor } from "@/components/liff/slice-color";
 import type { TxDto } from "@/lib/dto";
 import { money } from "@/lib/money";
-import { PLAN_LABEL } from "@/lib/plan";
+import { PLAN_LABEL, type Plan } from "@/lib/plan";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
@@ -40,7 +40,7 @@ interface SummaryResponse {
 interface MeResponse {
   displayName: string | null;
   pictureUrl: string | null;
-  plan: "free" | "plus" | "ultimate";
+  plan: Plan;
   features: Record<string, boolean>;
 }
 
@@ -60,7 +60,7 @@ const MAX_BACK = 24;
 
 const TIPS = [
   t('พิมพ์ "กาแฟ 60" ในแชท บอทจะจดและจัดหมวดให้ทันที'),
-  t('พิมพ์ "เมื่อวาน ข้าว 80" เพื่อจดย้อนหลัง (Pro ขึ้นไป)'),
+  t('พิมพ์ "เมื่อวาน ข้าว 80" เพื่อจดย้อนหลัง (Starter ขึ้นไป)'),
   t('พิมพ์ "สรุปเดือนนี้" ในแชท เพื่อดูภาพรวมได้ทุกเมื่อ'),
   t("ส่งรูปสลิปโอนเงินในแชท บอทอ่านยอดให้โดยไม่ต้องพิมพ์"),
 ];
@@ -429,7 +429,7 @@ function Spending({
           <Lock className="h-5 w-5 shrink-0 text-muted" aria-hidden />
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold">{t("กราฟสัดส่วนตามหมวด")}</span>
-            <span className="block text-xs text-muted">{t("ใช้ได้ในแผน Pro ขึ้นไป")}</span>
+            <span className="block text-xs text-muted">{t("ใช้ได้ในแผน Starter ขึ้นไป")}</span>
           </span>
           <span className="text-sm font-semibold text-primary">{t("ดูแผน")}</span>
         </Link>

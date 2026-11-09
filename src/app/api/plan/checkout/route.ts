@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
-  plan: z.enum(["plus", "ultimate"]).default("plus"),
+  plan: z.enum(["starter", "plus", "ultimate"]).default("plus"),
   period: z.enum(["monthly", "yearly"]).default("monthly"),
   /** card = auto-renewing subscription, promptpay = one prepaid period */
   method: z.enum(["card", "promptpay"]).default("card"),

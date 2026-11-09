@@ -1,4 +1,4 @@
-import type { Period } from "@/lib/pricing";
+import type { PaidPlan, Period } from "@/lib/pricing";
 
 /**
  * Payment seam for paid plans. Stripe is the real provider (see stripe.ts); the stub answers
@@ -13,7 +13,7 @@ export type PaymentMethod = "card" | "promptpay";
 
 export interface CheckoutRequest {
   userId: string;
-  plan: "plus" | "ultimate";
+  plan: PaidPlan;
   period: Period;
   /** card = auto-renewing subscription; promptpay = one prepaid period (no auto-renew). */
   method: PaymentMethod;
@@ -33,7 +33,7 @@ export type CheckoutResult =
 export interface ChangeRequest {
   userId: string;
   subscriptionId: string;
-  plan: "plus" | "ultimate";
+  plan: PaidPlan;
   period: Period;
 }
 

@@ -28,6 +28,8 @@ export const LIMITS = {
   voiceDay: { limit: 60, windowSeconds: 86_400 },
   /** Files arriving per user: they are only remembered, and each is at most 20 MB when kept. */
   chatFile: { limit: 20, windowSeconds: 60 },
+  /** ... and a daily ceiling, since the per-day save count is gone and only space limits a plan. */
+  fileDay: { limit: 300, windowSeconds: 86_400 },
   /** PDF files per user: each one is a paid AI reading of a whole document. */
   chatPdf: { limit: 3, windowSeconds: 60 },
   pdfDay: { limit: 20, windowSeconds: 86_400 },

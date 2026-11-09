@@ -3271,6 +3271,31 @@ describe("feedback (0061)", () => {
   });
 });
 
+describe("the Starter plan (0063)", () => {
+  it("is a plan_tier value that sorts between free and plus", async () => {
+    const r = await rows<{ v: string }>(
+      db,
+      "select e.enumlabel as v from pg_enum e join pg_type t on t.oid = e.enumtypid where t.typname = 'plan_tier' order by e.enumsortorder",
+    );
+    expect(r.map((x) => x.v)).toEqual(["free", "starter", "plus", "ultimate"]);
+  });
+
+  it("can be stored on a user and on a suggestion", async () => {
+    const u = await newUser(db, `st-${Math.random()}`);
+    await db.query("update users set plan = 'starter' where id = $1", [u]);
+    const row = await one<{ plan: string }>(
+      db,
+      "select plan::text as plan from users where id = $1",
+      [u],
+    );
+    expect(row.plan).toBe("starter");
+    await db.query(
+      "insert into feedback (user_id, plan, body, source) values ($1,'starter','ok','app')",
+      [u],
+    );
+  });
+});
+
 describe("groups the bot was taken out of (0062)", () => {
   async function makeGroup() {
     const owner = await newUser(db, `lf-${Math.random()}`);

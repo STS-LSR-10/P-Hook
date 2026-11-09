@@ -310,7 +310,7 @@ export default function WalletsPage() {
               <span className="flex-1">
                 <span className="block font-semibold">{tr("หนี้สิน")}</span>
                 <span className="block text-xs text-muted">
-                  {tr("จดให้ยืม/ยืม ตัดยอดกระเป๋าให้ · แผน Elite")}
+                  {tr("จดให้ยืม/ยืม ตัดยอดกระเป๋าให้ · แผน Starter ขึ้นไป")}
                 </span>
               </span>
             </Link>
@@ -365,7 +365,7 @@ export default function WalletsPage() {
                 <Link href="/upgrade" className="font-semibold underline">
                   {tr("ดูแผนอัปเกรด")}
                 </Link>{" "}
-                {tr("(Pro มีได้ 5 ใบ · Elite ไม่จำกัด)")}
+                {tr("(Starter 5 ใบ · Pro 20 ใบ · Elite ไม่จำกัด)")}
               </p>
             )}
           </>

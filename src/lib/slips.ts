@@ -9,8 +9,7 @@ import {
   IMAGE_TOO_LARGE_TEXT,
   NOT_A_SLIP_TEXT,
   SLIP_LOCKED_TEXT,
-  SLIP_FAIR_USE_TEXT,
-  SLIP_QUOTA_TEXT,
+  slipQuotaText,
   SLIP_FREE_LEFT_TEXT,
   SLIP_UNREADABLE_TEXT,
   text,
@@ -18,13 +17,7 @@ import {
 import { formatBaht, toSatang } from "@/lib/money";
 import type { SlipImage, SlipOcrProvider } from "@/lib/ocr/provider";
 import { sanitizeSlip } from "@/lib/ocr/slip-schema";
-import {
-  effectivePlan,
-  FAIR_USE,
-  FREE_SLIPS_PER_WEEK,
-  SLIP_LIMIT,
-  slipsRemaining,
-} from "@/lib/plan";
+import { effectivePlan, FREE_SLIPS_TOTAL, SLIP_LIMIT, slipsRemaining } from "@/lib/plan";
 import { planReceiptSplit } from "@/lib/receipt-split";
 import {
   insertTransaction,
@@ -36,7 +29,7 @@ import {
 } from "@/lib/repo";
 import {
   countSlipsThisMonth,
-  countSlipsThisWeek,
+  countSlipsEver,
   findSlipByHash,
   findSlipByRef,
   findTransactionBySlip,
@@ -105,15 +98,15 @@ export async function handleSlipImage(
   // 1. quota (failed reads are never inserted, so they never count)
   const planRow = await getUserPlanRow(db, user.id);
   const plan = effectivePlan(planRow.plan, planRow.plan_expires_at, now);
-  // Free: a few reads a week (a taste); past that the upgrade pitch. Failed reads are never
+  // Free: a taste for life (FREE_SLIPS_TOTAL); past that the upgrade pitch. Failed reads are never
   // inserted, so they never count.
   let freeLeft: number | null = null;
-  if (SLIP_LIMIT[plan] === 0) {
-    const usedWeek = await countSlipsThisWeek(db, user.id, now);
-    if (usedWeek >= FREE_SLIPS_PER_WEEK) {
+  if (plan === "free") {
+    const used = await countSlipsEver(db, user.id);
+    if (used >= FREE_SLIPS_TOTAL) {
       return upsellReply(db, user.id, now, "slip", SLIP_LOCKED_TEXT);
     }
-    freeLeft = FREE_SLIPS_PER_WEEK - usedWeek - 1;
+    freeLeft = FREE_SLIPS_TOTAL - used - 1;
   }
   let recorded = false;
   const messages = await readSlip();
@@ -122,12 +115,9 @@ export async function handleSlipImage(
     : messages;
 
   async function readSlip(): Promise<LineMessage[]> {
-    const used = await countSlipsThisMonth(db, user.id, now);
-    const remaining = slipsRemaining(plan, used);
-    if (freeLeft === null && remaining !== null && remaining <= 0) return [text(SLIP_QUOTA_TEXT)];
-    // "unlimited" is normal use: past the fair-use ceiling the paid-per-use reading stops until the 1st
-    if (plan === "ultimate" && used >= FAIR_USE.slips) {
-      return [text(SLIP_FAIR_USE_TEXT(FAIR_USE.slips))];
+    if (freeLeft === null) {
+      const used = await countSlipsThisMonth(db, user.id, now);
+      if (slipsRemaining(plan, used) <= 0) return [text(slipQuotaText(plan, SLIP_LIMIT[plan]))];
     }
 
     // 2. download
