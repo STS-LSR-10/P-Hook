@@ -261,6 +261,43 @@ export async function recentEntries(
   return ((data ?? []) as EntryDb[]).map(toEntry);
 }
 
+const CURSOR_RE =
+  /^(\d{4}-\d{2}-\d{2}T[0-9:.]+(?:Z|[+-]\d{2}:\d{2}))\|([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+/** Is this a cursor from `pageEntries` (it goes into a filter, so only that exact shape is allowed)? */
+export const isEntryCursor = (v: string): boolean => CURSOR_RE.test(v);
+
+/**
+ * A page of entries, newest first by when they happened. `cursor` is the `next` of the page before
+ * (null/undefined for the first page); `next` is null on the last page.
+ */
+export async function pageEntries(
+  db: SupabaseClient,
+  groupId: string,
+  limit: number,
+  cursor?: string | null,
+): Promise<{ items: GroupEntryRow[]; next: string | null }> {
+  let query = db
+    .from("group_entries")
+    .select(ENTRY_COLUMNS)
+    .eq("group_id", groupId)
+    .eq("status", "confirmed");
+  const at = cursor ? CURSOR_RE.exec(cursor) : null;
+  if (cursor && !at) fail("page group entries", { message: "bad cursor" });
+  if (at) {
+    query = query.or(`occurred_at.lt.${at[1]},and(occurred_at.eq.${at[1]},id.lt.${at[2]})`);
+  }
+  const { data, error } = await query
+    .order("occurred_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit + 1); // one more than shown tells whether there is another page
+  if (error) fail("page group entries", error);
+  const rows = ((data ?? []) as EntryDb[]).map(toEntry);
+  const items = rows.slice(0, limit);
+  const last = items[items.length - 1];
+  return { items, next: rows.length > limit && last ? `${last.occurredAt}|${last.id}` : null };
+}
+
 export async function getEntry(
   db: SupabaseClient,
   groupId: string,

@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { Segmented } from "@/components/liff/segmented";
 import { ErrorState, LoadingBlock } from "@/components/liff/states";
@@ -33,6 +33,8 @@ interface Manage {
     occurredAt: string;
     payerName: string;
   }[];
+  /** Where the next page of entries starts; null (or missing) when all are shown. */
+  nextCursor?: string | null;
   debts: {
     id: string;
     title: string;
@@ -41,6 +43,21 @@ interface Manage {
     unpaid: { userId: string; name: string; shareSatang: number }[];
   }[];
   schedule: ChaseSchedule;
+}
+
+type Entry = Manage["entries"][number];
+
+/** Entries in the order given, under the day they happened (a date that cannot be read has no heading). */
+function byDay(entries: Entry[]): { day: string | null; items: Entry[] }[] {
+  const out: { day: string | null; items: Entry[] }[] = [];
+  for (const e of entries) {
+    const at = new Date(e.occurredAt);
+    const day = Number.isNaN(at.getTime()) ? null : formatThaiDate(at);
+    const last = out[out.length - 1];
+    if (last && last.day === day) last.items.push(e);
+    else out.push({ day, items: [e] });
+  }
+  return out;
 }
 
 type Tab = "summary" | "entries" | "debts" | "chase";
@@ -107,6 +124,30 @@ function GroupPanel({
   const [busy, setBusy] = useState(false);
   const manage = useApi<Manage>(groupId ? `/api/groups/${groupId}/manage` : null);
   const data = manage.data;
+  // pages loaded with "ดูเพิ่ม" after the first one; a fresh load of the card starts over from the first
+  const [paged, setPaged] = useState<{ items: Entry[]; next: string | null } | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => setPaged(null), [data]);
+  const entries = [
+    ...new Map([...(data?.entries ?? []), ...(paged?.items ?? [])].map((e) => [e.id, e])).values(),
+  ];
+  const nextCursor = paged ? paged.next : (data?.nextCursor ?? null);
+
+  async function showMore() {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    setNotice(null);
+    try {
+      const r = await api<{ entries: Entry[]; nextCursor: string | null }>(
+        `/api/groups/${groupId}/entries?cursor=${encodeURIComponent(nextCursor)}`,
+      );
+      setPaged((p) => ({ items: [...(p?.items ?? []), ...r.entries], next: r.nextCursor }));
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : t("โหลดไม่สำเร็จ"));
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function run(job: () => Promise<string>) {
     setBusy(true);
@@ -132,7 +173,7 @@ function GroupPanel({
     });
   };
 
-  const editEntry = (e: Manage["entries"][number]) => {
+  const editEntry = (e: Entry) => {
     const title = window.prompt(t("ชื่อรายการ"), e.title)?.trim();
     if (!title) return;
     const amount = Number(
@@ -148,7 +189,7 @@ function GroupPanel({
     });
   };
 
-  const removeEntry = (e: Manage["entries"][number]) => {
+  const removeEntry = (e: Entry) => {
     if (!window.confirm(t('ลบ "{0}" ออกจากสมุดกลุ่มใช่ไหม?', e.title))) return;
     void run(async () => {
       await api(`/api/groups/${groupId}/entries/${e.id}`, { method: "DELETE" });
@@ -231,37 +272,58 @@ function GroupPanel({
           {tab === "entries" ? (
             <section className={cardClass} aria-label={t("รายการจดของกลุ่ม")}>
               <h3 className="text-sm font-semibold">{t("รายการจดล่าสุดของกลุ่ม")}</h3>
-              {data.entries.length === 0 ? (
+              {entries.length === 0 ? (
                 <p className="text-sm text-muted">{t("ยังไม่มีรายการ")}</p>
               ) : (
-                <ul className="space-y-2">
-                  {data.entries.map((e) => (
-                    <li key={e.id} className="flex items-center gap-2 text-sm">
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium">{e.title}</span>
-                        <span className="block truncate text-xs text-muted">{e.payerName}</span>
-                      </span>
-                      <span className="num shrink-0 font-semibold">{money(e.amountSatang)}</span>
-                      <button
-                        type="button"
-                        disabled={busy || !data.isActive}
-                        onClick={() => editEntry(e)}
-                        className={btn}
-                      >
-                        {t("แก้")}
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={t("ลบ {0}", e.title)}
-                        disabled={busy || !data.isActive}
-                        onClick={() => removeEntry(e)}
-                        className={cn(btn, "w-9 px-0 text-expense")}
-                      >
-                        <Trash2 className="mx-auto h-4 w-4" aria-hidden />
-                      </button>
-                    </li>
+                <div className="space-y-3">
+                  {byDay(entries).map((g, i) => (
+                    <div key={`${g.day}-${i}`} className="space-y-2">
+                      {g.day ? <h4 className="text-xs font-semibold text-muted">{g.day}</h4> : null}
+                      <ul className="space-y-2">
+                        {g.items.map((e) => (
+                          <li key={e.id} className="flex items-center gap-2 text-sm">
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium">{e.title}</span>
+                              <span className="block truncate text-xs text-muted">
+                                {e.payerName}
+                              </span>
+                            </span>
+                            <span className="num shrink-0 font-semibold">
+                              {money(e.amountSatang)}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={busy || !data.isActive}
+                              onClick={() => editEntry(e)}
+                              className={btn}
+                            >
+                              {t("แก้")}
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={t("ลบ {0}", e.title)}
+                              disabled={busy || !data.isActive}
+                              onClick={() => removeEntry(e)}
+                              className={cn(btn, "w-9 px-0 text-expense")}
+                            >
+                              <Trash2 className="mx-auto h-4 w-4" aria-hidden />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ))}
-                </ul>
+                  {nextCursor ? (
+                    <button
+                      type="button"
+                      onClick={showMore}
+                      disabled={loadingMore}
+                      className="h-11 w-full rounded-2xl border border-border bg-surface text-sm font-semibold disabled:opacity-60"
+                    >
+                      {loadingMore ? t("กำลังโหลด…") : t("ดูเพิ่ม")}
+                    </button>
+                  ) : null}
+                </div>
               )}
             </section>
           ) : null}

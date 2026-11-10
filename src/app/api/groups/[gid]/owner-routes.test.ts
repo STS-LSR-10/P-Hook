@@ -8,6 +8,7 @@ const B = "66666666-6666-4666-8666-666666666666";
 let viewer: GroupViewer | null = null;
 let ownerPlan = "ultimate";
 const calls: unknown[] = [];
+const pages: unknown[] = [];
 
 vi.mock("@/lib/auth/require-user", () => ({
   requireUser: async () => ({ userId: "app-Uanna", lineUserId: "Uanna" }),
@@ -23,9 +24,16 @@ vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
 vi.mock("@/lib/group-repo", () => ({
   memberNames: async () => new Map([["Uanna", { name: "แอน", updatedAt: "" }]]),
   payerTotals: async () => [{ lineUserId: "Uanna", totalSatang: 50_000, entries: 2 }],
-  recentEntries: async () => [
-    { id: E, title: "ข้าว", amountSatang: 30_000, occurredAt: "x", payerLineUserId: "Uanna" },
-  ],
+  isEntryCursor: (v: string) => /^2026-.*\|[0-9a-f-]{36}$/.test(v),
+  pageEntries: async (_d: unknown, _g: string, limit: number, cursor?: string | null) => {
+    pages.push(["page", limit, cursor ?? null]);
+    return {
+      items: [
+        { id: E, title: "ข้าว", amountSatang: 30_000, occurredAt: "x", payerLineUserId: "Uanna" },
+      ],
+      next: cursor ? null : `2026-11-10T01:00:00+00:00|${E}`,
+    };
+  },
   getChaseSchedule: async () => ({ everyDays: 1, window: "any" }),
   getLeftAt: async () => new Date("2026-11-08T05:00:00Z"),
   setChaseSchedule: async (_d: unknown, g: string, s: unknown) =>
@@ -48,6 +56,7 @@ vi.mock("@/lib/group-manage", () => ({
 }));
 
 import { GET as manage } from "./manage/route";
+import { GET as entriesPage } from "./entries/route";
 import { DELETE as delEntry, PATCH as patchEntry } from "./entries/[id]/route";
 import { POST as debts } from "./debts/route";
 import { PUT as schedule } from "./schedule/route";
@@ -68,6 +77,7 @@ beforeEach(() => {
   viewer = owner();
   ownerPlan = "ultimate";
   calls.length = 0;
+  pages.length = 0;
 });
 
 describe("owner only", () => {
@@ -113,6 +123,27 @@ describe("the owner's card", () => {
     ]);
     expect(body.debts).toHaveLength(1);
     expect(body.schedule).toEqual({ everyDays: 1, window: "any" });
+    // the first page is 10 entries, and says where the next one starts
+    expect(pages[0]).toEqual(["page", 10, null]);
+    expect(body.nextCursor).toBe(`2026-11-10T01:00:00+00:00|${E}`);
+  });
+  it("entries page: the next 20 after a cursor, none past the end, and a made-up cursor is refused", async () => {
+    const cursor = `2026-11-10T01:00:00+00:00|${E}`;
+    const res = await entriesPage(new Request(`http://x?cursor=${encodeURIComponent(cursor)}`), p);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(pages[0]).toEqual(["page", 20, cursor]);
+    expect(body.entries).toEqual([
+      { id: E, title: "ข้าว", amountSatang: 30_000, occurredAt: "x", payerName: "แอน" },
+    ]);
+    expect(body.nextCursor).toBeNull(); // the last page
+    const bad = await entriesPage(new Request("http://x?cursor=a),id.gt.0"), p);
+    expect(bad.status).toBe(400);
+    expect(pages).toHaveLength(1);
+  });
+  it("entries page: a member who is not the owner is refused", async () => {
+    viewer = { ...owner(), isOwner: false };
+    expect((await entriesPage(new Request("http://x"), p)).status).toBe(403);
   });
   it("entries: edits and deletes in this group; unknown ids are 404; empty or silly edits are 400", async () => {
     expect((await patchEntry(req({ title: " กาแฟ ", amountSatang: 4500 }), pe())).status).toBe(200);

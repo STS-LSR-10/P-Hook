@@ -27,6 +27,92 @@ const MANAGE = {
   schedule: { everyDays: 1, window: "any" },
 };
 
+const entry = (n: number, at: string) => ({
+  id: `e${n}`,
+  title: `รายการ ${n}`,
+  amountSatang: n * 100,
+  occurredAt: at,
+  payerName: "แอน",
+});
+
+test.describe("the entries of a long ledger (360px)", () => {
+  const open = async (page: import("@playwright/test").Page, routes: Record<string, unknown>) => {
+    await mockApi(page, {
+      "GET /api/settings": SETTINGS,
+      "GET /api/me": ME_PLUS,
+      "GET /api/groups": { items: [{ id: GID, name: "ทริปเชียงใหม่", isActive: true }] },
+      ...routes,
+    });
+    await page.goto("/settings");
+    await page.getByRole("button", { name: /จัดการกลุ่ม/ }).click();
+    await page.getByRole("tab", { name: "รายการจด" }).click();
+  };
+
+  test("starts with a short page under day headings, and ดูเพิ่ม adds the next page until the end", async ({
+    page,
+  }) => {
+    const asked: string[] = [];
+    await open(page, {
+      [`GET /api/groups/${GID}/manage`]: {
+        ...MANAGE,
+        entries: [
+          entry(1, "2026-11-10T08:00:00+07:00"),
+          entry(2, "2026-11-10T07:00:00+07:00"),
+          entry(3, "2026-11-09T20:00:00+07:00"),
+        ],
+        nextCursor: "2026-11-09T13:00:00+00:00|cursor-1",
+      },
+      [`GET /api/groups/${GID}/entries`]: (route: Route) => {
+        asked.push(new URL(route.request().url()).searchParams.get("cursor") ?? "");
+        return {
+          entries: [entry(4, "2026-11-08T10:00:00+07:00")],
+          nextCursor: null,
+        };
+      },
+    });
+    const list = page.getByRole("region", { name: "รายการจดของกลุ่ม" });
+    await expect(list.getByRole("heading", { level: 4 })).toHaveCount(2); // 10 พ.ย. and 9 พ.ย.
+    await expect(list.getByText("รายการ 1", { exact: true })).toBeVisible();
+    await expect(list.getByText("รายการ 4", { exact: true })).toHaveCount(0);
+
+    await list.getByRole("button", { name: "ดูเพิ่ม" }).click();
+    await expect(list.getByText("รายการ 4", { exact: true })).toBeVisible();
+    await expect(list.getByText("รายการ 1", { exact: true })).toBeVisible(); // the first page stays
+    expect(asked).toEqual(["2026-11-09T13:00:00+00:00|cursor-1"]);
+    // that was the last page
+    await expect(list.getByRole("button", { name: "ดูเพิ่ม" })).toHaveCount(0);
+    await expectNoHorizontalScroll(page);
+  });
+
+  test("no ดูเพิ่ม when everything fits on the first page", async ({ page }) => {
+    await open(page, { [`GET /api/groups/${GID}/manage`]: MANAGE });
+    await expect(page.getByRole("button", { name: "ดูเพิ่ม" })).toHaveCount(0);
+    await expect(page.getByText("ข้าวเที่ยง")).toBeVisible();
+  });
+
+  test("a failed ดูเพิ่ม says so and can be tried again", async ({ page }) => {
+    let calls = 0;
+    await open(page, {
+      [`GET /api/groups/${GID}/manage`]: {
+        ...MANAGE,
+        entries: [entry(1, "2026-11-10T08:00:00+07:00")],
+        nextCursor: "2026-11-09T13:00:00+00:00|c",
+      },
+      [`GET /api/groups/${GID}/entries`]: () => {
+        calls += 1;
+        return calls === 1
+          ? { status: 500, body: { error: "โหลดไม่สำเร็จ" } }
+          : { entries: [entry(2, "2026-11-09T10:00:00+07:00")], nextCursor: null };
+      },
+    });
+    const more = page.getByRole("button", { name: "ดูเพิ่ม" });
+    await more.click();
+    await expect(page.getByRole("status").filter({ hasText: "โหลดไม่สำเร็จ" })).toBeVisible();
+    await more.click();
+    await expect(page.getByText("รายการ 2", { exact: true })).toBeVisible();
+  });
+});
+
 test.describe("group management in settings (360px)", () => {
   test("the owner of a group sees the card; clearing and the schedule go to the server", async ({
     page,

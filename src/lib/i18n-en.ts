@@ -2965,4 +2965,5 @@ export const EN: Record<string, string> = {
   ซื้อ: "Buy",
   "แพ็กรายเดือน (พื้นที่ และกลุ่ม LINE) ต่ออายุเองเมื่อจ่ายด้วยบัตร ยกเลิกได้ที่ “จัดการการชำระเงิน” ส่วนแพ็กสลิปและแพ็กเตือนซื้อครั้งเดียวและไม่หมดอายุ":
     "Monthly packs (storage and LINE groups) renew by themselves when paid by card; cancel them under “Manage payment”. Slip and reminder packs are bought once and never expire.",
+  ขอหน้ารายการไม่ถูกต้อง: "That page of entries cannot be asked for",
 };
