@@ -43,28 +43,35 @@ export function CurrencySheet({ current, onClose }: { current?: string; onClose:
   }
 
   return (
-    <Sheet title={t("สกุลเงิน")} onClose={onClose}>
-      <label className="flex h-11 items-center gap-2 border-b border-border px-1">
-        <Search className="h-4 w-4 text-muted" aria-hidden />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("ค้นหาสกุลเงิน")}
-          aria-label={t("ค้นหาสกุลเงิน")}
-          className="h-full w-full bg-transparent text-sm outline-none"
-        />
-      </label>
-      <p className="text-xs text-muted">
-        {t(
-          "เปลี่ยนแล้วตัวเลขของรายการเดิมจะเหมือนเดิม เปลี่ยนแค่สัญลักษณ์ ส่วนเงินสกุลอื่นที่จดหลังจากนี้จะแปลงเป็นสกุลนี้ให้",
-        )}
-      </p>
-      {error ? (
-        <p role="alert" className="text-sm text-expense">
-          {error}
-        </p>
-      ) : null}
+    <Sheet
+      title={t("สกุลเงิน")}
+      onClose={onClose}
+      header={
+        <>
+          <label className="flex h-11 items-center gap-2 border-b border-border px-1">
+            <Search className="h-4 w-4 text-muted" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("ค้นหาสกุลเงิน")}
+              aria-label={t("ค้นหาสกุลเงิน")}
+              className="h-full w-full bg-transparent text-sm outline-none"
+            />
+          </label>
+          <p className="text-xs text-muted">
+            {t(
+              "เปลี่ยนแล้วตัวเลขของรายการเดิมจะเหมือนเดิม เปลี่ยนแค่สัญลักษณ์ ส่วนเงินสกุลอื่นที่จดหลังจากนี้จะแปลงเป็นสกุลนี้ให้",
+            )}
+          </p>
+          {error ? (
+            <p role="alert" className="text-sm text-expense">
+              {error}
+            </p>
+          ) : null}
+        </>
+      }
+    >
       {shown.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted">{t("ไม่พบสกุลเงินที่ค้นหา")}</p>
       ) : (

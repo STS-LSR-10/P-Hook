@@ -682,3 +682,43 @@ test.describe("quota page (360px)", () => {
     );
   });
 });
+
+test.describe("long pickers keep their header in place (360px)", () => {
+  for (const [button, search] of [
+    ["สกุลเงิน", "ค้นหาสกุลเงิน"],
+    ["โซนเวลา", "ค้นหาโซนเวลา"],
+  ] as const) {
+    test(`${button}: the title and the search stay put while only the list scrolls`, async ({
+      page,
+    }) => {
+      await mockApi(page, {
+        ...COMMON,
+        "GET /api/me": ME_PLUS,
+        "GET /api/memory": { items: [] },
+      });
+      await openSettings(page);
+      await page.getByRole("button", { name: button }).click();
+      const dialog = page.getByRole("dialog", { name: button });
+      const title = dialog.getByRole("heading", { name: button });
+      const field = dialog.getByLabel(search);
+      const first = dialog.getByRole("list").getByRole("button").first();
+
+      const before = {
+        title: (await title.boundingBox())!.y,
+        field: (await field.boundingBox())!.y,
+        first: (await first.boundingBox())!.y,
+      };
+      const body = dialog.locator("[data-sheet-body]");
+      const room = await body.evaluate((el) => el.scrollHeight - el.clientHeight);
+      expect(room).toBeGreaterThan(100); // the list is long enough to scroll
+      await body.evaluate((el) => (el.scrollTop = el.scrollHeight));
+
+      expect((await title.boundingBox())!.y).toBeCloseTo(before.title, 0);
+      expect((await field.boundingBox())!.y).toBeCloseTo(before.field, 0);
+      await expect(title).toBeInViewport();
+      await expect(field).toBeInViewport();
+      // while the list itself did move
+      expect((await first.boundingBox())!.y).toBeLessThan(before.first - 50);
+    });
+  }
+});
