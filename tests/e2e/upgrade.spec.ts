@@ -345,6 +345,58 @@ test.describe("upgrade page (360px)", () => {
     expect(feature.x + feature.width - left).toBeLessThan(150);
   });
 
+  test("tapping a plan name tints that plan's whole column; the chosen plan card sets it too", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE });
+    await page.goto("/upgrade");
+    const table = page.getByRole("table");
+    const head = (name: string) => table.getByRole("button", { name: `ไฮไลต์แผน ${name}` });
+    // the cells of one plan's column in every row: column 1 = Free ... column 4 = Elite
+    const tinted = (n: number) =>
+      table.locator(`tbody td:nth-child(${n + 1}).bg-primary-soft`).count();
+    const rows = await table.locator("tbody td:nth-child(2)").count();
+
+    // it starts on the chosen plan (Pro)
+    await expect(head("Pro")).toHaveAttribute("aria-pressed", "true");
+    expect(await tinted(3)).toBe(rows);
+    expect(await tinted(1)).toBe(0);
+
+    await head("Starter").click();
+    await expect(head("Starter")).toHaveAttribute("aria-pressed", "true");
+    await expect(head("Pro")).toHaveAttribute("aria-pressed", "false");
+    expect(await tinted(2)).toBe(rows);
+    expect(await tinted(3)).toBe(0);
+
+    await head("Starter").click(); // tap again to clear
+    await expect(head("Starter")).toHaveAttribute("aria-pressed", "false");
+    expect(await tinted(2)).toBe(0);
+
+    await page.getByRole("radio", { name: /^Elite/ }).click(); // picking a plan card marks it
+    await expect(head("Elite")).toHaveAttribute("aria-pressed", "true");
+    expect(await tinted(4)).toBe(rows);
+  });
+
+  test("a plan name that scrolls under the feature column is hidden with its column", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE });
+    await page.goto("/upgrade");
+    const box = page.getByRole("region", { name: "เปรียบเทียบแผน" });
+    await box.scrollIntoViewIfNeeded();
+    await box.getByRole("group").evaluate((el) => (el.scrollLeft = el.scrollWidth));
+    const free = page.getByRole("button", { name: "ไฮไลต์แผน Free" });
+    // what is on top at the centre of "Free" is the blank sticky header cell, not the name
+    const covered = await free.evaluate((el) => {
+      // bring the header row into the viewport first (the point must be on screen to be hit-tested)
+      window.scrollBy(0, el.getBoundingClientRect().y - 150);
+      const r = el.getBoundingClientRect();
+      const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return top !== null && !el.contains(top) && top.closest("th") !== el.closest("th");
+    });
+    expect(covered).toBe(true);
+  });
+
   test("has no serious accessibility violations", async ({ page }) => {
     await mockApi(page, { "GET /api/me": ME_FREE });
     await page.goto("/upgrade");

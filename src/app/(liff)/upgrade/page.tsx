@@ -121,6 +121,8 @@ export default function UpgradePage() {
   const [method, setMethod] = useState<Method>("card");
   const [period, setPeriod] = useState<Period>("yearly");
   const [picked, setPicked] = useState<PaidPlan>("plus");
+  // the plan whose column is tinted in the comparison: follows the chosen plan card until a plan name is tapped
+  const [mark, setMark] = useState<Plan | null>("plus");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -285,7 +287,10 @@ export default function UpgradePage() {
                   : undefined
               }
               selected={picked === plan}
-              onSelect={() => setPicked(plan)}
+              onSelect={() => {
+                setPicked(plan);
+                setMark(plan);
+              }}
             />
           ))}
         </div>
@@ -398,7 +403,7 @@ export default function UpgradePage() {
           {t("ยังไม่มีเงินสด? สะสมเหรียญจากการจดทุกวันแล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่า")}
         </p>
 
-        <Comparison />
+        <Comparison mark={mark} onMark={(p) => setMark((m) => (m === p ? null : p))} />
       </div>
     </main>
   );
@@ -590,7 +595,13 @@ function CellView({ cell, tone }: { cell: Cell; tone: "pro" | "plain" }) {
 }
 
 /** What each plan can do: short rows, a tick where the plan has it and a dash where it does not. */
-function Comparison() {
+const COMPARE_PLANS: Plan[] = ["free", "starter", "plus", "ultimate"];
+
+/** `mark`: the plan whose whole column is tinted (tap a plan name to move or clear it). */
+function Comparison({ mark, onMark }: { mark: Plan | null; onMark: (plan: Plan) => void }) {
+  // a thin divider between plans, and the marked plan's cells tinted top to bottom
+  const col = (i: number) =>
+    cn(i > 0 && "border-l border-border", mark === COMPARE_PLANS[i] && "bg-primary-soft");
   return (
     <section
       aria-label={t("เปรียบเทียบแผน")}
@@ -612,21 +623,31 @@ function Comparison() {
           </colgroup>
           <thead>
             <tr className="text-xs">
-              <th scope="col" className="sr-only">
-                {t("ฟีเจอร์")}
+              {/* a real blank cell at the left edge, like the feature names below it, so a plan name
+                  that scrolls under it is hidden with its column instead of floating over it */}
+              <th scope="col" className="sticky left-0 z-10 border-r border-border bg-surface">
+                <span className="sr-only">{t("ฟีเจอร์")}</span>
               </th>
-              <th scope="col" className="py-2 font-semibold">
-                Free
-              </th>
-              <th scope="col" className="py-2 font-semibold">
-                Starter
-              </th>
-              <th scope="col" className="py-2 font-semibold text-primary">
-                Pro
-              </th>
-              <th scope="col" className="py-2 font-semibold">
-                Elite
-              </th>
+              {COMPARE_PLANS.map((p, i) => (
+                <th key={p} scope="col" className={cn("px-1 py-2", col(i))}>
+                  <button
+                    type="button"
+                    aria-pressed={mark === p}
+                    aria-label={`${t("ไฮไลต์แผน")} ${PLAN_LABEL[p]}`}
+                    onClick={() => onMark(p)}
+                    className={cn(
+                      "h-8 rounded-full px-2.5 text-xs font-semibold",
+                      mark === p
+                        ? "bg-primary text-surface"
+                        : p === "plus"
+                          ? "text-primary"
+                          : "text-foreground",
+                    )}
+                  >
+                    {PLAN_LABEL[p]}
+                  </button>
+                </th>
+              ))}
             </tr>
           </thead>
           {FEATURE_GROUPS.map((group) => (
@@ -646,7 +667,7 @@ function Comparison() {
                   <tr key={row.label} className="border-t border-border">
                     <th
                       scope="row"
-                      className="sticky left-0 border-r border-border bg-surface py-3 pl-3 pr-1 text-left text-sm font-normal"
+                      className="sticky left-0 z-10 border-r border-border bg-surface py-3 pl-3 pr-1 text-left text-sm font-normal"
                     >
                       <span className="flex items-center gap-2">
                         <Icon className="h-4 w-4 shrink-0 text-muted" aria-hidden />
@@ -654,7 +675,7 @@ function Comparison() {
                       </span>
                     </th>
                     {row.cells.map((cell, i) => (
-                      <td key={i} className="px-1 py-3 text-center">
+                      <td key={i} className={cn("px-1 py-3 text-center", col(i))}>
                         <CellView cell={cell} tone={i === 2 ? "pro" : "plain"} />
                       </td>
                     ))}
