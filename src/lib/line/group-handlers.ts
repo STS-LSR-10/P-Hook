@@ -1,4 +1,5 @@
 import { loadBonus } from "@/lib/addons-repo";
+import { applyVariety } from "./variety";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calendarMonthRange, dayRange } from "@/lib/budget-cycle";
 import {
@@ -160,7 +161,9 @@ export async function handleGroupEvent(event: LineEvent, deps: HandlerDeps): Pro
   const groupId = event.source?.groupId;
   if (!groupId) return;
   const reply = async (messages: LineMessage[]) => {
-    if (event.replyToken && messages.length > 0) await deps.reply(event.replyToken, messages);
+    if (event.replyToken && messages.length > 0) {
+      await deps.reply(event.replyToken, applyVariety(messages));
+    }
   };
 
   switch (event.type) {

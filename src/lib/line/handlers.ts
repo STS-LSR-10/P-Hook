@@ -168,6 +168,7 @@ import { buildSummaryMenu } from "./summary-menu";
 import { PRESET_TITLE, presetRange } from "@/lib/summary-range-text";
 import type { Owl } from "@/lib/ai/owl";
 import { applyManner } from "@/lib/manner-text";
+import { applyVariety } from "./variety";
 import { inOwlMode, keepOwlOpen, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 import type { IntentRouter } from "@/lib/ai/intent-router";
 import { needsRouter } from "@/lib/ai/route-text";
@@ -489,7 +490,7 @@ export async function handleEvent(event: LineEvent, deps: HandlerDeps): Promise<
   const reply = async (messages: LineMessage[]) => {
     if (event.replyToken && messages.length > 0) {
       const { theme, persona, name } = await prefsOf(deps, user);
-      const said = applyManner(messages.slice(0, MAX_REPLY_MESSAGES), persona, name);
+      const said = applyVariety(applyManner(messages.slice(0, MAX_REPLY_MESSAGES), persona, name));
       await deps.reply(event.replyToken, applyTheme(said, theme));
     }
   };

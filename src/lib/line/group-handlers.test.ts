@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GroupEntryRow, GroupRow, TripRow } from "@/lib/group";
 import { handleEvent, type HandlerDeps, type LineEvent } from "./handlers";
+import { setVarietyRandom } from "./variety";
 
 const GID = "C-group-1";
 const NOW = new Date("2026-10-18T05:00:00Z");
@@ -564,6 +565,19 @@ describe("สรุป / ล่าสุด / ลบล่าสุด", () => {
     const { deps, reply } = setup();
     await handleEvent(inGroup("Ucarl", "ลบล่าสุด"), deps);
     expect(said(reply)).toContain("ไม่มีรายการของคุณให้ลบ");
+  });
+
+  it("the same reply can come out in other words, with the same meaning", async () => {
+    const seen = new Set<string>();
+    for (const roll of [0, 0.5, 0.99]) {
+      setVarietyRandom(() => roll);
+      const { deps, reply } = setup();
+      await handleEvent(inGroup("Ucarl", "ลบล่าสุด"), deps);
+      seen.add(said(reply));
+    }
+    setVarietyRandom(null);
+    expect(seen.size).toBeGreaterThanOrEqual(2);
+    for (const words of seen) expect(words).toContain("ลบ");
   });
 });
 
