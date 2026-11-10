@@ -268,4 +268,48 @@ test.describe("summary page (360px)", () => {
     expect(colours.headline).toEqual([4, 120, 87]);
     expect(colours.footer).toEqual([255, 255, 255]);
   });
+
+  test("card colours: Free has mint only, Starter and above can pick, and the picture follows", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/summary": SUMMARY, "GET /api/me": ME_FREE });
+    await page.goto("/summary");
+    await page.getByRole("button", { name: "แชร์สรุปนี้" }).click();
+    const colours = page.getByRole("dialog", { name: "แชร์สรุปของฉัน" }).getByRole("radiogroup", {
+      name: "สีการ์ด",
+    });
+    await expect(colours.getByRole("radio", { name: "เขียวมิ้นต์" })).toBeChecked();
+    await expect(colours.getByRole("radio", { name: /ฟ้าทะเล/ })).toBeDisabled();
+    await expect(colours.getByRole("radio", { name: /ดำกลางคืน/ })).toBeDisabled();
+    await expect(page.getByText("สีอื่นสำหรับแผน Starter ขึ้นไป")).toBeVisible();
+
+    // a paid plan picks one, and the picture is drawn again in it
+    const paid = await page.context().newPage();
+    await mockApi(paid, {
+      "GET /api/summary": SUMMARY,
+      "GET /api/me": { ...ME_PLUS, features: { ...ME_PLUS.features, personalize: true } },
+    });
+    await paid.goto("/summary");
+    await paid.getByRole("button", { name: "แชร์สรุปนี้" }).click();
+    const dialog = paid.getByRole("dialog", { name: "แชร์สรุปของฉัน" });
+    const picture = dialog.getByRole("img", { name: "ตัวอย่างการ์ดสรุปที่จะแชร์" });
+    await expect(picture).toBeVisible();
+    const mint = await picture.getAttribute("src");
+    await dialog.getByRole("radio", { name: /ดำกลางคืน/ }).click();
+    await expect(dialog.getByRole("radio", { name: /ดำกลางคืน/ })).toBeChecked();
+    await expect(picture).not.toHaveAttribute("src", mint!);
+    await expect(dialog.getByText("สีอื่นสำหรับแผน Starter ขึ้นไป")).toHaveCount(0);
+  });
+
+  test("sending into a chat explains when the share picker is not there", async ({ page }) => {
+    await mockApi(page, { "GET /api/summary": SUMMARY, "GET /api/me": ME_FREE });
+    await page.goto("/summary");
+    await page.getByRole("button", { name: "แชร์สรุปนี้" }).click();
+    await page.getByRole("button", { name: "ส่งเข้าแชท LINE" }).click();
+    await expect(
+      page
+        .getByRole("status")
+        .filter({ hasText: "ส่งเข้าแชทไม่ได้ตอนนี้ ลองเปิดสรุปนี้ในแอป LINE นะ" }),
+    ).toBeVisible();
+  });
 });

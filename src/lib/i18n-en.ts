@@ -3001,4 +3001,11 @@ export const EN: Record<string, string> = {
   กดค้างที่รูปเพื่อบันทึกลงเครื่องได้: "Press and hold the picture to save it",
   บันทึกรูป: "Save picture",
   สรุปของฉันกับพี่ฮูก: "My summary with P'Hook",
+  "ส่งเข้าแชทไม่ได้ตอนนี้ ลองเปิดสรุปนี้ในแอป LINE นะ":
+    "Cannot send to a chat right now. Try opening this summary in the LINE app",
+  ส่งเข้าแชทแล้ว: "Sent to the chat",
+  "ส่งเข้าแชทไม่สำเร็จ ลองใหม่อีกครั้งนะ": "Could not send to the chat. Please try again",
+  สีการ์ด: "Card colour",
+  "สีอื่นสำหรับแผน Starter ขึ้นไป": "Other colours are for the Starter plan and above",
+  "ส่งเข้าแชท LINE": "Send to a LINE chat",
 };

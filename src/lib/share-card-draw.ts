@@ -1,3 +1,5 @@
+import { forDark, mixHex } from "@/lib/colour";
+import { THEMES, type ThemeId } from "@/lib/personalize";
 import type { ShareCardModel } from "@/lib/share-card";
 
 /** The size of the picture: a story (9:16), which also fits a post when cropped. */
@@ -10,8 +12,14 @@ interface Theme {
   ink: string;
   muted: string;
   primary: string;
+  /** Text on the primary colour (the line about the month). */
+  onPrimary: string;
   card: string;
   track: string;
+  /** The faint circles in the background. */
+  deco: string;
+  /** The dark squares of the QR code. */
+  qr: string;
 }
 
 const MINT: Theme = {
@@ -20,9 +28,44 @@ const MINT: Theme = {
   ink: "#0F172A",
   muted: "#475569",
   primary: "#047857",
+  onPrimary: "#FFFFFF",
   card: "#FFFFFF",
   track: "#E2E8F0",
+  deco: "rgba(4,120,87,0.07)",
+  qr: "#064E3B",
 };
+
+const NIGHT: Theme = {
+  top: "#0B1220",
+  bottom: "#1E293B",
+  ink: "#F8FAFC",
+  muted: "#CBD5E1",
+  primary: "#5EEAD4",
+  onPrimary: "#0F172A",
+  card: "#1F2A3C",
+  track: "#334155",
+  deco: "rgba(94,234,212,0.07)",
+  qr: "#0F172A",
+};
+
+/** The colours of the card for a card theme (the same themes the chat cards have). */
+export function themeFor(id: ThemeId): Theme {
+  if (id === "mint") return MINT;
+  if (id === "night") return NIGHT;
+  const p = THEMES[id].palette;
+  return {
+    top: mixHex(p.soft, "#FFFFFF", 0.55),
+    bottom: p.soft,
+    ink: "#0F172A",
+    muted: p.bodySub,
+    primary: p.primary,
+    onPrimary: "#FFFFFF",
+    card: "#FFFFFF",
+    track: "#E2E8F0",
+    deco: `${p.primary}12`,
+    qr: p.bodyDeep,
+  };
+}
 
 export interface DrawInput {
   model: ShareCardModel;
@@ -32,7 +75,8 @@ export interface DrawInput {
   link: string | null;
   /** The font family to draw with (the page's own, so Thai looks like the app). */
   fontFamily: string;
-  theme?: Theme;
+  /** The card theme (default: mint). */
+  theme?: ThemeId;
 }
 
 function roundRect(
@@ -119,14 +163,14 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-async function qrImage(link: string): Promise<HTMLImageElement | null> {
+async function qrImage(link: string, dark: string): Promise<HTMLImageElement | null> {
   try {
     const QRCode = (await import("qrcode")).default;
     const url = await QRCode.toDataURL(link, {
       margin: 1,
       width: 320,
       errorCorrectionLevel: "M",
-      color: { dark: "#064E3B", light: "#FFFFFF" },
+      color: { dark, light: "#FFFFFF" },
     });
     return await loadImage(url);
   } catch {
@@ -137,7 +181,7 @@ async function qrImage(link: string): Promise<HTMLImageElement | null> {
 /** Draw the card and return it as a PNG. */
 export async function drawShareCard(input: DrawInput): Promise<Blob> {
   const { model, code, link, fontFamily: f } = input;
-  const th = input.theme ?? MINT;
+  const th = themeFor(input.theme ?? "mint");
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
@@ -152,7 +196,7 @@ export async function drawShareCard(input: DrawInput): Promise<Blob> {
   }
   const [logo, qr] = await Promise.all([
     loadImage("/phook-icon.png"),
-    link ? qrImage(link) : Promise.resolve(null),
+    link ? qrImage(link, th.qr) : Promise.resolve(null),
   ]);
 
   // background
@@ -161,7 +205,7 @@ export async function drawShareCard(input: DrawInput): Promise<Blob> {
   bg.addColorStop(1, th.bottom);
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
-  ctx.fillStyle = "rgba(4,120,87,0.07)";
+  ctx.fillStyle = th.deco;
   ctx.beginPath();
   ctx.arc(980, 120, 300, 0, Math.PI * 2);
   ctx.fill();
@@ -209,7 +253,8 @@ export async function drawShareCard(input: DrawInput): Promise<Blob> {
     fitText(ctx, "ใช้จ่ายหมวดไหนมากสุด", 80, y, 920, 700, 48, f);
     y += 35;
     for (const row of model.top) {
-      const color = row.color ?? th.primary;
+      const color =
+        input.theme === "night" ? forDark(row.color, th.primary) : (row.color ?? th.primary);
       ctx.fillStyle = `${color}2E`;
       ctx.beginPath();
       ctx.arc(140, y + 50, 50, 0, Math.PI * 2);
@@ -256,7 +301,7 @@ export async function drawShareCard(input: DrawInput): Promise<Blob> {
   ctx.fillStyle = th.primary;
   roundRect(ctx, 80, y, 920, 130, 40);
   ctx.fill();
-  ctx.fillStyle = "#FFFFFF";
+  ctx.fillStyle = th.onPrimary;
   ctx.font = `700 44px ${f}`;
   const lines = wrap(ctx, model.headline, 820).slice(0, 2);
   lines.forEach((ln, i) => {
@@ -270,7 +315,13 @@ export async function drawShareCard(input: DrawInput): Promise<Blob> {
   roundRect(ctx, 80, fy, 920, 260, 48);
   ctx.fill();
   const textX = qr ? 400 : 120;
-  if (qr) ctx.drawImage(qr, 112, fy + 20, 220, 220);
+  if (qr) {
+    // a white plate, so the code reads on a dark card too
+    ctx.fillStyle = "#FFFFFF";
+    roundRect(ctx, 104, fy + 12, 236, 236, 24);
+    ctx.fill();
+    ctx.drawImage(qr, 112, fy + 20, 220, 220);
+  }
   ctx.fillStyle = th.ink;
   fitText(ctx, "จดง่าย เห็นเงินชัด", textX, fy + 78, 570, 700, 52, f);
   ctx.fillStyle = th.muted;

@@ -245,6 +245,7 @@ export default function SummaryPage() {
           summary={data}
           previous={before.data}
           code={me.data?.referralCode ?? null}
+          canTheme={me.data?.features.personalize === true}
           onClose={() => setSharing(false)}
         />
       ) : null}
