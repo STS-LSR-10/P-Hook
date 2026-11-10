@@ -594,75 +594,77 @@ function Comparison() {
   return (
     <section
       aria-label={t("เปรียบเทียบแผน")}
-      // focusable so a keyboard can scroll the wide table
-      tabIndex={0}
-      className="overflow-x-auto rounded-3xl border border-border bg-surface"
+      className="overflow-hidden rounded-3xl border border-border bg-surface"
     >
-      <table className="w-full min-w-[500px] table-fixed border-collapse text-sm">
-        <caption className="px-4 pb-1 pt-4 text-left text-base font-bold">
-          {t("ทำอะไรได้บ้าง?")}
-        </caption>
-        <colgroup>
-          <col />
-          <col className="w-[64px]" />
-          <col className="w-[72px]" />
-          <col className="w-[64px]" />
-          <col className="w-[64px]" />
-        </colgroup>
-        <thead>
-          <tr className="text-xs">
-            <th scope="col" className="sr-only">
-              {t("ฟีเจอร์")}
-            </th>
-            <th scope="col" className="py-2 font-semibold">
-              Free
-            </th>
-            <th scope="col" className="py-2 font-semibold">
-              Starter
-            </th>
-            <th scope="col" className="py-2 font-semibold text-primary">
-              Pro
-            </th>
-            <th scope="col" className="py-2 font-semibold">
-              Elite
-            </th>
-          </tr>
-        </thead>
-        {FEATURE_GROUPS.map((group) => (
-          <tbody key={group.title}>
-            <tr>
-              <th
-                colSpan={5}
-                scope="colgroup"
-                className="px-4 pb-1 pt-4 text-left text-xs font-bold text-muted"
-              >
-                {group.title}
+      <h2 id="compare-title" className="px-4 pb-1 pt-4 text-base font-bold">
+        {t("ทำอะไรได้บ้าง?")}
+      </h2>
+      {/* only the table scrolls sideways: the title above, and the group names and feature names
+          inside, stay at the left edge. Focusable so a keyboard can scroll it. */}
+      <div role="group" aria-labelledby="compare-title" tabIndex={0} className="overflow-x-auto">
+        <table className="w-full min-w-[436px] table-fixed border-collapse text-sm">
+          <colgroup>
+            <col className="w-[132px]" />
+            <col className="w-[76px]" />
+            <col className="w-[76px]" />
+            <col className="w-[76px]" />
+            <col className="w-[76px]" />
+          </colgroup>
+          <thead>
+            <tr className="text-xs">
+              <th scope="col" className="sr-only">
+                {t("ฟีเจอร์")}
+              </th>
+              <th scope="col" className="py-2 font-semibold">
+                Free
+              </th>
+              <th scope="col" className="py-2 font-semibold">
+                Starter
+              </th>
+              <th scope="col" className="py-2 font-semibold text-primary">
+                Pro
+              </th>
+              <th scope="col" className="py-2 font-semibold">
+                Elite
               </th>
             </tr>
-            {group.rows.map((row) => {
-              const Icon = ICONS[row.icon];
-              return (
-                <tr key={row.label} className="border-t border-border">
-                  <th
-                    scope="row"
-                    className="sticky left-0 bg-surface py-3 pl-4 pr-1 text-left text-sm font-normal"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 shrink-0 text-muted" aria-hidden />
-                      <span>{row.label}</span>
-                    </span>
-                  </th>
-                  {row.cells.map((cell, i) => (
-                    <td key={i} className="px-1 py-3 text-center">
-                      <CellView cell={cell} tone={i === 2 ? "pro" : "plain"} />
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        ))}
-      </table>
+          </thead>
+          {FEATURE_GROUPS.map((group) => (
+            <tbody key={group.title}>
+              <tr>
+                <th
+                  colSpan={5}
+                  scope="colgroup"
+                  className="pb-1 pt-4 text-left text-xs font-bold text-muted"
+                >
+                  <span className="sticky left-4 inline-block">{group.title}</span>
+                </th>
+              </tr>
+              {group.rows.map((row) => {
+                const Icon = ICONS[row.icon];
+                return (
+                  <tr key={row.label} className="border-t border-border">
+                    <th
+                      scope="row"
+                      className="sticky left-0 border-r border-border bg-surface py-3 pl-3 pr-1 text-left text-sm font-normal"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+                        <span>{row.label}</span>
+                      </span>
+                    </th>
+                    {row.cells.map((cell, i) => (
+                      <td key={i} className="px-1 py-3 text-center">
+                        <CellView cell={cell} tone={i === 2 ? "pro" : "plain"} />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          ))}
+        </table>
+      </div>
       <p className="border-t border-border px-4 py-3 text-xs text-muted">{FAIR_USE_NOTE}</p>
     </section>
   );

@@ -319,6 +319,32 @@ test.describe("upgrade page (360px)", () => {
     expect(isGreen(await ultimate.getAttribute("class"))).toBe(true);
     expect(isGreen(await pro.getAttribute("class"))).toBe(false);
   });
+  test("scrolling the comparison sideways keeps its title, group names and feature column in place", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE });
+    await page.goto("/upgrade");
+    const box = page.getByRole("region", { name: "เปรียบเทียบแผน" });
+    await box.scrollIntoViewIfNeeded();
+    const scroller = box.getByRole("group");
+    const range = await scroller.evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(range).toBeGreaterThan(20); // there is something to scroll
+    await scroller.evaluate((el) => (el.scrollLeft = el.scrollWidth));
+
+    const left = (await scroller.boundingBox())!.x;
+    // the title, the first group name and the first feature name still start at the left edge
+    for (const el of [
+      page.getByText("ทำอะไรได้บ้าง?"),
+      box.locator("tbody tr").first().locator("th span"),
+      box.getByRole("rowheader").first(),
+    ]) {
+      expect((await el.boundingBox())!.x).toBeGreaterThanOrEqual(left - 1);
+    }
+    // and the feature column is narrow, so no plan column hides under it while scrolled
+    const feature = (await box.getByRole("rowheader").first().boundingBox())!;
+    expect(feature.x + feature.width - left).toBeLessThan(150);
+  });
+
   test("has no serious accessibility violations", async ({ page }) => {
     await mockApi(page, { "GET /api/me": ME_FREE });
     await page.goto("/upgrade");
