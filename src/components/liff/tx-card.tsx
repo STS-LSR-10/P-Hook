@@ -1,7 +1,7 @@
 import { ChevronRight, Image as ImageIcon, Receipt } from "lucide-react";
 import type { ReactNode } from "react";
 import { sliceColor } from "@/components/liff/slice-color";
-import { emojiOf } from "@/lib/category-emoji";
+import { txEmoji } from "@/lib/tx-icon";
 import type { TxDto } from "@/lib/dto";
 import { formatForeign, formatRate } from "@/lib/fx";
 import { money } from "@/lib/money";
@@ -44,8 +44,9 @@ export function TxCard({
   showDate?: boolean;
 }) {
   const income = tx.type === "income";
-  const color = sliceColor(null, paletteIndex(tx));
-  const emoji = emojiOf(tx.categoryIcon);
+  // the category's own colour (a stable pastel for one that has none), and an icon for the entry
+  const color = sliceColor(tx.categoryColor, paletteIndex(tx));
+  const emoji = txEmoji(tx);
   const body = (
     <>
       <span

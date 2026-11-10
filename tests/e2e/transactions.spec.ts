@@ -244,6 +244,54 @@ test.describe("transactions page (360px)", () => {
     await expect(page.getByText("🐱", { exact: true })).toBeVisible(); // on the card's tile
   });
 
+  test("each entry gets an icon that fits its title or category, on a tile in the category's colour", async ({
+    page,
+  }) => {
+    await mockApi(page, {
+      "GET /api/transactions": {
+        items: [
+          TX({ id: "a1", title: "กาแฟ", categoryName: "อาหาร", categoryIcon: "utensils" }),
+          TX({
+            id: "a2",
+            title: "ค่าแท็กซี่",
+            categoryName: "เดินทาง",
+            categoryIcon: "bus",
+            categoryColor: "#0369A1",
+          }),
+          TX({
+            id: "a3",
+            title: "ของลึกลับ",
+            categoryName: "อาหาร",
+            categoryIcon: "utensils",
+          }),
+          TX({
+            id: "a4",
+            title: "ของลึกลับอีกอย่าง",
+            categoryName: "อื่นๆ",
+            categoryIcon: "mystery-icon",
+          }),
+        ],
+        hasMore: false,
+      },
+      "GET /api/me": ME_FREE,
+    });
+    await page.goto("/transactions");
+    const card = (title: string) =>
+      page.getByRole("button", { name: `แก้ไข ${title}`, exact: true });
+    await expect(card("กาแฟ")).toContainText("☕"); // the title beats the category
+    await expect(card("ค่าแท็กซี่")).toContainText("🚕");
+    await expect(card("ของลึกลับ")).toContainText("🍜"); // no word of the title: the category's icon
+    await expect(card("ของลึกลับอีกอย่าง")).not.toContainText(/\p{Extended_Pictographic}/u); // a dot only
+    // the tile takes the category's own colour (a faint tint of #0369A1)
+    const tint = await card("ค่าแท็กซี่")
+      .locator("span[aria-hidden]")
+      .first()
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(tint).toMatch(/^rgba\(3, 105, 161, 0\.1\d*\)$/);
+    await expectNoHorizontalScroll(page);
+    await expectNoSeriousA11yViolations(page);
+  });
+
   test("empty state", async ({ page }) => {
     await mockApi(page, {
       "GET /api/transactions": { items: [], hasMore: false },
