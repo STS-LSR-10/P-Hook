@@ -85,7 +85,9 @@ describe("theme and manner in the chat", () => {
     const text = everything(reply);
     expect(text).toContain("#E0F2FE"); // ocean header band
     expect(text).not.toContain("#CCFBF1"); // the mint band is gone
-    expect(text).toMatch(/จดให้แล้วจ้า|เก็บเข้าสมุด|เรียบร้อย|ลงบัญชี|จำให้เอง/);
+    expect(text).toMatch(
+      /จดให้แล้วว่ะ|ลงสมุดละ|ติ๊ก! อีกรายการ|จดทันทีแบบนี้แหละโคตรดี|จดแล้วว่ะ|เวิร์ก/,
+    );
   });
 
   it("Free keeps the default look and tone", async () => {
@@ -95,7 +97,7 @@ describe("theme and manner in the chat", () => {
     const text = everything(reply);
     expect(text).toContain("#CCFBF1");
     expect(text).not.toContain("#E0F2FE");
-    expect(text).not.toMatch(/จดให้แล้วจ้า|เก็บเข้าสมุด|ลงบัญชีแล้ว ไม่หลุด|จำให้เอง/);
+    expect(text).not.toMatch(/จดให้แล้วว่ะ|ลงสมุดละ|ติ๊ก! อีกรายการ|จดแล้วว่ะ/);
   });
 
   it("a free plan adds no extra line, whatever manner was saved", async () => {
@@ -113,8 +115,8 @@ describe("theme and manner in the chat", () => {
     const { deps, reply } = setup();
     await handleEvent(say("กาแฟ 50"), deps);
     const text = everything(reply);
-    expect(text).toContain("จดแล้ว ไม่ต้องขอบคุณ ✅");
-    expect(text).toContain("ตรวจเองด้วย อย่าให้พี่ฮูกต้องตามแก้");
+    expect(text).toContain("จดแล้ว พักก่อนนะ ✅");
+    expect(text).toContain("เอาดี ๆ ตรวจเองอีกรอบ อย่าเชื่อใจพี่ฮูกร้อยเปอร์เซ็นต์");
     expect(text).not.toContain("อย่าลืมตรวจสอบรายการที่จดด้วยนะ");
   });
 

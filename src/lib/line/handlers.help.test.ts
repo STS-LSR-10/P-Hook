@@ -86,11 +86,11 @@ describe("the help flow in the chat", () => {
     persona = "bestie";
     const { deps, reply } = setup();
     await handleEvent(say("วิธีใช้งาน"), deps);
-    expect(first(reply).text).toContain("เพื่อน");
+    expect(first(reply).text).toContain("แก!");
     plan = "free";
     const free = setup();
     await handleEvent(say("วิธีใช้งาน"), free.deps);
-    expect(first(free.reply).text).toContain("ค่ะ"); // Free always gets the polite default
+    expect(first(free.reply).text).toContain("ครับ"); // Free always gets the polite default
   });
 
   it("choosing a topic shows its card, with the chips still under it", async () => {

@@ -2709,12 +2709,7 @@ export const EN: Record<string, string> = {
     "Calm and proper, but with a gentle sting in every word",
   "ได้ครับ{name} นึกว่าจะผลัดเป็นเดือนหน้าซะแล้วนะเนี่ย... บันทึกเรียบร้อยครับ":
     "Certainly{name}. I thought you would put it off until next month... Recorded",
-  ฮูกนอนดึก: "Night Owl",
   พิเศษ: "Special",
-  "ขยันเตือนคนนอนดึก จ้องจับผิดรายจ่ายเก่ง ตาวาวทุกการเคลื่อนไหว":
-    "Nags night owls, spots every expense, eyes wide open",
-  "ดึกป่านนี้ยังไม่นอนอีกนะ{name}! ตาจะค้างแข่งกับพี่ฮูกเหรอ รีบนอนได้แล้ว!":
-    "Still awake this late{name}! Staying up to compete with P'Hook? Go to bed!",
   "จดสำเร็จ {0} รายการ ✅": "Recorded {0} entries ✅",
   "จดแล้ว {0} รายการ: {1}": "Recorded {0} entries: {1}",
   รวม: "Total",
@@ -2967,4 +2962,30 @@ export const EN: Record<string, string> = {
     "Monthly packs (storage and LINE groups) renew by themselves when paid by card; cancel them under “Manage payment”. Slip and reminder packs are bought once and never expire.",
   ขอหน้ารายการไม่ถูกต้อง: "That page of entries cannot be asked for",
   ไฮไลต์แผน: "Highlight plan",
+  "อยากรู้เรื่องไหนเป็นพิเศษครับ แตะหัวข้อด้านล่างเพื่อดูวิธีใช้ได้เลยนะ ✨":
+    "Which topic would you like to know about? Tap one below to see how to use it ✨",
+  "ถามไว้ก่อนเก่งมากเลยน้า! เลือกหัวข้อด้านล่าง เดี๋ยวบอกให้ละเอียดเลยนะค้าบ 🌟":
+    "Good thinking to ask first! Pick a topic below and I'll walk you through it 🌟",
+  "อยากรู้เรื่องไหนบอกมาได้เลยแก! จิ้มหัวข้อข้างล่างป่ะ 😎":
+    "Tell me what you want to know! Just tap a topic below 😎",
+  "ยังไม่รู้จะเริ่มตรงไหนใช่มั้ย? เลือกหัวข้อข้างล่าง แล้วอ่านให้จบนะ สติค่ะ! 📖":
+    "Not sure where to start? Pick a topic below and read it to the end. Get a grip! 📖",
+  "หากสงสัยเรื่องใด เลือกหัวข้อด้านล่างได้ตามสะดวกเลยครับ ...ถ้าไม่ลืมไปก่อนนะครับ 🫖":
+    "If anything puzzles you, pick a topic below at your convenience... if you haven't forgotten, that is 🫖",
+  "เซฟโซน ปลอบโยน นุ่มนวล ใจดี คอยให้กำลังใจเสมอ ไม่ดุ ไม่ตัดสิน":
+    "A safe space: soothing, gentle and kind, always cheering you on. Never scolds, never judges",
+  "ไม่เป็นไรนะค้าบ{name} พลาดได้น้า พรุ่งนี้สู้ ๆ นะ คนเก่ง พี่ฮูกอยู่ตรงนี้เสมอ ✨":
+    "It's okay{name}, everyone slips. Tomorrow's a new day, you've got this. I'm always right here ✨",
+  "เพื่อนสนิทสายลุย ๆ จริงใจ คุยเหมือนพิมพ์แชต LINE ตรงไปตรงมา ช่วยกันแบบเพื่อนช่วยเพื่อน":
+    "A close, sincere friend who talks like a LINE chat: direct, to the point, helping like a friend helps a friend",
+  'เอาจริงนะแก{name} จดไว้ให้ละ อยากดูว่าเดือนนี้เวิร์กมั้ย พิมพ์ "สรุปเดือนนี้" ได้เลย':
+    'Honestly{name}, I\'ve logged it. Want to see how this month is going? Type "this month" any time',
+  "ตัวแม่สายฟาด ปากจัดแต่จริงใจ ขยันเตือนสติแบบฮา ๆ หวังดีเสมอ":
+    "A sharp-tongued queen who means well: funny reality checks, always with good intentions",
+  "พักก่อนค่ะ{name} สติค่ะ! อย่าหาทำรูดอีกนะคุณน้า ท่องไว้ว่าจน เดี๋ยวพี่ฮูกจดให้ก่อน":
+    "Hold on{name}, get a grip! Don't swipe again, repeat after me: I'm broke. I'll log it first",
+  "ผู้ดีจิบชา นิ่ง สงบ เรียบหรู มีชั้นเชิงในการแซะแบบเชือดนิ่ม ๆ ไม่ใช้สแลง":
+    "A calm, refined tea-sipper with a quiet sting. Always composed, never uses slang",
+  "น่าสนใจดีครับ{name} ก็แล้วแต่จะพิจารณานะครับ บันทึกเรียบร้อยแล้ว ตามสะดวกเลยครับ":
+    "How interesting{name}. Entirely up to you, of course. Recorded, at your convenience",
 };

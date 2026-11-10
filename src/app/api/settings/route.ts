@@ -5,6 +5,7 @@ import { MAX_START_DAY } from "@/lib/budget-cycle";
 import { requireFeature } from "@/lib/plan-server";
 import {
   cleanCallName,
+  currentPersona,
   DEFAULT_PERSONA,
   DEFAULT_THEME,
   MAX_CALL_NAME,
@@ -40,6 +41,8 @@ async function settingsOf(db: SupabaseClient, userId: string) {
   const row = user.data as { timezone?: string; currency?: string; locale?: string } | null;
   return {
     ...settings,
+    // a manner that was removed shows as the one it became
+    bot_persona: currentPersona(settings.bot_persona) as string,
     timezone: isZone(row?.timezone) ? row.timezone : DEFAULT_ZONE,
     currency: isHomeCurrency(row?.currency) ? row.currency : DEFAULT_CURRENCY,
     locale: isLocale(row?.locale) ? row.locale : DEFAULT_LOCALE,

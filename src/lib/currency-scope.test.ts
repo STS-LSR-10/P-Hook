@@ -6,7 +6,7 @@ import { runInZone } from "./zone-scope";
 describe("the person's currency reaches every message of their own", () => {
   it("a manner's over-budget line uses their sign", () => {
     expect(runInZone(null, () => dailyStillOverLine("bestie", "12"), "USD")).toBe(
-      "ยังเกินงบวันนี้อยู่ $12 นะเพื่อน",
+      "ยังเกินงบวันนี้อยู่ $12 นะแก",
     );
   });
 

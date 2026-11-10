@@ -162,10 +162,10 @@ describe("help topics", () => {
 
 describe("the question", () => {
   it("has its own wording for each manner of the bot (never the sample's)", () => {
-    const wording = (["plain", "warm", "bestie", "spicy", "tea", "night"] as const).map(
+    const wording = (["plain", "warm", "bestie", "spicy", "tea"] as const).map(
       (p) => (buildHelpPrompt(p) as unknown as { text: string }).text,
     );
-    expect(new Set(wording).size).toBe(6);
+    expect(new Set(wording).size).toBe(5);
     for (const text of wording) {
       expect(text).not.toContain("สงสัยตรงไหน");
       expect(text).not.toContain("คะลูก");

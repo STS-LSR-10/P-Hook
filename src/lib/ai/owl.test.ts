@@ -156,6 +156,38 @@ describe("needsPersonalData: the person's records go along only for a question a
   });
 });
 
+describe("the voice of every answer", () => {
+  it("is modern spoken Thai: no stiff writing, ครับ with soft endings, the punchline first", () => {
+    expect(OWL_SYSTEM_PROMPT).toContain("VOICE");
+    expect(OWL_SYSTEM_PROMPT).toContain("อย่างไรก็ตาม"); // named as a phrase never to use
+    expect(OWL_SYSTEM_PROMPT).toContain("มั้ย / ป่ะ");
+    expect(OWL_SYSTEM_PROMPT).toContain("use ครับ (not ค่ะ)");
+    expect(OWL_SYSTEM_PROMPT).toContain("Punchline first");
+  });
+});
+
+describe("the four modes of the bot", () => {
+  const prompt = (persona: "warm" | "bestie" | "spicy" | "tea") =>
+    owlUserPrompt({ question: "ขอคำแนะนำ", data: "", persona });
+
+  it("each has its own words and character", () => {
+    expect(prompt("warm")).toContain("นะค้าบ");
+    expect(prompt("warm")).toContain("Never scold or judge");
+    expect(prompt("bestie")).toContain("ป่ะ");
+    expect(prompt("bestie")).toContain("แก / นาย / ตัวเอง");
+    expect(prompt("spicy")).toContain("สติค่ะ");
+    expect(prompt("spicy")).toContain("never crude or abusive");
+    expect(prompt("tea")).toContain("น่าสนใจดีนะครับ");
+    expect(prompt("tea")).toContain("no teen slang");
+  });
+
+  it("the night owl is not a mode any more: an old saved value asks for no manner", () => {
+    const p = owlUserPrompt({ question: "x", data: "", persona: "night" as never });
+    expect(p).not.toContain("MANNER");
+    expect(p).not.toContain("undefined");
+  });
+});
+
 describe("the manner the person chose", () => {
   const base = { question: "วันนี้มีอะไรต้องทำบ้าง", data: "" };
   it("adds nothing for the plain manner or when none is given", () => {
@@ -163,7 +195,7 @@ describe("the manner the person chose", () => {
     expect(owlUserPrompt({ ...base, persona: "plain" })).not.toContain("MANNER");
   });
 
-  it.each(["warm", "bestie", "spicy", "tea", "night"] as const)(
+  it.each(["warm", "bestie", "spicy", "tea"] as const)(
     "asks for the %s manner and keeps facts and numbers exact",
     (persona) => {
       const p = owlUserPrompt({ ...base, persona });

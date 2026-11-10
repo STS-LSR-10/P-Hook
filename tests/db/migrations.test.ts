@@ -2135,6 +2135,34 @@ describe("card theme and bot manner (0032)", () => {
     ).rejects.toThrow();
   });
 
+  it("the night owl manner is gone: refused now, and anyone who had it moves to bestie (0067)", async () => {
+    const u = await newUser(db, `per-${Math.random()}`);
+    await expect(
+      db.query("update user_settings set bot_persona = 'night' where user_id = $1", [u]),
+    ).rejects.toThrow();
+    // a row from before the migration: put the old value back, run the migration again
+    await db.query("alter table user_settings drop constraint user_settings_bot_persona_check");
+    await db.query("update user_settings set bot_persona = 'night' where user_id = $1", [u]);
+    await db.exec(
+      readFileSync(
+        join(process.cwd(), "supabase/migrations/0067_remove_night_persona.sql"),
+        "utf8",
+      ),
+    );
+    const r = await one<{ bot_persona: string }>(
+      db,
+      "select bot_persona from user_settings where user_id = $1",
+      [u],
+    );
+    expect(r.bot_persona).toBe("bestie");
+    await expect(
+      db.query("update user_settings set bot_persona = 'night' where user_id = $1", [u]),
+    ).rejects.toThrow();
+    for (const ok of ["warm", "bestie", "spicy", "tea"]) {
+      await db.query("update user_settings set bot_persona = $2 where user_id = $1", [u, ok]);
+    }
+  });
+
   it("a name is one to twenty letters, or none", async () => {
     const u = await newUser(db, `per-${Math.random()}`);
     for (const bad of ["", "ก".repeat(21)]) {

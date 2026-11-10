@@ -3,6 +3,8 @@ import { dailyBudgetAlert } from "./daily-budget";
 import {
   BASE_PALETTE,
   PERSONA_IDS,
+  currentPersona,
+  isPersonaId,
   THEMES,
   THEME_IDS,
   applyTheme,
@@ -186,5 +188,38 @@ describe("the name the bot calls someone", () => {
     expect(cleanCallName("ก".repeat(20))).toBe("ก".repeat(20));
     expect(cleanCallName("{name}<b>")).toBe("name b");
     expect(cleanCallName(42)).toBeNull();
+  });
+});
+
+describe("the four manners", () => {
+  it("are warm, bestie, spicy and tea: the night owl is gone", () => {
+    expect([...PERSONA_IDS]).toEqual(["warm", "bestie", "spicy", "tea"]);
+    expect(isPersonaId("night")).toBe(false);
+  });
+
+  it("a row that still says night (before the migration) is read as bestie, the manner it became", () => {
+    expect(
+      effectivePrefs("ultimate", { card_theme: "mint", bot_persona: "night", call_name: null })
+        .persona,
+    ).toBe("bestie");
+    expect(currentPersona("night")).toBe("bestie");
+    expect(currentPersona("warm")).toBe("warm");
+    expect(currentPersona("toString")).toBe("toString"); // never a function from the object's own methods
+  });
+
+  it("every manner keeps the places its lines fill in", () => {
+    for (const persona of PERSONA_IDS) {
+      for (const level of [80, 100] as const) {
+        const line = budgetAlertLine(
+          persona,
+          { level, scope: "อาหาร", figures: "฿500/฿1,000" },
+          0,
+          "เอ",
+        );
+        expect(line).toContain("อาหาร");
+        expect(line).toContain("฿500/฿1,000");
+        expect(line).not.toMatch(/\{(scope|figures|name)\}/);
+      }
+    }
   });
 });

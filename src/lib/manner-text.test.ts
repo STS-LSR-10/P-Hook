@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyManner, MANNER_LINES } from "./manner-text";
 import { PERSONA_IDS } from "./personalize";
+import { setVarietyRandom } from "./line/variety";
 import {
   ALREADY_RECORDED_TEXT,
   ERROR_TEXT,
@@ -159,4 +160,60 @@ describe("applyManner", () => {
       expect(out.contents.text).not.toMatch(/[{}]/);
     },
   );
+});
+
+describe("every wording of a manner keeps its meaning and its places", () => {
+  const rolls = [0, 0.34, 0.67, 0.99];
+  const say = (persona: "warm" | "bestie" | "spicy" | "tea", line: string, roll: number) => {
+    setVarietyRandom(() => roll);
+    try {
+      return (applyManner([{ type: "text", text: line }], persona, "เอ")[0] as { text: string })
+        .text;
+    } finally {
+      setVarietyRandom(null);
+    }
+  };
+
+  it("no wording is left with an unfilled place, and the name goes in once", () => {
+    for (const persona of ["warm", "bestie", "spicy", "tea"] as const) {
+      for (const key of Object.keys(MANNER_LINES)) {
+        for (const roll of rolls) {
+          const out = say(persona, key, roll);
+          expect(out).not.toMatch(/\{(name|n)\}/);
+        }
+      }
+    }
+  });
+
+  it("errors and missing things never blame the person, in any manner or wording", () => {
+    for (const persona of ["warm", "bestie", "spicy", "tea"] as const) {
+      for (const roll of rolls) {
+        for (const line of [ERROR_TEXT, NOT_FOUND_TEXT]) {
+          const out = say(persona, line, roll);
+          expect(out).not.toMatch(/น่าจะเธอเอง|ลบเอง|เธอลบ|ความผิดเธอเอง/);
+        }
+      }
+    }
+  });
+
+  it("the notices still say what they said: not recorded again, not found, nothing to delete, cancelled", () => {
+    for (const persona of ["warm", "bestie", "spicy", "tea"] as const) {
+      for (const roll of rolls) {
+        expect(say(persona, ALREADY_RECORDED_TEXT, roll)).toMatch(/ไม่.*ซ้ำ/);
+        expect(say(persona, NOT_FOUND_TEXT, roll)).toMatch(/ไม่เจอ|ไม่พบ|หา.*ไม่เจอ|ไม่อยู่|หายไป/);
+        expect(say(persona, NOTHING_TO_DELETE_TEXT, roll)).toMatch(/ไม่มี|ว่าง|ยังไม่/);
+        expect(say(persona, SLIP_CANCELLED_TEXT, roll)).toMatch(/ยกเลิก/);
+        expect(say(persona, SLIP_CANCELLED_TEXT, roll)).toMatch(/ไม่/);
+      }
+    }
+  });
+
+  it("a card title says it is recorded (✅), whichever wording is picked", () => {
+    for (const persona of ["warm", "bestie", "spicy", "tea"] as const) {
+      for (const roll of rolls) {
+        expect(say(persona, "จดสำเร็จ ✅", roll)).toContain("✅");
+        expect(say(persona, "จดสำเร็จ 3 รายการ ✅", roll)).toMatch(/3.*✅/);
+      }
+    }
+  });
 });
