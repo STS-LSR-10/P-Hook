@@ -120,6 +120,11 @@ const BY_ICON_NAME: Record<string, string> = {
   tag: "🏷️",
 };
 
+/** The icon of a category alone: the emoji a person gave it, else its system icon as an emoji. */
+export function categoryEmoji(icon: string | null | undefined): string | null {
+  return emojiOf(icon) ?? (icon ? (BY_ICON_NAME[icon] ?? null) : null);
+}
+
 /**
  * The icon for an entry, or null when there is none to show. In order: the emoji a person gave their
  * own category, a word of the title (กาแฟ → ☕), then the icon of a system category.

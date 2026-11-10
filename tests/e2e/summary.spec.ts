@@ -188,4 +188,84 @@ test.describe("summary page (360px)", () => {
     await expect(skeleton).toHaveCount(0);
     await expect(page.getByText("฿12,500", { exact: true })).toBeVisible();
   });
+
+  test("shares the summary as a picture: preview, hidden amounts by default, save, no overflow", async ({
+    page,
+  }) => {
+    await mockApi(page, {
+      "GET /api/summary": {
+        ...SUMMARY,
+        categories: [
+          {
+            categoryId: "c1",
+            name: "อาหาร",
+            color: "#0F766E",
+            icon: "utensils",
+            totalSatang: 400_000,
+          },
+          {
+            categoryId: "c2",
+            name: "เดินทาง",
+            color: "#0369A1",
+            icon: "bus",
+            totalSatang: 200_000,
+          },
+        ],
+      },
+      "GET /api/me": { ...ME_PLUS, referralCode: "ABCD1234" },
+    });
+    await page.goto("/summary");
+    await page.getByRole("button", { name: "แชร์สรุปนี้" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "แชร์สรุปของฉัน" });
+    await expect(dialog).toBeVisible();
+    const picture = dialog.getByRole("img", { name: "ตัวอย่างการ์ดสรุปที่จะแชร์" });
+    await expect(picture).toBeVisible();
+    // a story-sized picture (9:16), made on the phone
+    await expect
+      .poll(() => picture.evaluate((el: HTMLImageElement) => [el.naturalWidth, el.naturalHeight]))
+      .toEqual([1080, 1920]);
+    const hiddenSrc = await picture.getAttribute("src");
+    expect(hiddenSrc).toMatch(/^data:image\/png/);
+
+    // amounts are hidden until the switch is turned off, and the picture changes with it
+    const hide = dialog.getByRole("switch", { name: "ซ่อนยอดเงิน" });
+    await expect(hide).toHaveAttribute("aria-checked", "true");
+    await hide.click();
+    await expect(hide).toHaveAttribute("aria-checked", "false");
+    await expect(picture).not.toHaveAttribute("src", hiddenSrc!);
+
+    await expect(dialog.getByRole("link", { name: "บันทึกรูป" })).toHaveAttribute(
+      "download",
+      "phook-summary.png",
+    );
+    await expectNoHorizontalScroll(page);
+    await expectNoSeriousA11yViolations(page);
+  });
+
+  test("the picture is not blank: the title, the figure and the bars are drawn", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/summary": SUMMARY, "GET /api/me": ME_FREE });
+    await page.goto("/summary");
+    await page.getByRole("button", { name: "แชร์สรุปนี้" }).click();
+    const picture = page
+      .getByRole("dialog", { name: "แชร์สรุปของฉัน" })
+      .getByRole("img", { name: "ตัวอย่างการ์ดสรุปที่จะแชร์" });
+    await expect(picture).toBeVisible();
+    const colours = await picture.evaluate((el: HTMLImageElement) => {
+      const c = document.createElement("canvas");
+      c.width = el.naturalWidth;
+      c.height = el.naturalHeight;
+      const ctx = c.getContext("2d")!;
+      ctx.drawImage(el, 0, 0);
+      // the hero card (white) and the line about it (green) are inside the picture
+      const px = (x: number, y: number) =>
+        Array.from(ctx.getImageData(x, y, 1, 1).data.slice(0, 3));
+      return { hero: px(140, 500), headline: px(120, 1500), footer: px(96, 1700) };
+    });
+    expect(colours.hero).toEqual([255, 255, 255]);
+    expect(colours.headline).toEqual([4, 120, 87]);
+    expect(colours.footer).toEqual([255, 255, 255]);
+  });
 });

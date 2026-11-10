@@ -18,7 +18,7 @@ vi.mock("@/lib/repo", async (original) => ({
   getBudgetMode: async () => mode,
   loadBudgets: async () => budgets,
   loadCategories: async () => [
-    { id: "food", name: "อาหาร", color: "#0F766E", type: "expense" },
+    { id: "food", name: "อาหาร", color: "#0F766E", icon: "utensils", type: "expense" },
     { id: "trip", name: "เดินทาง", color: null, type: "expense" },
   ],
   periodSummary: async (_db: unknown, i: { from: Date; to: Date }) => {
@@ -110,8 +110,14 @@ describe("GET /api/summary", () => {
   it("categories (Pro and above): biggest first, empty ones dropped, names and colours filled in", async () => {
     const body = await get();
     expect(body.categories).toEqual([
-      { categoryId: "food", name: "อาหาร", color: "#0F766E", totalSatang: 50_000 },
-      { categoryId: "trip", name: "เดินทาง", color: null, totalSatang: 25_000 },
+      {
+        categoryId: "food",
+        name: "อาหาร",
+        color: "#0F766E",
+        icon: "utensils",
+        totalSatang: 50_000,
+      },
+      { categoryId: "trip", name: "เดินทาง", color: null, icon: null, totalSatang: 25_000 },
     ]);
   });
 

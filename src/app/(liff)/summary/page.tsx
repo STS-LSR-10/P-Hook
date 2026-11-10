@@ -1,10 +1,19 @@
 "use client";
 
-import { ChevronDown, ChevronLeft, ChevronRight, Lightbulb, Lock, Repeat } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Lightbulb,
+  Lock,
+  Repeat,
+  Share2,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EmptyState, ErrorState, PageHeader, Skeleton } from "@/components/liff/states";
+import { ShareSummarySheet } from "@/components/liff/share-summary";
 import { TxCard } from "@/components/liff/tx-card";
 import { useApi } from "@/components/liff/liff-provider";
 import { sliceColor } from "@/components/liff/slice-color";
@@ -33,13 +42,21 @@ interface SummaryResponse {
   budgetSatang: number | null;
   /** Null when the plan has no category chart (Free). */
   categories:
-    { categoryId: string | null; name: string; color: string | null; totalSatang: number }[] | null;
+    | {
+        categoryId: string | null;
+        name: string;
+        color: string | null;
+        icon?: string | null;
+        totalSatang: number;
+      }[]
+    | null;
   recent: TxDto[];
 }
 
 interface MeResponse {
   displayName: string | null;
   pictureUrl: string | null;
+  referralCode?: string;
   plan: Plan;
   features: Record<string, boolean>;
 }
@@ -72,6 +89,11 @@ export default function SummaryPage() {
   const goals = useApi<GoalsResponse>(me.data?.features.savingsGoal ? "/api/goals" : null);
   const [accumulated, setAccumulated] = useState(false);
   const [open, setOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  // the period before is asked for only once the share sheet is open (its comparison line)
+  const before = useApi<SummaryResponse>(
+    sharing && offset > -MAX_BACK ? `/api/summary?offset=${offset - 1}` : null,
+  );
   const tip = useMemo(() => TIPS[Math.floor(Date.now() / 86_400_000) % TIPS.length], []);
 
   const data = summary.data;
@@ -170,6 +192,14 @@ export default function SummaryPage() {
               />
               <IncomeExpense data={data} />
               <Spending data={data} open={open} onToggle={() => setOpen((v) => !v)} />
+              <button
+                type="button"
+                onClick={() => setSharing(true)}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-primary bg-primary-soft text-sm font-semibold text-primary"
+              >
+                <Share2 className="h-4 w-4" aria-hidden />
+                {t("แชร์สรุปนี้")}
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -210,6 +240,14 @@ export default function SummaryPage() {
           </div>
         ) : null}
       </div>
+      {sharing && data ? (
+        <ShareSummarySheet
+          summary={data}
+          previous={before.data}
+          code={me.data?.referralCode ?? null}
+          onClose={() => setSharing(false)}
+        />
+      ) : null}
     </main>
   );
 }

@@ -84,7 +84,13 @@ export async function GET(request: Request): Promise<Response> {
     })();
 
     let categories:
-      | { categoryId: string | null; name: string; color: string | null; totalSatang: number }[]
+      | {
+          categoryId: string | null;
+          name: string;
+          color: string | null;
+          icon: string | null;
+          totalSatang: number;
+        }[]
       | null = null;
     if (can(plan, "dashboard")) {
       const [spend, all] = await Promise.all([
@@ -105,6 +111,7 @@ export async function GET(request: Request): Promise<Response> {
             categoryId: r.category_id,
             name: c?.name ?? "ไม่ระบุหมวด",
             color: c?.color ?? null,
+            icon: c?.icon ?? null,
             totalSatang: toSatang(r.total),
           };
         })

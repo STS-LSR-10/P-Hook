@@ -2988,4 +2988,17 @@ export const EN: Record<string, string> = {
     "A calm, refined tea-sipper with a quiet sting. Always composed, never uses slang",
   "น่าสนใจดีครับ{name} ก็แล้วแต่จะพิจารณานะครับ บันทึกเรียบร้อยแล้ว ตามสะดวกเลยครับ":
     "How interesting{name}. Entirely up to you, of course. Recorded, at your convenience",
+  แชร์สรุปนี้: "Share this summary",
+  "แชร์ไม่สำเร็จ ลองบันทึกรูปแล้วโพสต์เองได้เลยนะ":
+    "Could not share. Save the picture and post it yourself instead",
+  แชร์สรุปของฉัน: "Share my summary",
+  ซ่อนยอดเงิน: "Hide amounts",
+  "แสดงเป็นเปอร์เซ็นต์แทนตัวเลข จะได้แชร์ได้สบายใจ":
+    "Shows percentages instead of numbers, so you can share with peace of mind",
+  "สร้างรูปไม่สำเร็จ ลองใหม่อีกครั้งนะ": "Could not make the picture. Please try again",
+  ตัวอย่างการ์ดสรุปที่จะแชร์: "Preview of the summary card to share",
+  "กำลังสร้างรูป…": "Making the picture…",
+  กดค้างที่รูปเพื่อบันทึกลงเครื่องได้: "Press and hold the picture to save it",
+  บันทึกรูป: "Save picture",
+  สรุปของฉันกับพี่ฮูก: "My summary with P'Hook",
 };
