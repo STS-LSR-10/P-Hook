@@ -633,6 +633,23 @@ test.describe("quota page (360px)", () => {
     await expect(others.getByText("4 / 50 ครั้ง (เหลือ 46)")).toBeVisible();
   });
 
+  test("a paid plan has a readable button to buy more quota, on the dark overview card", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/quota": QUOTA("plus") });
+    await page.goto("/settings/quota");
+    const buy = page.getByRole("link", { name: "ซื้อโควตาเพิ่ม" });
+    await expect(buy).toHaveAttribute("href", "/addons");
+    // white text on the dark card, not the same colour as its own background
+    const [color, bg] = await buy.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return [s.color, s.backgroundColor];
+    });
+    expect(color).toBe("rgb(255, 255, 255)");
+    expect(bg).not.toBe("rgb(255, 255, 255)");
+    await expectNoSeriousA11yViolations(page);
+  });
+
   test("groups kept after a downgrade still show how many", async ({ page }) => {
     const q = QUOTA("plus");
     q.main = q.main.map((i) => (i.key === "groups" ? { ...i, used: 2 } : i));

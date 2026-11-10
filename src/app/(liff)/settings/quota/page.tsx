@@ -434,7 +434,7 @@ export default function QuotaPage() {
                 {data.plan !== "free" ? (
                   <Link
                     href="/addons"
-                    className="flex h-10 items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 text-xs font-semibold"
+                    className="flex h-10 items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-3.5 text-xs font-semibold text-white"
                   >
                     {t("ซื้อโควตาเพิ่ม")}
                   </Link>
