@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
@@ -35,7 +36,7 @@ export async function GET(request: Request): Promise<Response> {
       countActiveReminders(db, auth.userId, "repeat"),
       getPlanInfo(db, auth.userId),
     ]);
-    const limit = reminderCapacity(plan);
+    const limit = reminderCapacity(plan, (await loadBonus(db, auth.userId)).alerts);
     const repeatLimit = repeatCapacity(plan);
     const canAddOnce = active < limit;
     const canAddRepeat = repeating < repeatLimit;

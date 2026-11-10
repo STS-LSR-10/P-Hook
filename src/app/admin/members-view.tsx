@@ -1,4 +1,5 @@
 import type { MembersData } from "@/lib/admin/members";
+import { addonBySku } from "@/lib/addons";
 import { PLAN_LABEL, PLAN_ORDER } from "@/lib/plan";
 import { EARLY_BIRD } from "@/lib/pricing";
 import { COLORS, Panel } from "./panels";
@@ -116,6 +117,29 @@ export function MembersView({
               )}
               <p className="text-[11px] text-muted">
                 จองอยู่ = เปิดหน้าชำระเงินแล้วแต่ยังไม่จ่าย (คืนสิทธิ์เองใน 30 นาที)
+              </p>
+            </Panel>
+            <Panel
+              title="แพ็กเกจเสริม (Add-on)"
+              tag="Add-on"
+              color={COLORS.r2}
+              cost={n(data.addons.reduce((s, a) => s + a.active, 0))}
+              costSub="ที่ใช้งานอยู่ตอนนี้"
+              delay={200}
+            >
+              <ul className="divide-y divide-border text-sm">
+                {data.addons.map((a) => (
+                  <li key={a.sku} className="flex items-center justify-between gap-3 py-2">
+                    <span>{addonBySku(a.sku)?.label ?? a.sku}</span>
+                    <span className="tabular-nums text-muted">
+                      ขายแล้ว {n(a.sold)} · ใช้อยู่{" "}
+                      <span className="font-semibold text-foreground">{n(a.active)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[11px] text-muted">
+                ใช้อยู่ = แพ็กรายเดือนที่ยังไม่หมดอายุ และแพ็กสลิปที่ยังเหลือใบ
               </p>
             </Panel>
           </div>

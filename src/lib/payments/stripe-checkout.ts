@@ -1,6 +1,6 @@
 import { EARLY_BIRD, PERIOD_MONTHS, priceFor, type PaidPlan } from "@/lib/pricing";
 import { PLAN_LABEL } from "@/lib/plan";
-import type { CheckoutRequest } from "./provider";
+import type { AddonCheckoutRequest, CheckoutRequest } from "./provider";
 
 /** Where Stripe sends the person after paying / cancelling (a public page, no LINE login needed). */
 export function resultUrls(baseUrl: string) {
@@ -73,6 +73,43 @@ export function buildCheckoutFields(
     if (early && couponId) f["discounts[0][coupon]"] = couponId;
   } else {
     if (!req.customerId) f.customer_creation = "always";
+  }
+  if (req.customerId) f.customer = req.customerId;
+  return f;
+}
+
+/**
+ * Form fields for an add-on booster. A monthly add-on paid by card is its own subscription (so it can
+ * be cancelled apart from the plan); everything else is a single payment.
+ */
+export function buildAddonCheckoutFields(
+  req: AddonCheckoutRequest,
+  baseUrl: string,
+): Record<string, string> {
+  const urls = resultUrls(baseUrl);
+  const subscription = req.addon.monthly && req.method === "card";
+  const meta: Record<string, string> = {
+    user_id: req.userId,
+    addon: req.addon.sku,
+    method: req.method,
+  };
+  const f: Record<string, string> = {
+    mode: subscription ? "subscription" : "payment",
+    success_url: urls.success,
+    cancel_url: urls.cancel,
+    locale: "th",
+    client_reference_id: req.userId,
+    "line_items[0][quantity]": "1",
+    "line_items[0][price_data][currency]": "thb",
+    "line_items[0][price_data][unit_amount]": String(req.addon.baht * 100),
+    "line_items[0][price_data][product_data][name]": `พี่ฮูก ${req.addon.label}${req.addon.monthly ? " (รายเดือน)" : ""}`,
+  };
+  for (const [k, v] of Object.entries(meta)) f[`metadata[${k}]`] = v;
+  if (subscription) {
+    f["line_items[0][price_data][recurring][interval]"] = "month";
+    for (const [k, v] of Object.entries(meta)) f[`subscription_data[metadata][${k}]`] = v;
+  } else if (!req.customerId) {
+    f.customer_creation = "always";
   }
   if (req.customerId) f.customer = req.customerId;
   return f;

@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import { guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { fileUsage, groupFileUsage } from "@/lib/file-repo";
@@ -10,7 +11,7 @@ import { buildQuota } from "@/lib/quota";
 import { countRules } from "@/lib/recurring-repo";
 import { countSlipsEver, countSlipsThisMonth } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { dayKey, LIFETIME, monthKey, readUsage } from "@/lib/usage";
+import { LIFETIME, monthKey, readUsage } from "@/lib/usage";
 import { countActiveReminders } from "@/lib/user-reminder-repo";
 import { ownedWallets } from "@/lib/wallet";
 import { listWallets } from "@/lib/wallet-repo";
@@ -63,29 +64,34 @@ export async function GET(request: Request): Promise<Response> {
       ]),
     ]);
     const [voice = 0, pdf = 0, owl = 0, ai = 0, groupReminders = 0] = counters;
+    const bonus = await loadBonus(db, auth.userId, now);
 
     return json({
       plan,
       planExpiresAt: expiresAt,
-      ...buildQuota(plan, {
-        storageBytes,
-        groupStorageBytes,
-        // counted as the wallets page counts them: the person's own, not ones they were invited to
-        wallets: ownedWallets(wallets, auth.userId).length,
-        goals: goals.filter((g) => !g.archived).length,
-        notes,
-        reminders,
-        repeatReminders,
-        groups,
-        groupReminders,
-        recurring,
-        slips,
-        photos,
-        voice,
-        pdf,
-        owl,
-        ai,
-      }),
+      ...buildQuota(
+        plan,
+        {
+          storageBytes,
+          groupStorageBytes,
+          // counted as the wallets page counts them: the person's own, not ones they were invited to
+          wallets: ownedWallets(wallets, auth.userId).length,
+          goals: goals.filter((g) => !g.archived).length,
+          notes,
+          reminders,
+          repeatReminders,
+          groups,
+          groupReminders,
+          recurring,
+          slips,
+          photos,
+          voice,
+          pdf,
+          owl,
+          ai,
+        },
+        bonus,
+      ),
     });
   });
 }

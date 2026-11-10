@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   cleanFileName,
@@ -97,7 +98,7 @@ export async function saveFile(
       mimeType,
       sizeBytes: bytes.byteLength,
       r2Key,
-      capacity: fileCapacity(plan),
+      capacity: fileCapacity(plan, (await loadBonus(db, user.id)).storageBytes),
       ...(group ? { groupId: group.groupId, savedBy: group.savedBy } : {}),
     });
     if (!reserved) {

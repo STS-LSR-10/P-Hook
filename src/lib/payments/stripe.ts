@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { log } from "@/lib/log";
 import {
   buildChangeFields,
+  buildAddonCheckoutFields,
   buildCheckoutFields,
   earlyBirdCouponFields,
   productName,
@@ -54,6 +55,21 @@ export function createStripeProvider(
         return { status: "redirect", url: session.url, reference: session.id };
       } catch (error) {
         log.error("stripe_checkout_failed", error);
+        return { status: "unavailable", message: failureMessage(error) };
+      }
+    },
+
+    async createAddonCheckout(request) {
+      try {
+        const session = await stripePost<{ id: string; url: string | null }>(
+          config.secretKey,
+          "/checkout/sessions",
+          buildAddonCheckoutFields(request, config.baseUrl),
+        );
+        if (!session.url) return { status: "unavailable", message: PAYMENT_FAILED_TEXT };
+        return { status: "redirect", url: session.url, reference: session.id };
+      } catch (error) {
+        log.error("stripe_addon_checkout_failed", error);
         return { status: "unavailable", message: failureMessage(error) };
       }
     },

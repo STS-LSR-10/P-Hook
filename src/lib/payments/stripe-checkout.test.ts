@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildCheckoutFields, earlyBirdCouponFields, resultUrls } from "./stripe-checkout";
+import {
+  buildAddonCheckoutFields,
+  buildCheckoutFields,
+  earlyBirdCouponFields,
+  resultUrls,
+} from "./stripe-checkout";
+import { addonBySku } from "@/lib/addons";
 
 const USER = "11111111-1111-1111-1111-111111111111";
 const BASE = "https://jodtang.example.com/";
@@ -179,5 +185,36 @@ describe("Early Bird checkout", () => {
     );
     expect(f["discounts[0][coupon]"]).toBeUndefined();
     expect(f["subscription_data[metadata][early_bird]"]).toBeUndefined();
+  });
+});
+
+describe("add-on checkout", () => {
+  const sku = (id: string) => addonBySku(id)!;
+
+  it("a monthly add-on by card is its own monthly subscription", () => {
+    const f = buildAddonCheckoutFields(
+      { userId: USER, addon: sku("storage_10"), method: "card" },
+      BASE,
+    );
+    expect(f.mode).toBe("subscription");
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("1500");
+    expect(f["line_items[0][price_data][recurring][interval]"]).toBe("month");
+    expect(f["subscription_data[metadata][addon]"]).toBe("storage_10");
+    expect(f["subscription_data[metadata][user_id]"]).toBe(USER);
+    expect(f["subscription_data[metadata][plan]"]).toBeUndefined();
+  });
+
+  it("a monthly add-on by PromptPay and every pack are a single payment", () => {
+    for (const [id, method, baht] of [
+      ["groups_2", "promptpay", 29],
+      ["slips_300", "card", 49],
+      ["alerts_l", "promptpay", 35],
+    ] as const) {
+      const f = buildAddonCheckoutFields({ userId: USER, addon: sku(id), method }, BASE);
+      expect(f.mode).toBe("payment");
+      expect(f["line_items[0][price_data][unit_amount]"]).toBe(String(baht * 100));
+      expect(f["metadata[addon]"]).toBe(id);
+      expect(f["line_items[0][price_data][recurring][interval]"]).toBeUndefined();
+    }
   });
 });

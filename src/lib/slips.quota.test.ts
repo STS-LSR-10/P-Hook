@@ -7,6 +7,11 @@ import { handleSlipImage, type SlipDeps } from "./slips";
 let plan = "free";
 let used = 0;
 let usedEver = 0;
+let packLeft = 0;
+vi.mock("@/lib/addons-repo", () => ({
+  loadBonus: async () => ({ storageBytes: 0, alerts: 0, slips: packLeft, groups: 0 }),
+  takeSlipPack: async () => true,
+}));
 vi.mock("@/lib/upsell", () => ({ claimUpsellCard: async () => false }));
 vi.mock("@/lib/slip-repo", async (original) => ({
   ...(await original<typeof import("@/lib/slip-repo")>()),
@@ -36,7 +41,31 @@ beforeEach(() => {
   plan = "free";
   used = 0;
   usedEver = 0;
+  packLeft = 0;
   fetchImage.mockClear();
+});
+
+describe("a bought slip pack", () => {
+  it("is read once the plan's own slips are used up, on any plan", async () => {
+    packLeft = 30;
+    plan = "starter";
+    used = 60;
+    await expect(run()).rejects.toThrow("stop after the quota check");
+    expect(fetchImage).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets Free read past its ten when a pack is left", async () => {
+    packLeft = 5;
+    usedEver = 10;
+    await expect(run()).rejects.toThrow("stop after the quota check");
+  });
+
+  it("is not touched while the plan's own slips last, and an empty pack changes nothing", async () => {
+    plan = "starter";
+    used = 60;
+    packLeft = 0;
+    expect(await run()).toBe(slipQuotaText("starter", 60));
+  });
 });
 
 describe("slip quota by plan", () => {

@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { signViewToken } from "@/lib/auth/file-token";
@@ -40,6 +41,13 @@ export async function GET(request: Request): Promise<Response> {
       getPlanInfo(db, auth.userId),
     ]);
     const viewToken = await signViewToken(auth.userId, getServerEnv().SESSION_JWT_SECRET);
-    return json({ items, hasMore, usedBytes, capacityBytes: fileCapacity(plan), viewToken });
+    const { storageBytes } = await loadBonus(db, auth.userId);
+    return json({
+      items,
+      hasMore,
+      usedBytes,
+      capacityBytes: fileCapacity(plan, storageBytes),
+      viewToken,
+    });
   });
 }

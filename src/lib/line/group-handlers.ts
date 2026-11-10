@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calendarMonthRange, dayRange } from "@/lib/budget-cycle";
 import {
@@ -372,9 +373,12 @@ async function ownerState(db: SupabaseClient, group: GroupRow, now: Date) {
   let writable = can(plan, "groupLedger");
   if (writable) {
     // a plan that dropped to fewer groups keeps the oldest ledgers writable and the rest view-only
-    const limit = GROUP_LEDGER_LIMIT[plan].groups;
     const mine = await ownedGroupIds(db, group.ownerUserId);
-    if (mine.length > limit) writable = mine.slice(0, limit).includes(group.id);
+    if (mine.length > GROUP_LEDGER_LIMIT[plan].groups) {
+      const limit =
+        GROUP_LEDGER_LIMIT[plan].groups + (await loadBonus(db, group.ownerUserId)).groups;
+      if (mine.length > limit) writable = mine.slice(0, limit).includes(group.id);
+    }
   }
   return { owner, plan, writable };
 }
@@ -407,11 +411,12 @@ async function runGroupCommand(
       if ((await ownerState(db, existing, now)).writable)
         return reply([text(GROUP_OTHER_OWNER_TEXT)]);
     }
-    if (
-      existing?.ownerUserId !== user.id &&
-      (await countOwnedGroups(db, user.id)) >= GROUP_LEDGER_LIMIT[userPlan].groups
-    ) {
-      return reply([text(groupTooManyText(GROUP_LEDGER_LIMIT[userPlan].groups, userPlan))]);
+    if (existing?.ownerUserId !== user.id) {
+      const groupLimit =
+        GROUP_LEDGER_LIMIT[userPlan].groups + (await loadBonus(db, user.id)).groups;
+      if ((await countOwnedGroups(db, user.id)) >= groupLimit) {
+        return reply([text(groupTooManyText(groupLimit, userPlan))]);
+      }
     }
     const opened = await openGroup(db, groupId, user.id);
     // a ledger that changed hands: the old owner's reminders stop (they used the old owner's limits),

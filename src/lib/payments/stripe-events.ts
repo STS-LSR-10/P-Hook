@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PERIOD_MONTHS, type Period } from "@/lib/pricing";
 import type { PaidPlan } from "@/lib/pricing";
+import { addonBySku } from "@/lib/addons";
 
 /** The slice of a Stripe event we read. Everything else is ignored. */
 export interface StripeEvent {
@@ -50,6 +51,17 @@ export type PaymentAction =
       amountSatang: number;
       customer: string | null;
     }
+  | {
+      /** An add-on booster was paid (the first charge and every renewal of a monthly one). */
+      kind: "addon";
+      userId: string;
+      sku: string;
+      ref: string;
+      /** When it stops (a monthly one), or null for a pack that is kept. */
+      expiresAt: Date | null;
+      /** Stripe's customer, saved so a monthly add-on can be cancelled in the billing portal. */
+      customer: string | null;
+    }
   | { kind: "ignore" };
 
 const IGNORE: PaymentAction = { kind: "ignore" };
@@ -74,6 +86,19 @@ function readMeta(metadata: unknown): { userId: string; plan: PaidPlan; period: 
   return { userId, plan, period };
 }
 
+/** The add-on a payment is for: our user and a known add-on, or null. */
+function readAddonMeta(metadata: unknown): { userId: string; sku: string } | null {
+  const m = obj(metadata);
+  const userId = str(m?.user_id);
+  const sku = str(m?.addon);
+  if (!userId || !UUID_RE.test(userId) || !sku || !addonBySku(sku)) return null;
+  return { userId, sku };
+}
+
+const DAY = 86_400_000;
+/** A monthly add-on keeps working this long after its paid period, while Stripe collects the renewal. */
+const RENEWAL_GRACE = 3 * DAY;
+
 /** Turn a verified Stripe event into what we should do about it (no I/O). */
 export function interpretEvent(event: StripeEvent): PaymentAction {
   const o = event.data?.object;
@@ -84,6 +109,21 @@ export function interpretEvent(event: StripeEvent): PaymentAction {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded": {
       if (o.mode !== "payment" || o.payment_status !== "paid") return IGNORE;
+      const addon = readAddonMeta(o.metadata);
+      const sessionId = str(o.id);
+      if (addon && sessionId) {
+        const sku = addonBySku(addon.sku);
+        // shortcut: one month is 31 days from the payment, close enough for a booster
+        const created = (num(o.created) ?? Date.now() / 1000) * 1000;
+        return {
+          kind: "addon",
+          userId: addon.userId,
+          sku: addon.sku,
+          ref: sessionId,
+          expiresAt: sku?.monthly ? new Date(created + 31 * DAY + RENEWAL_GRACE) : null,
+          customer: idOf(o.customer),
+        };
+      }
       const meta = readMeta(o.metadata);
       const ref = str(o.id);
       const amount = num(o.amount_total);
@@ -140,11 +180,23 @@ export function interpretEvent(event: StripeEvent): PaymentAction {
       if (!ref || amount === null || o.currency !== "thb") return IGNORE;
       const details =
         obj(o.subscription_details) ?? obj(obj(o.parent)?.subscription_details) ?? null;
-      const meta = readMeta(details?.metadata);
       const line = obj((obj(o.lines)?.data as unknown[] | undefined)?.[0]);
       const period = obj(line?.period);
       const start = num(period?.start);
       const end = num(period?.end);
+      // a monthly add-on's invoice grants it for the period it paid, and is not a plan payment
+      const addon = readAddonMeta(details?.metadata);
+      if (addon) {
+        return {
+          kind: "addon",
+          userId: addon.userId,
+          sku: addon.sku,
+          ref,
+          expiresAt: new Date((end !== null ? end * 1000 : Date.now() + 31 * DAY) + RENEWAL_GRACE),
+          customer: idOf(o.customer),
+        };
+      }
+      const meta = readMeta(details?.metadata);
       const days = start !== null && end !== null ? (end - start) / 86_400 : 30;
       return {
         kind: "invoice",
@@ -261,6 +313,33 @@ export async function applyAction(
         p_method: "card",
       });
       return { handled: true, userId };
+    }
+
+    case "addon": {
+      const sku = addonBySku(action.sku);
+      if (!sku) return { handled: false };
+      // the same payment arriving twice (a retried webhook) adds the add-on once
+      const { error } = await db.from("addons").upsert(
+        {
+          user_id: action.userId,
+          kind: sku.kind,
+          sku: sku.sku,
+          units: sku.units,
+          remaining: sku.kind === "slips" ? sku.units : null,
+          expires_at: action.expiresAt ? action.expiresAt.toISOString() : null,
+          source_ref: action.ref,
+        },
+        { onConflict: "source_ref", ignoreDuplicates: true },
+      );
+      if (error) throw new Error(`add addon: ${error.message}`);
+      if (action.customer) {
+        await db
+          .from("users")
+          .update({ stripe_customer_id: action.customer })
+          .eq("id", action.userId)
+          .is("stripe_customer_id", null);
+      }
+      return { handled: true, userId: action.userId };
     }
 
     case "ignore":

@@ -1,3 +1,4 @@
+import type { AddonSku } from "@/lib/addons";
 import type { PaidPlan, Period } from "@/lib/pricing";
 
 /**
@@ -26,6 +27,14 @@ export interface CheckoutRequest {
   upgrade?: { amountSatang: number; days: number };
   /** The server reserved an Early Bird seat for this checkout: the first period costs less. */
   earlyBird?: boolean;
+}
+
+export interface AddonCheckoutRequest {
+  userId: string;
+  addon: AddonSku;
+  /** card = a monthly add-on renews by itself; promptpay = one month (or the pack) paid once. */
+  method: PaymentMethod;
+  customerId?: string | null;
 }
 
 export type CheckoutResult =
@@ -66,6 +75,8 @@ export interface PaymentProvider {
   readonly name: string;
   readonly available: boolean;
   createCheckout(request: CheckoutRequest): Promise<CheckoutResult>;
+  /** An add-on booster (extra storage, reminders, slips or group slots). */
+  createAddonCheckout(request: AddonCheckoutRequest): Promise<CheckoutResult>;
   createPortal(customerId: string): Promise<PortalResult>;
   /** Move a running card subscription to a higher tier / yearly billing (prorated by Stripe). */
   changeSubscription(request: ChangeRequest): Promise<ChangeResult>;

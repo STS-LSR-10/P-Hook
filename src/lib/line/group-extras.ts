@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData, splitChat } from "@/lib/ai/owl";
 import { fileCapacity, formatBytes, type FileDto } from "@/lib/file";
@@ -182,7 +183,11 @@ async function saveFailureText(
     case "too_large":
       return text(FILE_TOO_LARGE_TEXT);
     case "full":
-      return text(groupFileFullText(formatBytes(fileCapacity(plan))));
+      return text(
+        groupFileFullText(
+          formatBytes(fileCapacity(plan, (await loadBonus(ctx.db, owner.id)).storageBytes)),
+        ),
+      );
     case "gone":
       // the file left LINE before it could be read: wait for it once more
       if (ctx.userId) {
@@ -237,7 +242,7 @@ export async function addGroupReminder(
   if (!ctx.writable || !owner) return [text(GROUP_PAUSED_TEXT)];
 
   const kind = reminderKind(parsed.repeat);
-  const limit = capacityOf(ownerPlan(ctx, owner), kind);
+  const limit = capacityOf(ownerPlan(ctx, owner), kind, (await loadBonus(ctx.db, owner.id)).alerts);
   if ((await countActiveReminders(ctx.db, owner.id, kind)) >= limit) {
     return [text(groupReminderFullText(limit, kind === "repeat"))];
   }

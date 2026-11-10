@@ -1,3 +1,4 @@
+import { loadBonus, takeSlipPack } from "@/lib/addons-repo";
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { categorizeByRules } from "@/lib/categorize/rules";
@@ -101,12 +102,15 @@ export async function handleSlipImage(
   // Free: a taste for life (FREE_SLIPS_TOTAL); past that the upgrade pitch. Failed reads are never
   // inserted, so they never count.
   let freeLeft: number | null = null;
+  // a bought slip pack is spent only when the plan's own reads are used up
+  let usePack = false;
+  const packLeft = async () => (await loadBonus(db, user.id, now)).slips;
   if (plan === "free") {
     const used = await countSlipsEver(db, user.id);
     if (used >= FREE_SLIPS_TOTAL) {
-      return upsellReply(db, user.id, now, "slip", SLIP_LOCKED_TEXT);
-    }
-    freeLeft = FREE_SLIPS_TOTAL - used - 1;
+      if ((await packLeft()) <= 0) return upsellReply(db, user.id, now, "slip", SLIP_LOCKED_TEXT);
+      usePack = true;
+    } else freeLeft = FREE_SLIPS_TOTAL - used - 1;
   }
   let recorded = false;
   const messages = await readSlip();
@@ -115,9 +119,12 @@ export async function handleSlipImage(
     : messages;
 
   async function readSlip(): Promise<LineMessage[]> {
-    if (freeLeft === null) {
+    if (freeLeft === null && !usePack) {
       const used = await countSlipsThisMonth(db, user.id, now);
-      if (slipsRemaining(plan, used) <= 0) return [text(slipQuotaText(plan, SLIP_LIMIT[plan]))];
+      if (slipsRemaining(plan, used) <= 0) {
+        if ((await packLeft()) <= 0) return [text(slipQuotaText(plan, SLIP_LIMIT[plan]))];
+        usePack = true;
+      }
     }
 
     // 2. download
@@ -179,6 +186,8 @@ export async function handleSlipImage(
     }
 
     recorded = true;
+    if (usePack)
+      await takeSlipPack(db, user.id).catch((e) => log.error("slip_pack_take_failed", e));
     await deps.onRecorded?.();
     const title = data.payeeName ?? data.memo ?? "โอนเงิน";
     const [categories, memory] = await Promise.all([

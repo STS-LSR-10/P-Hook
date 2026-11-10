@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { interpretEvent, type StripeEvent } from "./stripe-events";
+import { applyAction, interpretEvent, type StripeEvent } from "./stripe-events";
 
 const USER = "11111111-1111-1111-1111-111111111111";
 const meta = { user_id: USER, plan: "plus", period: "yearly", method: "promptpay" };
@@ -223,5 +223,159 @@ describe("interpretEvent", () => {
   it("ignores everything else", () => {
     expect(interpretEvent(ev("charge.refunded", { id: "ch_1" }))).toEqual({ kind: "ignore" });
     expect(interpretEvent({ id: "e", type: "x", data: {} as never })).toEqual({ kind: "ignore" });
+  });
+});
+
+describe("add-on payments", () => {
+  const addonMeta = { user_id: USER, addon: "groups_2", method: "card" };
+
+  it("a paid session for a pack is kept with no end date", () => {
+    const a = interpretEvent(
+      ev("checkout.session.completed", {
+        id: "cs_pack",
+        mode: "payment",
+        payment_status: "paid",
+        created: 1_800_000_000,
+        metadata: { user_id: USER, addon: "slips_100", method: "promptpay" },
+      }),
+    );
+    expect(a).toMatchObject({
+      kind: "addon",
+      userId: USER,
+      sku: "slips_100",
+      ref: "cs_pack",
+      expiresAt: null,
+    });
+  });
+
+  it("a paid session for a monthly add-on runs about a month", () => {
+    const a = interpretEvent(
+      ev("checkout.session.completed", {
+        id: "cs_m",
+        mode: "payment",
+        payment_status: "paid",
+        created: 1_800_000_000,
+        metadata: { user_id: USER, addon: "groups_2", method: "promptpay" },
+      }),
+    );
+    expect(a).toMatchObject({ kind: "addon", sku: "groups_2", ref: "cs_m" });
+    expect((a as { expiresAt: Date }).expiresAt.getTime()).toBe(
+      1_800_000_000_000 + 34 * 86_400_000,
+    );
+  });
+
+  it("every paid invoice of a monthly add-on grants it until the end of that period, and is no plan payment", () => {
+    const a = interpretEvent(
+      ev("invoice.paid", {
+        id: "in_1",
+        amount_paid: 2900,
+        currency: "thb",
+        customer: "cus_1",
+        subscription_details: { metadata: addonMeta },
+        lines: { data: [{ period: { start: 1_800_000_000, end: 1_802_592_000 } }] },
+      }),
+    );
+    expect(a).toMatchObject({ kind: "addon", sku: "groups_2", ref: "in_1" });
+    expect((a as { expiresAt: Date }).expiresAt.getTime()).toBe(1_802_592_000_000 + 3 * 86_400_000);
+  });
+
+  it("an unknown add-on or user is ignored", () => {
+    const bad = (m: Record<string, string>) =>
+      interpretEvent(
+        ev("checkout.session.completed", {
+          id: "cs_x",
+          mode: "payment",
+          payment_status: "paid",
+          amount_total: 100,
+          currency: "thb",
+          metadata: m,
+        }),
+      );
+    expect(bad({ user_id: USER, addon: "free_money" })).toEqual({ kind: "ignore" });
+    expect(bad({ user_id: "nope", addon: "slips_100" })).toEqual({ kind: "ignore" });
+  });
+});
+
+describe("applying an add-on payment", () => {
+  const fakeDb = () => {
+    const calls: { row: Record<string, unknown>; opts: unknown }[] = [];
+    const db = {
+      from: (table: string) => ({
+        upsert: async (row: Record<string, unknown>, opts: unknown) => {
+          expect(table).toBe("addons");
+          calls.push({ row, opts });
+          return { error: null };
+        },
+      }),
+    };
+    return { db: db as never, calls };
+  };
+
+  it("a slip pack starts with all its reads, and a retried payment is not added twice", async () => {
+    const { db, calls } = fakeDb();
+    const action = {
+      kind: "addon",
+      userId: USER,
+      sku: "slips_300",
+      ref: "cs_1",
+      expiresAt: null,
+      customer: null,
+    } as const;
+    expect(await applyAction(db, action)).toEqual({ handled: true, userId: USER });
+    expect(calls[0]?.row).toMatchObject({
+      user_id: USER,
+      kind: "slips",
+      units: 300,
+      remaining: 300,
+      expires_at: null,
+      source_ref: "cs_1",
+    });
+    // the second delivery goes to the same key and is ignored by the database
+    expect(calls[0]?.opts).toEqual({ onConflict: "source_ref", ignoreDuplicates: true });
+  });
+
+  it("a monthly add-on carries its end date and no reads counter", async () => {
+    const { db, calls } = fakeDb();
+    const end = new Date("2026-12-10T00:00:00Z");
+    await applyAction(db, {
+      kind: "addon",
+      userId: USER,
+      sku: "storage_10",
+      ref: "in_1",
+      expiresAt: end,
+      customer: null,
+    });
+    expect(calls[0]?.row).toMatchObject({
+      kind: "storage",
+      units: 10,
+      remaining: null,
+      expires_at: end.toISOString(),
+    });
+  });
+});
+
+describe("an add-on bought by someone with no saved Stripe customer", () => {
+  it("keeps the customer so the billing portal can cancel it", async () => {
+    const updates: unknown[] = [];
+    const db = {
+      from: (table: string) =>
+        table === "addons"
+          ? { upsert: async () => ({ error: null }) }
+          : {
+              update: (v: unknown) => {
+                updates.push(v);
+                return { eq: () => ({ is: async () => ({ error: null }) }) };
+              },
+            },
+    } as never;
+    await applyAction(db, {
+      kind: "addon",
+      userId: USER,
+      sku: "groups_2",
+      ref: "in_9",
+      expiresAt: new Date("2026-12-10T00:00:00Z"),
+      customer: "cus_9",
+    });
+    expect(updates).toEqual([{ stripe_customer_id: "cus_9" }]);
   });
 });

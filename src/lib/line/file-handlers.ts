@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import { fileCapacity, formatBytes, isBlockedFile, cleanFileName } from "@/lib/file";
 import type { FileDto } from "@/lib/file";
 import {
@@ -90,7 +91,11 @@ async function failureText(
     case "too_large":
       return text(FILE_TOO_LARGE_TEXT);
     case "full":
-      return text(fileFullText(formatBytes(fileCapacity(plan))));
+      return text(
+        fileFullText(
+          formatBytes(fileCapacity(plan, (await loadBonus(deps.db, user.id)).storageBytes)),
+        ),
+      );
     case "gone":
       await startFileWait(deps.db, user.id, null, deps.now());
       return text(FILE_GONE_TEXT);

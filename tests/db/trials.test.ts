@@ -279,3 +279,47 @@ describe("Early Bird seats (0065)", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("add-ons (0066)", () => {
+  const pack = (u: string, remaining: number, source: string) =>
+    db.query(
+      "insert into addons (user_id, kind, sku, units, remaining, source_ref) values ($1,'slips','slips_100',100,$2,$3)",
+      [u, remaining, source],
+    );
+  const take = async (u: string) =>
+    (await one<{ ok: boolean }>(db, "select take_slip_pack($1::uuid) as ok", [u])).ok;
+
+  it("spends a slip pack one read at a time and says when it is empty", async () => {
+    const u = await newUser(db, "ad-a");
+    await pack(u, 2, "ref-a");
+    expect(await take(u)).toBe(true);
+    expect(await take(u)).toBe(true);
+    expect(await take(u)).toBe(false);
+  });
+
+  it("uses the oldest pack first, and never goes below zero", async () => {
+    const u = await newUser(db, "ad-b");
+    await pack(u, 1, "ref-b1");
+    await pack(u, 5, "ref-b2");
+    expect(await take(u)).toBe(true);
+    const r = await rows<{ remaining: number }>(
+      db,
+      "select remaining from addons where user_id = $1 order by created_at, remaining",
+      [u],
+    );
+    expect(r.map((x) => x.remaining).sort()).toEqual([0, 5]);
+  });
+
+  it("one payment adds an add-on once", async () => {
+    const u = await newUser(db, "ad-c");
+    await pack(u, 100, "ref-c");
+    await expect(pack(u, 100, "ref-c")).rejects.toThrow();
+  });
+
+  it("a kind it does not know is refused", async () => {
+    const u = await newUser(db, "ad-d");
+    await expect(
+      db.query("insert into addons (user_id, kind, sku, units) values ($1,'coins','x',1)", [u]),
+    ).rejects.toThrow();
+  });
+});

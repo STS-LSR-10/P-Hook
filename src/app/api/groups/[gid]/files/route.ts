@@ -1,3 +1,4 @@
+import { loadBonus } from "@/lib/addons-repo";
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { signGroupViewToken } from "@/lib/auth/file-token";
@@ -47,6 +48,7 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
       groupFileUsage(db, owner),
       getPlanInfo(db, owner),
     ]);
+    const capacity = fileCapacity(plan, (await loadBonus(db, owner)).storageBytes);
     const viewToken = await signGroupViewToken(
       owner,
       viewer.group.id,
@@ -60,9 +62,9 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
       hasMore,
       // the owner's own use is theirs: a member sees only whether the space is running out
       ...(viewer.isOwner
-        ? { usedBytes, groupBytes, capacityBytes: fileCapacity(plan) }
+        ? { usedBytes, groupBytes, capacityBytes: capacity }
         : { usedBytes: null, groupBytes: null, capacityBytes: null }),
-      spaceLow: usedBytes >= fileCapacity(plan) * SPACE_LOW,
+      spaceLow: usedBytes >= capacity * SPACE_LOW,
       isOwner: viewer.isOwner,
       viewToken,
     });

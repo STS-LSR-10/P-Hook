@@ -1,3 +1,4 @@
+import { type Bonus, NO_BONUS } from "@/lib/addons";
 import { fileCapacity, formatBytes } from "@/lib/file";
 import { noteCapacity } from "@/lib/note";
 import {
@@ -107,20 +108,25 @@ interface Def {
   used: number;
   /** The limit and how it counts on a plan. */
   on: (plan: Plan) => { limit: number | null; period: QuotaPeriod };
+  /** Extra room the person bought (add-ons): added to their own limit, not to the plan table. */
+  extra?: number;
+  /** Slip packs: what the pack covered is not shown as used, so what is left is the pack's. */
+  capUsed?: boolean;
 }
 
 const each = (on: Def["on"]) =>
   Object.fromEntries(PLANS.map((p) => [p, on(p)])) as QuotaItem["plans"];
 
 function item(plan: Plan, def: Def): QuotaItem {
-  const { limit, period } = def.on(plan);
+  const { limit: base, period } = def.on(plan);
+  const limit = base === null ? null : base + (def.extra ?? 0);
   return {
     key: def.key,
     label: def.label,
     hint: def.hint,
     word: def.word,
     icon: def.icon,
-    used: def.used,
+    used: def.capUsed && def.extra && base !== null ? Math.min(def.used, base) : def.used,
     limit,
     unit: def.unit ?? "count",
     period,
@@ -129,7 +135,7 @@ function item(plan: Plan, def: Def): QuotaItem {
 }
 
 /** Every quota of `plan` with what was used, in the order the quota page shows them. */
-export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
+export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS): Quota {
   const main: Def[] = [
     {
       key: "slips",
@@ -138,6 +144,8 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       word: "ครั้ง",
       icon: "receipt",
       used: used.slips,
+      extra: bonus.slips,
+      capUsed: true,
       on: (p) =>
         p === "free"
           ? { limit: FREE_SLIPS_TOTAL, period: "once" }
@@ -159,6 +167,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       word: "กลุ่ม",
       icon: "group",
       used: used.groups,
+      extra: bonus.groups,
       on: (p) => ({ limit: GROUP_LEDGER_LIMIT[p].groups, period: "total" }),
     },
     {
@@ -168,6 +177,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       word: "รายการ",
       icon: "bell",
       used: used.reminders,
+      extra: bonus.alerts,
       on: (p) => ({ limit: reminderCapacity(p), period: "total" }),
     },
     {
@@ -199,6 +209,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage): Quota {
       icon: "storage",
       unit: "bytes",
       used: used.storageBytes,
+      extra: bonus.storageBytes,
       on: (p) => ({ limit: fileCapacity(p), period: "total" }),
     },
   ];

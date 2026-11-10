@@ -10,6 +10,9 @@ export const stubPaymentProvider: PaymentProvider = {
   async createCheckout() {
     return { status: "unavailable", message: PAYMENTS_UNAVAILABLE_TEXT };
   },
+  async createAddonCheckout() {
+    return { status: "unavailable", message: PAYMENTS_UNAVAILABLE_TEXT };
+  },
   async changeSubscription() {
     return { status: "unavailable", message: PAYMENTS_UNAVAILABLE_TEXT };
   },

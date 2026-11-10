@@ -14,7 +14,9 @@ const FILE_CAPACITY: Record<Plan, number> = {
   plus: 20 * GB,
   ultimate: 100 * GB,
 };
-export const fileCapacity = (plan: Plan): number => FILE_CAPACITY[plan];
+/** `extraBytes`: storage the person bought on top (add-ons). */
+export const fileCapacity = (plan: Plan, extraBytes = 0): number =>
+  FILE_CAPACITY[plan] + extraBytes;
 
 export type MediaKind = "image" | "video" | "file";
 
