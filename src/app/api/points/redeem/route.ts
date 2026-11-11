@@ -34,7 +34,7 @@ export async function POST(request: Request): Promise<Response> {
     } catch (error) {
       if (error instanceof NotEnoughPointsError) {
         return apiError(
-          t("เหรียญสะสมไม่พอ (ต้องใช้ {0} แต้ม)", parsed.data.days * POINTS_PER_PLUS_DAY),
+          t("ฮูกคอยน์ไม่พอ (ต้องใช้ {0} แต้ม)", parsed.data.days * POINTS_PER_PLUS_DAY),
           400,
         );
       }

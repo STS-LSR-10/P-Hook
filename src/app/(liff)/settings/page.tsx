@@ -125,7 +125,7 @@ const SECTIONS: SectionDef[] = [
     tone: "warm",
     icon: <Crown className="h-5 w-5" />,
     words: t(
-      "สมาชิก แผน อัปเกรด ต่ออายุ ชวนเพื่อน เหรียญ แต้ม แลก ประวัติการชำระเงิน ใบเสร็จ โควตา",
+      "สมาชิก แผน อัปเกรด ต่ออายุ ชวนเพื่อน เหรียญ แต้ม ฮูกคอยน์ คอยน์ แลก ประวัติการชำระเงิน ใบเสร็จ โควตา",
     ),
   },
   {
@@ -411,7 +411,7 @@ export default function SettingsPage() {
                 href="/invite"
                 icon={<Gift className="h-[18px] w-[18px]" />}
                 title={t("ชวนเพื่อน")}
-                sub={t("รหัสชวนของคุณ และรับเหรียญสะสมทั้งคู่")}
+                sub={t("รหัสชวนของคุณ และรับฮูกคอยน์ทั้งคู่")}
                 value={person.referrals > 0 ? t("{0} คน", person.referrals) : undefined}
               />
               <MenuButton

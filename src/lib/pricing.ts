@@ -476,7 +476,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         feature: "personalize",
       },
       { label: t("ล้างข้อมูล / ลบบัญชี"), icon: "trash", cells: [true, true, true, true] },
-      { label: t("เหรียญสะสมและชวนเพื่อน"), icon: "gift", cells: [true, true, true, true] },
+      { label: t("ฮูกคอยน์และชวนเพื่อน"), icon: "gift", cells: [true, true, true, true] },
     ],
   },
 ];

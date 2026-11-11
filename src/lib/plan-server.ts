@@ -24,13 +24,13 @@ export async function getPlanInfo(
 }
 
 export const PLUS_ONLY_MESSAGE =
-  "ฟีเจอร์นี้สำหรับแผน Starter ขึ้นไป ใช้เหรียญสะสมแลกวัน Pro ได้ที่หน้าตั้งค่านะ";
+  "ฟีเจอร์นี้สำหรับแผน Starter ขึ้นไป ใช้ฮูกคอยน์แลกวัน Pro ได้ที่หน้าตั้งค่านะ";
 
 /** The locked message names the plan this feature really starts at. */
 export const lockedMessage = (feature: Feature): string =>
   MIN_PLAN[feature] === "starter"
     ? PLUS_ONLY_MESSAGE
-    : `ฟีเจอร์นี้สำหรับแผน ${PLAN_LABEL[MIN_PLAN[feature]]} ขึ้นไป ใช้เหรียญสะสมแลกวัน Pro ได้ที่หน้าตั้งค่านะ`;
+    : `ฟีเจอร์นี้สำหรับแผน ${PLAN_LABEL[MIN_PLAN[feature]]} ขึ้นไป ใช้ฮูกคอยน์แลกวัน Pro ได้ที่หน้าตั้งค่านะ`;
 
 /**
  * Server-side feature gate for API routes (the UI hides things too, but this is the real check).

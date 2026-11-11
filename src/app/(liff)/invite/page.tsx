@@ -15,7 +15,7 @@ const LINK = LIFF_ID ? `https://liff.line.me/${LIFF_ID}` : null;
 const STEPS = [
   { n: 1, title: t("ส่งคำชวนให้เพื่อน"), sub: t("กดแชร์ผ่าน LINE") },
   { n: 2, title: t("เพื่อนเพิ่มเพื่อน"), sub: t("แล้วพิมพ์ “ใช้รหัส” ของคุณ") },
-  { n: 3, title: t("รับเหรียญสะสมทั้งคู่"), sub: t("เมื่อเพื่อนจดรายการแรก") },
+  { n: 3, title: t("รับฮูกคอยน์ทั้งคู่"), sub: t("เมื่อเพื่อนจดรายการแรก") },
 ] as const;
 
 export default function InvitePage() {
@@ -43,7 +43,7 @@ export default function InvitePage() {
           />
           <h1 className="text-xl font-extrabold leading-snug text-primary">
             {t("ชวนเพื่อนมาจดใช้งาน")}
-            <span className="block text-foreground">{t("รับเหรียญสะสมฟรี!")}</span>
+            <span className="block text-foreground">{t("รับฮูกคอยน์ฟรี!")}</span>
           </h1>
         </div>
       </header>
@@ -65,7 +65,7 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
 
   const shareText =
     t(
-      'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสเหรียญสะสม',
+      'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสฮูกคอยน์',
       me.referralCode,
     ) + (LINK ? `\n${LINK}` : "");
 
@@ -126,7 +126,7 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
             </dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted">{t("เหรียญสะสมของคุณ")}</dt>
+            <dt className="text-muted">{t("ฮูกคอยน์ของคุณ")}</dt>
             <dd className="num font-bold">{me.points}</dd>
           </div>
         </dl>
@@ -210,7 +210,7 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
         <section className={cardClass} aria-label={t("กรอกรหัสจากเพื่อน")}>
           <h2 className="font-semibold">{t("มีรหัสจากเพื่อน?")}</h2>
           <p className="text-xs text-muted">
-            {t("ใช้ได้ภายในไม่กี่วันแรกหลังเริ่มใช้งาน พอจดรายการแรก ทั้งคู่ได้โบนัสเหรียญสะสม")}
+            {t("ใช้ได้ภายในไม่กี่วันแรกหลังเริ่มใช้งาน พอจดรายการแรก ทั้งคู่ได้โบนัสฮูกคอยน์")}
           </p>
           <div className="flex gap-2">
             <input

@@ -73,7 +73,7 @@ export function ProfileCard({ me }: { me: Me }) {
             <Sparkles className="h-5 w-5 text-accent" />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-medium text-muted">{t("เหรียญสะสม")}</p>
+            <p className="text-[11px] font-medium text-muted">{t("ฮูกคอยน์")}</p>
             <p className="num text-xl font-bold leading-tight text-primary">{me.points}</p>
           </div>
         </div>

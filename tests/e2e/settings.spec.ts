@@ -496,7 +496,7 @@ test.describe("settings sections and search (360px)", () => {
     await page.goto("/settings");
     const profile = page.getByRole("region", { name: "โปรไฟล์และแผน" });
     await expect(profile.getByText("แผน Pro")).toBeVisible();
-    await expect(profile.getByText("เหรียญสะสม")).toBeVisible();
+    await expect(profile.getByText("ฮูกคอยน์")).toBeVisible();
     await expect(profile.getByText("จดต่อเนื่อง")).toBeVisible();
     await expect(profile.getByRole("link", { name: "โควตา" })).toHaveAttribute(
       "href",

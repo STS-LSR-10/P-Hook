@@ -335,7 +335,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: "other",
     chip: tr("✏️ อื่น ๆ"),
     icon: "✏️",
-    title: tr("แก้ไข เหรียญสะสม ชวนเพื่อน"),
+    title: tr("แก้ไข ฮูกคอยน์ ชวนเพื่อน"),
     subtitle: tr("คำสั่งอื่น ๆ ที่ใช้บ่อย"),
     tagline: tr("จดผิดก็แก้ได้ในพริบตา"),
     items: [
@@ -343,10 +343,10 @@ export const HELP_TOPICS: HelpTopic[] = [
       { icon: "✏️", cmd: "แก้ล่าสุด 45", desc: tr("แก้ยอดรายการล่าสุด"), need: "free" },
       {
         icon: "🎁",
-        cmd: "เหรียญสะสม",
-        desc: tr("แต้มและวันที่จดต่อเนื่อง"),
+        cmd: "ฮูกคอยน์",
+        desc: tr("ฮูกคอยน์และวันที่จดต่อเนื่อง"),
         need: "free",
-        send: "เหรียญสะสม",
+        send: "ฮูกคอยน์",
       },
       {
         icon: "📣",

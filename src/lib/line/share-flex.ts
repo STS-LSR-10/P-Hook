@@ -118,7 +118,7 @@ export function buildShareFlex(
   if (input.code) {
     footer.push({
       type: "text",
-      text: `พิมพ์ "ใช้รหัส ${input.code}" ทั้งคู่ได้โบนัสเหรียญสะสม`,
+      text: `พิมพ์ "ใช้รหัส ${input.code}" ทั้งคู่ได้โบนัสฮูกคอยน์`,
       size: "xs",
       color: muted,
       align: "center",

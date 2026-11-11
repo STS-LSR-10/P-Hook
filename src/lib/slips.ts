@@ -1,4 +1,6 @@
 import { loadBonus, takeSlipPack } from "@/lib/addons-repo";
+import { FIRST_SLIP_BONUS } from "@/lib/config";
+import { awardOnce } from "@/lib/points";
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { categorizeByRules } from "@/lib/categorize/rules";
@@ -9,6 +11,7 @@ import {
   IMAGE_ERROR_TEXT,
   IMAGE_TOO_LARGE_TEXT,
   NOT_A_SLIP_TEXT,
+  FIRST_SLIP_BONUS_TEXT,
   SLIP_LOCKED_TEXT,
   slipQuotaText,
   SLIP_FREE_LEFT_TEXT,
@@ -114,9 +117,14 @@ export async function handleSlipImage(
   }
   let recorded = false;
   const messages = await readSlip();
-  return freeLeft !== null && recorded
-    ? [...messages, text(SLIP_FREE_LEFT_TEXT(freeLeft))]
-    : messages;
+  if (!recorded) return messages;
+  // the first slip read for good pays a one-time bonus (once per account)
+  const first = await awardOnce(db, user.id, "first_slip", FIRST_SLIP_BONUS);
+  return [
+    ...messages,
+    ...(first ? [text(FIRST_SLIP_BONUS_TEXT(FIRST_SLIP_BONUS))] : []),
+    ...(freeLeft !== null ? [text(SLIP_FREE_LEFT_TEXT(freeLeft))] : []),
+  ];
 
   async function readSlip(): Promise<LineMessage[]> {
     if (freeLeft === null && !usePack) {

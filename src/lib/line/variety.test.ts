@@ -74,8 +74,8 @@ describe("varyText", () => {
   });
 
   it("puts the same numbers and names into the other wording", () => {
-    const template = "ได้โบนัสชวนเพื่อน +{0} เหรียญสะสมแล้ว! ตรวจดูได้ที่หน้าตั้งค่า";
-    const said = "ได้โบนัสชวนเพื่อน +50 เหรียญสะสมแล้ว! ตรวจดูได้ที่หน้าตั้งค่า";
+    const template = "ได้โบนัสชวนเพื่อน +{0} ฮูกคอยน์แล้ว! ตรวจดูได้ที่หน้าตั้งค่า";
+    const said = "ได้โบนัสชวนเพื่อน +50 ฮูกคอยน์แล้ว! ตรวจดูได้ที่หน้าตั้งค่า";
     setVarietyRandom(() => 0.99);
     const out = varyText(said);
     expect(out).not.toBe(said);

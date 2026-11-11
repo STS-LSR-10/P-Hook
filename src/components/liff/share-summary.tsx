@@ -3,6 +3,7 @@
 import { Download, Lock, MessageCircle, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useLiff } from "@/components/liff/liff-provider";
 import { Sheet } from "@/components/liff/sheet";
 import { Switch } from "@/components/liff/settings/switch";
 import { buildShareFlex } from "@/lib/line/share-flex";
@@ -43,6 +44,7 @@ export function ShareSummarySheet({
   canTheme: boolean;
   onClose: () => void;
 }) {
+  const { api } = useLiff();
   const [hideAmounts, setHideAmounts] = useState(true);
   const [theme, setTheme] = useState<ThemeId>("mint");
   const [sending, setSending] = useState(false);
@@ -97,11 +99,25 @@ export function ShareSummarySheet({
     typeof navigator.canShare === "function" &&
     navigator.canShare({ files: [file] });
 
+  /** After the person really shared: the monthly HookCoins bonus (the server pays it once a month). */
+  async function claimBonus(): Promise<string | null> {
+    try {
+      const r = await api<{ awarded: boolean; coins: number }>("/api/points/share", {
+        method: "POST",
+        body: "{}",
+      });
+      return r.awarded ? t("ได้โบนัสแชร์ +{0} ฮูกคอยน์!", r.coins) : null;
+    } catch {
+      return null; // the bonus is a nicety: never let it spoil a share that worked
+    }
+  }
+
   async function share() {
     if (!file) return;
     setNotice(null);
     try {
       await navigator.share({ files: [file], title: t("สรุปของฉันกับพี่ฮูก") });
+      setNotice(await claimBonus());
     } catch (e) {
       // closing the share menu is not a failure
       if (!(e instanceof DOMException && e.name === "AbortError")) {
@@ -131,7 +147,10 @@ export function ShareSummarySheet({
         { isMultiple: true },
       );
       // nothing comes back when the person closes the picker without sending
-      if (sent) setNotice(t("ส่งเข้าแชทแล้ว"));
+      if (sent) {
+        const bonus = await claimBonus();
+        setNotice(bonus ? `${t("ส่งเข้าแชทแล้ว")} · ${bonus}` : t("ส่งเข้าแชทแล้ว"));
+      }
     } catch {
       setNotice(t("ส่งเข้าแชทไม่สำเร็จ ลองใหม่อีกครั้งนะ"));
     } finally {

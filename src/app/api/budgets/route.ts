@@ -2,6 +2,8 @@ import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { cycleRange, dayRange } from "@/lib/budget-cycle";
+import { FIRST_BUDGET_BONUS } from "@/lib/config";
+import { awardOnce } from "@/lib/points";
 import { satangToString, toSatang } from "@/lib/money";
 import {
   expenseTotalSatang,
@@ -190,6 +192,14 @@ export async function PUT(request: Request): Promise<Response> {
         cycle: settings.budget_cycle,
       });
     }
-    return json({ ok: true });
+    // the first budget ever set pays a one-time bonus (once per account)
+    const setsAnAmount =
+      (overall !== undefined && overall !== null && overall > 0) ||
+      (body.categories ?? []).some((c) => (toBudgetSatang(c.amount) ?? 0) > 0);
+    const coins =
+      setsAnAmount && (await awardOnce(db, auth.userId, "first_budget", FIRST_BUDGET_BONUS))
+        ? FIRST_BUDGET_BONUS
+        : 0;
+    return json({ ok: true, coins });
   });
 }

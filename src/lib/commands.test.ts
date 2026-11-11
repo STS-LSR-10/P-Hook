@@ -21,7 +21,9 @@ describe("parseCommand", () => {
   });
 
   it.each([
-    ["เหรียญสะสม", { kind: "points" }],
+    ["ฮูกคอยน์", { kind: "points" }],
+    ["คอยน์", { kind: "points" }],
+    ["เหรียญสะสม", { kind: "points" }], // the old name still works
     ["เหรียญ", { kind: "points" }],
     ["ตังสะสม", { kind: "points" }],
     ["แต้ม", { kind: "points" }],

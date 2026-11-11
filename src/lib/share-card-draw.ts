@@ -330,7 +330,7 @@ export async function drawShareCard(input: DrawInput): Promise<Blob> {
     ctx.fillStyle = th.primary;
     fitText(ctx, `พิมพ์ “ใช้รหัส ${code}”`, textX, fy + 190, 570, 700, 40, f);
     ctx.fillStyle = th.muted;
-    fitText(ctx, "ทั้งคู่ได้โบนัสเหรียญสะสม", textX, fy + 232, 570, 400, 30, f);
+    fitText(ctx, "ทั้งคู่ได้โบนัสฮูกคอยน์", textX, fy + 232, 570, 400, 30, f);
   }
 
   return new Promise((resolve, reject) =>

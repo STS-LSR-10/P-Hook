@@ -1927,6 +1927,86 @@ describe("points, redeem and referral", () => {
   });
 });
 
+describe("HookCoins earning rules (0068)", () => {
+  const pts = async (u: string) =>
+    (await one<{ points: number }>(db, "select points from users where id=$1", [u])).points;
+  const award = async (u: string, delta: number, reason: string, ref: string) =>
+    (
+      await one<{ award_points: boolean }>(db, "select award_points($1,$2,$3,$4)", [
+        u,
+        delta,
+        reason,
+        ref,
+      ])
+    ).award_points;
+
+  it("the referrer is paid for at most 5 friends a month, and the friends still get their welcome", async () => {
+    const referrer = await newUser(db, `cap-owner-${Math.random()}`);
+    const code = (
+      await one<{ referral_code: string }>(db, "select referral_code from users where id=$1", [
+        referrer,
+      ])
+    ).referral_code;
+    const friends: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const f = await newUser(db, `cap-friend-${i}-${Math.random()}`);
+      await db.query("select apply_referral($1,$2,14)", [f, code]);
+      friends.push(f);
+    }
+    for (const f of friends) {
+      expect(
+        (await one<{ g: boolean }>(db, "select grant_referral_bonus($1,5,5,5) as g", [f])).g,
+      ).toBe(true);
+    }
+    expect(await pts(referrer)).toBe(25); // 5 friends x 5, the 6th and 7th paid nothing
+    for (const f of friends) expect(await pts(f)).toBe(5); // every friend got the welcome
+  });
+
+  it("last month's friends do not count against this month's cap", async () => {
+    const referrer = await newUser(db, `cap2-owner-${Math.random()}`);
+    const code = (
+      await one<{ referral_code: string }>(db, "select referral_code from users where id=$1", [
+        referrer,
+      ])
+    ).referral_code;
+    // five payments made two months ago
+    for (let i = 0; i < 5; i++) {
+      await award(referrer, 5, "referral", `old-${i}`);
+    }
+    await db.query(
+      "update point_ledger set created_at = now() - interval '70 days' where user_id=$1 and reason='referral'",
+      [referrer],
+    );
+    const friend = await newUser(db, `cap2-friend-${Math.random()}`);
+    await db.query("select apply_referral($1,$2,14)", [friend, code]);
+    await db.query("select grant_referral_bonus($1,5,5,5)", [friend]);
+    expect(await pts(referrer)).toBe(30);
+  });
+
+  it("a streak bonus, a one-time quest and the monthly share are each paid once for their key", async () => {
+    const u = await newUser(db, `quest-${Math.random()}`);
+    expect(await award(u, 3, "streak_week", "2026-11-01:7")).toBe(true);
+    expect(await award(u, 3, "streak_week", "2026-11-01:7")).toBe(false); // the same run, the same week
+    expect(await award(u, 3, "streak_week", "2026-11-01:14")).toBe(true); // the next week of the run
+    expect(await award(u, 3, "streak_week", "2026-12-01:7")).toBe(true); // a new run
+    expect(await award(u, 3, "first_slip", u)).toBe(true);
+    expect(await award(u, 3, "first_slip", u)).toBe(false);
+    expect(await award(u, 3, "share", "2026-11")).toBe(true);
+    expect(await award(u, 3, "share", "2026-11")).toBe(false);
+    expect(await award(u, 3, "share", "2026-12")).toBe(true);
+    expect(await pts(u)).toBe(18);
+  });
+
+  it("the referral function cannot be called from the browser", async () => {
+    await expect(
+      db.transaction(async (tx) => {
+        await tx.query("set local role authenticated");
+        await tx.query("select grant_referral_bonus('00000000-0000-0000-0000-000000000000',5,5,5)");
+      }),
+    ).rejects.toThrow();
+  });
+});
+
 describe("check_rate_limit", () => {
   it("counts hits per key and blocks over the limit", async () => {
     const hit = async (key: string) =>

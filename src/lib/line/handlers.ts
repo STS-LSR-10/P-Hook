@@ -260,6 +260,7 @@ import {
   splitDoneText,
   NOTHING_TO_DELETE_TEXT,
   REFERRAL_BONUS_TEXT,
+  STREAK_BONUS_TEXT,
   REFERRAL_FAIL_TEXT,
   REFERRAL_OK_TEXT,
   referralShareText,
@@ -1926,7 +1927,10 @@ async function splitReceipt(tx: TxRow, user: UserRow, deps: HandlerDeps): Promis
  */
 async function awardAndNotify(deps: HandlerDeps, userId: string): Promise<LineMessage[]> {
   const result = await awardActivity(deps.db, userId, deps.now());
-  return result.referralBonus ? [text(REFERRAL_BONUS_TEXT)] : [];
+  return [
+    ...(result.referralBonus ? [text(REFERRAL_BONUS_TEXT)] : []),
+    ...(result.streak ? [text(STREAK_BONUS_TEXT(result.streak.days, result.streak.bonus))] : []),
+  ];
 }
 
 async function pointsSummaryText(db: SupabaseClient, userId: string, now: Date): Promise<string> {
@@ -1938,7 +1942,7 @@ async function pointsSummaryText(db: SupabaseClient, userId: string, now: Date):
   const streak = currentStreak(keys, now);
   const { days } = redeemable(points);
   return [
-    tr("เหรียญสะสมของคุณ: {0} แต้ม", points),
+    tr("ฮูกคอยน์ของคุณ: {0}", points),
     streak > 0 ? tr("จดต่อเนื่อง {0} วันแล้ว", streak) : tr("วันนี้จดรายการแรกเพื่อเริ่มสะสมนะ"),
     days > 0
       ? tr("แลกเป็นวันใช้ Pro ได้ {0} วัน (แลกที่หน้าตั้งค่า)", days)

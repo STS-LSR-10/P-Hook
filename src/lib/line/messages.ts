@@ -71,14 +71,19 @@ export const slipQuotaText = (plan: Plan, limit: number) => {
 export const SLIP_CANCELLED_TEXT = t("ยกเลิกแล้ว ไม่ได้จดสลิปนี้");
 export const PICK_CATEGORY_TEXT = t("เลือกหมวดที่ถูกต้องนะ");
 export const REFERRAL_BONUS_TEXT = t(
-  "ได้โบนัสชวนเพื่อน +{0} เหรียญสะสมแล้ว! ตรวจดูได้ที่หน้าตั้งค่า",
+  "ได้โบนัสชวนเพื่อน +{0} ฮูกคอยน์แล้ว! ตรวจดูได้ที่หน้าตั้งค่า",
   REFERRAL_BONUS_REFEREE,
 );
+/** A streak reached a week or a month: how long, and what it paid. */
+export const STREAK_BONUS_TEXT = (days: number, bonus: number) =>
+  t("🔥 จดต่อเนื่องครบ {0} วันแล้ว! ได้โบนัส +{1} ฮูกคอยน์", days, bonus);
+export const FIRST_SLIP_BONUS_TEXT = (bonus: number) =>
+  t("🎉 สแกนสลิปครั้งแรกสำเร็จ! ได้โบนัส +{0} ฮูกคอยน์", bonus);
 export const USE_CODE_USAGE_TEXT = t(
   'พิมพ์ "ใช้รหัส" ตามด้วยรหัสของเพื่อน เช่น "ใช้รหัส ABCD1234" เพื่อรับโบนัสทั้งสองฝ่ายนะ',
 );
 export const REFERRAL_OK_TEXT = t(
-  "ใช้รหัสแล้ว! พอจดรายการแรกจะได้โบนัส {0} เหรียญสะสม และเพื่อนก็ได้ด้วยนะ",
+  "ใช้รหัสแล้ว! พอจดรายการแรกจะได้โบนัส {0} ฮูกคอยน์ และเพื่อนก็ได้ด้วยนะ",
   REFERRAL_BONUS_REFEREE,
 );
 export const REFERRAL_FAIL_TEXT = {
@@ -91,12 +96,12 @@ export const REFERRAL_FAIL_TEXT = {
 export function referralShareText(code: string): string {
   return [
     t("รหัสชวนเพื่อนของคุณ: {0}", code),
-    t('ให้เพื่อนพิมพ์ "ใช้รหัส {0}" ในแชทนี้ พอเพื่อนจดรายการแรก ทั้งคู่ได้โบนัสเหรียญสะสม', code),
+    t('ให้เพื่อนพิมพ์ "ใช้รหัส {0}" ในแชทนี้ พอเพื่อนจดรายการแรก ทั้งคู่ได้โบนัสฮูกคอยน์', code),
   ].join("\n");
 }
 
 export const MEMORY_PLUS_HINT_TEXT = t(
-  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Starter ขึ้นไป (แลกวัน Pro ด้วยเหรียญสะสมได้ที่หน้าตั้งค่า)",
+  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Starter ขึ้นไป (แลกวัน Pro ด้วยฮูกคอยน์ได้ที่หน้าตั้งค่า)",
 );
 
 export const SLIP_SOON_TEXT = t(

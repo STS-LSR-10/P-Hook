@@ -368,18 +368,18 @@ export const EN: Record<string, string> = {
   ส่งคำชวนให้เพื่อน: "Send an invite to a friend",
   "กดแชร์ผ่าน LINE": "Tap share via LINE",
   เพื่อนเพิ่มเพื่อน: "Your friend adds the bot",
-  รับเหรียญสะสมทั้งคู่: "You both get coins",
+  รับฮูกคอยน์ทั้งคู่: "You both get HookCoins",
   เมื่อเพื่อนจดรายการแรก: "when your friend records their first entry",
   กลับไปหน้าตั้งค่า: "Back to settings",
   ชวนเพื่อนมาจดใช้งาน: "Invite friends",
-  "รับเหรียญสะสมฟรี!": "Get free coins!",
+  "รับฮูกคอยน์ฟรี!": "Get free HookCoins!",
   "คัดลอกอัตโนมัติไม่ได้ ลองกดค้างที่ข้อความเพื่อคัดลอกนะ":
     "Couldn't copy automatically. Press and hold the text to copy it",
   ใช้รหัสไม่สำเร็จ: "Couldn't use the code",
   สถิติการชวนเพื่อน: "Invite stats",
   เพื่อนที่ชวนสำเร็จแล้ว: "Friends who joined",
   คน: "people",
-  เหรียญสะสมของคุณ: "Your coins",
+  ฮูกคอยน์ของคุณ: "Your HookCoins",
   สิทธิประโยชน์ที่ได้รับ: "Rewards",
   คุณได้รับ: "You get",
   เหรียญ: "coins",
@@ -395,8 +395,8 @@ export const EN: Record<string, string> = {
   คัดลอกลิงก์ชวนเพื่อน: "Copy the invite link",
   กรอกรหัสจากเพื่อน: "Enter a friend's code",
   "มีรหัสจากเพื่อน?": "Have a friend's code?",
-  "ใช้ได้ภายในไม่กี่วันแรกหลังเริ่มใช้งาน พอจดรายการแรก ทั้งคู่ได้โบนัสเหรียญสะสม":
-    "Usable within your first few days. Once you record your first entry, you both get bonus coins",
+  "ใช้ได้ภายในไม่กี่วันแรกหลังเริ่มใช้งาน พอจดรายการแรก ทั้งคู่ได้โบนัสฮูกคอยน์":
+    "Usable within your first few days. Once you record your first entry, you both get bonus HookCoins",
   "เช่น ABCD1234": "e.g. ABCD1234",
   รหัสของเพื่อน: "Friend's code",
   ใช้รหัส: "Use code",
@@ -476,7 +476,7 @@ export const EN: Record<string, string> = {
   สมาชิกและสิทธิประโยชน์: "Membership and benefits",
   "อัปเกรด, ชวนเพื่อน, แลกเหรียญ, ประวัติชำระเงิน":
     "Upgrade, invite friends, redeem coins, payment history",
-  "สมาชิก แผน อัปเกรด ต่ออายุ ชวนเพื่อน เหรียญ แต้ม แลก ประวัติการชำระเงิน ใบเสร็จ โควตา":
+  "สมาชิก แผน อัปเกรด ต่ออายุ ชวนเพื่อน เหรียญ แต้ม ฮูกคอยน์ คอยน์ แลก ประวัติการชำระเงิน ใบเสร็จ โควตา":
     "membership plan upgrade renew invite friends coins points redeem payment history receipts quota",
   ตั้งค่าทั่วไป: "General settings",
   "ภาษา, สกุลเงิน, โซนเวลา": "Language, currency, time zone",
@@ -515,7 +515,7 @@ export const EN: Record<string, string> = {
   โควตาการใช้งาน: "Usage quota",
   ดูว่าใช้ไปเท่าไรจากโควตาของแผน: "See how much of your plan's quota you've used",
   ชวนเพื่อน: "Invite friends",
-  "รหัสชวนของคุณ และรับเหรียญสะสมทั้งคู่": "Your invite code; you both get coins",
+  "รหัสชวนของคุณ และรับฮูกคอยน์ทั้งคู่": "Your invite code; you both get HookCoins",
   "{0} คน": "{0} people",
   ประวัติการชำระเงิน: "Payment history",
   ดูใบเสร็จและรอบต่ออายุสมาชิก: "See receipts and membership renewals",
@@ -1063,7 +1063,7 @@ export const EN: Record<string, string> = {
   ลบข้อมูลทั้งหมด: "Delete all data",
   "ลบข้อมูลทั้งหมด?": "Delete all data?",
   ระบบจะลบ: "This permanently deletes",
-  "รายการ หมวด งบ รายการประจำ สลิป (รวมรูป) แต้ม และการตั้งค่าทั้งหมด":
+  "รายการ หมวด งบ รายการประจำ สลิป (รวมรูป) ฮูกคอยน์ และการตั้งค่าทั้งหมด":
     "all your entries, categories, budgets, recurring entries, slips (with images), points and settings",
   ของคุณอย่างถาวร: "permanently.",
   กู้คืนไม่ได้: "It can't be undone.",
@@ -1117,13 +1117,14 @@ export const EN: Record<string, string> = {
   กดแล้วถ่ายรูปหรือเลือกจากอัลบั้มเพื่อแนบใบเสร็จหรือสินค้า:
     "Tap it to take a photo or pick one from your album to attach a receipt or product",
   แนบรูปใบเสร็จหรือสินค้ากับรายการ: "Attach receipt or product photos to entries",
-  หรือแลกวันใช้ด้วยเหรียญสะสมที่การ์ดแผนด้านบน: "or redeem days with coins on the plan card above",
+  หรือแลกวันใช้ด้วยฮูกคอยน์ที่การ์ดแผนด้านบน:
+    "or redeem days with HookCoins on the plan card above",
   โปรไฟล์และแผน: "Profile and plan",
   ผู้ใช้: "User",
   โควตา: "Quota",
   "ใช้ได้ถึง {0}": "Valid until {0}",
   "แผนฟรี ใช้ได้ตลอด": "Free plan, forever",
-  เหรียญสะสม: "Coins",
+  ฮูกคอยน์: "HookCoins",
   จดต่อเนื่อง: "Streak",
   อาทิตย์: "Sunday",
   จันทร์: "Monday",
@@ -1184,8 +1185,8 @@ export const EN: Record<string, string> = {
   กระเป๋าร่วม: "shared wallets",
   จะไม่ถูกลบ: "won't be deleted",
   เพราะอีกฝ่ายยังเห็นอยู่: "because the other person still sees them",
-  "ที่เก็บไว้: บัญชีและแผน การตั้งค่า หมวด งบ กระเป๋า กระปุกออม บิล รายการประจำ โน้ต เหรียญสะสม":
-    "Kept: account and plan, settings, categories, budgets, wallets, savings jars, bills, recurring entries, notes, coins",
+  "ที่เก็บไว้: บัญชีและแผน การตั้งค่า หมวด งบ กระเป๋า กระปุกออม บิล รายการประจำ โน้ต ฮูกคอยน์":
+    "Kept: account and plan, settings, categories, budgets, wallets, savings jars, bills, recurring entries, notes, HookCoins",
   "หนี้ กระปุกออม และยอดตั้งต้นของกระเป๋าไม่ถูกแตะ ยอดคงเหลือของกระเป๋าจะเปลี่ยนตามรายการที่ลบ":
     "Debts, savings jars and wallets' starting balances aren't touched; wallet balances change with the deleted entries",
   คงยอดเงินปัจจุบันของแต่ละกระเป๋าไว้: "Keep each wallet's current balance",
@@ -1302,7 +1303,7 @@ export const EN: Record<string, string> = {
   "AI Insight วิเคราะห์การใช้จ่าย": "AI Insight on your spending",
   ส่วนตัวและรางวัล: "Personal and rewards",
   "ล้างข้อมูล / ลบบัญชี": "Clear data / delete account",
-  เหรียญสะสมและชวนเพื่อน: "Coins and invites",
+  ฮูกคอยน์และชวนเพื่อน: "HookCoins and invites",
   ตั้งหมวดและงบรวม: "Categories and an overall budget",
   "อ่านสลิป 30 ใบ/เดือน + จดด้วยเสียง 20 ครั้ง + จดย้อนหลัง":
     "30 slips/month + 20 voice entries + past-day entries",
@@ -1356,8 +1357,8 @@ export const EN: Record<string, string> = {
     'Add one with the button below, or type in the chat, e.g. "เป้าหมาย ใหม่ เที่ยวญี่ปุ่น 30000"',
   'เปิดหน้านี้จากการ์ดในกลุ่ม LINE เช่น พิมพ์ "ไฟล์กลุ่ม" ในกลุ่ม':
     'Open this page from a card in the LINE group, e.g. type "ไฟล์กลุ่ม" in the group',
-  'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสเหรียญสะสม':
-    "Let's track income and expenses easily in LINE with P'Hook! Add the bot and type \"ใช้รหัส {0}\" and we both get bonus coins",
+  'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสฮูกคอยน์':
+    "Let's track income and expenses easily in LINE with P'Hook! Add the bot and type \"ใช้รหัส {0}\" and we both get bonus HookCoins",
   'ลบเตือน "{0}" ทุกรอบใช่ไหม?': 'Delete the reminder "{0}" for every round?',
   'ลบเตือน "{0}" ใช่ไหม?': 'Delete the reminder "{0}"?',
   'มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ':
@@ -1526,7 +1527,7 @@ export const EN: Record<string, string> = {
     "The ledger owner's notes are full ({0}). Delete old ones first",
   "แนบรูปครบ {0} รูปของเดือนนี้แล้ว": "You've attached all {0} photos for this month",
   "มีบิลได้สูงสุด {0} รายการ": "You can have up to {0} bills",
-  "เหรียญสะสมไม่พอ (ต้องใช้ {0} แต้ม)": "Not enough coins (needs {0} points)",
+  "ฮูกคอยน์ไม่พอ (ต้องใช้ {0} แต้ม)": "Not enough HookCoins (needs {0} HookCoins)",
   "ตั้งชื่อกระเป๋าให้ถูกต้องนะ (ไม่เกิน {0} ตัวอักษร)":
     "Enter a valid wallet name (up to {0} characters)",
   "สร้างหมวดของตัวเองได้ไม่เกิน {0} หมวด": "You can create up to {0} of your own categories",
@@ -1660,7 +1661,7 @@ export const EN: Record<string, string> = {
   "{0}\n{1}\nยังไม่มีรายการเลย": "{0}\n{1}\nNo entries yet",
   "รายเดือน (วันที่ {0})": "Monthly (day {0})",
   "จดแล้ว {0} รายการ": "Recorded {0} entries",
-  "เหรียญสะสมของคุณ: {0} แต้ม": "Your coins: {0} points",
+  "ฮูกคอยน์ของคุณ: {0}": "Your HookCoins: {0}",
   "จดต่อเนื่อง {0} วันแล้ว": "{0}-day recording streak",
   วันนี้จดรายการแรกเพื่อเริ่มสะสมนะ: "Record your first entry today to start collecting",
   "แลกเป็นวันใช้ Pro ได้ {0} วัน (แลกที่หน้าตั้งค่า)": "You can redeem {0} Pro days (in settings)",
@@ -1751,7 +1752,7 @@ export const EN: Record<string, string> = {
   "ดูเตือนที่ตั้งไว้ (ยกเลิกได้ที่การ์ด)": "See your reminders (cancel from the card)",
   เตือน: "Remind",
   "✏️ อื่น ๆ": "✏️ Other",
-  "แก้ไข เหรียญสะสม ชวนเพื่อน": "Edit, coins, invite friends",
+  "แก้ไข ฮูกคอยน์ ชวนเพื่อน": "Edit, HookCoins, invite friends",
   "คำสั่งอื่น ๆ ที่ใช้บ่อย": "Other common commands",
   จดผิดก็แก้ได้ในพริบตา: "Fix a mistake in a moment",
   ดูแต้มและจดต่อเนื่องกี่วัน: "See your points and recording streak",
@@ -1870,12 +1871,12 @@ export const EN: Record<string, string> = {
     'You\'ve read {0} slips this month, the normal-use limit. Type entries yourself, e.g. "ค่าไฟ 1200"; slip reading resets at the start of next month',
   "ยกเลิกแล้ว ไม่ได้จดสลิปนี้": "Cancelled; this slip wasn't recorded",
   เลือกหมวดที่ถูกต้องนะ: "Choose a valid category",
-  "ได้โบนัสชวนเพื่อน +{0} เหรียญสะสมแล้ว! ตรวจดูได้ที่หน้าตั้งค่า":
-    "Invite bonus +{0} coins received! Check it in settings",
+  "ได้โบนัสชวนเพื่อน +{0} ฮูกคอยน์แล้ว! ตรวจดูได้ที่หน้าตั้งค่า":
+    "Invite bonus +{0} HookCoins received! Check it in settings",
   'พิมพ์ "ใช้รหัส" ตามด้วยรหัสของเพื่อน เช่น "ใช้รหัส ABCD1234" เพื่อรับโบนัสทั้งสองฝ่ายนะ':
     'Type "ใช้รหัส" followed by your friend\'s code, e.g. "ใช้รหัส ABCD1234", and you both get a bonus',
-  "ใช้รหัสแล้ว! พอจดรายการแรกจะได้โบนัส {0} เหรียญสะสม และเพื่อนก็ได้ด้วยนะ":
-    "Code used! When you record your first entry you'll get {0} coins, and so will your friend",
+  "ใช้รหัสแล้ว! พอจดรายการแรกจะได้โบนัส {0} ฮูกคอยน์ และเพื่อนก็ได้ด้วยนะ":
+    "Code used! When you record your first entry you'll get {0} HookCoins, and so will your friend",
   "ไม่พบรหัสชวนเพื่อนนี้ ตรวจตัวอักษรอีกครั้งนะ":
     "That invite code wasn't found. Check the letters again",
   ใช้รหัสของตัวเองไม่ได้นะ: "You can't use your own code",
@@ -1883,10 +1884,10 @@ export const EN: Record<string, string> = {
   "ใช้รหัสได้ภายใน {0} วันแรกหลังเริ่มใช้งานเท่านั้นนะ":
     "A code can only be used within your first {0} days",
   "รหัสชวนเพื่อนของคุณ: {0}": "Your invite code: {0}",
-  'ให้เพื่อนพิมพ์ "ใช้รหัส {0}" ในแชทนี้ พอเพื่อนจดรายการแรก ทั้งคู่ได้โบนัสเหรียญสะสม':
-    'Ask your friend to type "ใช้รหัส {0}" in this chat. When they record their first entry, you both get bonus coins',
-  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Pro (แลกวัน Pro ด้วยเหรียญสะสมได้ที่หน้าตั้งค่า)":
-    "Recorded in this category. Remembering payee → category automatically is a Pro feature (redeem Pro days with coins in settings)",
+  'ให้เพื่อนพิมพ์ "ใช้รหัส {0}" ในแชทนี้ พอเพื่อนจดรายการแรก ทั้งคู่ได้โบนัสฮูกคอยน์':
+    'Ask your friend to type "ใช้รหัส {0}" in this chat. When they record their first entry, you both get bonus HookCoins',
+  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Pro (แลกวัน Pro ด้วยฮูกคอยน์ได้ที่หน้าตั้งค่า)":
+    "Recorded in this category. Remembering payee → category automatically is a Pro feature (redeem Pro days with HookCoins in settings)",
   'ฟีเจอร์อ่านสลิปกำลังจะมาเร็ว ๆ นี้ ตอนนี้พิมพ์จดได้เลย เช่น "ค่าไฟ 1200" นะ':
     'Slip reading is coming soon. For now, type it, e.g. "ค่าไฟ 1200"',
   "ส่งมาเร็วไปนิดนะ รอสักครู่แล้วค่อยส่งต่อ ข้อความช่วงนี้อาจไม่ได้ถูกจด":
@@ -2589,7 +2590,7 @@ export const EN: Record<string, string> = {
   "ฝากไฟล์ · หาไฟล์ สัญญา": 'Keep a file · "find files contract"',
   ลบรายการล่าสุด: "Delete the latest entry",
   แก้ยอดรายการล่าสุด: "Change the latest amount",
-  แต้มและวันที่จดต่อเนื่อง: "Points and your streak",
+  ฮูกคอยน์และวันที่จดต่อเนื่อง: "HookCoins and your streak",
   "ชวนเพื่อน ได้โบนัสทั้งคู่": "Invite a friend, both get a bonus",
   ใส่รหัสของเพื่อน: "Enter a friend's code",
   "ต้องมีคำว่า จด ด้วย": 'Needs the word "จด"',
@@ -2844,8 +2845,8 @@ export const EN: Record<string, string> = {
   "เดือนนี้จดด้วยเสียงครบ {0} ครั้งแล้ว พิมพ์จดแทนได้เลย และจะใช้เสียงได้ใหม่ต้นเดือนหน้านะ":
     "You have used {0} voice records this month. You can type instead, and voice resets next month",
   "งบรายวัน/สัปดาห์ + เตือนเมื่อใกล้เกินงบ": "Daily and weekly budgets + warnings near the limit",
-  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Starter ขึ้นไป (แลกวัน Pro ด้วยเหรียญสะสมได้ที่หน้าตั้งค่า)":
-    "Category saved. Remembering a payee → category automatically is for the Starter plan and above (you can swap coins for Pro days on the settings page)",
+  "จดหมวดนี้ให้แล้วนะ การจำผู้รับ → หมวดอัตโนมัติเป็นฟีเจอร์ของแผน Starter ขึ้นไป (แลกวัน Pro ด้วยฮูกคอยน์ได้ที่หน้าตั้งค่า)":
+    "Category saved. Remembering a payee → category automatically is for the Starter plan and above (you can swap HookCoins for Pro days on the settings page)",
   'นี่คือสลิปฟรีใบสุดท้ายของ {0} ใบแรกแล้ว อยากอ่านได้ทุกเดือน ลองทดลองใช้แผนฟรี 7 วันที่เมนู "อัปเกรด" นะ':
     'That was the last of your first {0} free slip reads. To read slips every month, try a plan free for 7 days from the "Upgrade" menu',
   'การจดย้อนหลัง (เช่น "เมื่อวาน กาแฟ 60") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือพิมพ์จดเป็นวันนี้ได้เลย':
@@ -3008,4 +3009,9 @@ export const EN: Record<string, string> = {
   สีการ์ด: "Card colour",
   "สีอื่นสำหรับแผน Starter ขึ้นไป": "Other colours are for the Starter plan and above",
   "ส่งเข้าแชท LINE": "Send to a LINE chat",
+  "ได้โบนัสแชร์ +{0} ฮูกคอยน์!": "Share bonus +{0} HookCoins!",
+  "🔥 จดต่อเนื่องครบ {0} วันแล้ว! ได้โบนัส +{1} ฮูกคอยน์":
+    "🔥 {0} days in a row! Bonus +{1} HookCoins",
+  "🎉 สแกนสลิปครั้งแรกสำเร็จ! ได้โบนัส +{0} ฮูกคอยน์":
+    "🎉 First slip scanned! Bonus +{0} HookCoins",
 };

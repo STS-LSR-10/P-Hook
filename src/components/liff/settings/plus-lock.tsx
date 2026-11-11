@@ -12,7 +12,7 @@ export function PlusLock({ children }: { children: React.ReactNode }) {
         <Link href="/upgrade" className="font-semibold underline">
           {t("ดูแผนอัปเกรด")}
         </Link>{" "}
-        {t("หรือแลกวันใช้ด้วยเหรียญสะสมที่การ์ดแผนด้านบน")}
+        {t("หรือแลกวันใช้ด้วยฮูกคอยน์ที่การ์ดแผนด้านบน")}
       </p>
     </div>
   );

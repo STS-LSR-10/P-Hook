@@ -10,8 +10,21 @@ export const DAILY_POINT = 1;
 export const POINTS_PER_PLUS_DAY = 10;
 
 /** Referral rewards, paid once when the referred user records their first entry. */
-export const REFERRAL_BONUS_REFERRER = 10;
-export const REFERRAL_BONUS_REFEREE = 10;
+export const REFERRAL_BONUS_REFERRER = 5;
+export const REFERRAL_BONUS_REFEREE = 5;
+/** The referrer is paid for at most this many friends a month. */
+export const REFERRAL_MONTHLY_CAP = 5;
+
+/** Streaks: a bonus each time the run of recording days reaches a multiple of these. */
+export const STREAK_WEEK_DAYS = 7;
+export const STREAK_WEEK_BONUS = 3;
+export const STREAK_MONTH_DAYS = 30;
+export const STREAK_MONTH_BONUS = 15;
+
+/** One-time quests (once per account) and the monthly share. */
+export const FIRST_SLIP_BONUS = 3;
+export const FIRST_BUDGET_BONUS = 2;
+export const SHARE_BONUS = 3;
 
 /** A referral code can only be applied by users who joined within this many days. */
 export const REFERRAL_WINDOW_DAYS = 14;
