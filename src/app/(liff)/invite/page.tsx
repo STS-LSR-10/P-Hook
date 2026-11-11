@@ -6,7 +6,20 @@ import { useState } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { cardClass, fieldClass, type Me } from "@/components/liff/settings/types";
 import { ErrorState, LoadingBlock } from "@/components/liff/states";
-import { REFERRAL_BONUS_REFEREE, REFERRAL_BONUS_REFERRER } from "@/lib/config";
+import {
+  DAILY_POINT,
+  FIRST_BUDGET_BONUS,
+  FIRST_SLIP_BONUS,
+  PASS_PACKS,
+  REFERRAL_BONUS_REFEREE,
+  REFERRAL_BONUS_REFERRER,
+  REFERRAL_MONTHLY_CAP,
+  SHARE_BONUS,
+  STREAK_MONTH_BONUS,
+  STREAK_MONTH_DAYS,
+  STREAK_WEEK_BONUS,
+  STREAK_WEEK_DAYS,
+} from "@/lib/config";
 import { t } from "@/lib/i18n";
 
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID;
@@ -17,6 +30,41 @@ const STEPS = [
   { n: 2, title: t("เพื่อนเพิ่มเพื่อน"), sub: t("แล้วพิมพ์ “ใช้รหัส” ของคุณ") },
   { n: 3, title: t("รับฮูกคอยน์ทั้งคู่"), sub: t("เมื่อเพื่อนจดรายการแรก") },
 ] as const;
+
+/** How HookCoins are earned: what you do, how many coins, and the limit that goes with it. */
+const EARN_ROWS = [
+  { what: t("จดรายการแรกของวัน"), coins: DAILY_POINT, rule: t("วันละ 1 ครั้ง") },
+  {
+    what: t("จดครบ {0} วันติดกัน", STREAK_WEEK_DAYS),
+    coins: STREAK_WEEK_BONUS,
+    rule: t("ทุกสัปดาห์ ถ้าขาดวันไหนเริ่มนับใหม่"),
+  },
+  {
+    what: t("จดครบ {0} วันติดกัน", STREAK_MONTH_DAYS),
+    coins: STREAK_MONTH_BONUS,
+    rule: t("ถ้าขาดวันไหนเริ่มนับใหม่"),
+  },
+  { what: t("สแกนสลิปสำเร็จครั้งแรก"), coins: FIRST_SLIP_BONUS, rule: t("ครั้งเดียวต่อบัญชี") },
+  {
+    what: t("ตั้งงบประมาณรายเดือนครั้งแรก"),
+    coins: FIRST_BUDGET_BONUS,
+    rule: t("ครั้งเดียวต่อบัญชี"),
+  },
+  {
+    what: t("ชวนเพื่อน (เมื่อเพื่อนจดรายการแรก)"),
+    coins: REFERRAL_BONUS_REFERRER,
+    rule: t(
+      "เดือนละไม่เกิน {0} คน เพื่อนได้ด้วย +{1}",
+      REFERRAL_MONTHLY_CAP,
+      REFERRAL_BONUS_REFEREE,
+    ),
+  },
+  {
+    what: t("แชร์สรุปประจำเดือนลงโซเชียล"),
+    coins: SHARE_BONUS,
+    rule: t("เดือนละ 1 ครั้ง (กดปุ่มแชร์ในหน้าสรุป)"),
+  },
+];
 
 export default function InvitePage() {
   const me = useApi<Me>("/api/me");
@@ -150,6 +198,40 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className={cardClass} aria-label={t("วิธีสะสมฮูกคอยน์")}>
+        <h2 className="font-semibold">{t("วิธีสะสมฮูกคอยน์")}</h2>
+        <ul className="divide-y divide-border">
+          {EARN_ROWS.map((r) => (
+            <li key={r.what} className="flex items-start gap-3 py-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">{r.what}</p>
+                <p className="text-xs text-muted">{r.rule}</p>
+              </div>
+              <span className="num shrink-0 rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary">
+                +{r.coins}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={cardClass} aria-label={t("แลกฮูกคอยน์เป็น Pro Pass")}>
+        <h2 className="font-semibold">{t("แลกฮูกคอยน์เป็น Pro Pass")}</h2>
+        <ul className="divide-y divide-border">
+          {PASS_PACKS.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-3 py-2">
+              <span className="text-sm font-semibold">{t("Pro Pass {0} วัน", p.days)}</span>
+              <span className="num text-sm font-bold text-warn">
+                {p.coins} {t("ฮูกคอยน์")}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <Link href="/settings" className="block text-center text-sm font-semibold text-primary">
+          {t("ไปแลกที่หน้าตั้งค่า")}
+        </Link>
       </section>
 
       <section aria-label={t("ชวนเพื่อนง่าย ๆ ใน 3 ขั้นตอน")} className="space-y-3">

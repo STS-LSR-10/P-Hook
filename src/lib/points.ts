@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DAILY_POINT,
-  POINTS_PER_PLUS_DAY,
+  PASS_PACKS,
+  type PassPackId,
   REFERRAL_BONUS_REFEREE,
   REFERRAL_BONUS_REFERRER,
   REFERRAL_MONTHLY_CAP,
@@ -41,11 +42,6 @@ export function currentStreak(dailyKeys: string[], now: Date): number {
   return streak;
 }
 
-/** Whole Plus days the given points can buy, and what is left over. */
-export function redeemable(points: number): { days: number; cost: number } {
-  const days = Math.floor(Math.max(0, points) / POINTS_PER_PLUS_DAY);
-  return { days, cost: days * POINTS_PER_PLUS_DAY };
-}
 
 export interface AwardResult {
   /** true when this call gave today's point (first activity of the day). */
@@ -190,16 +186,18 @@ export async function recentDailyKeys(db: SupabaseClient, userId: string): Promi
 
 export class NotEnoughPointsError extends Error {}
 
-/** Spend points on Plus days. Returns the new Plus expiry. */
+/** Spend coins on a Pro Pass pack. Returns the new Pro expiry. */
 export async function redeemForPlus(
   db: SupabaseClient,
   userId: string,
-  days: number,
+  packId: PassPackId,
 ): Promise<string> {
+  const pack = PASS_PACKS.find((p) => p.id === packId);
+  if (!pack) throw new Error(`redeem: unknown pack ${packId}`);
   const { data, error } = await db.rpc("redeem_points", {
     p_user: userId,
-    p_points: days * POINTS_PER_PLUS_DAY,
-    p_days: days,
+    p_points: pack.coins,
+    p_days: pack.days,
   });
   if (error) {
     if (error.message.includes("not_enough_points")) throw new NotEnoughPointsError();

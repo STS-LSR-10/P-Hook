@@ -6,8 +6,15 @@
 /** Points for each day on which the user records at least one entry (1 per day: no farming). */
 export const DAILY_POINT = 1;
 
-/** Redeem rate: this many points buy one day of Plus. */
-export const POINTS_PER_PLUS_DAY = 10;
+/** Pro Pass packs the coins buy (the price is decided here, never by the browser). */
+export const PASS_PACKS = [
+  { id: "pass3", days: 3, coins: 35 },
+  { id: "pass7", days: 7, coins: 75 },
+  { id: "pass15", days: 15, coins: 150 },
+] as const;
+/** The cheapest pack's price: below this the coins buy nothing yet. */
+export const CHEAPEST_PACK = Math.min(...PASS_PACKS.map((p) => p.coins));
+export type PassPackId = (typeof PASS_PACKS)[number]["id"];
 
 /** Referral rewards, paid once when the referred user records their first entry. */
 export const REFERRAL_BONUS_REFERRER = 5;

@@ -25,6 +25,20 @@ test.describe("invite page (360px)", () => {
     await expectNoSeriousA11yViolations(page);
   });
 
+  test("shows how to earn HookCoins and what they buy", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE });
+    await page.goto("/invite");
+    const earn = page.getByRole("region", { name: "วิธีสะสมฮูกคอยน์" });
+    await expect(earn.getByRole("listitem")).toHaveCount(7);
+    await expect(earn.getByText("จดครบ 7 วันติดกัน")).toBeVisible();
+    await expect(earn.getByText("จดครบ 30 วันติดกัน")).toBeVisible();
+    const pass = page.getByRole("region", { name: "แลกฮูกคอยน์เป็น Pro Pass" });
+    await expect(pass.getByText("Pro Pass 3 วัน")).toBeVisible();
+    await expect(pass.getByText("150 ฮูกคอยน์")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectNoSeriousA11yViolations(page);
+  });
+
   test("a friend's code can be entered here (and the field is gone once used)", async ({
     page,
   }) => {

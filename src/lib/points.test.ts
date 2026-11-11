@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { POINTS_PER_PLUS_DAY } from "./config";
+import { CHEAPEST_PACK, PASS_PACKS } from "./config";
 import {
   awardOnce,
   awardShare,
   awardStreak,
   bangkokDateKey,
   currentStreak,
-  redeemable,
+  NotEnoughPointsError,
+  redeemForPlus,
 } from "./points";
 
 // Fri 2026-10-16 15:00 Bangkok
@@ -45,18 +46,33 @@ describe("currentStreak", () => {
   });
 });
 
-describe("redeemable", () => {
-  it("converts whole days only", () => {
-    expect(redeemable(0)).toEqual({ days: 0, cost: 0 });
-    expect(redeemable(POINTS_PER_PLUS_DAY - 1)).toEqual({ days: 0, cost: 0 });
-    expect(redeemable(POINTS_PER_PLUS_DAY * 3 + 4)).toEqual({
-      days: 3,
-      cost: POINTS_PER_PLUS_DAY * 3,
-    });
+describe("Pro Pass packs", () => {
+  it("are 3 days for 35, 7 for 75 and 15 for 150, and the cheapest sets the bar", () => {
+    expect(PASS_PACKS.map((p) => [p.days, p.coins])).toEqual([
+      [3, 35],
+      [7, 75],
+      [15, 150],
+    ]);
+    expect(CHEAPEST_PACK).toBe(35);
   });
 
-  it("ignores negative balances", () => {
-    expect(redeemable(-50)).toEqual({ days: 0, cost: 0 });
+  it("redeemForPlus charges the pack's price and days, not what the caller says", async () => {
+    const calls: Record<string, unknown>[] = [];
+    const db = {
+      rpc: async (_fn: string, args: Record<string, unknown>) => {
+        calls.push(args);
+        return { data: "2026-11-01T00:00:00Z", error: null };
+      },
+    };
+    await redeemForPlus(db as never, "u1", "pass7");
+    expect(calls[0]).toEqual({ p_user: "u1", p_points: 75, p_days: 7 });
+  });
+
+  it("an overdraw becomes NotEnoughPointsError", async () => {
+    const db = { rpc: async () => ({ data: null, error: { message: "not_enough_points" } }) };
+    await expect(redeemForPlus(db as never, "u1", "pass3")).rejects.toBeInstanceOf(
+      NotEnoughPointsError,
+    );
   });
 });
 

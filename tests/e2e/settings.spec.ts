@@ -473,12 +473,12 @@ test.describe("settings sections and search (360px)", () => {
   test("a search hides other sections without losing what was typed in them", async ({ page }) => {
     await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS, "GET /api/memory": { items: [] } });
     await openSettings(page);
-    const days = page.getByLabel("จำนวนวันที่จะแลก");
-    await days.selectOption("2");
+    const note = page.getByLabel("ให้พี่ฮูกเรียกคุณว่าอะไร?");
+    await note.fill("คุณบาส");
     await page.getByLabel("ค้นหาการตั้งค่า").fill("ธีม");
     await expect(page.getByRole("region", { name: "สมาชิกและสิทธิประโยชน์" })).toBeHidden();
     await page.getByLabel("ค้นหาการตั้งค่า").fill("");
-    await expect(days).toHaveValue("2");
+    await expect(note).toHaveValue("คุณบาส");
   });
 
   test("#recurring also opens the section it lives in", async ({ page }) => {
@@ -489,6 +489,27 @@ test.describe("settings sections and search (360px)", () => {
       .getByRole("button", { name: "ปิด" })
       .click();
     await expect(page.getByRole("button", { name: "รายการประจำ" })).toBeVisible();
+  });
+
+  test("the redeem card offers the three Pro Pass packs and sends the one pressed", async ({
+    page,
+  }) => {
+    const sent: unknown[] = [];
+    await mockApi(page, {
+      ...COMMON,
+      "GET /api/me": { ...ME_PLUS, points: 80 },
+      "POST /api/points/redeem": (route: { request: () => { postData: () => string | null } }) => {
+        sent.push(route.request().postData());
+        return { ok: true, planExpiresAt: "2027-01-01T00:00:00Z", spent: 75, days: 7 };
+      },
+    });
+    await openSettings(page);
+    const card = page.getByRole("region", { name: "แลกเหรียญเป็นวันใช้ Pro" });
+    await expect(card.getByRole("button")).toHaveCount(3);
+    await expect(card.getByRole("button", { name: /15 วัน/ })).toBeDisabled(); // 150 > 80
+    await card.getByRole("button", { name: /7 วัน/ }).click();
+    await expect(card.getByRole("status")).toContainText("+7 วัน");
+    expect(JSON.stringify(sent[0])).toContain("pass7");
   });
 
   test("the profile shows the plan, coins and streak, with a quota button", async ({ page }) => {

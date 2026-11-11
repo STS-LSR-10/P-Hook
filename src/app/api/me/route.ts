@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
-import { POINTS_PER_PLUS_DAY } from "@/lib/config";
 import {
   can,
   effectivePlan,
@@ -16,7 +15,7 @@ import { loadBillingState } from "@/lib/payments/billing-state";
 import { trialBlock } from "@/lib/payments/policy";
 import { EARLY_BIRD, pricingAt, TRIAL_DAYS } from "@/lib/pricing";
 import { earlyBirdOffers, hasPaidEarlyBird } from "@/lib/early-bird-repo";
-import { currentStreak, recentDailyKeys, redeemable } from "@/lib/points";
+import { currentStreak, recentDailyKeys } from "@/lib/points";
 import { countSlipsThisMonth } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 
@@ -109,7 +108,6 @@ export async function GET(request: Request): Promise<Response> {
       },
       points: data.points,
       streak: currentStreak(dailyKeys, now),
-      redeem: { pointsPerDay: POINTS_PER_PLUS_DAY, ...redeemable(data.points) },
       referralCode: data.referral_code,
       referred: Boolean(data.referred_by),
       referrals,

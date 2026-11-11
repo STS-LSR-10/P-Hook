@@ -129,7 +129,6 @@ export const ME_FREE = {
   slips: { used: 0, limit: 0, remaining: 0 },
   points: 7,
   streak: 3,
-  redeem: { pointsPerDay: 10, days: 0, cost: 0 },
   referralCode: "ABCD1234",
   referrals: 3,
   referred: false,
@@ -151,7 +150,6 @@ export const ME_PLUS = {
   },
   slips: { used: 3, limit: 5, remaining: 2 },
   points: 25,
-  redeem: { pointsPerDay: 10, days: 2, cost: 20 },
   trial: { days: 7, available: { starter: false, plus: false, ultimate: false } },
 };
 

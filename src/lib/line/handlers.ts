@@ -1,3 +1,4 @@
+import { CHEAPEST_PACK } from "@/lib/config";
 import { loadBonus } from "@/lib/addons-repo";
 import type { LineMentionee } from "@/lib/group-mention";
 import { googleEventOf, removeGoogleEvent, syncReminderToGoogle } from "@/lib/google/sync";
@@ -55,13 +56,7 @@ import {
   type PersonaId,
 } from "@/lib/personalize";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
-import {
-  applyReferralCode,
-  awardActivity,
-  currentStreak,
-  recentDailyKeys,
-  redeemable,
-} from "@/lib/points";
+import { applyReferralCode, awardActivity, currentStreak, recentDailyKeys } from "@/lib/points";
 import { cancelSlipEntries, getSlip, getSlipItems, learnMerchant } from "@/lib/slip-repo";
 import { planReceiptSplit } from "@/lib/receipt-split";
 import { categoryLabel, emojiOf } from "@/lib/category-emoji";
@@ -1940,13 +1935,12 @@ async function pointsSummaryText(db: SupabaseClient, userId: string, now: Date):
   ]);
   const points = (row.data as { points?: number } | null)?.points ?? 0;
   const streak = currentStreak(keys, now);
-  const { days } = redeemable(points);
   return [
     tr("ฮูกคอยน์ของคุณ: {0}", points),
     streak > 0 ? tr("จดต่อเนื่อง {0} วันแล้ว", streak) : tr("วันนี้จดรายการแรกเพื่อเริ่มสะสมนะ"),
-    days > 0
-      ? tr("แลกเป็นวันใช้ Pro ได้ {0} วัน (แลกที่หน้าตั้งค่า)", days)
-      : tr("สะสมครบแล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่านะ"),
+    points >= CHEAPEST_PACK
+      ? tr("แลกเป็นวันใช้ Pro ได้แล้ว (แลกที่หน้าตั้งค่า)")
+      : tr("สะสมครบ {0} ฮูกคอยน์แล้วแลกเป็นวันใช้ Pro ได้ที่หน้าตั้งค่านะ", CHEAPEST_PACK),
   ].join("\n");
 }
 
