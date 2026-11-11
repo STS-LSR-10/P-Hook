@@ -42,7 +42,6 @@ export function currentStreak(dailyKeys: string[], now: Date): number {
   return streak;
 }
 
-
 export interface AwardResult {
   /** true when this call gave today's point (first activity of the day). */
   awarded: boolean;

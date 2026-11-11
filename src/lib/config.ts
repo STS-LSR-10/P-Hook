@@ -22,6 +22,12 @@ export const REFERRAL_BONUS_REFEREE = 5;
 /** The referrer is paid for at most this many friends a month. */
 export const REFERRAL_MONTHLY_CAP = 5;
 
+/** Paid Referral: a referred friend's first real payment gives the referrer these coins and days, and the friend the days. */
+export const PAID_REFERRAL_COINS = 30;
+export const PAID_REFERRAL_DAYS = 30;
+/** The referrer is rewarded for at most this many paying friends a month. */
+export const PAID_REFERRAL_MONTHLY_CAP = 5;
+
 /** Streaks: a bonus each time the run of recording days reaches a multiple of these. */
 export const STREAK_WEEK_DAYS = 7;
 export const STREAK_WEEK_BONUS = 3;

@@ -379,3 +379,102 @@ describe("an add-on bought by someone with no saved Stripe customer", () => {
     expect(updates).toEqual([{ stripe_customer_id: "cus_9" }]);
   });
 });
+
+describe("Paid Referral on a payment", () => {
+  const fakeDb = (failReward = false) => {
+    const rpcs: { fn: string; args: Record<string, unknown> }[] = [];
+    const db = {
+      rpc: async (fn: string, args: Record<string, unknown>) => {
+        rpcs.push({ fn, args });
+        if (fn === "grant_paid_referral" && failReward) {
+          return { data: null, error: { message: "boom" } };
+        }
+        return { data: true, error: null };
+      },
+      from: () => ({ update: () => ({ eq: () => ({ is: async () => ({ error: null }) }) }) }),
+    };
+    return { db: db as never, rpcs };
+  };
+  const reward = (rpcs: { fn: string; args: Record<string, unknown> }[]) =>
+    rpcs.filter((r) => r.fn === "grant_paid_referral").map((r) => r.args);
+
+  it("a prepaid purchase asks for the reward with its own payment reference", async () => {
+    const { db, rpcs } = fakeDb();
+    await applyAction(db, {
+      kind: "prepaid",
+      userId: USER,
+      plan: "plus",
+      months: 1,
+      ref: "cs_1",
+      amountSatang: 5900,
+      method: "promptpay",
+      customer: null,
+    });
+    expect(reward(rpcs)).toEqual([
+      { p_user: USER, p_ref: "cs_1", p_referrer_coins: 30, p_days: 30, p_monthly_cap: 5 },
+    ]);
+    // it comes after the payment is recorded
+    expect(rpcs.map((r) => r.fn)).toEqual(["apply_prepaid_purchase", "grant_paid_referral"]);
+  });
+
+  it("a paid card invoice asks for it too", async () => {
+    const { db, rpcs } = fakeDb();
+    await applyAction(db, {
+      kind: "invoice",
+      userId: USER,
+      plan: "plus",
+      months: 1,
+      ref: "in_1",
+      amountSatang: 5900,
+      customer: "cus_1",
+    });
+    expect(reward(rpcs)).toHaveLength(1);
+    expect(reward(rpcs)[0]).toMatchObject({ p_user: USER, p_ref: "in_1" });
+  });
+
+  it("a prepaid upgrade that was applied asks for it, one that was not does not", async () => {
+    const applied = fakeDb();
+    await applyAction(applied.db, {
+      kind: "prepaidUpgrade",
+      userId: USER,
+      plan: "ultimate",
+      ref: "cs_up",
+      amountSatang: 4000,
+      method: "promptpay",
+    });
+    expect(reward(applied.rpcs)).toHaveLength(1);
+
+    const rpcs: string[] = [];
+    const notApplied = {
+      rpc: async (fn: string) => {
+        rpcs.push(fn);
+        return { data: false, error: null };
+      },
+    };
+    await applyAction(notApplied as never, {
+      kind: "prepaidUpgrade",
+      userId: USER,
+      plan: "ultimate",
+      ref: "cs_up2",
+      amountSatang: 4000,
+      method: "promptpay",
+    });
+    expect(rpcs).toEqual(["apply_prepaid_upgrade"]);
+  });
+
+  it("a failing reward never fails the webhook", async () => {
+    const { db } = fakeDb(true);
+    await expect(
+      applyAction(db, {
+        kind: "prepaid",
+        userId: USER,
+        plan: "plus",
+        months: 1,
+        ref: "cs_2",
+        amountSatang: 5900,
+        method: "card",
+        customer: null,
+      }),
+    ).resolves.toEqual({ handled: true, userId: USER });
+  });
+});

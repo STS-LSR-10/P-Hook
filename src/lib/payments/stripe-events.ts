@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { PERIOD_MONTHS, type Period } from "@/lib/pricing";
 import type { PaidPlan } from "@/lib/pricing";
 import { addonBySku } from "@/lib/addons";
+import { PAID_REFERRAL_COINS, PAID_REFERRAL_DAYS, PAID_REFERRAL_MONTHLY_CAP } from "@/lib/config";
+import { log } from "@/lib/log";
 
 /** The slice of a Stripe event we read. Everything else is ignored. */
 export interface StripeEvent {
@@ -220,6 +222,28 @@ async function rpc(db: SupabaseClient, fn: string, args: Record<string, unknown>
   return data;
 }
 
+/**
+ * A referred friend's first real payment rewards them and the person who invited them (once, in SQL).
+ * Best effort: a failure here must not fail the webhook, since the payment itself is already recorded.
+ */
+async function rewardPaidReferral(db: SupabaseClient, userId: string, ref: string): Promise<void> {
+  // twice: a deadlock with a simultaneous first-entry bonus aborts one side, and Stripe is not asked to resend
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await rpc(db, "grant_paid_referral", {
+        p_user: userId,
+        p_ref: ref,
+        p_referrer_coins: PAID_REFERRAL_COINS,
+        p_days: PAID_REFERRAL_DAYS,
+        p_monthly_cap: PAID_REFERRAL_MONTHLY_CAP,
+      });
+      return;
+    } catch (error) {
+      if (attempt === 2) log.error("paid_referral_failed", error);
+    }
+  }
+}
+
 /** Carry out an action. Every step is idempotent, so Stripe retrying a webhook is harmless. */
 export async function applyAction(
   db: SupabaseClient,
@@ -235,6 +259,7 @@ export async function applyAction(
         p_amount: action.amountSatang,
         p_method: action.method,
       });
+      await rewardPaidReferral(db, action.userId, action.ref);
       if (action.customer) {
         // remember the customer for the billing portal and returning payers (best effort)
         await db
@@ -262,6 +287,7 @@ export async function applyAction(
         p_method: action.method,
       });
       // false: already applied before, or the prepaid time ended while the person was paying
+      if (applied === true) await rewardPaidReferral(db, action.userId, action.ref);
       return applied === true ? { handled: true, userId: action.userId } : { handled: false };
     }
 
@@ -312,6 +338,7 @@ export async function applyAction(
         p_amount: action.amountSatang,
         p_method: "card",
       });
+      await rewardPaidReferral(db, userId, action.ref);
       return { handled: true, userId };
     }
 

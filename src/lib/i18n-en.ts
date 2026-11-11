@@ -1172,6 +1172,9 @@ export const EN: Record<string, string> = {
   "ชวนเพื่อน (เมื่อเพื่อนจดรายการแรก)": "Invite a friend (when they record their first entry)",
   "เดือนละไม่เกิน {0} คน เพื่อนได้ด้วย +{1}":
     "Up to {0} friends a month; your friend gets +{1} too",
+  "เพื่อนที่ชวนซื้อแผน (จ่ายเงินครั้งแรก)": "A friend you invited buys a plan (first payment)",
+  "คุณได้ Pro เพิ่ม {0} วัน เพื่อนก็ได้ Pro เพิ่ม {0} วันด้วย (เดือนละไม่เกิน {1} คน)":
+    "You get {0} more Pro days, and your friend gets {0} more too (up to {1} friends a month)",
   แชร์สรุปประจำเดือนลงโซเชียล: "Share your monthly summary to social media",
   "เดือนละ 1 ครั้ง (กดปุ่มแชร์ในหน้าสรุป)": "Once a month (use the Share button on the summary)",
   "แลกฮูกคอยน์เป็น Pro Pass": "Redeem HookCoins for a Pro Pass",

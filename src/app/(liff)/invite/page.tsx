@@ -10,6 +10,9 @@ import {
   DAILY_POINT,
   FIRST_BUDGET_BONUS,
   FIRST_SLIP_BONUS,
+  PAID_REFERRAL_COINS,
+  PAID_REFERRAL_DAYS,
+  PAID_REFERRAL_MONTHLY_CAP,
   PASS_PACKS,
   REFERRAL_BONUS_REFEREE,
   REFERRAL_BONUS_REFERRER,
@@ -57,6 +60,15 @@ const EARN_ROWS = [
       "เดือนละไม่เกิน {0} คน เพื่อนได้ด้วย +{1}",
       REFERRAL_MONTHLY_CAP,
       REFERRAL_BONUS_REFEREE,
+    ),
+  },
+  {
+    what: t("เพื่อนที่ชวนซื้อแผน (จ่ายเงินครั้งแรก)"),
+    coins: PAID_REFERRAL_COINS,
+    rule: t(
+      "คุณได้ Pro เพิ่ม {0} วัน เพื่อนก็ได้ Pro เพิ่ม {0} วันด้วย (เดือนละไม่เกิน {1} คน)",
+      PAID_REFERRAL_DAYS,
+      PAID_REFERRAL_MONTHLY_CAP,
     ),
   },
   {

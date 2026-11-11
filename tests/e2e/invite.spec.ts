@@ -29,7 +29,7 @@ test.describe("invite page (360px)", () => {
     await mockApi(page, { "GET /api/me": ME_FREE });
     await page.goto("/invite");
     const earn = page.getByRole("region", { name: "วิธีสะสมฮูกคอยน์" });
-    await expect(earn.getByRole("listitem")).toHaveCount(7);
+    await expect(earn.getByRole("listitem")).toHaveCount(8);
     await expect(earn.getByText("จดครบ 7 วันติดกัน")).toBeVisible();
     await expect(earn.getByText("จดครบ 30 วันติดกัน")).toBeVisible();
     const pass = page.getByRole("region", { name: "แลกฮูกคอยน์เป็น Pro Pass" });

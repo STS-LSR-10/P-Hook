@@ -221,7 +221,8 @@ export default function SettingsPage() {
       </p>
     ) : null;
 
-  const loading = settings.loading || me.loading;
+  // a reload keeps showing the page (and its notices) instead of swapping it for a skeleton
+  const loading = (settings.loading || me.loading) && !(settings.data && me.data);
   const error = settings.error ?? me.error;
 
   function badgeOf(id: SectionId): string | undefined {

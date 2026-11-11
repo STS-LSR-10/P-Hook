@@ -2007,6 +2007,171 @@ describe("HookCoins earning rules (0068)", () => {
   });
 });
 
+describe("Paid Referral (0069)", () => {
+  const pts = async (u: string) =>
+    (await one<{ points: number }>(db, "select points from users where id=$1", [u])).points;
+  const expiry = async (u: string) =>
+    (
+      await one<{ plan_expires_at: Date | null }>(
+        db,
+        "select plan_expires_at from users where id=$1",
+        [u],
+      )
+    ).plan_expires_at;
+  const daysFromNow = (d: Date | null) => (new Date(d!).getTime() - Date.now()) / 86_400_000;
+  const pay = (u: string, ref: string, amount: number) =>
+    db.query("select record_payment($1,'plus',1,$2,$3,'card')", [u, `${ref}-${u}`, amount]);
+  const grant = async (u: string, ref: string) =>
+    (
+      await one<{ g: boolean }>(db, "select grant_paid_referral($1,$2,30,30,5) as g", [
+        u,
+        `${ref}-${u}`,
+      ])
+    ).g;
+  const pair = async (name: string) => {
+    const referrer = await newUser(db, `${name}-owner-${Math.random()}`);
+    const code = (
+      await one<{ referral_code: string }>(db, "select referral_code from users where id=$1", [
+        referrer,
+      ])
+    ).referral_code;
+    const friend = await newUser(db, `${name}-friend-${Math.random()}`);
+    await db.query("select apply_referral($1,$2,14)", [friend, code]);
+    return { referrer, friend };
+  };
+
+  it("rewards both sides once, on the friend's first real payment", async () => {
+    const { referrer, friend } = await pair("paid");
+    await pay(friend, "in_1", 5900);
+    expect(await grant(friend, "in_1")).toBe(true);
+    expect(await pts(referrer)).toBe(30);
+    expect(daysFromNow(await expiry(referrer))).toBeCloseTo(30, 0); // a Free row now reads as Pro
+    expect(daysFromNow(await expiry(friend))).toBeCloseTo(30, 0);
+    // the same payment again, and the friend's next payment, add nothing
+    expect(await grant(friend, "in_1")).toBe(false);
+    await pay(friend, "in_2", 5900);
+    expect(await grant(friend, "in_2")).toBe(false);
+    expect(await pts(referrer)).toBe(30);
+    expect(daysFromNow(await expiry(referrer))).toBeCloseTo(30, 0);
+  });
+
+  it("only the first payment counts: an earlier payer does not pay out later", async () => {
+    const { referrer, friend } = await pair("first");
+    await pay(friend, "old", 5900);
+    await db.query("update payments set created_at = now() - interval '40 days' where user_id=$1", [
+      friend,
+    ]);
+    await pay(friend, "renewal", 5900);
+    expect(await grant(friend, "renewal")).toBe(false);
+    expect(await pts(referrer)).toBe(0);
+  });
+
+  it("pays a referrer for at most 5 paying friends a month", async () => {
+    const referrer = await newUser(db, `cap-owner-${Math.random()}`);
+    const code = (
+      await one<{ referral_code: string }>(db, "select referral_code from users where id=$1", [
+        referrer,
+      ])
+    ).referral_code;
+    const results: boolean[] = [];
+    let lastFriend = "";
+    for (let i = 0; i < 7; i++) {
+      const f = await newUser(db, `cap-friend-${i}-${Math.random()}`);
+      await db.query("select apply_referral($1,$2,14)", [f, code]);
+      await pay(f, "in_1", 5900);
+      results.push(await grant(f, "in_1"));
+      lastFriend = f;
+    }
+    expect(results).toEqual([true, true, true, true, true, true, true]); // the friend always gets theirs
+    expect(await pts(referrer)).toBe(150); // but the referrer is paid for five
+    expect(daysFromNow(await expiry(referrer))).toBeCloseTo(150, 0);
+    expect(await grant(lastFriend, "in_1")).toBe(false); // never twice
+  });
+
+  it("a card subscriber keeps the bonus days through the next renewal; the end of the subscription uses them", async () => {
+    const { referrer, friend } = await pair("sub");
+    await db.query("update users set stripe_subscription_id='sub_ref' where id=$1", [referrer]);
+    await db.query(
+      "select set_plan_until($1,'plus', now() + interval '10 days', 'cus_r','sub_ref','monthly')",
+      [referrer],
+    );
+    await pay(friend, "in_1", 5900);
+    await grant(friend, "in_1");
+    expect(daysFromNow(await expiry(referrer))).toBeCloseTo(40, 0); // 10 paid + 30 bonus
+    // renewal: the next period ends 30 days after the old one
+    await db.query(
+      "select set_plan_until($1,'plus', now() + interval '40 days', 'cus_r','sub_ref','monthly')",
+      [referrer],
+    );
+    expect(daysFromNow(await expiry(referrer))).toBeCloseTo(70, 0); // 40 paid + 30 bonus, not 40
+    // the same event again changes nothing
+    await db.query(
+      "select set_plan_until($1,'plus', now() + interval '40 days', 'cus_r','sub_ref','monthly')",
+      [referrer],
+    );
+    expect(daysFromNow(await expiry(referrer))).toBeCloseTo(70, 0);
+  });
+
+  it("a friend's first card invoice that arrives before the subscription event still keeps the days", async () => {
+    const { friend } = await pair("early-invoice");
+    await pay(friend, "in_1", 5900);
+    await grant(friend, "in_1"); // the invoice came first: no subscription id yet
+    await db.query(
+      "select set_plan_until($1,'plus', now() + interval '30 days', 'cus_f','sub_f','monthly')",
+      [friend],
+    );
+    expect(daysFromNow(await expiry(friend))).toBeCloseTo(60, 0);
+  });
+
+  it("bonus days left over from a plan that already ended are not added again", async () => {
+    const u = await newUser(db, `stale-${Math.random()}`);
+    await db.query(
+      "update users set bonus_days=30, plan_expires_at = now() - interval '5 days' where id=$1",
+      [u],
+    );
+    await db.query("select set_plan_until($1,'plus', now() + interval '30 days', null,null,null)", [
+      u,
+    ]);
+    expect(daysFromNow(await expiry(u))).toBeCloseTo(30, 0);
+  });
+
+  it("adds the days after the time already paid for", async () => {
+    const { referrer, friend } = await pair("stack");
+    await db.query("update users set plan_expires_at = now() + interval '20 days' where id=$1", [
+      referrer,
+    ]);
+    await pay(friend, "in_1", 5900);
+    await grant(friend, "in_1");
+    expect(daysFromNow(await expiry(referrer))).toBeCloseTo(50, 0);
+  });
+
+  it("pays nothing for a free payment, an unknown payment, or a friend nobody invited", async () => {
+    const { referrer, friend } = await pair("none");
+    await pay(friend, "free_1", 0);
+    expect(await grant(friend, "free_1")).toBe(false); // a 100% coupon moved no money
+    expect(await grant(friend, "never_paid")).toBe(false); // no such payment
+    const loner = await newUser(db, `loner-${Math.random()}`);
+    await pay(loner, "in_9", 5900);
+    expect(await grant(loner, "in_9")).toBe(false);
+    expect(await pts(referrer)).toBe(0);
+    expect(await expiry(referrer)).toBeNull();
+    // a real payment later still counts: the free one did not use it up
+    await pay(friend, "in_2", 5900);
+    expect(await grant(friend, "in_2")).toBe(true);
+  });
+
+  it("cannot be called from the browser", async () => {
+    await expect(
+      db.transaction(async (tx) => {
+        await tx.query("set local role authenticated");
+        await tx.query(
+          "select grant_paid_referral('00000000-0000-0000-0000-000000000000','x',30,30,5)",
+        );
+      }),
+    ).rejects.toThrow();
+  });
+});
+
 describe("check_rate_limit", () => {
   it("counts hits per key and blocks over the limit", async () => {
     const hit = async (key: string) =>
