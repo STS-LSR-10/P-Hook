@@ -749,11 +749,25 @@ export const EN: Record<string, string> = {
   เอารูปออก: "Remove the photo",
   แนบรูปใบเสร็จหรือสินค้า: "Attach a receipt or product photo",
   "บัตรเครดิต/เดบิต": "Credit/debit card",
-  "บัตรในประเทศและต่างประเทศ ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ":
-    "Thai and foreign cards, renews automatically, cancel any time",
   "พร้อมเพย์ (QR)": "PromptPay (QR)",
-  "จ่ายครั้งเดียวต่อรอบ สแกน QR ผ่านแอปธนาคาร ไม่ต่ออายุอัตโนมัติ":
-    "Pay once per period by scanning a QR in your banking app, no auto-renewal",
+  "ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ": "Renews automatically, cancel any time",
+  "จ่ายครั้งเดียวต่อรอบ ไม่ต่ออายุอัตโนมัติ": "One payment per period, no automatic renewal",
+  เลือกช่องทางชำระเงิน: "Choose how to pay",
+  "ปกติ ฿": "Normally ฿",
+  สรุปก่อนชำระเงิน: "Summary before you pay",
+  เปลี่ยนช่องทาง: "Change how to pay",
+  ช่องทาง: "Payment method",
+  ยอดที่ชำระวันนี้: "Paying today",
+  ใช้งานได้ถึง: "Active until",
+  "ตัดบัตรครั้งถัดไป (โดยประมาณ)": "Next card charge (approx.)",
+  "จ่ายครั้งเดียว ไม่ต่ออายุอัตโนมัติ ต่อท้ายเวลาที่เหลืออยู่":
+    "One payment, no automatic renewal, added after the time you have left",
+  "ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ ใช้ได้จนครบรอบที่จ่ายแล้ว":
+    "Renews automatically, cancel any time, and it stays active until the paid period ends",
+  ไปชำระเงิน: "Go to payment",
+  "ที่นั่ง Early Bird หมดไปแล้ว ตอนนี้เป็นราคาปกติ กดชำระเงินอีกครั้งถ้ายังต้องการ":
+    "The Early Bird seats are gone, so the normal price applies now. Press pay again if you still want it",
+  "ระบบจะพาไปหน้าชำระเงินที่ปลอดภัยของ Stripe": "You'll be taken to Stripe's secure payment page",
   รายปี: "Yearly",
   "เริ่มทดลองใช้ {0} ฟรี {1} วันแล้ว": "Started your {1}-day free {0} trial",
   เริ่มทดลองใช้ไม่สำเร็จ: "Couldn't start the trial",

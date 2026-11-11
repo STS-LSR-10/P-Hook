@@ -60,7 +60,8 @@ export async function openSettings(page: Page, path = "/settings") {
 export async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
-    inner: window.innerWidth,
+    // the width of the screen: innerWidth grows with an overflowing page, so it cannot be the yardstick
+    inner: document.documentElement.clientWidth,
   }));
   expect(
     overflow.scroll,

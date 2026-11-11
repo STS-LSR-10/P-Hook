@@ -47,6 +47,8 @@ import {
 import { useState } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { Logo } from "@/components/logo";
+import { PaySheet } from "@/components/liff/pay-sheet";
+import { earlyBirdFits } from "@/lib/payments/pay-summary";
 import { PageHeader } from "@/components/liff/states";
 import { planAction, prepaidUpgradeFor } from "@/lib/payments/policy";
 import { PLAN_LABEL, type Plan } from "@/lib/plan";
@@ -86,19 +88,6 @@ interface MeLite {
 
 type Method = "card" | "promptpay";
 
-const METHODS: { value: Method; label: string; hint: string }[] = [
-  {
-    value: "card",
-    label: t("บัตรเครดิต/เดบิต"),
-    hint: t("บัตรในประเทศและต่างประเทศ ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ"),
-  },
-  {
-    value: "promptpay",
-    label: t("พร้อมเพย์ (QR)"),
-    hint: t("จ่ายครั้งเดียวต่อรอบ สแกน QR ผ่านแอปธนาคาร ไม่ต่ออายุอัตโนมัติ"),
-  },
-];
-
 const PERIODS: { value: Period; label: string }[] = [
   { value: "monthly", label: t("รายเดือน") },
   { value: "yearly", label: t("รายปี") },
@@ -118,7 +107,7 @@ const PAID: PaidPlan[] = ["starter", "plus", "ultimate"];
 export default function UpgradePage() {
   const { api, openExternal } = useLiff();
   const me = useApi<MeLite>("/api/me");
-  const [method, setMethod] = useState<Method>("card");
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [period, setPeriod] = useState<Period>("yearly");
   const [picked, setPicked] = useState<PaidPlan>("plus");
   // the plan whose column is tinted in the comparison: follows the chosen plan card until a plan name is tapped
@@ -132,7 +121,8 @@ export default function UpgradePage() {
   const autoRenew = me.data?.payments?.autoRenew === true;
   const prepaidRunning = me.data?.payments?.prepaidRunning === true;
   // Someone with a running plan can only continue the way they pay, so the method is not a choice.
-  const payWith: Method = autoRenew ? "card" : prepaidRunning ? "promptpay" : method;
+  const fixedMethod: Method | null = autoRenew ? "card" : prepaidRunning ? "promptpay" : null;
+  const payWith: Method = fixedMethod ?? "card";
   const billing = {
     plan: current,
     customerId: null,
@@ -185,20 +175,29 @@ export default function UpgradePage() {
       setBusy(false);
     }
   }
-  async function checkout(upgrade = false) {
+  /** `showedEarly`: the person was shown an Early Bird price, so a page at the normal price must not open unannounced. */
+  async function checkout(upgrade = false, method: Method = payWith, showedEarly = false) {
     setBusy(true);
     setNotice(null);
     try {
-      const res = await api<{ available: boolean; message?: string; url?: string }>(
-        "/api/plan/checkout",
-        {
-          method: "POST",
-          body: JSON.stringify({ plan: picked, period, method: payWith, upgrade }),
-        },
-      );
+      const res = await api<{
+        available: boolean;
+        message?: string;
+        url?: string;
+        earlyBird?: boolean;
+      }>("/api/plan/checkout", {
+        method: "POST",
+        body: JSON.stringify({ plan: picked, period, method, upgrade }),
+      });
       // Stripe opens in the phone browser: PromptPay needs a banking app, and the LINE in-app
       // browser cannot always hand over to one.
-      if (res.available && res.url) await openExternal(res.url);
+      if (res.available && res.url && showedEarly && res.earlyBird !== true) {
+        // the last seat went while the person was looking: say so and show the normal price, do not open it
+        setNotice(
+          t("ที่นั่ง Early Bird หมดไปแล้ว ตอนนี้เป็นราคาปกติ กดชำระเงินอีกครั้งถ้ายังต้องการ"),
+        );
+        me.reload();
+      } else if (res.available && res.url) await openExternal(res.url);
       else setNotice(res.message ?? t("ยังไม่เปิดให้ชำระเงิน"));
     } catch (e) {
       setNotice(e instanceof Error ? e.message : t("ทำรายการไม่สำเร็จ"));
@@ -277,7 +276,7 @@ export default function UpgradePage() {
               pricing={pricing}
               period={period}
               early={
-                method === "card" || period === "yearly"
+                earlyBirdFits(payWith, period)
                   ? me.data?.earlyBird?.find(
                       (o) =>
                         o.plan === plan &&
@@ -295,33 +294,10 @@ export default function UpgradePage() {
           ))}
         </div>
 
-        {autoRenew || prepaidRunning ? null : (
-          <div role="radiogroup" aria-label={t("ช่องทางชำระเงิน")} className="space-y-2">
-            {METHODS.map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                role="radio"
-                aria-checked={method === m.value}
-                onClick={() => setMethod(m.value)}
-                className={cn(
-                  "block w-full rounded-2xl border p-3 text-left",
-                  method === m.value
-                    ? "border-primary bg-primary-soft"
-                    : "border-border bg-surface",
-                )}
-              >
-                <span className="block text-sm font-semibold">{m.label}</span>
-                <span className="block text-xs text-foreground/80">{m.hint}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
         <button
           type="button"
-          onClick={action.kind === "change" ? changePlan : () => checkout(false)}
-          disabled={busy || action.kind === "blocked"}
+          onClick={action.kind === "change" ? changePlan : () => setSheetOpen(true)}
+          disabled={busy || !me.data || action.kind === "blocked"}
           className="h-12 w-full rounded-2xl bg-primary text-base font-semibold text-surface disabled:opacity-60"
         >
           {busy
@@ -405,6 +381,29 @@ export default function UpgradePage() {
 
         <Comparison mark={mark} onMark={(p) => setMark((m) => (m === p ? null : p))} />
       </div>
+      {sheetOpen ? (
+        <PaySheet
+          plan={picked}
+          period={period}
+          price={pricing.prices[picked]}
+          earlyBaht={
+            me.data?.earlyBird?.find(
+              (o) =>
+                o.plan === picked &&
+                o.period === period &&
+                (o.remaining === null || o.remaining > 0),
+            )?.price ?? null
+          }
+          fixedMethod={fixedMethod}
+          expiresAt={me.data?.planExpiresAt ? new Date(me.data.planExpiresAt) : null}
+          busy={busy}
+          onPay={async (m, showedEarly) => {
+            await checkout(false, m, showedEarly);
+            setSheetOpen(false);
+          }}
+          onClose={() => setSheetOpen(false)}
+        />
+      ) : null}
     </main>
   );
 }
@@ -605,7 +604,8 @@ function Comparison({ mark, onMark }: { mark: Plan | null; onMark: (plan: Plan) 
   return (
     <section
       aria-label={t("เปรียบเทียบแผน")}
-      className="overflow-hidden rounded-3xl border border-border bg-surface"
+      // relative: the sr-only labels in the table are absolute, and without it they sit against the page and widen it
+      className="relative overflow-hidden rounded-3xl border border-border bg-surface"
     >
       <h2 id="compare-title" className="px-4 pb-1 pt-4 text-base font-bold">
         {t("ทำอะไรได้บ้าง?")}

@@ -1,4 +1,4 @@
-import { expect, test, type Route } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import {
   expectNoHorizontalScroll,
   expectNoSeriousA11yViolations,
@@ -6,6 +6,17 @@ import {
   ME_FREE,
   ME_PLUS,
 } from "./helpers";
+
+/**
+ * A real tap at the middle of an element. Playwright's own click scrolls the page behind the sheet
+ * first, and with the long comparison table there its hit check wrongly lands on the neighbouring
+ * option, though a tap on the page works.
+ */
+async function tap(page: Page, target: Locator) {
+  const box = await target.boundingBox();
+  if (!box) throw new Error("nothing to tap");
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+}
 
 test.describe("upgrade page (360px)", () => {
   test("shows the four plans with their normal prices, yearly first and monthly on the toggle", async ({
@@ -90,8 +101,15 @@ test.describe("upgrade page (360px)", () => {
     });
     await page.goto("/upgrade");
     await page.getByRole("radio", { name: /Elite/ }).click();
-    await page.getByRole("radio", { name: /พร้อมเพย์/ }).click();
     await page.getByRole("button", { name: /ชำระเงิน · Elite/ }).click();
+    const sheet = page.getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" });
+    await tap(page, sheet.getByRole("button", { name: /พร้อมเพย์/ }));
+    await tap(
+      page,
+      page
+        .getByRole("dialog", { name: "สรุปก่อนชำระเงิน" })
+        .getByRole("button", { name: "ไปชำระเงิน" }),
+    );
 
     await expect.poll(() => bodies.length).toBe(1);
     expect(bodies[0]).toEqual({
@@ -105,20 +123,158 @@ test.describe("upgrade page (360px)", () => {
     ).toBeVisible();
   });
 
-  test("offers card (auto-renew) and PromptPay (one period) and defaults to card", async ({
+  test("pressing pay offers card and PromptPay, each with its price, instead of a choice on the page", async ({
     page,
   }) => {
     await mockApi(page, { "GET /api/me": ME_FREE });
     await page.goto("/upgrade");
-    const methods = page.getByRole("radiogroup", { name: "ช่องทางชำระเงิน" });
-    await expect(methods.getByRole("radio", { name: /บัตรเครดิต/ })).toHaveAttribute(
-      "aria-checked",
-      "true",
+    await expect(page.getByRole("radiogroup", { name: "ช่องทางชำระเงิน" })).toHaveCount(0);
+    await page.getByRole("button", { name: /ชำระเงิน · Pro/ }).click();
+    const sheet = page.getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" });
+    await expect(sheet.getByRole("button", { name: /บัตรเครดิต/ })).toContainText(
+      "ต่ออายุอัตโนมัติ",
     );
-    await expect(methods.getByRole("radio", { name: /พร้อมเพย์/ })).toContainText(
+    await expect(sheet.getByRole("button", { name: /พร้อมเพย์/ })).toContainText(
       "ไม่ต่ออายุอัตโนมัติ",
     );
+    await expect(sheet.getByRole("button", { name: /บัตรเครดิต/ })).toContainText("฿");
     await expect(page.getByRole("button", { name: /จัดการการชำระเงิน/ })).toHaveCount(0);
+    await expectNoSeriousA11yViolations(page);
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+  });
+
+  test("the summary says what is charged today and until when, and can go back to the choice", async ({
+    page,
+  }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE });
+    await page.goto("/upgrade");
+    await page.getByRole("button", { name: /ชำระเงิน · Pro/ }).click();
+    await tap(
+      page,
+      page
+        .getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" })
+        .getByRole("button", { name: /พร้อมเพย์/ }),
+    );
+    const summary = page.getByRole("dialog", { name: "สรุปก่อนชำระเงิน" });
+    await expect(summary.getByText("ยอดที่ชำระวันนี้")).toBeVisible();
+    await expect(summary.getByText("ใช้งานได้ถึง")).toBeVisible();
+    await expect(summary.getByText("ตัดบัตรครั้งถัดไป")).toHaveCount(0);
+    await expectNoHorizontalScroll(page);
+
+    await summary.getByRole("button", { name: "เปลี่ยนช่องทาง" }).click();
+    await tap(
+      page,
+      page
+        .getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" })
+        .getByRole("button", { name: /บัตรเครดิต/ }),
+    );
+    await expect(page.getByText("ตัดบัตรครั้งถัดไป (โดยประมาณ)")).toBeVisible();
+    await expect(page.getByText("ใช้งานได้ถึง")).toHaveCount(0);
+  });
+
+  test("an Early Bird seat shows in today's price, with the normal price beside it", async ({
+    page,
+  }) => {
+    await mockApi(page, {
+      "GET /api/me": {
+        ...ME_FREE,
+        earlyBird: [{ plan: "plus", period: "yearly", remaining: 10, price: 499 }],
+      },
+    });
+    await page.goto("/upgrade");
+    await page.getByRole("button", { name: /ชำระเงิน · Pro/ }).click();
+    const sheet = page.getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" });
+    await expect(sheet.getByRole("button", { name: /บัตรเครดิต/ })).toContainText("฿499");
+    await expect(sheet.getByRole("button", { name: /พร้อมเพย์/ })).toContainText("฿499");
+  });
+
+  test("when the last Early Bird seat goes, the page says so instead of opening a normal-price payment", async ({
+    page,
+  }) => {
+    let seatGone = false;
+    await mockApi(page, {
+      "GET /api/me": () => ({
+        ...ME_FREE,
+        earlyBird: seatGone ? [] : [{ plan: "plus", period: "yearly", remaining: 1, price: 499 }],
+      }),
+      "POST /api/plan/checkout": () => {
+        seatGone = true; // someone else took it first
+        return { available: true, url: "https://pay.example.test/session", earlyBird: false };
+      },
+    });
+    await page.goto("/upgrade");
+    await page.getByRole("button", { name: /ชำระเงิน · Pro/ }).click();
+    await tap(
+      page,
+      page
+        .getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" })
+        .getByRole("button", { name: /บัตรเครดิต/ }),
+    );
+    await expect(page.getByRole("dialog", { name: "สรุปก่อนชำระเงิน" })).toContainText("฿499");
+    let opened = 0;
+    page.on("popup", () => opened++);
+    await tap(
+      page,
+      page
+        .getByRole("dialog", { name: "สรุปก่อนชำระเงิน" })
+        .getByRole("button", { name: "ไปชำระเงิน" }),
+    );
+    await expect(
+      page.getByRole("status").filter({ hasText: "ที่นั่ง Early Bird หมดไปแล้ว" }),
+    ).toBeVisible();
+    expect(opened).toBe(0);
+    // the page now shows the normal price, and paying again opens the payment
+    await page.getByRole("button", { name: /ชำระเงิน · Pro/ }).click();
+    await expect(page.getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" })).not.toContainText(
+      "ปกติ",
+    );
+  });
+
+  test("with an Early Bird seat secured, the payment page opens", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/me": {
+        ...ME_FREE,
+        earlyBird: [{ plan: "plus", period: "yearly", remaining: 5, price: 499 }],
+      },
+      "POST /api/plan/checkout": () => ({
+        available: true,
+        url: "about:blank#early",
+        earlyBird: true,
+      }),
+    });
+    await page.goto("/upgrade");
+    await page.getByRole("button", { name: /ชำระเงิน · Pro/ }).click();
+    await tap(
+      page,
+      page
+        .getByRole("dialog", { name: "เลือกช่องทางชำระเงิน" })
+        .getByRole("button", { name: /บัตรเครดิต/ }),
+    );
+    const popup = page.waitForEvent("popup");
+    await tap(
+      page,
+      page
+        .getByRole("dialog", { name: "สรุปก่อนชำระเงิน" })
+        .getByRole("button", { name: "ไปชำระเงิน" }),
+    );
+    expect((await popup).url()).toContain("about:blank");
+  });
+
+  test("someone already paying one way goes straight to the summary, with no choice", async ({
+    page,
+  }) => {
+    await mockApi(page, {
+      "GET /api/me": {
+        ...ME_PLUS,
+        payments: { available: true, history: [], canManage: false, prepaidRunning: true },
+      },
+    });
+    await page.goto("/upgrade");
+    await page.getByRole("button", { name: /ต่ออายุ · Pro/ }).click();
+    const summary = page.getByRole("dialog", { name: "สรุปก่อนชำระเงิน" });
+    await expect(summary.getByText("ใช้งานได้ถึง")).toBeVisible();
+    await expect(summary.getByRole("button", { name: "เปลี่ยนช่องทาง" })).toHaveCount(0);
   });
 
   test("a card subscriber can upgrade the tier or switch to yearly (difference only)", async ({
