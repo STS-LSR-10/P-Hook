@@ -221,7 +221,15 @@ beforeEach(() => {
 });
 
 describe("plain messages", () => {
-  it("every message is read by the AI first, even clear money, which the rules then record", async () => {
+  it("clear money is recorded by the rules and the AI is not asked", async () => {
+    const { deps } = setup();
+    await handleEvent(say("กินข้าว50"), deps);
+    expect(route).not.toHaveBeenCalled();
+    expect(entries).toHaveLength(1);
+  });
+
+  it("with AI_CHAT_ALL=on, every message is read by the AI first, even clear money", async () => {
+    process.env.AI_CHAT_ALL = "on";
     route.mockResolvedValue(decision({ intent: "money" }));
     const { deps } = setup();
     await handleEvent(say("กินข้าว50"), deps);
@@ -230,6 +238,7 @@ describe("plain messages", () => {
   });
 
   it("a clear entry is recorded at once even when the AI is unsure or cannot tell", async () => {
+    process.env.AI_CHAT_ALL = "on";
     for (const d of [
       decision({ intent: "money", confidence: 0.6 }),
       decision({ intent: "unclear", confidence: 0.2 }),
@@ -244,7 +253,8 @@ describe("plain messages", () => {
     expect(putPending).not.toHaveBeenCalled();
   });
 
-  it("a clear entry the AI is sure is something else goes that way", async () => {
+  it("a clear entry the AI is sure is something else goes that way (AI_CHAT_ALL=on)", async () => {
+    process.env.AI_CHAT_ALL = "on";
     route.mockResolvedValue(decision({ intent: "note_add", confidence: 0.95 }));
     const { deps } = setup();
     await handleEvent(say("ซื้อครีม 2 หลอด"), deps);
@@ -269,12 +279,48 @@ describe("plain messages", () => {
     expect(said(reply)).not.toContain(AI_OUT_NOTICE_TEXT);
   });
 
-  it("with AI_CHAT_ALL=off, clear money stays with the rules as before", async () => {
-    process.env.AI_CHAT_ALL = "off";
-    const { deps } = setup();
-    await handleEvent(say("กินข้าว50"), deps);
+  it("the usual ways of saying a command are read by the rules, with no AI call", async () => {
+    const first = setup();
+    await handleEvent(say("จดโน้ต ซื้อนม"), first.deps);
+    expect(notes).toEqual(["ซื้อนม"]);
+    const hello = setup();
+    await handleEvent(say("สวัสดีค่ะ"), hello.deps);
+    expect(said(hello.reply)).toContain("สวัสดีนะ");
+    const thanks = setup();
+    await handleEvent(say("ขอบคุณนะ"), thanks.deps);
+    expect(said(thanks.reply)).toContain("ยินดีเลยนะ");
     expect(route).not.toHaveBeenCalled();
-    expect(entries).toHaveLength(1);
+  });
+
+  it("a budget typed in the chat is not an expense: a card opens the budgets page filled in, with no AI", async () => {
+    const named = setup();
+    await handleEvent(say("งบอาหาร 3000"), named.deps);
+    const card = JSON.stringify(sent(named.reply));
+    expect(card).toContain("budgets?set=%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3&amount=3000");
+    const overall = setup();
+    await handleEvent(say("ตั้งงบ 20000"), overall.deps);
+    expect(JSON.stringify(sent(overall.reply))).toContain("budgets?set=&amount=20000");
+    expect(entries).toEqual([]);
+    expect(route).not.toHaveBeenCalled();
+  });
+
+  it("only what the rules cannot read goes to the AI: a lone count of things, an unknown phrase", async () => {
+    route.mockResolvedValue(decision({ intent: "unclear", confidence: 0.2 }));
+    const { deps } = setup();
+    await handleEvent(say("ซื้อครีม 2 หลอด"), deps);
+    expect(route).toHaveBeenCalledTimes(1);
+    expect(entries).toEqual([]);
+    await handleEvent(say("อะไรก็ไม่รู้"), deps);
+    expect(route).toHaveBeenCalledTimes(2);
+  });
+
+  it("in the พี่ฮูก mode a greeting is for the owl, not the fixed answer", async () => {
+    owlMode = true;
+    route.mockResolvedValue(decision({ intent: "ask" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("สวัสดี"), deps);
+    expect(said(reply)).not.toContain("สวัสดีนะ");
+    expect(asked.mock.calls.length + askedWith.mock.calls.length).toBeGreaterThan(0);
   });
 
   it("a command typed exactly is not sent to the AI", async () => {
@@ -285,6 +331,7 @@ describe("plain messages", () => {
 
   it("the AI quota used up: the rules record it, and it is said once a day", async () => {
     quota = false;
+    process.env.AI_CHAT_ALL = "on";
     const first = setup();
     await handleEvent(say("กินข้าว50"), first.deps);
     expect(route).not.toHaveBeenCalled();

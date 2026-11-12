@@ -118,6 +118,7 @@ export function personAmount(rest: string): { person: string; amountSatang: numb
  *   ยืม แม่ 2000 [คืน 25/10]                      -> borrowed
  *   สมชายคืน 200                                  -> they pay me back
  *   คืนแม่ 1000 · คืน แม่ 1000                    -> I pay them back
+ *   สมชายติดเงิน 300 -> lent · ติดเงิน แม่ 500 · ผมติดเงินแม่ 500   -> borrowed
  * Any of them may end with "@กระเป๋า". Returns null for anything else.
  */
 export function parseDebtText(text: string): DebtCommand | null {
@@ -139,6 +140,16 @@ export function parseDebtText(text: string): DebtCommand | null {
   if (m?.[1]) return create("borrowed", m[1]);
   m = /^คืน(?:เงิน)?\s*(.+)$/.exec(unwalleted);
   if (m?.[1]) return pay("borrowed", m[1]);
+
+  // "ติดเงิน แม่ 500" (I owe them) · "สมชายติดเงิน 300" (they owe me)
+  // (not a bill or a shop: "ติดเงินค่าห้อง 3000", "ติดหนี้บัตร 5000", "ร้านติดหนี้ 500" are no person)
+  const notPerson = /^(?:ค่า|บัตร|ทอน|ร้าน|ธนาคาร|บริษัท)/;
+  m = /^(?:ผม|ฉัน|เรา|หนู|ดิฉัน)?ติด(?:เงิน|หนี้)\s*(.+)$/.exec(unwalleted);
+  if (m?.[1] && !notPerson.test(m[1])) return create("borrowed", m[1]);
+  m = new RegExp(String.raw`^(.+?)ติด(?:เงิน|หนี้)\s*(${AMOUNT}.*)$`, "i").exec(unwalleted);
+  if (m?.[1] && m[2] && !/\s/.test(m[1]) && !notPerson.test(m[1])) {
+    return create("lent", `${m[1]} ${m[2]}`);
+  }
 
   // "<person>ยืม 500" / "<person>คืน 200": the person comes first
   m = new RegExp(String.raw`^(.+?)ยืม\s*(${AMOUNT}.*)$`, "i").exec(unwalleted);

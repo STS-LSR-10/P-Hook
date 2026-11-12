@@ -46,6 +46,9 @@ export const INCOME_KEYWORDS = [
   "เงินเดือน",
   "โบนัส",
   "ขายของ",
+  "ยอดขาย",
+  "ขายสินค้า",
+  "ขายออนไลน์",
   "ค่าคอม",
   "คอมมิชชั่น",
   "ปันผล",
@@ -103,10 +106,12 @@ const EXPENSE_VERBS = [
 ];
 
 /**
- * "ได้ …" / "รับ …" at the start of a word: money received ("ได้เงิน", "รับค่าขนม").
+ * "ได้ …" / "รับ …" / "ขาย …" at the start of a word: money received ("ได้เงิน", "รับค่าขนม", "ขายรถ 200000";
+ * "ร้านขายยา" is not matched: the word does not start there).
  * Not when followed by a word that makes it something else ("รับประทาน", "ได้ซื้อ").
  */
-const GENERIC_INCOME_RE = /(?:^|\s)(?:ได้|รับ)(?!ประทาน|รอง|ผิดชอบ|ส่ง|ซื้อ|จ่าย|ชำระ|ผ่อน|ไป|ไม่)/;
+const GENERIC_INCOME_RE =
+  /(?:^|\s)(?:ได้|รับ|ขาย)(?!ประทาน|รอง|ผิดชอบ|ส่ง|ซื้อ|จ่าย|ชำระ|ผ่อน|ไป|ไม่)/;
 const AMOUNT_RE =
   /([+\-−–])?\s*(฿)?\s*(\d(?:[\d,]*\d)?(?:\.\d+)?)\s*(k(?![a-z])|พัน|หมื่น|แสน|ล้าน)?\s*(บาท|฿|บ\.|baht|thb)?/gi;
 
@@ -163,7 +168,9 @@ function cleanTitle(text: string): string {
  * "ซื้อหวยที่ได้เงิน" is expense (ซื้อ first). Returns the confidence of the guess, or null when
  * nothing in the title says (the caller then defaults to expense).
  */
-function titleCue(title: string): { type: TxType; confidence: number } | null {
+function titleCue(rawTitle: string): { type: TxType; confidence: number } | null {
+  // going to a shop that sells is buying: "ร้านขายของ" is not the word "ขายของ"
+  const title = rawTitle.replace(/ร้าน\s*ขาย/g, "ร้าน");
   if (EXPENSE_OVERRIDES.some((k) => title.includes(k))) return { type: "expense", confidence: 0.9 };
 
   const firstIndex = (words: string[]) => {

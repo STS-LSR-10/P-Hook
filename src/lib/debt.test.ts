@@ -47,6 +47,50 @@ describe("parseDebtText: new debts", () => {
   });
 });
 
+describe("parseDebtText: owing in other words", () => {
+  it("'<person>ติดเงิน 300' is a debt they owe me, 'ติดเงิน แม่ 500' one I owe", () => {
+    expect(parseDebtText("สมชายติดเงิน 300")).toMatchObject({
+      kind: "debt-new",
+      direction: "lent",
+      person: "สมชาย",
+      amountSatang: 30000,
+    });
+    expect(parseDebtText("ติดเงิน แม่ 500")).toMatchObject({
+      kind: "debt-new",
+      direction: "borrowed",
+      person: "แม่",
+      amountSatang: 50000,
+    });
+    expect(parseDebtText("ติดหนี้ แม่ 500")).toMatchObject({ direction: "borrowed" });
+    expect(parseDebtText("ผมติดเงินแม่ 500")).toMatchObject({
+      kind: "debt-new",
+      direction: "borrowed",
+      person: "แม่",
+      amountSatang: 50000,
+    });
+    expect(parseDebtText("ฉันติดหนี้เพื่อน 1,200")).toMatchObject({
+      direction: "borrowed",
+      person: "เพื่อน",
+    });
+  });
+
+  it("is not a debt without a person or an amount", () => {
+    expect(parseDebtText("ติดเงิน 300")).toBeNull();
+    expect(parseDebtText("ค่าติดตั้ง 500")).toBeNull();
+  });
+
+  it("is not a person when it is a bill, a card, change or a shop", () => {
+    for (const t of [
+      "ติดเงินค่าห้อง 3000",
+      "ติดหนี้บัตร 5000",
+      "ติดเงินทอน 20",
+      "ร้านติดหนี้ 500",
+    ]) {
+      expect(parseDebtText(t), t).toBeNull();
+    }
+  });
+});
+
 describe("parseDebtText: repayments", () => {
   it("they pay me back", () => {
     expect(parseDebtText("สมชายคืน 200")).toMatchObject({

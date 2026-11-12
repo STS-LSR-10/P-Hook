@@ -647,3 +647,124 @@ test.describe("legal pages (public, no sign-in)", () => {
     expect(res.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });
 });
+
+test.describe("a budget typed in the chat (360px)", () => {
+  const BASE = { "GET /api/budgets": BUDGETS, "GET /api/categories": CATEGORIES };
+  const put = (bodies: unknown[]) => ({
+    "PUT /api/budgets": async (route: Route) => {
+      bodies.push(route.request().postDataJSON());
+      return { ok: true };
+    },
+  });
+
+  test("an overall budget opens the overall sheet filled in, and saves only when confirmed", async ({
+    page,
+  }) => {
+    const bodies: unknown[] = [];
+    await mockApi(page, { ...BASE, "GET /api/me": ME_PLUS, ...put(bodies) });
+    await page.goto("/budgets?set=&amount=20000");
+
+    const dialog = page.getByRole("dialog", { name: "งบรวมต่อรอบ" });
+    await expect(dialog.getByLabel("งบรวมต่อรอบ")).toHaveValue("20000");
+    expect(bodies).toEqual([]);
+    await dialog.getByRole("button", { name: "บันทึก" }).click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0]).toEqual({ overall: "20000", mode: "overall" });
+    expect(new URL(page.url()).search).toBe("");
+  });
+
+  test("a category that exists opens its sheet with the amount, and switches to per-category budgets on save", async ({
+    page,
+  }) => {
+    const bodies: unknown[] = [];
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/me": ME_PLUS,
+      "PATCH /api/categories/a": { ok: true },
+      ...put(bodies),
+    });
+    await page.goto("/budgets?set=%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3&amount=3000");
+
+    const dialog = page.getByRole("dialog", { name: "แก้ไขหมวด" });
+    await expect(dialog.getByLabel("งบหมวด อาหาร")).toHaveValue("3000");
+    expect(bodies).toEqual([]);
+    await dialog.getByRole("button", { name: "บันทึก" }).click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0]).toEqual({
+      mode: "category",
+      categories: [{ categoryId: "a", amount: "3000" }],
+    });
+  });
+
+  test("an amount equal to the one already stored is still saved, and the mode still switches", async ({
+    page,
+  }) => {
+    const bodies: unknown[] = [];
+    await mockApi(page, {
+      "GET /api/budgets": {
+        ...BUDGETS,
+        categories: [
+          {
+            categoryId: "a",
+            name: "อาหาร",
+            color: "#0F766E",
+            amountSatang: 300_000,
+            spentSatang: 0,
+          },
+        ],
+      },
+      "GET /api/categories": CATEGORIES,
+      "GET /api/me": ME_PLUS,
+      "PATCH /api/categories/a": { ok: true },
+      ...put(bodies),
+    });
+    await page.goto("/budgets?set=%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3&amount=3000");
+    await page
+      .getByRole("dialog", { name: "แก้ไขหมวด" })
+      .getByRole("button", { name: "บันทึก" })
+      .click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0]).toMatchObject({ mode: "category" });
+  });
+
+  test("a new name opens the add-category sheet with that name, then makes the category and its budget", async ({
+    page,
+  }) => {
+    const posted: unknown[] = [];
+    const bodies: unknown[] = [];
+    await mockApi(page, {
+      ...BASE,
+      "GET /api/me": ME_PLUS,
+      "POST /api/categories": (route: Route) => {
+        posted.push(route.request().postDataJSON());
+        return { id: "new1" };
+      },
+      ...put(bodies),
+    });
+    await page.goto(`/budgets?set=${encodeURIComponent("กินเที่ยว")}&amount=120`);
+
+    const dialog = page.getByRole("dialog", { name: /เพิ่มหมวด/ });
+    await expect(dialog.getByLabel("ชื่อหมวด")).toHaveValue("กินเที่ยว");
+    await dialog.getByRole("button", { name: "เพิ่มหมวด" }).click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(posted[0]).toMatchObject({ type: "expense", name: "กินเที่ยว" });
+    expect(bodies[0]).toEqual({
+      mode: "category",
+      categories: [{ categoryId: "new1", amount: "120" }],
+    });
+    await expect(
+      page.getByRole("status").filter({ hasText: "เพิ่มหมวดและตั้งงบแล้ว" }),
+    ).toBeVisible();
+  });
+
+  test("Free: a category budget says it is for Starter and above and changes nothing", async ({
+    page,
+  }) => {
+    const bodies: unknown[] = [];
+    await mockApi(page, { ...BASE, "GET /api/me": ME_FREE, ...put(bodies) });
+    await page.goto("/budgets?set=%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3&amount=3000");
+    await expect(page.getByText("งบรายหมวดใช้ได้ในแผน Starter ขึ้นไป")).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(bodies).toEqual([]);
+  });
+});

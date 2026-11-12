@@ -765,6 +765,21 @@ export const EN: Record<string, string> = {
   "ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ ใช้ได้จนครบรอบที่จ่ายแล้ว":
     "Renews automatically, cancel any time, and it stays active until the paid period ends",
   ไปชำระเงิน: "Go to payment",
+  "เพิ่มหมวดแล้ว แต่ตั้งงบไม่สำเร็จ ลองตั้งที่หมวดอีกครั้งนะ":
+    "Category added, but the budget could not be set. Try setting it on the category",
+  เพิ่มหมวดและตั้งงบแล้ว: "Category added and budget set",
+  "งบรายหมวดใช้ได้ในแผน Starter ขึ้นไป ตั้งเป็นงบรวมที่ปุ่มงบรวมได้นะ":
+    "Category budgets are on Starter and above. You can set an overall budget with the overall budget button",
+  "ตั้งงบได้ที่หน้างบ (เมนูด้านล่างของแอป) นะ":
+    "You can set a budget on the budgets page (bottom menu of the app)",
+  "ตั้งงบ {0} {1} บาท": "Set budget {0} {1} baht",
+  "ตั้งงบ {0}?": "Set the {0} budget?",
+  "ยังไม่ได้ตั้งนะ กดปุ่มเพื่อเปิดหน้างบแล้วกดบันทึกเพื่อยืนยัน":
+    "Not set yet. Tap the button to open the budgets page, then save to confirm",
+  เปิดหน้างบเพื่อยืนยัน: "Open budgets to confirm",
+  'สวัสดีนะ จดรายการได้เลย เช่น "กาแฟ 50" หรือพิมพ์ "เมนู" ดูวิธีใช้':
+    'Hi! Just type an entry, like "coffee 50", or type "menu" to see how it works',
+  "ยินดีเลยนะ จดรายการต่อได้เลย": "You're welcome! Keep recording whenever you like",
   "ที่นั่ง Early Bird หมดไปแล้ว ตอนนี้เป็นราคาปกติ กดชำระเงินอีกครั้งถ้ายังต้องการ":
     "The Early Bird seats are gone, so the normal price applies now. Press pay again if you still want it",
   "ระบบจะพาไปหน้าชำระเงินที่ปลอดภัยของ Stripe": "You'll be taken to Stripe's secure payment page",
@@ -2655,7 +2670,7 @@ export const EN: Record<string, string> = {
   "โควตา ถาม AI เดือนนี้หมดแล้ว คำสั่งต่าง ๆ และการจดแบบ กาแฟ 30 ยังใช้ได้ตามปกติ":
     'This month\'s AI uses are gone. Commands and entries like "coffee 30" still work as usual',
   "ใช้ ถาม AI ได้มากขึ้น": "More AI uses",
-  "AI ช่วยอ่านทุกข้อความ ทั้งจดเงิน ตั้งเตือน จดโน้ต ค้นหา และตอบคำถามของคุณ ใช้ ถาม AI ฟรีของเดือนนี้ครบแล้ว (พิมพ์จดแบบปกติยังได้เหมือนเดิม)":
+  "AI ช่วยอ่านข้อความที่ระบบอ่านเองไม่ได้ ทั้งจดเงิน ตั้งเตือน จดโน้ต ค้นหา และตอบคำถามของคุณ ใช้ ถาม AI ฟรีของเดือนนี้ครบแล้ว (พิมพ์จดแบบปกติยังได้เหมือนเดิม)":
     "The AI reads every message: entries, reminders, notes, searches and your questions. This month's free AI uses are gone (typing entries still works as usual)",
   "Pro ฿{0}/เดือน ถาม AI ได้ {1} ครั้ง/เดือน · Elite ฿{2}/เดือน {3} ครั้ง/เดือน{4}":
     "Pro ฿{0}/month, {1} AI uses a month · Elite ฿{2}/month, {3} a month{4}",

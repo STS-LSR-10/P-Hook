@@ -152,7 +152,7 @@ import {
 import { buildFileResults } from "./file-flex";
 import { buildNoteListCard } from "./list-flex";
 import { buildReminderCard, buildReminderListCard } from "./reminder-flex";
-import { buildOpenPageCard, PAGE_INFO } from "./page-flex";
+import { buildBudgetSetCard, buildOpenPageCard, PAGE_INFO } from "./page-flex";
 import { buildSummaryMenu } from "./summary-menu";
 import { PRESET_TITLE, presetRange } from "@/lib/summary-range-text";
 import type { Owl } from "@/lib/ai/owl";
@@ -161,6 +161,7 @@ import { applyVariety } from "./variety";
 import { inOwlMode, keepOwlOpen, owlAsk, owlEnd, owlStart, type OwlDeps } from "./owl";
 import type { IntentRouter } from "@/lib/ai/intent-router";
 import { needsRouter } from "@/lib/ai/route-text";
+import { parseNaturalCommand } from "@/lib/rule-intents";
 import {
   handleFilePick,
   handleIncomingFile,
@@ -210,6 +211,8 @@ import { runPaymentCommand } from "./payment-handlers";
 import { buildHelpPrompt, buildHelpTopicCard, buildWelcomeCard, isHelpTopic } from "./help-flex";
 import { notUnderstood } from "./not-understood";
 import {
+  CHITCHAT_HELLO_TEXT,
+  CHITCHAT_THANKS_TEXT,
   EDIT_HINT_TEXT,
   EDIT_LINK_TEXT,
   EDIT_USAGE_TEXT,
@@ -713,8 +716,8 @@ function owlDeps(deps: HandlerDeps): OwlDeps {
 }
 
 /**
- * Every typed message: read by the AI first (unless it is a command typed exactly, or AI_CHAT_ALL is
- * "off"), then by the ordinary rules. When the month's "ถาม AI" is out the rules read it, and the
+ * Every typed message: read by the rules first, and by the AI only when they cannot settle it (or
+ * always first, when AI_CHAT_ALL is "on"). When the month's "ถาม AI" is out the rules read it, and the
  * person is told so once a day.
  */
 async function handleText(
@@ -801,12 +804,18 @@ async function readText(
     return keepOwlOpen(owlDeps(deps), user, replies);
   }
 
+  // the usual ways of saying a command ("ลบอันล่าสุด", "เดือนนี้ใช้ไปเท่าไหร่", "จดโน้ต …", "สวัสดี") are
+  // read by rules too, so the AI is not asked; in the พี่ฮูก mode they are for the owl, above, and a
+  // button's own message already said what it is
+  const natural = !command && !options.routed ? parseNaturalCommand(input, deps.now()) : null;
+  if (natural) return runCommand(natural, user, deps);
+
   let { entries } = parsed;
   const plan = effectivePlan(user.plan, user.plan_expires_at, deps.now());
 
-  // What the rules cannot be trusted with: the AI says whether it is money at all.
-  // every message goes to the AI first (AI_CHAT_ALL=off: only what the rules cannot be trusted with)
-  const aiReadsAll = process.env.AI_CHAT_ALL?.trim().toLowerCase() !== "off";
+  // The rules go first; the AI reads only what they cannot be trusted with (a phrase they do not know,
+  // a question, a time, a long sentence). AI_CHAT_ALL=on sends every message to the AI first instead.
+  const aiReadsAll = process.env.AI_CHAT_ALL?.trim().toLowerCase() === "on";
   if (
     !options.routed &&
     deps.router &&
@@ -2264,6 +2273,21 @@ async function runCommand(
   switch (command.kind) {
     case "help":
       return [buildHelpPrompt((await prefsOf(deps, user)).persona)];
+
+    case "budget-set": {
+      const baht = command.amountSatang / 100;
+      const amountText = Number.isInteger(baht) ? String(baht) : baht.toFixed(2);
+      const query = `set=${encodeURIComponent(command.name ?? "")}&amount=${amountText}`;
+      const url = pageUrl(`/budgets?${query}`);
+      return [
+        url
+          ? buildBudgetSetCard({ name: command.name, amountText, url })
+          : text(tr("ตั้งงบได้ที่หน้างบ (เมนูด้านล่างของแอป) นะ")),
+      ];
+    }
+
+    case "chitchat":
+      return [text(command.say === "hello" ? CHITCHAT_HELLO_TEXT : CHITCHAT_THANKS_TEXT)];
 
     case "summary": {
       const now = deps.now();

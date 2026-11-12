@@ -41,7 +41,26 @@ export function clockIsTheAmount(input: string, entries: ParsedEntry[]): boolean
  * the end, so "ผ้าไหม 500" stays an entry.
  */
 export const ASKS_RE =
-  /(?:(?<!ผ้า)ไหม|มั้ย|หรือยัง|หรือเปล่า|รึเปล่า|รึยัง)\s*\??\s*$|\?\s*$|เท่าไร|เท่าไหร่|กี่บาท|กี่รายการ|ยังไง(?!ก็)|อย่างไร|ทำไม(?!้)|คืออะไร|กี่ครั้ง|กี่(?:เดือน|วัน|ปี|สัปดาห์|อาทิตย์|ชั่วโมง)/;
+  /(?:(?<!ผ้า)ไหม|มั้ย|ป่ะ|ปะ|ป่าว|ปล่าว|มะ|หรือยัง|หรือเปล่า|รึเปล่า|รึยัง)\s*\??\s*$|\?\s*$|เท่าไร|เท่าไหร่|กี่บาท|กี่รายการ|ยังไง(?!ก็)|อย่างไร|ทำไม(?!้)|คืออะไร|กี่ครั้ง|กี่(?:เดือน|วัน|ปี|สัปดาห์|อาทิตย์|ชั่วโมง)/;
+
+/**
+ * A lone number that counts things, not baht: "ซื้อครีม 2 หลอด" is not 2 baht. Only when it is the
+ * only number and no "บาท" says otherwise ("กาแฟ 2 แก้ว 90" has its price).
+ */
+const UNIT_AFTER_NUMBER =
+  /\d(?:[\d,]*\d)?(?:\.\d+)?\s*(?:หลอด|แผง|จาน|คน|ชิ้น|อัน|กล่อง|แพ็ก|แพ็ค|ถุง|ขวด|ตัว|แก้ว|ชุด|ห่อ|เม็ด|ฟอง|เล่ม|คู่|โหล|ถ้วย|ชาม|ซอง|กระป๋อง|กก\.?|กิโล|ลิตร|กรัม|นาที|ชั่วโมง|ชม\.?|กม\.?|ก้าว|ใบ|วัน|เดือน|ปี|ครั้ง|รอบ|คืน|คัน|ลูก|เส้น)(?![ก-๙])/;
+export function numberCountsThings(input: string): boolean {
+  const text = normalizeThaiDigits(input);
+  if (/บาท|฿|baht/i.test(text)) return false;
+  return (text.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).length === 1 && UNIT_AFTER_NUMBER.test(text);
+}
+
+/** A plan or a wish, not something spent: "เดือนหน้าต้องจ่ายค่าเทอม 20000", "อยากได้ไอโฟน 40000". */
+const FUTURE_RE =
+  /(?:เดือน|ปี|สัปดาห์|อาทิตย์)หน้า|อยากได้|อยากซื้อ|ต้องจ่าย|วางแผน|ตั้งใจ(?:จะ)?|จะ(?:ซื้อ|จ่าย|ไป)/;
+/** A sentence in English (three words or more) or a day of the month in the words ("วันที่ 5"). */
+const ENGLISH_WORDS_RE = /[a-z]{2,}/gi;
+const DAY_OF_MONTH_RE = /วันที่\s*\d/;
 
 /** Three lines or more, most with no number: a list of things, not a list of entries. */
 function isPlainList(input: string): boolean {
@@ -61,6 +80,10 @@ export function needsRouter(input: string, result: ParseResult): boolean {
     CLOCK_RE.test(input) ||
     KEEP_RE.test(input) ||
     ASKS_RE.test(input) ||
+    numberCountsThings(input) ||
+    FUTURE_RE.test(input) ||
+    (input.match(ENGLISH_WORDS_RE)?.length ?? 0) >= 3 ||
+    (DAY_OF_MONTH_RE.test(input) && result.entries.every((e) => !e.backdated)) ||
     isPlainList(input)
   );
 }

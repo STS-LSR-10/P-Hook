@@ -576,6 +576,10 @@ export const ROUTER_REMINDER_HINT_TEXT = t(
 export const QUESTION_NOT_RECORDED_TEXT = t(
   'ข้อความนี้ดูเหมือนคำถาม ตอนนี้ AI ช่วยตอบไม่ได้ เลยยังไม่ได้จดอะไร ถ้าต้องการจดเป็นรายการ พิมพ์ชื่อกับจำนวน เช่น "กาแฟ 50"',
 );
+export const CHITCHAT_HELLO_TEXT = t(
+  'สวัสดีนะ จดรายการได้เลย เช่น "กาแฟ 50" หรือพิมพ์ "เมนู" ดูวิธีใช้',
+);
+export const CHITCHAT_THANKS_TEXT = t("ยินดีเลยนะ จดรายการต่อได้เลย");
 export const MONEY_HINT_TEXT = t('ลองพิมพ์ชื่อรายการกับจำนวนเงิน เช่น "ค่าหมอ 800" นะ');
 
 /** "• 27 ธ.ค. 2569  ซื้อนม…" lines for a short list of notes, then where to see the rest. */

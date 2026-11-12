@@ -88,6 +88,20 @@ function parseAmount(input: string): { ok: true; value: string | null } | { ok: 
   return { ok: true, value: text };
 }
 
+/** "3000" or "3000.5" from whole satang, for a text field. */
+const bahtText = (satang: number) => formatBaht(satang).replace(/,/g, "");
+
+/** The category a typed name means: the same name, then a keyword it was given. Nothing looser: "อาหารแมว" is not "อาหาร". */
+function findCategory(items: CategoryItem[], name: string): CategoryItem | null {
+  const want = name.trim().toLowerCase();
+  const pool = items.filter((c) => c.type === "expense");
+  return (
+    pool.find((c) => c.name.toLowerCase() === want) ??
+    pool.find((c) => !c.isHidden && c.keywords.some((k) => k.toLowerCase() === want)) ??
+    null
+  );
+}
+
 function keywordsFromText(text: string): string[] {
   return Array.from(
     new Set(
@@ -323,15 +337,21 @@ const fieldClass =
 
 function AddSheet({
   kind,
+  initialName = "",
+  budgetAfter = null,
   onClose,
   onSaved,
 }: {
   kind: Kind;
+  /** A name typed in the chat ("งบกินเที่ยว 120"). */
+  initialName?: string;
+  /** Set the budget of the new category once it is made (and switch to per-category budgets). */
+  budgetAfter?: { amountSatang: number; switchMode: boolean } | null;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (message?: string) => void;
 }) {
   const { api } = useLiff();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialName);
   const [keywords, setKeywords] = useState("");
   const [color, setColor] = useState(SWATCHES[0] ?? "#0F766E");
   const [emoji, setEmoji] = useState("");
@@ -346,7 +366,7 @@ function AddSheet({
     setSaving(true);
     setError(null);
     try {
-      await api("/api/categories", {
+      const created = await api<{ id: string }>("/api/categories", {
         method: "POST",
         body: JSON.stringify({
           type: kind,
@@ -356,6 +376,20 @@ function AddSheet({
           emoji: emoji || null,
         }),
       });
+      if (budgetAfter) {
+        try {
+          await api("/api/budgets", {
+            method: "PUT",
+            body: JSON.stringify({
+              ...(budgetAfter.switchMode ? { mode: "category" } : {}),
+              categories: [{ categoryId: created.id, amount: bahtText(budgetAfter.amountSatang) }],
+            }),
+          });
+        } catch {
+          return onSaved(tr("เพิ่มหมวดแล้ว แต่ตั้งงบไม่สำเร็จ ลองตั้งที่หมวดอีกครั้งนะ"));
+        }
+        return onSaved(tr("เพิ่มหมวดและตั้งงบแล้ว"));
+      }
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : tr("บันทึกไม่สำเร็จ"));
@@ -421,6 +455,16 @@ export default function BudgetsPage() {
   const [editing, setEditing] = useState<CategoryItem | null>(null);
   const [adding, setAdding] = useState(false);
   const [totalOpen, setTotalOpen] = useState(false);
+  // a budget typed in the chat ("งบอาหาร 3000"): the page opens the right sheet with it filled in
+  const [fromChat, setFromChat] = useState<{ name: string | null; amountSatang: number } | null>(
+    null,
+  );
+  const [chatBudget, setChatBudget] = useState<{
+    totalSatang?: number;
+    categorySatang?: number;
+    newName?: string;
+    newSatang?: number;
+  }>({});
   const [cycleOpen, setCycleOpen] = useState(false);
   const [ordering, setOrdering] = useState(false);
   const [search, setSearch] = useState("");
@@ -454,6 +498,47 @@ export default function BudgetsPage() {
     cats.reload();
     budgets.reload();
   }
+
+  // read "?set=<name>&amount=<baht>" once (from the card the bot sends) and clear it from the address
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const amount = parseAmount(q.get("amount") ?? "");
+      if (q.has("set") && amount.ok && amount.value) {
+        setFromChat({
+          name: q.get("set")?.trim() || null,
+          amountSatang: Math.round(Number(amount.value) * 100),
+        });
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    } catch {
+      /* no address to read: nothing is filled in */
+    }
+  }, []);
+
+  // once everything is loaded, open the sheet that fits (the person still has to press save)
+  useEffect(() => {
+    if (!fromChat || !cats.data || !budgets.data || !me.data) return;
+    setFromChat(null);
+    setKind("expense");
+    if (fromChat.name === null) {
+      setChatBudget({ totalSatang: fromChat.amountSatang });
+      setTotalOpen(true);
+      return;
+    }
+    if (me.data.features.categoryBudget !== true) {
+      setNotice(tr("งบรายหมวดใช้ได้ในแผน Starter ขึ้นไป ตั้งเป็นงบรวมที่ปุ่มงบรวมได้นะ"));
+      return;
+    }
+    const found = findCategory(cats.data.items, fromChat.name);
+    if (found) {
+      setChatBudget({ categorySatang: fromChat.amountSatang });
+      setEditing(found);
+    } else {
+      setChatBudget({ newName: fromChat.name, newSatang: fromChat.amountSatang });
+      setAdding(true);
+    }
+  }, [fromChat, cats.data, budgets.data, me.data]);
 
   async function run(action: () => Promise<unknown>, done?: string) {
     setNotice(null);
@@ -754,15 +839,21 @@ export default function BudgetsPage() {
           index={all.findIndex((c) => c.id === editing.id)}
           locked={locked}
           budget={
-            kind === "expense" && budgets.data?.mode === "category"
+            kind === "expense" &&
+            (budgets.data?.mode === "category" || chatBudget.categorySatang !== undefined)
               ? { amountSatang: budgetOf(editing.id)?.amountSatang ?? null, locked: budgetLocked }
               : null
           }
+          budgetPrefillSatang={chatBudget.categorySatang ?? null}
           cycle={budgets.data?.cycle ?? "monthly"}
           historyOn={historyOn && kind === "expense"}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+            setEditing(null);
+            setChatBudget({});
+          }}
           onSaved={(msg) => {
             setEditing(null);
+            setChatBudget({});
             setNotice(msg);
             refresh();
           }}
@@ -770,11 +861,19 @@ export default function BudgetsPage() {
       ) : null}
       {totalOpen && budgets.data ? (
         <TotalBudgetSheet
-          amountSatang={budgets.data.overall.amountSatang}
-          onClose={() => setTotalOpen(false)}
-          onSave={(value) => {
+          amountSatang={chatBudget.totalSatang ?? budgets.data.overall.amountSatang}
+          onClose={() => {
             setTotalOpen(false);
-            void putBudget({ overall: value }, value ? tr("ตั้งงบแล้ว") : tr("ล้างงบแล้ว"));
+            setChatBudget({});
+          }}
+          onSave={(value) => {
+            const fromTheChat = chatBudget.totalSatang !== undefined;
+            setTotalOpen(false);
+            setChatBudget({});
+            void putBudget(
+              { overall: value, ...(fromTheChat ? { mode: "overall" } : {}) },
+              value ? tr("ตั้งงบแล้ว") : tr("ล้างงบแล้ว"),
+            );
           }}
         />
       ) : null}
@@ -794,10 +893,23 @@ export default function BudgetsPage() {
       {adding && !locked ? (
         <AddSheet
           kind={kind}
-          onClose={() => setAdding(false)}
-          onSaved={() => {
+          initialName={chatBudget.newName}
+          budgetAfter={
+            chatBudget.newSatang
+              ? {
+                  amountSatang: chatBudget.newSatang,
+                  switchMode: budgets.data?.mode !== "category",
+                }
+              : null
+          }
+          onClose={() => {
             setAdding(false);
-            setNotice(tr("เพิ่มหมวดแล้ว"));
+            setChatBudget({});
+          }}
+          onSaved={(msg) => {
+            setAdding(false);
+            setChatBudget({});
+            setNotice(msg ?? tr("เพิ่มหมวดแล้ว"));
             refresh();
           }}
         />
@@ -1293,6 +1405,7 @@ function CategorySheet({
   index,
   locked,
   budget,
+  budgetPrefillSatang = null,
   cycle,
   historyOn,
   onClose,
@@ -1304,6 +1417,8 @@ function CategorySheet({
   locked: boolean;
   /** Null when budgets are not per category; `locked` makes the field read only (Free). */
   budget: { amountSatang: number | null; locked: boolean } | null;
+  /** An amount typed in the chat, put in the field for the person to confirm (and per-category budgets are switched on with it). */
+  budgetPrefillSatang?: number | null;
   cycle: "monthly" | "weekly";
   historyOn: boolean;
   onClose: () => void;
@@ -1317,7 +1432,9 @@ function CategorySheet({
   const initialBudget = budget?.amountSatang
     ? formatBaht(budget.amountSatang).replace(/,/g, "")
     : "";
-  const [budgetText, setBudgetText] = useState(initialBudget);
+  const [budgetText, setBudgetText] = useState(
+    budgetPrefillSatang ? bahtText(budgetPrefillSatang) : initialBudget,
+  );
   const [hidden, setHidden] = useState(category.isHidden);
   const [busy, setBusy] = useState(false);
   const frozen = category.own && locked;
@@ -1346,10 +1463,18 @@ function CategorySheet({
       }
       if (hidden !== category.isHidden) body.isHidden = hidden;
       await api(`/api/categories/${category.id}`, { method: "PATCH", body: JSON.stringify(body) });
-      if (budget && !budget.locked && budgetText.trim() !== initialBudget && parsed.ok) {
+      if (
+        budget &&
+        !budget.locked &&
+        (budgetText.trim() !== initialBudget || budgetPrefillSatang) &&
+        parsed.ok
+      ) {
         await api("/api/budgets", {
           method: "PUT",
-          body: JSON.stringify({ categories: [{ categoryId: category.id, amount: parsed.value }] }),
+          body: JSON.stringify({
+            ...(budgetPrefillSatang ? { mode: "category" } : {}),
+            categories: [{ categoryId: category.id, amount: parsed.value }],
+          }),
         });
       }
       onSaved(tr("บันทึกแล้ว"));

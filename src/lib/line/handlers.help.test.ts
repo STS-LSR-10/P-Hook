@@ -125,7 +125,7 @@ describe("the help flow in the chat", () => {
 
   it("a message the bot cannot read gets the short text plus a button to the guide", async () => {
     const { deps, reply } = setup();
-    await handleEvent(say("สวัสดีครับ"), deps);
+    await handleEvent(say("อะไรก็ไม่รู้"), deps);
     const m = first(reply);
     expect(m.type).toBe("text");
     expect(m.text).toContain("ยังไม่เข้าใจ");

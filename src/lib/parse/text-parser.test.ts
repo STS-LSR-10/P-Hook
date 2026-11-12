@@ -54,6 +54,22 @@ describe("parseMessage: basics", () => {
   });
 });
 
+describe("parseMessage: selling is income", () => {
+  it.each(["ยอดขายวันนี้ 5000", "ขายรถ 200000", "ขายไก่ย่าง 500", "ขายของ 500"])(
+    "%s is income",
+    (text) => {
+      expect(one(text).type).toBe("income");
+    },
+  );
+
+  it.each(["ร้านขายยา 200", "ซื้อของขาย 300", "ขายส่ง 100", "ไปร้านขายของ 100", "ร้าน ขายยา 200"])(
+    "%s is still an expense",
+    (text) => {
+      expect(one(text).type).toBe("expense");
+    },
+  );
+});
+
 describe("parseMessage: units", () => {
   it.each([
     ["ข้าว 1.5k", 150_000],
