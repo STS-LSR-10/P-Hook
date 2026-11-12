@@ -1,7 +1,7 @@
+import { tokenSecrets } from "@/lib/auth/keys";
 import { z } from "zod";
 import { apiError, guard } from "@/lib/api";
 import { readViewToken } from "@/lib/auth/file-token";
-import { getServerEnv } from "@/lib/env";
 import { isViewableImage, thumbKey } from "@/lib/file";
 import { getGroupFile, getReadyFile } from "@/lib/file-repo";
 import { getFileStore } from "@/lib/file-store";
@@ -21,10 +21,7 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) return apiError("ไม่พบรูปนี้", 404);
     const url = new URL(request.url);
-    const claims = await readViewToken(
-      url.searchParams.get("t") ?? "",
-      getServerEnv().SESSION_JWT_SECRET,
-    );
+    const claims = await readViewToken(url.searchParams.get("t") ?? "", tokenSecrets());
     if (!claims) return apiError("ลิงก์หมดอายุ", 401);
 
     // a person's token reaches their own pictures, a group's token only that group's

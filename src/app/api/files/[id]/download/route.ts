@@ -1,6 +1,6 @@
+import { tokenSecrets } from "@/lib/auth/keys";
 import { apiError, guard } from "@/lib/api";
 import { verifyFileToken } from "@/lib/auth/file-token";
-import { getServerEnv } from "@/lib/env";
 import { contentDisposition } from "@/lib/file";
 import { getReadyFile } from "@/lib/file-repo";
 import { getFileStore } from "@/lib/file-store";
@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
   return guard(async () => {
     const { id } = await params;
     const token = new URL(request.url).searchParams.get("t") ?? "";
-    const claims = await verifyFileToken(token, getServerEnv().SESSION_JWT_SECRET);
+    const claims = await verifyFileToken(token, tokenSecrets());
     if (!claims) return apiError("ลิงก์หมดอายุ เปิดไฟล์จากคลังอีกครั้งนะ", 401);
     if (claims.fileId !== id) return apiError("ลิงก์นี้ไม่ถูกต้อง", 403);
 

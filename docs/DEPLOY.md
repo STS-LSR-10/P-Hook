@@ -189,6 +189,9 @@ pnpm e2e                                   # Playwright + axe ที่ 360px (�
 ## 9) ที่ยังไม่ได้ทำ (ความเสี่ยงที่ยอมรับอยู่)
 
 - **CSP (Content-Security-Policy)** เปิดแบบ **report-only** (`next.config.ts`): ยังไม่บล็อกอะไร เบราว์เซอร์ส่งสิ่งที่จะถูกบล็อกมาที่ `/api/csp-report` ซึ่งเขียน log `csp_violation` (เฉพาะ directive กับ host ที่ถูกบล็อก จำกัด 20 ครั้ง/นาทีต่อ IP) ดู log สักระยะกับ LINE จริง แล้วค่อยเปลี่ยน header เป็น `Content-Security-Policy` เพื่อบังคับจริง การเอา `'unsafe-inline'` ออกจาก script-src ต้องใช้ nonce ต่อคำขอ (ยังไม่ได้ทำ)
+- **เปลี่ยนรหัสลับโทเค็น (`SESSION_JWT_SECRET`)**: ตั้งรหัสใหม่ใน `SESSION_JWT_SECRET` และย้ายรหัสเดิมไปไว้ที่ `SESSION_JWT_SECRET_PREVIOUS` แล้ว deploy โทเค็นเก่ายังใช้ได้จนหมดอายุ (session 1 ชม. ลิงก์ไฟล์/ส่งออก/Google ไม่กี่นาที) ผ่านไปสัก 2 ชม. ค่อยลบ `SESSION_JWT_SECRET_PREVIOUS` **ยกเว้น** ปุ่ม "เพิ่มลงปฏิทิน" บนการ์ดเตือนในกลุ่มที่ส่งไปแล้ว ลิงก์พวกนี้ไม่มีวันหมดอายุ พอลบรหัสเดิม ปุ่มบนการ์ดเก่าจะใช้ไม่ได้ (เปิดแล้วขึ้นว่าไม่พบเตือน) ถ้าสำคัญให้เก็บ `SESSION_JWT_SECRET_PREVIOUS` ไว้นานกว่านั้น
+- **session ของบัญชีที่ลบแล้ว**: `requireUser` เช็กว่าผู้ใช้ยังมีอยู่ (จำผลไว้ 1 นาทีต่อ Worker) บัญชีที่ลบจะถูกปฏิเสธภายในราว 1 นาที ถ้าฐานข้อมูลล่มจะให้ผ่าน ไม่เตะทุกคนออก
+- **ตรวจช่องโหว่ไลบรารี**: CI รัน `pnpm audit --prod --audit-level moderate` รายการที่ยกเว้นอยู่ใน `pnpm.auditConfig` ของ `package.json` (ตอนนี้ zod GHSA-mrhx-c7xc-m3w5 ซึ่งปิดทางไว้แล้วด้วยการจำกัดขนาด body) รุ่นที่บังคับอัปเดตอยู่ใน `pnpm.overrides`
 - **ขนาด body ของ API**: ทุกเส้นทางอ่าน JSON ผ่าน `readJson` (`src/lib/api.ts`) ซึ่งปฏิเสธ body เกิน 100 KB ก่อนตรวจข้อมูล
 - ไม่มีระบบแจ้งเตือนอัตโนมัติเมื่อ error (ดู Cloudflare Logs ด้วยตนเอง) — ถ้าต้องการให้ต่อ Logpush / Sentry
 - Privacy Policy และ Terms เป็น **ฉบับร่าง** ควรให้ผู้เชี่ยวชาญกฎหมายตรวจก่อนเปิดใช้จริง

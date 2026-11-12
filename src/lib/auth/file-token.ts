@@ -1,4 +1,5 @@
-import { jwtVerify, SignJWT } from "jose";
+import { SignJWT } from "jose";
+import { verifyWithAny, type Secrets } from "./keys";
 
 const ISSUER = "phook";
 const AUDIENCE = "phook-file";
@@ -32,11 +33,11 @@ export async function signFileToken(
 
 export async function verifyFileToken(
   token: string,
-  secret: string,
+  secret: Secrets,
   now: Date = new Date(),
 ): Promise<{ userId: string; fileId: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, keyOf(secret), {
+    const payload = await verifyWithAny(token, secret, {
       issuer: ISSUER,
       audience: AUDIENCE,
       algorithms: ["HS256"],
@@ -87,11 +88,11 @@ async function signView(
 /** Whose pictures a view token shows: a person's own (`groupId` null), or one group's. */
 export async function readViewToken(
   token: string,
-  secret: string,
+  secret: Secrets,
   now: Date = new Date(),
 ): Promise<{ userId: string; groupId: string | null } | null> {
   try {
-    const { payload } = await jwtVerify(token, keyOf(secret), {
+    const payload = await verifyWithAny(token, secret, {
       issuer: ISSUER,
       audience: VIEW_AUDIENCE,
       algorithms: ["HS256"],
@@ -107,7 +108,7 @@ export async function readViewToken(
 /** The person of a token for their own pictures (null for a group's token). */
 export async function verifyViewToken(
   token: string,
-  secret: string,
+  secret: Secrets,
   now: Date = new Date(),
 ): Promise<string | null> {
   const claims = await readViewToken(token, secret, now);

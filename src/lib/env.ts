@@ -29,6 +29,11 @@ const serverSchema = z
     LINE_CHANNEL_ACCESS_TOKEN: z.string().min(1),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     SESSION_JWT_SECRET: z.string().min(32, "SESSION_JWT_SECRET must be at least 32 chars"),
+    // While SESSION_JWT_SECRET is being replaced: the old one, still accepted (never used to sign).
+    SESSION_JWT_SECRET_PREVIOUS: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z.string().min(32, "SESSION_JWT_SECRET_PREVIOUS must be at least 32 chars").optional(),
+    ),
     CRON_SECRET: z.string().min(1),
     // The LIFF app lives in a LINE Login channel; its id is the `client_id` for ID token
     // verification. Falls back to LINE_CHANNEL_ID when both live in the same channel.

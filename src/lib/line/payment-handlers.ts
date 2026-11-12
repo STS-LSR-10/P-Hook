@@ -1,5 +1,5 @@
 import type { Command } from "@/lib/commands";
-import { maskPromptPayId } from "@/lib/promptpay";
+import { kindOf, maskPromptPayId } from "@/lib/promptpay";
 import type { UserRow } from "@/lib/repo";
 import { getPayment, savePayment } from "@/lib/split-bill-repo";
 import type { LineMessage } from "@/lib/types";
@@ -47,6 +47,16 @@ export async function runPaymentCommand(
             maskPromptPayId(command.id),
           ),
         ),
+        // the QR a friend gets carries the whole number: a national ID is better kept out of it
+        ...(kindOf(command.id) === "national_id"
+          ? [
+              text(
+                t(
+                  'เลขบัตรประชาชนจะอยู่ใน QR ที่เพื่อนได้รับแบบเต็ม (แอปสแกน QR ทั่วไปก็อ่านได้) แนะนำใช้เบอร์โทรที่ผูกพร้อมเพย์แทน พิมพ์ เช่น "พร้อมเพย์ 0812345678"',
+                ),
+              ),
+            ]
+          : []),
       ];
 
     case "payment-bank":

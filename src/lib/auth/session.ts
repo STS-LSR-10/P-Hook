@@ -1,4 +1,5 @@
-import { jwtVerify, SignJWT } from "jose";
+import { SignJWT } from "jose";
+import { verifyWithAny, type Secrets } from "./keys";
 
 const ISSUER = "jodtang";
 const AUDIENCE = "jodtang-liff";
@@ -43,11 +44,11 @@ export async function signSession(
 /** Returns the claims, or null for anything invalid/expired/forged. */
 export async function verifySession(
   token: string,
-  secret: string,
+  secret: Secrets,
   now: Date = new Date(),
 ): Promise<SessionClaims | null> {
   try {
-    const { payload } = await jwtVerify(token, keyOf(secret), {
+    const payload = await verifyWithAny(token, secret, {
       issuer: ISSUER,
       audience: AUDIENCE,
       algorithms: ["HS256"],

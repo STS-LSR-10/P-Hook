@@ -1,7 +1,7 @@
+import { tokenSecrets } from "@/lib/auth/keys";
 import { verifyExportToken } from "@/lib/auth/export-token";
 import { MAX_EXPORT_ROWS } from "@/lib/config";
 import { TX_SELECT, toTxDto } from "@/lib/dto";
-import { getServerEnv } from "@/lib/env";
 import { buildZip, collectAttachments, type AttachmentSource } from "@/lib/export/attachments";
 import { toCsv } from "@/lib/export/csv";
 import { buildPdf } from "@/lib/export/pdf";
@@ -41,7 +41,7 @@ async function download(request: Request): Promise<Response> {
   if (!token) return new Response("ลิงก์ไม่ถูกต้อง", { status: 400 });
 
   try {
-    const claims = await verifyExportToken(token, getServerEnv().SESSION_JWT_SECRET);
+    const claims = await verifyExportToken(token, tokenSecrets());
     if (!claims) {
       return new Response("ลิงก์หมดอายุแล้ว กลับไปกดส่งออกใหม่อีกครั้งนะ", {
         status: 401,

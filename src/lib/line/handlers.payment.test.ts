@@ -65,6 +65,14 @@ describe("setting where to be paid (private chat, any plan)", () => {
     expect(out).not.toContain("0812345678");
   });
 
+  it("a national ID is saved, with a warning that the QR carries it in full", async () => {
+    const out = await run("พร้อมเพย์ 1-2345-67890-12-3");
+    expect(saved).toEqual([{ promptpayId: "1234567890123" }]);
+    expect(out).toContain("เลขบัตรประชาชนจะอยู่ใน QR");
+    // a phone number gets no such warning
+    expect(await run("พร้อมเพย์ 0812345678")).not.toContain("เลขบัตรประชาชน");
+  });
+
   it("a number that is not one explains the formats and saves nothing", async () => {
     const out = await run("พร้อมเพย์ 12345");
     expect(saved).toHaveLength(0);

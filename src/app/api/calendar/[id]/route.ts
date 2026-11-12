@@ -1,6 +1,6 @@
+import { tokenSecrets } from "@/lib/auth/keys";
 import { verifyCalendarToken } from "@/lib/auth/calendar-token";
 import { buildIcs, googleCalendarUrl } from "@/lib/calendar";
-import { getServerEnv } from "@/lib/env";
 import { getCalendarReminder } from "@/lib/group-reminder-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 
@@ -24,10 +24,7 @@ const plain = (text: string, status: number) =>
 export async function GET(request: Request, { params }: Params): Promise<Response> {
   const { id } = await params;
   const url = new URL(request.url);
-  const named = await verifyCalendarToken(
-    url.searchParams.get("t") ?? "",
-    getServerEnv().SESSION_JWT_SECRET,
-  );
+  const named = await verifyCalendarToken(url.searchParams.get("t") ?? "", tokenSecrets());
   if (named !== id) return plain("ไม่พบเตือนนี้", 404);
 
   const reminder = await getCalendarReminder(getAdminClient(), id);

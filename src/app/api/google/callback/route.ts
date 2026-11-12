@@ -1,3 +1,4 @@
+import { tokenSecrets } from "@/lib/auth/keys";
 import { verifyGoogleLinkToken } from "@/lib/auth/google-token";
 import { getServerEnv } from "@/lib/env";
 import { googleConfig } from "@/lib/google/config";
@@ -24,10 +25,7 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const cfg = googleConfig();
   const claims = cfg
-    ? await verifyGoogleLinkToken(
-        url.searchParams.get("state") ?? "",
-        getServerEnv().SESSION_JWT_SECRET,
-      )
+    ? await verifyGoogleLinkToken(url.searchParams.get("state") ?? "", tokenSecrets())
     : null;
   const db = getAdminClient();
   // one sign-in per link: a link that was used (or copied from a history) goes nowhere

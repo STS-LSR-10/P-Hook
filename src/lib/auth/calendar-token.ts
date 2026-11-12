@@ -1,4 +1,5 @@
-import { jwtVerify, SignJWT } from "jose";
+import { SignJWT } from "jose";
+import { verifyWithAny, type Secrets } from "./keys";
 
 const ISSUER = "phook";
 const AUDIENCE = "phook-calendar";
@@ -29,9 +30,9 @@ export async function signCalendarToken(
 }
 
 /** The reminder a calendar link names, or null when the link was not made by พี่ฮูก. */
-export async function verifyCalendarToken(token: string, secret: string): Promise<string | null> {
+export async function verifyCalendarToken(token: string, secret: Secrets): Promise<string | null> {
   try {
-    const { payload } = await jwtVerify(token, keyOf(secret), {
+    const payload = await verifyWithAny(token, secret, {
       issuer: ISSUER,
       audience: AUDIENCE,
       algorithms: ["HS256"],

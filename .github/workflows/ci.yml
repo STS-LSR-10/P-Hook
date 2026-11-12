@@ -16,6 +16,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # known holes in the libraries the app runs with fail the build (ignored ones are listed under
+      # pnpm.auditConfig in package.json; the reason for each is in docs/DEPLOY.md)
+      - run: pnpm audit --prod --audit-level moderate
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

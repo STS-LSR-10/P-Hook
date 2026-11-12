@@ -765,6 +765,8 @@ export const EN: Record<string, string> = {
   "ต่ออายุอัตโนมัติ ยกเลิกได้ทุกเมื่อ ใช้ได้จนครบรอบที่จ่ายแล้ว":
     "Renews automatically, cancel any time, and it stays active until the paid period ends",
   ไปชำระเงิน: "Go to payment",
+  'เลขบัตรประชาชนจะอยู่ใน QR ที่เพื่อนได้รับแบบเต็ม (แอปสแกน QR ทั่วไปก็อ่านได้) แนะนำใช้เบอร์โทรที่ผูกพร้อมเพย์แทน พิมพ์ เช่น "พร้อมเพย์ 0812345678"':
+    'Your full national ID number is inside the QR your friends get (any QR scanner can read it). A phone number linked to PromptPay is safer: type, for example, "พร้อมเพย์ 0812345678"',
   "เพิ่มหมวดแล้ว แต่ตั้งงบไม่สำเร็จ ลองตั้งที่หมวดอีกครั้งนะ":
     "Category added, but the budget could not be set. Try setting it on the category",
   เพิ่มหมวดและตั้งงบแล้ว: "Category added and budget set",

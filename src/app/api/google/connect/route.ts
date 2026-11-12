@@ -1,5 +1,5 @@
+import { tokenSecrets } from "@/lib/auth/keys";
 import { verifyGoogleLinkToken } from "@/lib/auth/google-token";
-import { getServerEnv } from "@/lib/env";
 import { googleConfig } from "@/lib/google/config";
 import { getUserBasics } from "@/lib/google/link-repo";
 import { googleAuthUrl } from "@/lib/google/oauth";
@@ -19,9 +19,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   const cfg = googleConfig();
   const tokenText = new URL(request.url).searchParams.get("t") ?? "";
-  const claims = cfg
-    ? await verifyGoogleLinkToken(tokenText, getServerEnv().SESSION_JWT_SECRET)
-    : null;
+  const claims = cfg ? await verifyGoogleLinkToken(tokenText, tokenSecrets()) : null;
   const user = claims ? await getUserBasics(getAdminClient(), claims.userId) : null;
   return runInZone(
     user?.timezone,

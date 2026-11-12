@@ -1,4 +1,5 @@
-import { jwtVerify, SignJWT } from "jose";
+import { SignJWT } from "jose";
+import { verifyWithAny, type Secrets } from "./keys";
 
 const ISSUER = "phook";
 const AUDIENCE = "phook-google";
@@ -38,10 +39,10 @@ export async function signGoogleLinkToken(
 
 export async function verifyGoogleLinkToken(
   token: string,
-  secret: string,
+  secret: Secrets,
 ): Promise<GoogleLinkClaims | null> {
   try {
-    const { payload } = await jwtVerify(token, keyOf(secret), {
+    const payload = await verifyWithAny(token, secret, {
       issuer: ISSUER,
       audience: AUDIENCE,
       algorithms: ["HS256"],

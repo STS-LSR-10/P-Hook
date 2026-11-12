@@ -67,5 +67,19 @@
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
     "wrangler": "4.156.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "follow-redirects@<1.16.2": "^1.16.2",
+      "glob@>=9.0.0 <14.0.2": "^14.0.2",
+      "minimatch@>=7.0.0 <11.0.1": "^11.0.1",
+      "postcss@<8.5.23": "^8.5.23",
+      "uuid@<11.1.1": "^11.1.1"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-mrhx-c7xc-m3w5"
+      ]
+    }
   }
 }

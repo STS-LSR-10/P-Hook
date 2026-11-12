@@ -1,4 +1,5 @@
-import { jwtVerify, SignJWT } from "jose";
+import { SignJWT } from "jose";
+import { verifyWithAny, type Secrets } from "./keys";
 import { EXPORT_LINK_TTL_SECONDS } from "@/lib/config";
 import { COLUMN_GROUPS, type ColumnGroup } from "@/lib/export/columns";
 import { txFilterSchema, type TxFilters } from "@/lib/tx-query";
@@ -56,11 +57,11 @@ export async function signExportToken(
 
 export async function verifyExportToken(
   token: string,
-  secret: string,
+  secret: Secrets,
   now: Date = new Date(),
 ): Promise<ExportClaims | null> {
   try {
-    const { payload } = await jwtVerify(token, keyOf(secret), {
+    const payload = await verifyWithAny(token, secret, {
       issuer: ISSUER,
       audience: AUDIENCE,
       algorithms: ["HS256"],

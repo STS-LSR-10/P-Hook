@@ -2,7 +2,7 @@ import { z } from "zod";
 import { isDeleteConfirmed } from "@/lib/account-confirm";
 import { deleteAccountData } from "@/lib/account";
 import { apiError, guard, json, readJson } from "@/lib/api";
-import { requireUser } from "@/lib/auth/require-user";
+import { forgetUser, requireUser } from "@/lib/auth/require-user";
 import { getFileStore } from "@/lib/file-store";
 import { log } from "@/lib/log";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
@@ -33,6 +33,7 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const { filesRemoved } = await deleteAccountData(db, auth.userId, await getFileStore());
+    forgetUser(auth.userId);
     log.info("account_deleted", { files: filesRemoved }); // counts only: no ids, no content
     return json({ ok: true });
   });
