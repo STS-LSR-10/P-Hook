@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { categorizeByRules } from "@/lib/categorize/rules";
 import { recurringLimit } from "@/lib/plan";
@@ -95,7 +95,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = createSchema.safeParse(await request.json().catch(() => null));
+    const parsed = createSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("กรอกข้อมูลรายการประจำให้ครบและถูกต้องนะ", 400);
     const body = parsed.data;
 

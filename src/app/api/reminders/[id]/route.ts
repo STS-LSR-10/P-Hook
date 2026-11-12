@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { roundAfter } from "@/lib/reminder-calendar";
@@ -55,7 +55,7 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const input: unknown = await request.json().catch(() => null);
+    const input: unknown = await readJson(request);
     const action = actionSchema.safeParse(input);
     const edit = action.success ? null : reminderSchema.safeParse(input);
     if (edit && !edit.success) return apiError(REMINDER_INVALID_TEXT, 400);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { parseEmoji } from "@/lib/category-emoji";
 import { MAX_GOAL_NAME } from "@/lib/goal";
@@ -53,7 +53,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = createSchema.safeParse(await request.json().catch(() => null));
+    const parsed = createSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ตั้งชื่อเป้าหมายให้ถูกต้องนะ (ไม่เกิน 40 ตัวอักษร)", 400);
     const target = String(parsed.data.target).replace(/,/g, "").trim();
     if (!AMOUNT_PATTERN.test(target) || toSatang(target) <= 0) {

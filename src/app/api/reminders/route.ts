@@ -1,6 +1,6 @@
 import { loadBonus } from "@/lib/addons-repo";
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPlanInfo } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
@@ -63,7 +63,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = reminderSchema.safeParse(await request.json().catch(() => null));
+    const parsed = reminderSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError(REMINDER_INVALID_TEXT, 400);
     const remindAt = new Date(parsed.data.remindAt);
     const problem = reminderTimeProblem(remindAt);

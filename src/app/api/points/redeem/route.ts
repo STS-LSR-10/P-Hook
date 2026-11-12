@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { PASS_PACKS } from "@/lib/config";
 import { NotEnoughPointsError, redeemForPlus } from "@/lib/points";
@@ -21,7 +21,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(getAdminClient(), "points", auth.userId, LIMITS.points);
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("แพ็กที่เลือกไม่ถูกต้อง", 400);
     const pack = PASS_PACKS.find((p) => p.id === parsed.data.pack)!;
 

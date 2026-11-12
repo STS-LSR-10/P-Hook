@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { JOIN_FAIL_TEXT } from "@/lib/shared-wallet";
 import { redeemInvite } from "@/lib/shared-wallet-repo";
@@ -22,7 +22,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "join_wallet", auth.userId, LIMITS.joinWallet);
     if (limited) return limited;
 
-    const parsed = schema.safeParse(await request.json().catch(() => null));
+    const parsed = schema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("รหัสต้องเป็นตัวเลข 6 หลักนะ", 400);
 
     const result = await redeemInvite(db, parsed.data.code, auth.userId, new Date());

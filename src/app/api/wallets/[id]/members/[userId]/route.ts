@@ -2,6 +2,7 @@ import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { removeMember } from "@/lib/shared-wallet-repo";
+import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { listWallets } from "@/lib/wallet-repo";
 
@@ -18,6 +19,8 @@ export async function DELETE(request: Request, { params }: Params): Promise<Resp
   return guard(async () => {
     const auth = await requireUser(request);
     if (auth instanceof Response) return auth;
+    const limited = await limitOr429(getAdminClient(), "write", auth.userId, LIMITS.write);
+    if (limited) return limited;
     const { id, userId } = await params;
     if (!z.string().uuid().safeParse(id).success || !z.string().uuid().safeParse(userId).success) {
       return apiError("ไม่พบสมาชิกนี้", 404);

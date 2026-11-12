@@ -188,7 +188,8 @@ pnpm e2e                                   # Playwright + axe ที่ 360px (�
 
 ## 9) ที่ยังไม่ได้ทำ (ความเสี่ยงที่ยอมรับอยู่)
 
-- **CSP (Content-Security-Policy)** ยังไม่เปิด เพราะต้องใช้ nonce ให้เข้ากับสคริปต์ของ Next และ LIFF SDK มีความเสี่ยงทำหน้าพัง — แนะนำทำเป็นงานแยกแล้วทดสอบกับ LINE จริง
+- **CSP (Content-Security-Policy)** เปิดแบบ **report-only** (`next.config.ts`): ยังไม่บล็อกอะไร เบราว์เซอร์ส่งสิ่งที่จะถูกบล็อกมาที่ `/api/csp-report` ซึ่งเขียน log `csp_violation` (เฉพาะ directive กับ host ที่ถูกบล็อก จำกัด 20 ครั้ง/นาทีต่อ IP) ดู log สักระยะกับ LINE จริง แล้วค่อยเปลี่ยน header เป็น `Content-Security-Policy` เพื่อบังคับจริง การเอา `'unsafe-inline'` ออกจาก script-src ต้องใช้ nonce ต่อคำขอ (ยังไม่ได้ทำ)
+- **ขนาด body ของ API**: ทุกเส้นทางอ่าน JSON ผ่าน `readJson` (`src/lib/api.ts`) ซึ่งปฏิเสธ body เกิน 100 KB ก่อนตรวจข้อมูล
 - ไม่มีระบบแจ้งเตือนอัตโนมัติเมื่อ error (ดู Cloudflare Logs ด้วยตนเอง) — ถ้าต้องการให้ต่อ Logpush / Sentry
 - Privacy Policy และ Terms เป็น **ฉบับร่าง** ควรให้ผู้เชี่ยวชาญกฎหมายตรวจก่อนเปิดใช้จริง
 - ไม่มีสำรองข้อมูลอัตโนมัติของโปรเจกต์ (ขึ้นกับแผน Supabase)

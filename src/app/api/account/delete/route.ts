@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isDeleteConfirmed } from "@/lib/account-confirm";
 import { deleteAccountData } from "@/lib/account";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { getFileStore } from "@/lib/file-store";
 import { log } from "@/lib/log";
@@ -27,7 +27,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "delete_account", auth.userId, LIMITS.deleteAccount);
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success || !isDeleteConfirmed(parsed.data.confirm)) {
       return apiError("พิมพ์ข้อความยืนยันให้ถูกต้องก่อนนะ", 400);
     }

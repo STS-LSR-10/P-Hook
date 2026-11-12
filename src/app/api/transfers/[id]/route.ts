@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
+import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { deleteTransfer } from "@/lib/transfer-repo";
 
@@ -14,6 +15,8 @@ export async function DELETE(request: Request, { params }: Params): Promise<Resp
   return guard(async () => {
     const auth = await requireUser(request);
     if (auth instanceof Response) return auth;
+    const limited = await limitOr429(getAdminClient(), "write", auth.userId, LIMITS.write);
+    if (limited) return limited;
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) return apiError("ไม่พบการโอนนี้", 404);
     const removed = await deleteTransfer(getAdminClient(), auth.userId, id);

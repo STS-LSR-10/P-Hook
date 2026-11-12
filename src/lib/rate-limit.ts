@@ -46,6 +46,8 @@ export const LIMITS = {
   authPerIp: { limit: 30, windowSeconds: 60 },
   /** Writes from the web app per user. */
   write: { limit: 60, windowSeconds: 60 },
+  /** Reports of what the Content-Security-Policy would block, per address (no sign-in). */
+  cspReport: { limit: 20, windowSeconds: 60 },
   /** Download links of kept files per user. */
   fileLink: { limit: 20, windowSeconds: 60 },
   /** Export file links per user. */

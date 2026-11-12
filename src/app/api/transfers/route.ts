@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { requireFeature } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
@@ -43,7 +43,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = createSchema.safeParse(await request.json().catch(() => null));
+    const parsed = createSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ข้อมูลการโอนไม่ถูกต้อง", 400);
     const { fromId, toId, note, occurredAt } = parsed.data;
     const amount = String(parsed.data.amount).replace(/,/g, "").trim();

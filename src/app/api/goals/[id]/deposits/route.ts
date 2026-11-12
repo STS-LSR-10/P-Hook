@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { MAX_GOAL_NOTE } from "@/lib/goal";
 import { addDeposit, listDeposits, listGoals } from "@/lib/goal-repo";
@@ -45,7 +45,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = depositSchema.safeParse(await request.json().catch(() => null));
+    const parsed = depositSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ข้อมูลไม่ถูกต้อง", 400);
     const amount = String(parsed.data.amount).replace(/,/g, "").trim();
     if (!/^\d{1,10}(\.\d{1,2})?$/.test(amount) || toSatang(amount) <= 0) {

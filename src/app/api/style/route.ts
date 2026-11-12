@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { clearStyle, setStyleEnabled, styleSummary } from "@/lib/style-repo";
@@ -24,7 +24,7 @@ export async function PUT(request: Request): Promise<Response> {
   return guard(async () => {
     const auth = await requireUser(request);
     if (auth instanceof Response) return auth;
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ค่าที่ส่งมาไม่ถูกต้อง", 400);
     const db = getAdminClient();
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);

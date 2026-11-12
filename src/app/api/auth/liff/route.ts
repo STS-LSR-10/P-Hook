@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { verifyLineIdToken } from "@/lib/auth/liff-verify";
 import { SESSION_TTL_SECONDS, signSession } from "@/lib/auth/session";
 import { getServerEnv } from "@/lib/env";
@@ -23,7 +23,7 @@ export async function POST(request: Request): Promise<Response> {
     );
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ข้อมูลไม่ถูกต้อง", 400);
 
     const env = getServerEnv();

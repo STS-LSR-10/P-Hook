@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { signExportToken } from "@/lib/auth/export-token";
 import { requireUser } from "@/lib/auth/require-user";
 import { EXPORT_LINK_TTL_SECONDS } from "@/lib/config";
@@ -44,7 +44,7 @@ export async function POST(request: Request): Promise<Response> {
     );
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ตัวเลือกส่งออกไม่ถูกต้อง", 400);
     const { format, groups, attachments, ...filters } = parsed.data;
     // the PDF summary is an Elite feature (the Excel and CSV files are for every paid plan)

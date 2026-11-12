@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireGroupViewer } from "@/lib/group-api";
 import { cleanNoteBody, MAX_NOTE_LENGTH } from "@/lib/note";
 import { deleteGroupNote, getGroupNote, updateGroupNote, type GroupNote } from "@/lib/note-repo";
@@ -47,7 +47,7 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
   return guard(async () => {
     const found = await noteToChange(request, params);
     if (found instanceof Response) return found;
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     const body = parsed.success ? cleanNoteBody(parsed.data.body) : "";
     if (!body || body.length > MAX_NOTE_LENGTH) {
       return apiError(t("เขียนโน้ตให้ไม่ว่างและไม่เกิน {0} ตัวอักษรนะ", MAX_NOTE_LENGTH), 400);

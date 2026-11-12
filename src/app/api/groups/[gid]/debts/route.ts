@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireGroupOwner } from "@/lib/group-api";
 import { clearDebts } from "@/lib/group-manage";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     const found = await requireGroupOwner(request, gid, { writable: true });
     if (found instanceof Response) return found;
     const { auth, db, viewer } = found;
-    const body = Body.safeParse(await request.json().catch(() => null));
+    const body = Body.safeParse(await readJson(request));
     if (!body.success) return apiError("ข้อมูลไม่ถูกต้อง ลองใหม่อีกครั้งนะ", 400);
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;

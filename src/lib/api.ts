@@ -24,3 +24,41 @@ export async function guard(fn: () => Promise<Response>): Promise<Response> {
     return apiError(SERVER_ERROR_TEXT, 500);
   }
 }
+
+/** The largest JSON body an API route reads (the biggest real one is a few kilobytes). */
+export const MAX_JSON_BYTES = 100_000;
+
+/**
+ * Read a JSON body, but never more than `maxBytes` of it: an oversized body is refused before it is
+ * parsed or checked, so it cannot be used to exhaust memory. null for too large, unreadable or not JSON.
+ */
+export async function readJson(request: Request, maxBytes = MAX_JSON_BYTES): Promise<unknown> {
+  const declared = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+  try {
+    // the header can be missing or wrong, so the bytes are counted as they arrive
+    const reader = request.body?.getReader();
+    if (!reader) return null;
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel().catch(() => undefined);
+        return null;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let at = 0;
+    for (const c of chunks) {
+      bytes.set(c, at);
+      at += c.byteLength;
+    }
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+  } catch {
+    return null;
+  }
+}

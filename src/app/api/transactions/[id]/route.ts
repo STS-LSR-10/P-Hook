@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { log } from "@/lib/log";
 import { can } from "@/lib/plan";
@@ -68,7 +68,7 @@ export async function PATCH(
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) return apiError("ไม่พบรายการนี้", 404);
 
-    const parsed = patchSchema.safeParse(await request.json().catch(() => null));
+    const parsed = patchSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("กรอกข้อมูลไม่ครบหรือไม่ถูกต้อง", 400);
 
     const db = getAdminClient();

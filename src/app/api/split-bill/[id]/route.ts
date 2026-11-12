@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { getServerEnv } from "@/lib/env";
 import { memberNames, upsertMember } from "@/lib/group-repo";
@@ -122,7 +122,7 @@ export async function POST(
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = confirmSchema.safeParse(await request.json().catch(() => null));
+    const parsed = confirmSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("เลือกคนหารไม่ถูกต้อง", 400);
     if (bill.status !== "setup" && bill.status !== "joining") {
       return apiError("บิลนี้เลือกคนหารไปแล้ว", 409);

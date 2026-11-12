@@ -5,6 +5,11 @@ const saved: { categoryId: string | null; amountSatang: number | null }[] = [];
 const modes: Record<string, unknown>[] = [];
 const FOOD = "11111111-1111-4111-8111-111111111111";
 
+let limited = false;
+vi.mock("@/lib/rate-limit", async (original) => ({
+  ...(await original<typeof import("@/lib/rate-limit")>()),
+  limitOr429: async () => (limited ? new Response("{}", { status: 429 }) : null),
+}));
 vi.mock("@/lib/auth/require-user", () => ({
   requireUser: async () => ({ userId: "u1", lineUserId: "U1" }),
 }));
@@ -45,6 +50,7 @@ const put = (body: unknown) =>
   );
 
 beforeEach(() => {
+  limited = false;
   plan = "free";
   saved.length = 0;
   modes.length = 0;
@@ -105,5 +111,19 @@ describe("PUT /api/budgets: the daily limit", () => {
     expect((await put({ daily: "0" })).status).toBe(200);
     expect(modes[0]).toMatchObject({ daily_budget: null });
     expect((await put({ daily: "abc" })).status).toBe(400);
+  });
+});
+
+describe("PUT /api/budgets: limits", () => {
+  it("is refused when sent too often, before anything is saved", async () => {
+    limited = true;
+    expect((await put({ mode: "overall", overall: "10000" })).status).toBe(429);
+    expect(saved).toEqual([]);
+  });
+
+  it("refuses a body far larger than any real one", async () => {
+    const res = await put({ mode: "overall", overall: "10000", junk: "x".repeat(200_000) });
+    expect(res.status).toBe(400);
+    expect(saved).toEqual([]);
   });
 });

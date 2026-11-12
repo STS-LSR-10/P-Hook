@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { signCalendarToken } from "@/lib/auth/calendar-token";
 import { signGoogleLinkToken } from "@/lib/auth/google-token";
 import { requireUser } from "@/lib/auth/require-user";
@@ -65,7 +65,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     const { auth, db, reminder } = found;
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ส่งข้อมูลไม่ถูกต้อง", 400);
 
     const secret = getServerEnv().SESSION_JWT_SECRET;

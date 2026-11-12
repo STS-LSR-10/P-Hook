@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { MAX_DEBT_NOTE, MAX_OPEN_DEBTS_PER_PERSON, MAX_PERSON, cleanPerson } from "@/lib/debt";
 import { createDebt, listDebts, openDebtsOf } from "@/lib/debt-repo";
@@ -48,7 +48,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = createSchema.safeParse(await request.json().catch(() => null));
+    const parsed = createSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ข้อมูลหนี้ไม่ถูกต้อง", 400);
     const amount = String(parsed.data.amount).replace(/,/g, "").trim();
     if (!AMOUNT_PATTERN.test(amount) || toSatang(amount) <= 0) {

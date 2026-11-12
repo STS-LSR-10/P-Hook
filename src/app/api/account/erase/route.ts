@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { RESET_CONFIRM_PHRASE, monthDeletePhrase, phraseMatches } from "@/lib/account-confirm";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import {
   eraseData,
@@ -66,7 +66,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "erase_data", auth.userId, LIMITS.eraseData);
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ข้อมูลไม่ถูกต้อง", 400);
     const scope = toScope(parsed.data);
     if (!scope) return apiError("เดือนไม่ถูกต้อง", 400);

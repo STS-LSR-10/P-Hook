@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { REFERRAL_FAIL_TEXT, REFERRAL_OK_TEXT } from "@/lib/line/messages";
 import { applyReferralCode } from "@/lib/points";
@@ -20,7 +20,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(getAdminClient(), "points", auth.userId, LIMITS.points);
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("กรอกรหัสชวนเพื่อนให้ถูกต้องนะ", 400);
 
     const outcome = await applyReferralCode(getAdminClient(), auth.userId, parsed.data.code);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { addonBySku } from "@/lib/addons";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPaymentProvider } from "@/lib/payments";
@@ -26,7 +26,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => ({})));
+    const parsed = bodySchema.safeParse((await readJson(request)) ?? {});
     const addon = parsed.success ? addonBySku(parsed.data.sku) : undefined;
     if (!parsed.success || !addon) return apiError("ข้อมูลไม่ถูกต้อง", 400);
 

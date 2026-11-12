@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { loadCategories } from "@/lib/repo";
 import { MAX_CUSTOM_CATEGORIES, parseEmoji, emojiOf } from "@/lib/category-emoji";
@@ -68,7 +68,7 @@ export async function POST(request: Request): Promise<Response> {
     const limited = await limitOr429(getAdminClient(), "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = createSchema.safeParse(await request.json().catch(() => null));
+    const parsed = createSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("กรอกชื่อหมวดให้ถูกต้องนะ (ไม่เกิน 30 ตัวอักษร)", 400);
     const body = parsed.data;
     const emoji = parseEmoji(body.emoji);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { cleanNoteBody, MAX_NOTE_LENGTH } from "@/lib/note";
 import { deleteNote, updateNote } from "@/lib/note-repo";
@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readJson(request));
     const body = parsed.success ? cleanNoteBody(parsed.data.body) : "";
     if (!body || body.length > MAX_NOTE_LENGTH) {
       return apiError(t("เขียนโน้ตให้ไม่ว่างและไม่เกิน {0} ตัวอักษรนะ", MAX_NOTE_LENGTH), 400);

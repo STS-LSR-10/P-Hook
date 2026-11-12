@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { MAX_FEEDBACK_LENGTH, cleanFeedback } from "@/lib/feedback";
 import { addFeedback } from "@/lib/feedback-repo";
@@ -15,7 +15,7 @@ export async function POST(request: Request): Promise<Response> {
   return guard(async () => {
     const auth = await requireUser(request);
     if (auth instanceof Response) return auth;
-    const parsed = z.object({ body: z.string() }).safeParse(await request.json().catch(() => null));
+    const parsed = z.object({ body: z.string() }).safeParse(await readJson(request));
     const body = parsed.success ? cleanFeedback(parsed.data.body) : "";
     if (!body || body.length > MAX_FEEDBACK_LENGTH) {
       return apiError("เขียนข้อเสนอแนะให้ไม่ว่างและไม่เกิน 1,000 ตัวอักษรนะ", 400);

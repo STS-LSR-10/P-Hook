@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { recordBillExpense, settleBill } from "@/lib/bill-actions";
 import { listBills } from "@/lib/bill-repo";
@@ -35,7 +35,7 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => ({})));
+    const parsed = bodySchema.safeParse((await readJson(request)) ?? {});
     if (!parsed.success) return apiError("ข้อมูลไม่ถูกต้อง", 400);
 
     const bill = (await listBills(db, auth.userId)).find((b) => b.id === id);

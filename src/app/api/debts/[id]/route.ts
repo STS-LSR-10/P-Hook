@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiError, guard, json } from "@/lib/api";
+import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { MAX_DEBT_NOTE, MAX_PERSON } from "@/lib/debt";
 import { deleteDebt, listDebts, updateDebt } from "@/lib/debt-repo";
@@ -39,7 +39,7 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
     const limited = await limitOr429(db, "write", auth.userId, LIMITS.write);
     if (limited) return limited;
 
-    const parsed = patchSchema.safeParse(await request.json().catch(() => null));
+    const parsed = patchSchema.safeParse(await readJson(request));
     if (!parsed.success) return apiError("ข้อมูลไม่ถูกต้อง", 400);
 
     const debt = (await listDebts(db, auth.userId)).find((d) => d.id === id);
