@@ -48,13 +48,7 @@ import type { SlipImage, SlipOcrProvider } from "@/lib/ocr/provider";
 import { MAX_FEEDBACK_LENGTH, cleanFeedback } from "@/lib/feedback";
 import { addFeedback } from "@/lib/feedback-repo";
 import { can, effectivePlan } from "@/lib/plan";
-import {
-  applyTheme,
-  DEFAULT_THEME,
-  effectivePrefs,
-  savedQuip,
-  type PersonaId,
-} from "@/lib/personalize";
+import { applyTheme, DEFAULT_THEME, effectivePrefs, type PersonaId } from "@/lib/personalize";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import { applyReferralCode, awardActivity, currentStreak, recentDailyKeys } from "@/lib/points";
 import { cancelSlipEntries, getSlip, getSlipItems, learnMerchant } from "@/lib/slip-repo";
@@ -1724,11 +1718,9 @@ async function saveEntries(
   // Two or more entries from one message come back as one card: a row for each, the total, the budget.
   const batch = settings.confirm_style === "full" && confirmed.length >= 2;
   const embed = !batch && settings.confirm_style === "full" && confirmed.length === 1;
-  let cardWarned = false;
   if (batch) {
     const card = await batchCard(confirmed, categories, settings, user, deps);
     messages.push(card.message);
-    cardWarned = card.warned;
   } else if (embed) {
     const mode = await getBudgetMode(db, user.id).catch(() => "overall" as const);
     // the budget an entry counts against: the overall one, or its category's
@@ -1755,7 +1747,6 @@ async function saveEntries(
     ].map((t) => ({ text: t, level: "warn" as const }));
     for (const [i, c] of confirmed.entries()) {
       const key = scopeOf(c);
-      const out = { noticed: false };
       messages.push(
         await confirmCard(
           c.tx,
@@ -1773,11 +1764,9 @@ async function saveEntries(
             // one budget warning per budget, on the last card that counts against it
             budgetNotice: key === null ? undefined : lastOf.get(key) === i,
             notices: i === confirmed.length - 1 ? others : undefined,
-            out,
           },
         ),
       );
-      cardWarned ||= out.noticed;
     }
   } else if ((showCard || settings.confirm_style !== "off") && confirmed.length > 0) {
     if (confirmed.length <= MAX_CARDS_PER_REPLY) {
@@ -1830,18 +1819,6 @@ async function saveEntries(
     );
   }
   for (const a of alerts) messages.push(text(a));
-  // A friendly / cheering manner adds one line after a plain save (never on top of a budget warning).
-  const first = confirmed[0];
-  if (first && alerts.length === 0 && !cardWarned && messages.length < MAX_REPLY_MESSAGES) {
-    const prefs = await prefsOf(deps, user);
-    const quip = savedQuip(
-      prefs.persona,
-      confirmed.some((c) => c.entry.type === "expense") ? "expense" : "income",
-      undefined,
-      prefs.name,
-    );
-    if (quip) messages.push(text(quip));
-  }
   if (confirmed.length > 0) messages.push(...(await awardAndNotify(deps, user.id)));
   return messages;
 }

@@ -13,7 +13,6 @@ import {
   dailyOverLines,
   dailyStillOverLine,
   effectivePrefs,
-  savedQuip,
   withName,
 } from "./personalize";
 
@@ -84,17 +83,8 @@ describe("applyTheme", () => {
 
 describe("persona lines", () => {
   it("plain adds nothing and keeps the original budget text", () => {
-    expect(savedQuip("plain", "expense")).toBeNull();
     expect(budgetAlertLine("plain", { level: 80, scope: "รวม", figures: "x" })).toBeNull();
     expect(dailyOverLines("plain")).toBeUndefined();
-  });
-
-  it("every manner comments on saves, expense and income", () => {
-    for (const persona of PERSONA_IDS) {
-      for (const type of ["expense", "income"] as const) {
-        for (const pick of [0, 0.5, 0.99]) expect(savedQuip(persona, type, pick)).toBeTruthy();
-      }
-    }
   });
 
   it("every manner words both budget levels with the figures", () => {
@@ -161,8 +151,6 @@ describe("the name the bot calls someone", () => {
       for (const pick of [0, 0.3, 0.6, 0.99]) {
         for (const name of [null, "บาส"]) {
           const lines = [
-            savedQuip(persona, "expense", pick, name),
-            savedQuip(persona, "income", pick, name),
             budgetAlertLine(persona, { level: 80, scope: "รวม", figures: "x" }, pick, name),
             budgetAlertLine(persona, { level: 100, scope: "รวม", figures: "x" }, pick, name),
             dailyStillOverLine(persona, "5", name),
@@ -175,7 +163,9 @@ describe("the name the bot calls someone", () => {
   });
 
   it("is used in a line when one is given", () => {
-    expect(savedQuip("bestie", "expense", 0, "บาส")).toContain("บาส");
+    expect(
+      budgetAlertLine("bestie", { level: 80, scope: "รวม", figures: "x" }, 0, "บาส"),
+    ).toContain("บาส");
     expect(dailyStillOverLine("tea", "5", "บาส")).toContain("บาส");
   });
 
