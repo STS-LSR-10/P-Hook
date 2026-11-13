@@ -33,7 +33,7 @@ describe("GET /api/group-open", () => {
   it("a friend on Elite can open the ledger", async () => {
     const body = await (await get()).json();
     expect(body).toMatchObject({ friend: true, plan: "ultimate", canOpen: true });
-    expect(body.addFriendUrl).toBe("https://line.me/R/ti/p/%40964jamyy");
+    expect(body.addFriendUrl).toBe("https://line.me/R/ti/p/%40p-hook");
   });
 
   it("someone who is not a friend of the bot is told so (LINE gives no profile for them)", async () => {

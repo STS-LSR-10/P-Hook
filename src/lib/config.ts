@@ -52,7 +52,7 @@ export const EXPORT_LINK_TTL_SECONDS = 120;
 export const REMINDER_GRACE_HOURS = 3;
 
 /** The bot's LINE Official Account basic ID (not a secret); people who are not its friends are sent to add it. */
-export const LINE_OA_BASIC_ID = process.env.NEXT_PUBLIC_LINE_OA_BASIC_ID ?? "@964jamyy";
+export const LINE_OA_BASIC_ID = process.env.NEXT_PUBLIC_LINE_OA_BASIC_ID ?? "@p-hook";
 
 /** The "add friend" link of the bot. */
 export const addFriendUrl = (basicId: string = LINE_OA_BASIC_ID): string =>

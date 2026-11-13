@@ -5,7 +5,7 @@ const CHECK = {
   friend: true,
   plan: "ultimate",
   canOpen: true,
-  addFriendUrl: "https://line.me/R/ti/p/%40964jamyy",
+  addFriendUrl: "https://line.me/R/ti/p/%40p-hook",
 };
 
 test.describe("open the group ledger page (360px)", () => {
@@ -31,7 +31,7 @@ test.describe("open the group ledger page (360px)", () => {
       page.getByRole("heading", { name: /ยังไม่ได้เพิ่มพี่ฮูกเป็นเพื่อน/ }),
     ).toBeVisible();
     const add = page.getByRole("link", { name: "เพิ่มเพื่อน" });
-    await expect(add).toHaveAttribute("href", "https://line.me/R/ti/p/%40964jamyy");
+    await expect(add).toHaveAttribute("href", "https://line.me/R/ti/p/%40p-hook");
     await expect(page.getByRole("button", { name: /เปิดสมุดกลุ่ม/ })).toHaveCount(0);
     await expectNoSeriousA11yViolations(page);
   });

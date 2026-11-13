@@ -31,7 +31,7 @@ Cloudflare Cron (ทุกนาที) ─► /api/cron/user-reminders (เต�
 | `AI_PROVIDER` (+ `AI_MODEL`) และ key ของค่าย                            | Cloudflare | key = ใช่          | `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`                      |
 | `EASYSLIP_API_KEY`, `SLIP_READERS`                                      | Cloudflare | key = ใช่          | ไม่บังคับ                                                                      |
 | `NEXT_PUBLIC_CONTACT_EMAIL`                                             | Cloudflare | ไม่                | แสดงในหน้า Privacy/Terms                                                       |
-| `NEXT_PUBLIC_LINE_OA_BASIC_ID`                                          | Cloudflare | ไม่                | Basic ID ของ OA (ขึ้นต้นด้วย @) ใช้ทำลิงก์เพิ่มเพื่อน; ไม่ตั้ง = `@964jamyy`   |
+| `NEXT_PUBLIC_LINE_OA_BASIC_ID`                                          | Cloudflare | ไม่                | Basic ID ของ OA (ขึ้นต้นด้วย @) ใช้ทำลิงก์เพิ่มเพื่อน; ไม่ตั้ง = `@p-hook`   |
 
 ตัวแปรใหม่หรือแก้ค่า **ต้อง Deploy ใหม่** ถึงมีผล · อย่าตั้ง `NEXT_PUBLIC_E2E` ใน production (ใช้เฉพาะชุด e2e)
 
