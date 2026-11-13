@@ -128,7 +128,7 @@ describe("setting a reminder from the chat", () => {
     expect(created[0]).toMatchObject({ body: "กินยา", repeat: "daily" });
     const b = setup();
     await handleEvent(say("เตือน พรุ่งนี้ จ่ายค่าเน็ต"), b.deps);
-    expect(said(b.reply)).toContain("ใช้ 09:00");
+    expect(said(b.reply)).toContain("ตั้งเป็น 09:00");
   });
 
   it("tells what is wrong instead of saving: no text, a time gone by, no time at all", async () => {

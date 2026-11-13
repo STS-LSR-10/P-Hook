@@ -2429,8 +2429,8 @@ export const EN: Record<string, string> = {
   "ตั้งเตือนแล้ว ⏰": "Reminder set ⏰",
   "เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)":
     "That time today has passed, so it's set for tomorrow (if not, cancel and set it again)",
-  "ไม่ได้ระบุเวลา เลยใช้ 09:00 (อยากเปลี่ยน ยกเลิกแล้วตั้งใหม่พร้อมเวลา)":
-    "No time given, so 09:00 was used (to change it, cancel and set it again with a time)",
+  "ไม่ได้บอกเวลา พี่ฮูกเลยตั้งเป็น 09:00 ถ้าไม่ใช่ กด “เปลี่ยนเวลา” ได้เลย":
+    "No time given, so P'Hook set 09:00. If that's wrong, tap “Change time”",
   "เพิ่มลงปฏิทินในมือถือ ให้มือถือเตือนเองตรงเวลา":
     "Add it to your phone's calendar so the phone reminds you on time",
   ยกเลิกเตือนนี้: "Cancel this reminder",

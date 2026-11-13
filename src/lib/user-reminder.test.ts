@@ -328,3 +328,36 @@ describe("the three chats that went wrong", () => {
     expect(r.body).toBe(body);
   });
 });
+
+describe("a weekday with a day number and no time", () => {
+  it("วันอาทิตย์ 27 is the next 27th that is a Sunday, at 09:00, said so", () => {
+    const r = ok("วันอาทิตย์ 27 ไปกินข้าวกับเพื่อน");
+    expect(bkk(r.remindAt)).toBe("2026-12-27 09:00");
+    expect(r.body).toBe("ไปกินข้าวกับเพื่อน");
+    expect(r.timeDefaulted).toBe(true);
+  });
+  it.each([
+    ["วันอาทิตย์ที่ 27 ไปกินข้าวกับเพื่อน", "2026-12-27 09:00"],
+    ["วันพุธที่ 11 ประชุม", "2026-11-11 09:00"],
+    ["วันศุกร์ที่ 27 งานเลี้ยงบริษัท", "2026-11-27 09:00"],
+    ["วันอาทิตย์ 27 บ่าย 2 ครึ่ง ไปกินข้าว", "2026-12-27 14:30"],
+  ])("%s", (input, at) => expect(bkk(ok(input).remindAt)).toBe(at));
+  it("a weekday and a time (no day number) stays the coming weekday", () => {
+    expect(bkk(ok("วันอาทิตย์ 9 โมง ไปวัด").remindAt)).toBe("2026-11-01 09:00");
+  });
+});
+
+describe("a number after a weekday that is not a day", () => {
+  it.each([
+    ["กินยาวันพุธ 2 เม็ด", "2026-11-04 09:00", "กินยา 2 เม็ด"],
+    ["กินยาวันพุธ 5 ครั้ง", "2026-11-04 09:00", "กินยา 5 ครั้ง"],
+    ["วิ่งวันอาทิตย์ 5 กม.", "2026-11-01 09:00", "วิ่ง 5 กม"],
+  ])("%s keeps the count in the words", (input, at, body) => {
+    const r = ok(input);
+    expect(bkk(r.remindAt)).toBe(at);
+    expect(r.body).toBe(body);
+  });
+  it("a weekday that matches no 27th soon keeps the next 27th", () => {
+    expect(bkk(ok("วันเสาร์ 27 งาน").remindAt)).toBe("2026-11-27 09:00");
+  });
+});

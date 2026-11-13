@@ -153,6 +153,15 @@ const MONTHS: [string, number][] = [
 const MONTH_RE = MONTHS.map(([n]) => n.replace(/\./g, "\\.")).join("|");
 const monthOf = (name: string) => MONTHS.find(([n]) => n === name)?.[1] ?? 0;
 
+/** Words that make the number before them a count, not a day ("2 เม็ด", "5 กม."). */
+const COUNT_WORDS =
+  "หลอด|แผง|จาน|คน|ชิ้น|อัน|กล่อง|แพ็ก|แพ็ค|ถุง|ขวด|ตัว|แก้ว|ชุด|ห่อ|เม็ด|ฟอง|เล่ม|คู่|โหล|ถ้วย|ชาม|ซอง|กระป๋อง|กก|กิโล|ลิตร|กรัม|นาที|ชั่วโมง|ชม|กม|ก้าว|ใบ|ครั้ง|รอบ|คืน|คัน|ลูก|เส้น|บาท|(?:วัน|เดือน|ปี)(?![ก-๙])";
+/**
+ * "วันอาทิตย์ 27", "วันศุกร์ที่ 27": a weekday, then a day of the month. Groups: 1 the weekday,
+ * 2 "ที่", 3 the day. Not a count, a time or a full date ("วันพุธ 2 เม็ด", "วันศุกร์ 10.30", "27/12").
+ */
+export const WEEKDAY_DAY_SOURCE = `วัน(${WEEKDAY_RE})\\s*(ที่)?\\s*([12]?\\d|3[01])(?![\\d:./])(?!\\s*(?:${COUNT_WORDS}|${MONTH_RE}))`;
+
 /** Remove the first match of `re` from `s`; returns the groups and the rest. */
 function take(s: string, re: RegExp): { m: RegExpExecArray | null; rest: string } {
   const m = re.exec(s);
@@ -239,7 +248,8 @@ type DateSpec =
   | { kind: "offset"; days: number }
   | { kind: "weekday"; day: number }
   | { kind: "ymd"; year: number | null; month: number; day: number }
-  | { kind: "dom"; day: number };
+  /** A day of the month; `weekday` when it was said with one ("วันอาทิตย์ 27"). */
+  | { kind: "dom"; day: number; weekday?: number };
 
 function takeDate(s: string): { date: DateSpec | null; rest: string } {
   let r = take(s, /วันนี้/);
@@ -248,9 +258,14 @@ function takeDate(s: string): { date: DateSpec | null; rest: string } {
   if (r.m) return { date: { kind: "offset", days: 1 }, rest: r.rest };
   r = take(s, /มะรืน(?:นี้)?/);
   if (r.m) return { date: { kind: "offset", days: 2 }, rest: r.rest };
-  // "วันศุกร์ที่ 27": the day of the month decides (the weekday is how people say it)
-  r = take(s, new RegExp(`วัน(?:${WEEKDAY_RE})\\s*ที่\\s*(\\d{1,2})`));
-  if (r.m) return { date: { kind: "dom", day: Number(r.m[1]) }, rest: r.rest };
+  // "วันอาทิตย์ 27", "วันศุกร์ที่ 27": that day of the month, in a month where it falls on that weekday
+  r = take(s, new RegExp(WEEKDAY_DAY_SOURCE));
+  if (r.m && Number(r.m[3]) >= 1) {
+    return {
+      date: { kind: "dom", day: Number(r.m[3]), weekday: WEEKDAYS[r.m[1] ?? ""] ?? 0 },
+      rest: r.rest,
+    };
+  }
   r = take(s, new RegExp(`วัน(${WEEKDAY_RE})(?:\\s*(?:หน้า|นี้|ถัดไป))?`));
   if (r.m) return { date: { kind: "weekday", day: WEEKDAYS[r.m[1] ?? ""] ?? 0 }, rest: r.rest };
   r = take(s, /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
@@ -430,12 +445,18 @@ export function parseReminder(input: string, now: Date): ReminderParse {
       if (future(t)) remindAt = t;
     }
   } else if (date.kind === "dom") {
-    for (let i = 0; i < 14 && !remindAt; i += 1) {
-      const month = ((today.month - 1 + i) % 12) + 1;
-      const year = today.year + Math.floor((today.month - 1 + i) / 12);
-      if (!isValidYmd(year, month, date.day)) continue;
-      const t = at(year, month, date.day);
-      if (future(t)) remindAt = t;
+    // with a weekday: a month soon (this one or the next two) where the day falls on it; else the
+    // next such day of the month, so a wrong weekday never pushes it far ahead
+    for (const span of date.weekday === undefined ? [14] : [3, 14]) {
+      for (let i = 0; i < span && !remindAt; i += 1) {
+        const month = ((today.month - 1 + i) % 12) + 1;
+        const year = today.year + Math.floor((today.month - 1 + i) / 12);
+        if (!isValidYmd(year, month, date.day)) continue;
+        const wd = new Date(Date.UTC(year, month - 1, date.day)).getUTCDay();
+        if (span === 3 && wd !== date.weekday) continue;
+        const t = at(year, month, date.day);
+        if (future(t)) remindAt = t;
+      }
     }
   } else {
     if (!isValidYmd(date.year ?? today.year, date.month, date.day)) {

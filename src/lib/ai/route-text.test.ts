@@ -65,6 +65,7 @@ describe("needsRouter", () => {
     "ที่อยู่หอซอย 5",
     "เล่นเกมตอน 19.13 น.",
     "วันศุกร์ที่ 27 งานเลี้ยงบริษัท",
+    "วันอาทิตย์ 27 ไปกินข้าวกับเพื่อน",
   ])("sends %s to the router", (t) => expect(needsRouter(t, read(t))).toBe(true));
 
   it.each([
@@ -109,14 +110,24 @@ describe("an amount with satang", () => {
 });
 
 describe("a weekday in an entry", () => {
-  it.each(["ข้าววันศุกร์ 60", "ค่าข้าววันอาทิตย์ 120", "ตลาดนัดวันพุธ 300", "วันจันทร์ 50 กาแฟ"])(
-    "%s stays with the rules",
-    (t) => expect(needsRouter(t, read(t))).toBe(false),
-  );
+  it.each([
+    "ข้าววันศุกร์ 60",
+    "ค่าข้าววันอาทิตย์ 120",
+    "ตลาดนัดวันพุธ 300",
+    "วันจันทร์ 50 กาแฟ",
+    "ข้าววันศุกร์ 25",
+    "ตลาดนัดวันพุธ 20",
+  ])("%s stays with the rules", (t) => expect(needsRouter(t, read(t))).toBe(false));
 });
 
 describe("clockIsTheAmount", () => {
+  it.each(["วันจันทร์ 30 กาแฟ", "ข้าววันศุกร์ 25"])(
+    "a small price after a weekday is still money in %s",
+    (t) => expect(clockIsTheAmount(t, read(t).entries)).toBe(false),
+  );
+
   it.each([
+    "วันอาทิตย์ 27 ไปกินข้าวกับเพื่อน",
     "วันศุกร์ที่ 27 งานเลี้ยงบริษัท",
     "กินยา 6 โมงเย็น",
     "กินยา 18:00",

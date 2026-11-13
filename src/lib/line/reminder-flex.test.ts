@@ -80,9 +80,10 @@ describe("reminder card", () => {
   });
 
   it("still says when the time was not given, or had passed", () => {
-    expect(json({ timeDefaulted: true })).toContain("ใช้ 09:00");
+    expect(json({ timeDefaulted: true })).toContain("ตั้งเป็น 09:00");
+    expect(json({ timeDefaulted: true })).toContain("เปลี่ยนเวลา");
     expect(json({ rolledToTomorrow: true })).toContain("เลยตั้งเป็นพรุ่งนี้");
-    expect(json()).not.toContain("ใช้ 09:00");
+    expect(json()).not.toContain("ตั้งเป็น 09:00");
   });
 
   it("keeps the postback data short", () => {

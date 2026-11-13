@@ -122,7 +122,7 @@ export function routerPrompt(input: { text: string; today: string; hints?: strin
     `Today is ${input.today} in Bangkok.`,
     "Groups:",
     '- money: records money spent or received. "เมื่อวานจ่ายค่าหมอไป 800"',
-    '- reminder_add: wants to be reminded at a time. "เตือนกินยา 6 โมงเย็น", "พรุ่งนี้ต้องไปหาหมอ 10 โมง"',
+    '- reminder_add: wants to be reminded at a time. "เตือนกินยา 6 โมงเย็น", "พรุ่งนี้ต้องไปหาหมอ 10 โมง", a plan on a coming day with no money in it: "วันอาทิตย์ 27 ไปกินข้าวกับเพื่อน" (27 is the day, not baht)',
     '- reminder_edit: changes the time of a reminder. "เลื่อนเตือนกินยาเป็น 1 ทุ่ม"',
     '- note_add: wants something kept for later, such as a list or an address. "ไปเที่ยวต้องซื้อครีมกันแดด หมวก"',
     '- search: looks for something they recorded, noted or kept: an entry of money, a note or a file. "กาแฟที่จดไว้", "ค่าแท็กซี่ครั้งล่าสุด", "ที่อยู่หอพักจดไว้ไหม", "หาไฟล์สัญญาเช่า", "สลิปค่าเทอมอยู่ไหน"',
