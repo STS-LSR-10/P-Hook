@@ -21,6 +21,10 @@ test.describe("invite page (360px)", () => {
       "href",
       /^https:\/\/line\.me\/R\/share\?text=/,
     );
+    // the shared message points to "add friend", not to the app (a non-friend must land on add)
+    const href =
+      (await page.getByRole("link", { name: "ส่งคำชวนผ่าน LINE" }).getAttribute("href")) ?? "";
+    expect(decodeURIComponent(href)).toContain("https://line.me/R/ti/p/");
     await expectNoHorizontalScroll(page);
     await expectNoSeriousA11yViolations(page);
   });
