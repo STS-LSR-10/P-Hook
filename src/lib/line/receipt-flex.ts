@@ -23,7 +23,6 @@ export interface ReceiptCardInput {
   /** Opens the editor of one entry (undefined: no ✏️ button). */
   editUrl?: (txId: string) => string | undefined;
   /** Public https picture for the header (the mascot). */
-  logoUrl?: string;
   /** Where spending stands against the budget(s) these entries count against. */
   budgets?: {
     scopeName: string | null;
@@ -210,10 +209,6 @@ export function buildReceiptCard(input: ReceiptCardInput): LineMessage {
       ],
     },
   ];
-  // LINE only accepts https image URLs (a local http app URL would make the whole card invalid).
-  if (input.logoUrl?.startsWith("https://")) {
-    header.push({ type: "image", url: input.logoUrl, size: "72px", aspectMode: "fit", flex: 0 });
-  }
 
   // budget(s), warnings and "จ่ายด้วย", like the card of an entry typed in the chat
   const tail: unknown[] = [

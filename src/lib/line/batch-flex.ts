@@ -32,7 +32,6 @@ export interface BatchCardInput {
   /** Warnings the card carries itself (budget, daily limit, card limit). */
   notices: { text: string; level: "warn" | "over" }[];
   /** Public PNG of the mascot for the header (https only). */
-  logoUrl?: string;
 }
 
 /** More than this many rows would make a card too long to read; the rest are only counted. */
@@ -240,9 +239,6 @@ export function buildBatchConfirmMessage(input: BatchCardInput): LineMessage {
       ],
     },
   ];
-  if (input.logoUrl?.startsWith("https://")) {
-    header.push({ type: "image", url: input.logoUrl, size: "48px", aspectMode: "fit", flex: 0 });
-  }
 
   let altText = tr("จดแล้ว {0} รายการ: {1}", all.length, all.map((r) => r.title).join(", "));
   if (altText.length > ALT_MAX) altText = `${altText.slice(0, ALT_MAX - 1)}…`;

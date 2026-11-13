@@ -57,8 +57,6 @@ export interface ConfirmCardInput {
   addWalletUrl?: string;
   /** Show the small "📎 แนบรูป" button at the bottom-left; a tap starts the photo step. */
   photoButton?: boolean;
-  /** Public PNG of the mascot for the card header (omitted when the app URL is unknown). */
-  logoUrl?: string;
 }
 
 const TYPE_LABEL: Record<TxType, string> = { expense: tr("รายจ่าย"), income: tr("รายรับ") };
@@ -426,17 +424,6 @@ export function buildConfirmMessage(input: ConfirmCardInput): LineMessage {
       ],
     },
   ];
-  // LINE only accepts https image URLs (a local http app URL would make the whole card invalid).
-  if (input.logoUrl?.startsWith("https://")) {
-    header.push({
-      type: "image",
-      url: input.logoUrl,
-      size: "48px",
-      aspectMode: "fit",
-      flex: 0,
-    });
-  }
-
   const body: unknown[] = [
     {
       type: "box",

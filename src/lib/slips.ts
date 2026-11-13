@@ -53,7 +53,6 @@ export interface SlipDeps {
   /** Opens the editor of one entry (the ✏️ on the card); absent -> no ✏️ button. */
   editUrl?: (txId: string) => string | undefined;
   /** Public https picture for the card header. */
-  logoUrl?: string;
   /** After a slip was recorded. */
   onRecorded?: () => Promise<void>;
   /** What to say about a picture that is no slip. Absent -> the plain "not a slip" text. */
@@ -279,7 +278,6 @@ export async function handleSlipImage(
         entries,
         dateKnown: data.paidAt !== null,
         editUrl: deps.editUrl,
-        logoUrl: deps.logoUrl,
         budgets: extras.budgets,
         cycleLabel: extras.cycleLabel,
         notices: extras.notices,

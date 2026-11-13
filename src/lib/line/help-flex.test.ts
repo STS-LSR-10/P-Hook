@@ -297,12 +297,11 @@ describe("group welcome card", () => {
     expect(card).toContain("เริ่มใช้ใน 3 ขั้น");
     expect(card).toContain('"label":"📒 เปิดสมุดกลุ่ม"');
     expect(card).toContain('"label":"📖 วิธีใช้งาน","text":"วิธีใช้งาน"');
-    expect(card).toContain("https://x.test/logo.png");
     expect(card).toContain("Starter"); // the opener must be Starter or above; the rest are free
     expect(card.length).toBeLessThan(50_000);
   });
 
-  it("works without a public address (no logo, nothing undefined)", () => {
+  it("works without a public address (nothing undefined)", () => {
     const card = json(buildGroupWelcomeCard({}));
     expect(card).not.toContain("logo.png");
     expect(card).not.toContain("undefined");

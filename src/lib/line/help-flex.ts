@@ -498,19 +498,6 @@ export function topicBubble(input: {
   compact?: boolean;
 }) {
   const compact = input.compact === true;
-  const logo =
-    input.appUrl?.startsWith("https://") === true
-      ? [
-          {
-            type: "image",
-            // LINE keeps pictures by their address: bump `v` whenever public/logo.png changes
-            url: `${input.appUrl}/logo.png?v=3`,
-            size: "36px",
-            aspectMode: "fit",
-            flex: 0,
-          },
-        ]
-      : [];
   return {
     type: "bubble",
     // the group welcome is small cards to swipe through
@@ -547,8 +534,6 @@ export function topicBubble(input: {
             },
           ],
         },
-        // a card with its own buttons has no logo line at the foot, so the logo rides in the header
-        ...(input.footer ? logo : []),
       ],
     },
     body: {
@@ -573,7 +558,6 @@ export function topicBubble(input: {
           spacing: "md",
           alignItems: "center",
           contents: [
-            ...logo,
             {
               type: "text",
               text: input.tagline ?? "",

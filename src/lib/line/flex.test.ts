@@ -93,11 +93,7 @@ describe("flex", () => {
     expect(json).toContain('"width":"100%"'); // the only entry fills the bar
   });
 
-  it("adds the logo only when a URL is given", () => {
-    const withLogo = JSON.stringify(
-      buildConfirmMessage({ ...base, style: "full", logoUrl: "https://example.com/logo.png" }),
-    );
-    expect(withLogo).toContain("https://example.com/logo.png");
+  it("has no picture in it: the card is plain", () => {
     expect(JSON.stringify(buildConfirmMessage({ ...base, style: "full" }))).not.toContain(
       '"type":"image"',
     );
@@ -532,8 +528,8 @@ describe("the card title", () => {
     expect(title({ edited: true })).toContain('"text":"แก้ไขรายการสำเร็จ ✅"');
   });
 
-  it("has no separate tick badge to run into the mascot", () => {
-    expect(title({ logoUrl: "https://x.test/a.png" })).not.toContain('"text":"✓"');
+  it("has no separate tick badge", () => {
+    expect(title()).not.toContain('"text":"✓"');
   });
 });
 
@@ -542,7 +538,6 @@ describe("the look of the saved-entry card", () => {
     buildConfirmMessage({
       ...base,
       style: "full",
-      logoUrl: "https://x.test/logo.png",
       ...over,
     } as Parameters<typeof buildConfirmMessage>[0]);
   const json = (over: Record<string, unknown> = {}) => JSON.stringify(full(over));

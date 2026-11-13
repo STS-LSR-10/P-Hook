@@ -23,11 +23,9 @@ const json = (input: Partial<Parameters<typeof buildReceiptCard>[0]> = {}) =>
   );
 
 describe("receipt card", () => {
-  it("says it is recorded and shows the mascot only for an https picture", () => {
+  it("says it is recorded, with no picture", () => {
     expect(json()).toContain("จดสำเร็จ ✅");
     expect(json()).not.toContain('"type":"image"');
-    expect(json({ logoUrl: "http://x.test/a.png" })).not.toContain('"type":"image"');
-    expect(json({ logoUrl: "https://x.test/a.png" })).toContain("https://x.test/a.png");
   });
 
   it("shows each row with its date, title and amount, and a ❌ that deletes that entry", () => {
