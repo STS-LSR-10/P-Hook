@@ -29,6 +29,17 @@ test.describe("invite page (360px)", () => {
     await expectNoSeriousA11yViolations(page);
   });
 
+  test("outside the LINE app the invite still goes out as a text link", async ({ page }) => {
+    await mockApi(page, { "GET /api/me": ME_FREE });
+    await page.route("https://line.me/**", (route) =>
+      route.fulfill({ contentType: "text/html", body: "<html><body>line share</body></html>" }),
+    );
+    await page.goto("/invite");
+    await page.getByRole("link", { name: "ส่งคำชวนผ่าน LINE" }).click();
+    await page.waitForURL(/^https:\/\/line\.me\/R\/share\?text=/);
+    expect(decodeURIComponent(page.url())).toContain("ใช้รหัส ABCD1234");
+  });
+
   test("shows how to earn HookCoins and what they buy", async ({ page }) => {
     await mockApi(page, { "GET /api/me": ME_FREE });
     await page.goto("/invite");

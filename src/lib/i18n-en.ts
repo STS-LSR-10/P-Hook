@@ -399,6 +399,10 @@ export const EN: Record<string, string> = {
     "Usable within your first few days. Once you record your first entry, you both get bonus HookCoins",
   "เช่น ABCD1234": "e.g. ABCD1234",
   รหัสของเพื่อน: "Friend's code",
+  มาจดรายรับรายจ่ายกับพี่ฮูกด้วยกัน: "Let's track income and expenses with P'Hook",
+  "เพิ่มเพื่อนแล้วพิมพ์ “ใช้รหัส {0}” ทั้งคู่ได้โบนัสฮูกคอยน์":
+    'Add the bot and type "ใช้รหัส {0}" and we both get bonus HookCoins',
+  เพิ่มเพื่อนพี่ฮูก: "Add P'Hook",
   ใช้รหัส: "Use code",
   คุณใช้รหัสชวนเพื่อนแล้ว: "You've already used an invite code",
   อา: "Su",

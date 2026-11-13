@@ -25,6 +25,7 @@ import {
   addFriendUrl,
 } from "@/lib/config";
 import { t } from "@/lib/i18n";
+import { buildInviteFlex, inviteText } from "@/lib/line/invite-flex";
 
 // The add-friend page, not the LIFF app: a friend who is not yet a friend of the bot must land on "add".
 const LINK = addFriendUrl();
@@ -124,11 +125,37 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const shareText =
-    t(
-      'มาจดรายรับรายจ่ายง่าย ๆ ในไลน์กับพี่ฮูก (P\'Hook) ด้วยกันนะ เพิ่มเพื่อนแล้วพิมพ์ "ใช้รหัส {0}" ทั้งคู่ได้โบนัสฮูกคอยน์',
-      me.referralCode,
-    ) + `\n${LINK}`;
+  const shareText = inviteText(me.referralCode, LINK);
+
+  const shareHref = `https://line.me/R/share?text=${encodeURIComponent(shareText)}`;
+
+  // The card (picture + button) when the LINE app allows it; otherwise the plain-text link.
+  const [sending, setSending] = useState(false);
+  async function sendInvite(textHref: string) {
+    if (sending) return; // a second tap while the picker is open
+    setSending(true);
+    try {
+      const liff = (await import("@line/liff")).default;
+      if (liff.isApiAvailable("shareTargetPicker")) {
+        await liff.shareTargetPicker(
+          [
+            buildInviteFlex({
+              code: me.referralCode,
+              addFriendLink: LINK,
+              imageUrl: `${window.location.origin}/phook-invite-card.jpg`,
+            }) as never,
+          ],
+          { isMultiple: true },
+        );
+        setSending(false);
+        return;
+      }
+    } catch {
+      // not in the LINE app, or the picker failed: fall through to the text link
+    }
+    setSending(false);
+    window.location.assign(textHref);
+  }
 
   async function copy(value: string, done: string) {
     try {
@@ -285,7 +312,11 @@ function Content({ me, onChanged }: { me: Me; onChanged: () => void }) {
         </div>
 
         <a
-          href={`https://line.me/R/share?text=${encodeURIComponent(shareText)}`}
+          href={shareHref}
+          onClick={(e) => {
+            e.preventDefault();
+            void sendInvite(shareHref);
+          }}
           className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-surface"
         >
           <Share2 className="h-4 w-4" aria-hidden />
