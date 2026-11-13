@@ -12,12 +12,12 @@ export const MAX_AHEAD_DAYS = 366;
 export const DEFAULT_HOUR = 9;
 
 /** One-off reminders a plan may have waiting at once (each one is a push message, so also a cost guard). */
-const REMINDER_LIMIT: Record<Plan, number> = { free: 10, starter: 50, plus: 100, ultimate: 250 };
+const REMINDER_LIMIT: Record<Plan, number> = { free: 5, starter: 50, plus: 100, ultimate: 250 };
 /** `extra`: waiting reminders bought on top (add-ons). */
 export const reminderCapacity = (plan: Plan, extra = 0): number => REMINDER_LIMIT[plan] + extra;
 
 /** Repeating reminders a plan may have, apart from the one-offs: each sends again every round. */
-const REPEAT_LIMIT: Record<Plan, number> = { free: 5, starter: 20, plus: 50, ultimate: 100 };
+const REPEAT_LIMIT: Record<Plan, number> = { free: 1, starter: 20, plus: 50, ultimate: 100 };
 export const repeatCapacity = (plan: Plan): number => REPEAT_LIMIT[plan];
 
 /** Which limit a reminder counts against. */

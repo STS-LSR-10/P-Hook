@@ -463,7 +463,7 @@ describe("saying to keep it", () => {
     failure = "full";
     const { deps, reply } = setup();
     await handleEvent(say("เก็บไว้"), deps);
-    expect(said(reply)).toBe(fileFullText("500 MB"));
+    expect(said(reply)).toBe(fileFullText("150 MB"));
   });
 
   it("the content is gone: asks to send it again, and waits", async () => {

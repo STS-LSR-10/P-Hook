@@ -162,7 +162,7 @@ describe("POST /api/reminders", () => {
 });
 
 describe("repeating reminders have their own limit", () => {
-  it("each plan has its own number of repeating ones (Free 5, Pro 50, Elite 100), apart from the one-offs", async () => {
+  it("each plan has its own number of repeating ones (Free 1, Pro 50, Elite 100), apart from the one-offs", async () => {
     plan = "free";
     repeating = FREE_REPEAT;
     const full = await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "daily" }));

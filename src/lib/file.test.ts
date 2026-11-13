@@ -73,7 +73,7 @@ describe("file rules", () => {
   it("allows 20 MB a file", () => expect(MAX_FILE_BYTES).toBe(20 * 1024 * 1024));
 
   it("gives each plan its space", () => {
-    expect(fileCapacity("free")).toBe(500 * 1024 * 1024);
+    expect(fileCapacity("free")).toBe(150 * 1024 * 1024);
     expect(fileCapacity("starter")).toBe(5 * 1024 ** 3);
     expect(fileCapacity("plus")).toBe(20 * 1024 ** 3);
     expect(fileCapacity("ultimate")).toBe(100 * 1024 ** 3);

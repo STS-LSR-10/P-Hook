@@ -9,7 +9,7 @@ export const MAX_NAME_LENGTH = 200;
 
 /** Space a plan may keep. Files stay when a plan is lowered; only new ones are refused. */
 const FILE_CAPACITY: Record<Plan, number> = {
-  free: 500 * MB,
+  free: 150 * MB,
   starter: 5 * GB,
   plus: 20 * GB,
   ultimate: 100 * GB,

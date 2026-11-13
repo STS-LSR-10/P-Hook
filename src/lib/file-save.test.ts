@@ -117,7 +117,7 @@ describe("saveFile", () => {
   it("still refuses when a plan was lowered below the space used", async () => {
     reserved = false;
     await expect(saveFile(deps(), user, doc, null)).resolves.toEqual({ ok: false, reason: "full" });
-    expect(reservations[0]?.capacity).toBe(500 * 1024 * 1024);
+    expect(reservations[0]?.capacity).toBe(150 * 1024 * 1024);
   });
 
   it("keeps LINE's small preview beside a picture", async () => {

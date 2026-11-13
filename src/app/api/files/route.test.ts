@@ -89,7 +89,7 @@ describe("GET /api/files", () => {
     expect(await res.json()).toMatchObject({
       hasMore: false,
       usedBytes: 3,
-      capacityBytes: 500 * 1024 * 1024,
+      capacityBytes: 150 * 1024 * 1024,
     });
   });
 
