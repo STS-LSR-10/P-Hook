@@ -1,12 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Mention } from "@/lib/group-mention";
-import type {
-  ReminderCategory,
-  ReminderDto,
-  ReminderKind,
-  ReminderStatus,
-  Repeat,
-} from "@/lib/user-reminder";
+import type { ReminderDto, ReminderKind, ReminderStatus, Repeat } from "@/lib/user-reminder";
 
 /** The finished reminders the page keeps showing. */
 const MAX_DONE_SHOWN = 100;
@@ -21,7 +15,7 @@ interface Row {
   remind_at: string;
   repeat: Repeat | null;
   status?: ReminderStatus;
-  category?: ReminderCategory | null;
+  category?: string | null;
 }
 const COLUMNS = "id,body,remind_at,repeat,status,category";
 const toDto = (r: Row): ReminderDto => ({
@@ -115,7 +109,7 @@ export async function createReminder(
     body: string;
     remindAt: Date;
     repeat: Repeat | null;
-    category?: ReminderCategory | null;
+    category?: string | null;
     /** A reminder set in a group (pushed to the group): which one, and the LINE id of who set it. */
     groupId?: string;
     createdBy?: string;
@@ -220,7 +214,7 @@ export async function updateReminder(
     body: string;
     remindAt: Date;
     repeat: Repeat | null;
-    category: ReminderCategory | null;
+    category: string | null;
     status: ReminderStatus;
   },
 ): Promise<ReminderDto | null> {

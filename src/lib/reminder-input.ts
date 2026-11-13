@@ -6,10 +6,11 @@ import { getPlanInfo } from "@/lib/plan-server";
 import {
   MAX_AHEAD_DAYS,
   MAX_REMINDER_TEXT,
-  REMINDER_CATEGORIES,
   capacityOf,
+  isBuiltInCategory,
   type ReminderKind,
 } from "@/lib/user-reminder";
+import { listReminderCategories } from "@/lib/reminder-category-repo";
 import { countActiveReminders } from "@/lib/user-reminder-repo";
 
 /** POST and PATCH share this: what a reminder is made of. */
@@ -18,7 +19,8 @@ export const reminderSchema = z.object({
   /** ISO moment with an offset (the page sends the Bangkok time the person picked). */
   remindAt: z.string().datetime({ offset: true }),
   repeat: z.enum(["daily", "weekly", "monthly"]).nullable().optional(),
-  category: z.enum(REMINDER_CATEGORIES).nullable().optional(),
+  /** A built-in key or the id of one of the person's own categories (checked by `categoryProblem`). */
+  category: z.string().min(1).max(40).nullable().optional(),
 });
 
 export const REMINDER_INVALID_TEXT = `เขียนเรื่องที่ให้เตือน (ไม่เกิน ${MAX_REMINDER_TEXT} ตัวอักษร) และเลือกวันเวลาให้ถูกต้องนะ`;
@@ -55,4 +57,15 @@ export async function reminderRoomProblem(
     },
     409,
   );
+}
+
+/** The problem with a category, or null when it is built in, one of the person's own, or none. */
+export async function categoryProblem(
+  db: SupabaseClient,
+  userId: string,
+  category: string | null | undefined,
+): Promise<string | null> {
+  if (!category || isBuiltInCategory(category)) return null;
+  const own = await listReminderCategories(db, userId);
+  return own.some((c) => c.id === category) ? null : "ไม่พบหมวดนี้ ลองเลือกหมวดใหม่นะ";
 }

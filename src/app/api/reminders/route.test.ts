@@ -34,6 +34,10 @@ vi.mock("@/lib/rate-limit", async (original) => ({
     limited ? new Response(JSON.stringify({ error: "x" }), { status: 429 }) : null,
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
+const OWN = "22222222-2222-4222-8222-222222222222";
+vi.mock("@/lib/reminder-category-repo", () => ({
+  listReminderCategories: async () => [{ id: OWN, name: "วิ่ง", emoji: "🏃" }],
+}));
 vi.mock("@/lib/user-reminder-repo", () => ({
   listReminders: async () => Array.from({ length: active }, (_, i) => ({ id: `r${i}` })),
   countActiveReminders: async (_db: unknown, _u: string, kind?: string) =>
@@ -283,6 +287,29 @@ describe("reminders on the page", () => {
   it("refuses an unknown category", async () => {
     const res = await POST(req("POST", { body: "a", remindAt: soon(), category: "x" }));
     expect(res.status).toBe(400);
+  });
+
+  it("takes a new built-in category and one of the person's own", async () => {
+    expect(
+      (await POST(req("POST", { body: "a", remindAt: soon(), category: "travel" }))).status,
+    ).toBe(201);
+    expect((await POST(req("POST", { body: "a", remindAt: soon(), category: OWN }))).status).toBe(
+      201,
+    );
+    expect(created.map((c) => c.category)).toEqual(["travel", OWN]);
+  });
+
+  it("refuses an id that is not one of the person's categories", async () => {
+    const other = "33333333-3333-4333-8333-333333333333";
+    const res = await POST(req("POST", { body: "a", remindAt: soon(), category: other }));
+    expect(res.status).toBe(400);
+  });
+
+  it("GET gives the person's own categories", async () => {
+    const res = await GET(req("GET"));
+    expect(await res.json()).toMatchObject({
+      categories: [{ id: OWN, name: "วิ่ง", emoji: "🏃" }],
+    });
   });
 
   it("edits a reminder", async () => {

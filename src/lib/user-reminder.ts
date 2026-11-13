@@ -35,18 +35,64 @@ export interface ReminderDto {
   repeat: Repeat | null;
   /** "done": sent, or ticked before its time. */
   status: ReminderStatus;
-  category: ReminderCategory | null;
+  /** A built-in key or the id of one of the person's own categories. */
+  category: string | null;
 }
 
 export type ReminderStatus = "active" | "done";
-export const REMINDER_CATEGORIES = ["bill", "work", "health", "family"] as const;
+export const REMINDER_CATEGORIES = [
+  "bill",
+  "work",
+  "health",
+  "family",
+  "appointment",
+  "shopping",
+  "birthday",
+  "home",
+  "car",
+  "study",
+  "pet",
+  "travel",
+] as const;
 export type ReminderCategory = (typeof REMINDER_CATEGORIES)[number];
 export const CATEGORY_INFO: Record<ReminderCategory, { icon: string; label: string }> = {
   bill: { icon: "💳", label: t("บิล") },
   work: { icon: "💼", label: t("งาน") },
   health: { icon: "🩺", label: t("สุขภาพ") },
   family: { icon: "📞", label: t("ครอบครัว") },
+  appointment: { icon: "📅", label: t("นัดหมาย") },
+  shopping: { icon: "🛒", label: t("ซื้อของ") },
+  birthday: { icon: "🎂", label: t("วันเกิด") },
+  home: { icon: "🏠", label: t("บ้าน") },
+  car: { icon: "🚗", label: t("รถ") },
+  study: { icon: "📚", label: t("เรียน") },
+  pet: { icon: "🐾", label: t("สัตว์เลี้ยง") },
+  travel: { icon: "✈️", label: t("เที่ยว") },
 };
+
+/** A reminder category the person named themself; a reminder's `category` holds its id. */
+export interface CustomReminderCategory {
+  id: string;
+  name: string;
+  emoji: string;
+}
+export const MAX_REMINDER_CATEGORY_NAME = 20;
+/** Own categories a person may keep. */
+export const MAX_CUSTOM_REMINDER_CATEGORIES = 20;
+
+export const isBuiltInCategory = (key: string): key is ReminderCategory =>
+  (REMINDER_CATEGORIES as readonly string[]).includes(key);
+
+/** How a reminder's category looks: a built-in one, one of the person's own, or none (deleted). */
+export function categoryLook(
+  key: string | null | undefined,
+  own: readonly CustomReminderCategory[],
+): { icon: string; label: string } | null {
+  if (!key) return null;
+  if (isBuiltInCategory(key)) return CATEGORY_INFO[key];
+  const c = own.find((x) => x.id === key);
+  return c ? { icon: c.emoji, label: c.name } : null;
+}
 
 export const REPEAT_LABEL: Record<Repeat, string> = {
   daily: t("ทุกวัน"),

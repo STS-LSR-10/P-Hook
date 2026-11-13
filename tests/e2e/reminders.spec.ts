@@ -160,6 +160,77 @@ test.describe("reminders page (360px)", () => {
     });
   });
 
+  test("makes a category of its own with a name and an emoji, and files the reminder in it", async ({
+    page,
+  }) => {
+    const OWN = "99999999-9999-4999-8999-999999999999";
+    let own: unknown[] = [];
+    let made: unknown;
+    let posted: unknown;
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": () => LIST(THREE, { categories: own }),
+      "POST /api/reminders/categories": (route: Route) => {
+        made = JSON.parse(route.request().postData() ?? "{}");
+        own = [{ id: OWN, name: "วิ่ง", emoji: "🏃" }];
+        return { status: 201, body: { category: own[0] } };
+      },
+      "POST /api/reminders": (route: Route) => {
+        posted = JSON.parse(route.request().postData() ?? "{}");
+        return { reminder: {} };
+      },
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
+    await expect(page.getByRole("button", { name: /เที่ยว/ })).toBeVisible();
+    await page.getByLabel("ชื่อรายการเตือน").fill("วิ่งรอบสวน");
+    await page.getByRole("button", { name: "+ หมวดใหม่" }).click();
+    await page.getByLabel("ชื่อหมวด").fill("วิ่ง");
+    await page.getByLabel("อีโมจิ (พิมพ์เอง)").fill("🏃");
+    await page.getByRole("button", { name: "เพิ่มหมวด" }).click();
+    await expect(page.getByRole("button", { name: "🏃 วิ่ง" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expectNoSeriousA11yViolations(page);
+    await page.getByRole("button", { name: "บันทึกการเตือน" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "บันทึกการเตือนให้แล้ว" }),
+    ).toBeVisible();
+    expect(made).toEqual({ name: "วิ่ง", emoji: "🏃" });
+    expect(posted).toMatchObject({ body: "วิ่งรอบสวน", category: OWN });
+  });
+
+  test("Enter in the category name adds the category, not the reminder", async ({ page }) => {
+    const calls: string[] = [];
+    await mockApi(page, {
+      "GET /api/me": ME_FREE,
+      "GET /api/reminders": LIST(THREE),
+      "POST /api/reminders/categories": () => {
+        calls.push("category");
+        return {
+          status: 201,
+          body: {
+            category: { id: "99999999-9999-4999-8999-999999999999", name: "วิ่ง", emoji: "🏃" },
+          },
+        };
+      },
+      "POST /api/reminders": () => {
+        calls.push("reminder");
+        return { reminder: {} };
+      },
+    });
+    await page.goto("/reminders");
+    await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
+    await page.getByLabel("ชื่อรายการเตือน").fill("วิ่งรอบสวน");
+    await page.getByRole("button", { name: "+ หมวดใหม่" }).click();
+    await page.getByLabel("อีโมจิ (พิมพ์เอง)").fill("🏃");
+    await page.getByLabel("ชื่อหมวด").fill("วิ่ง");
+    await page.getByLabel("ชื่อหมวด").press("Enter");
+    await expect.poll(() => calls).toEqual(["category"]);
+    await expect(page.getByRole("button", { name: "บันทึกการเตือน" })).toBeVisible();
+  });
+
   test("a full list blocks adding and says so", async ({ page }) => {
     await mockApi(page, {
       "GET /api/me": ME_FREE,

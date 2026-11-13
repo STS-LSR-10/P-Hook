@@ -8,6 +8,7 @@ import {
   reminderRoomProblem,
   reminderSchema,
   reminderTimeProblem,
+  categoryProblem,
 } from "@/lib/reminder-input";
 import {
   googleEventOf,
@@ -71,6 +72,11 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
       if (!sameTime) {
         const problem = reminderTimeProblem(remindAt);
         if (problem) return apiError(problem, 400);
+      }
+      // a category kept as it was is fine even if it is gone (deleted meanwhile)
+      if ((edit.data.category ?? null) !== reminder.category) {
+        const badCategory = await categoryProblem(db, auth.userId, edit.data.category);
+        if (badCategory) return apiError(badCategory, 400);
       }
       // waiting again, or waiting as the other kind (one-off <-> repeat): it needs room there
       const kind = reminderKind(edit.data.repeat);

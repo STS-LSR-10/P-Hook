@@ -3446,9 +3446,49 @@ describe("reminder categories (0049)", () => {
     for (const c of ["bill", "work", "health", "family", null]) await add(u, c);
   });
 
-  it("refuses anything else", async () => {
+  it("refuses an empty or overlong value (0070: the API checks which keys and ids are allowed)", async () => {
     const u = await newUser(db, `rc-${Math.random()}`);
-    await expect(add(u, "x")).rejects.toThrow();
+    await expect(add(u, "")).rejects.toThrow();
+    await expect(add(u, "x".repeat(41))).rejects.toThrow();
+  });
+});
+
+describe("own reminder categories (0070)", () => {
+  it("keeps a name and one emoji per row, and a reminder can point at one", async () => {
+    const u = await newUser(db, `orc-${Math.random()}`);
+    const c = await one<{ id: string }>(
+      db,
+      "insert into reminder_categories (user_id, name, emoji) values ($1, 'ออกกำลังกาย', '🏃') returning id",
+      [u],
+    );
+    await db.query(
+      "insert into user_reminders (user_id, body, remind_at, category) values ($1, 'a', now(), $2)",
+      [u, c.id],
+    );
+  });
+
+  it("refuses an empty or long name, or no emoji", async () => {
+    const u = await newUser(db, `orc-${Math.random()}`);
+    const add = (name: string, emoji: string) =>
+      db.query("insert into reminder_categories (user_id, name, emoji) values ($1, $2, $3)", [
+        u,
+        name,
+        emoji,
+      ]);
+    await expect(add("", "🏃")).rejects.toThrow();
+    await expect(add("ก".repeat(21), "🏃")).rejects.toThrow();
+    await expect(add("วิ่ง", "")).rejects.toThrow();
+  });
+
+  it("one name per person, whatever the case", async () => {
+    const u = await newUser(db, `orc-${Math.random()}`);
+    const add = (name: string) =>
+      db.query("insert into reminder_categories (user_id, name, emoji) values ($1, $2, '🏃')", [
+        u,
+        name,
+      ]);
+    await add("Gym");
+    await expect(add("gym")).rejects.toThrow();
   });
 });
 

@@ -35,11 +35,14 @@ import {
 } from "@/lib/thai-date";
 import {
   CATEGORY_INFO,
+  MAX_CUSTOM_REMINDER_CATEGORIES,
+  MAX_REMINDER_CATEGORY_NAME,
   MAX_REMINDER_TEXT,
   REMINDER_CATEGORIES,
   REPEAT_LABEL,
+  categoryLook,
   reminderKind,
-  type ReminderCategory,
+  type CustomReminderCategory,
   type ReminderDto,
   type ReminderKind,
   type Repeat,
@@ -47,6 +50,8 @@ import {
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 import { canSendToChat } from "@/lib/liff-chat";
+import { EmojiPicker } from "@/components/liff/emoji-picker";
+import { isSingleEmoji } from "@/lib/category-emoji";
 
 /** How long "แก้ไขแล้ว" shows before the page closes back to the chat. */
 const CLOSE_AFTER_MS = 900;
@@ -90,6 +95,8 @@ interface RemindersResponse {
   canAdd: boolean;
   canAddOnce: boolean;
   canAddRepeat: boolean;
+  /** The person's own categories. */
+  categories?: CustomReminderCategory[];
 }
 
 /** Whether each kind of reminder has room, and its limit. */
@@ -288,7 +295,9 @@ function PersonalReminders() {
     }
   }
 
+  const own = data?.categories ?? [];
   const rowActions = {
+    own,
     onEdit: (reminder: ReminderDto) => setForm({ reminder }),
     onTick: (reminder: ReminderDto) => void tick(reminder),
     onDelete: (reminder: ReminderDto) => void remove(reminder),
@@ -568,6 +577,8 @@ function PersonalReminders() {
       {form ? (
         <ReminderSheet
           reminder={form.reminder}
+          own={own}
+          onOwnChanged={reminders.reload}
           day={selected}
           today={today}
           room={{
@@ -647,6 +658,7 @@ function ReminderRow({
   at,
   canTick,
   showDay = false,
+  own,
   onEdit,
   onTick,
   onDelete,
@@ -655,12 +667,13 @@ function ReminderRow({
   at: Date;
   canTick: boolean;
   showDay?: boolean;
+  own: readonly CustomReminderCategory[];
   onEdit: (reminder: ReminderDto) => void;
   onTick: (reminder: ReminderDto) => void;
   onDelete: (reminder: ReminderDto) => void;
 }) {
   const done = reminder.status === "done";
-  const icon = reminder.category ? CATEGORY_INFO[reminder.category].icon : "🔔";
+  const icon = categoryLook(reminder.category, own)?.icon ?? "🔔";
   return (
     <li
       className={cn(
@@ -749,12 +762,14 @@ function ReminderRow({
 function AllList({
   items,
   filter,
+  own,
   onEdit,
   onTick,
   onDelete,
 }: {
   items: ReminderDto[];
   filter: Filter;
+  own: readonly CustomReminderCategory[];
   onEdit: (reminder: ReminderDto) => void;
   onTick: (reminder: ReminderDto) => void;
   onDelete: (reminder: ReminderDto) => void;
@@ -785,6 +800,7 @@ function AllList({
           at={new Date(reminder.remindAt)}
           canTick
           showDay
+          own={own}
           onEdit={onEdit}
           onTick={onTick}
           onDelete={onDelete}
@@ -831,6 +847,8 @@ function Confetti({ active }: { active: boolean }) {
 
 function ReminderSheet({
   reminder,
+  own,
+  onOwnChanged,
   day,
   today,
   room,
@@ -838,6 +856,8 @@ function ReminderSheet({
   onSaved,
 }: {
   reminder: ReminderDto | null;
+  own: readonly CustomReminderCategory[];
+  onOwnChanged: () => void;
   day: string;
   today: string;
   room: Room;
@@ -852,7 +872,7 @@ function ReminderSheet({
   const [body, setBody] = useState(reminder?.body ?? "");
   const [date, setDate] = useState(start.slice(0, 10));
   const [time, setTime] = useState(start.slice(11, 16));
-  const [category, setCategory] = useState<ReminderCategory | null>(reminder?.category ?? null);
+  const [category, setCategory] = useState<string | null>(reminder?.category ?? null);
   const [repeat, setRepeat] = useState<Repeat | "">(reminder?.repeat ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -937,27 +957,12 @@ function ReminderSheet({
             />
           </div>
         </div>
-        <fieldset>
-          <legend className="mb-1 text-xs font-semibold">{t("หมวดหมู่")}</legend>
-          <div className="grid grid-cols-4 gap-1.5">
-            {REMINDER_CATEGORIES.map((key) => (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={category === key}
-                onClick={() => setCategory(category === key ? null : key)}
-                className={cn(
-                  "min-h-11 rounded-xl border px-1 text-xs",
-                  category === key
-                    ? "border-emerald-600 bg-emerald-50 dark:bg-primary-soft font-semibold text-emerald-900 dark:text-primary"
-                    : "border-border",
-                )}
-              >
-                {CATEGORY_INFO[key].icon} {CATEGORY_INFO[key].label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <CategoryPicker
+          value={category}
+          onChange={setCategory}
+          own={own}
+          onOwnChanged={onOwnChanged}
+        />
         <div>
           <label htmlFor="reminder-repeat" className="mb-1 block text-xs font-semibold">
             {t("ทำซ้ำ")}
@@ -1003,5 +1008,189 @@ function ReminderSheet({
         </button>
       </form>
     </Sheet>
+  );
+}
+
+const chipClass = (on: boolean) =>
+  cn(
+    "min-h-11 rounded-xl border px-1 text-xs",
+    on
+      ? "border-emerald-600 bg-emerald-50 dark:bg-primary-soft font-semibold text-emerald-900 dark:text-primary"
+      : "border-border",
+  );
+
+/** The built-in categories, the person's own, and adding, renaming or removing their own. */
+function CategoryPicker({
+  value,
+  onChange,
+  own,
+  onOwnChanged,
+}: {
+  value: string | null;
+  onChange: (key: string | null) => void;
+  own: readonly CustomReminderCategory[];
+  onOwnChanged: () => void;
+}) {
+  const { api } = useLiff();
+  /** null: closed; "new": adding one; an id: editing that one. */
+  const [editing, setEditing] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [emoji, setEmoji] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const picked = own.find((c) => c.id === value) ?? null;
+
+  function open(c: CustomReminderCategory | null) {
+    setEditing(c ? c.id : "new");
+    setName(c?.name ?? "");
+    setEmoji(c?.emoji ?? "");
+    setError(null);
+  }
+
+  async function save() {
+    if (!name.trim() || !isSingleEmoji(emoji)) {
+      setError(t("ตั้งชื่อหมวดและเลือกอีโมจิ 1 ตัวนะ"));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const isNew = editing === "new";
+      const res = await api<{ category: CustomReminderCategory }>(
+        isNew ? "/api/reminders/categories" : `/api/reminders/categories/${editing}`,
+        { method: isNew ? "POST" : "PATCH", body: JSON.stringify({ name, emoji }) },
+      );
+      if (isNew) onChange(res.category.id);
+      setEditing(null);
+      onOwnChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("บันทึกไม่สำเร็จ"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(c: CustomReminderCategory) {
+    if (!window.confirm(t("ลบหมวด “{0}” ไหม? เตือนในหมวดนี้ยังอยู่ แค่ไม่มีหมวด", c.name))) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/api/reminders/categories/${c.id}`, { method: "DELETE" });
+      onChange(null);
+      onOwnChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("ลบไม่สำเร็จ"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <fieldset>
+      <legend className="mb-1 text-xs font-semibold">{t("หมวดหมู่")}</legend>
+      <div className="grid grid-cols-4 gap-1.5">
+        {REMINDER_CATEGORIES.map((key) => (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={value === key}
+            onClick={() => onChange(value === key ? null : key)}
+            className={chipClass(value === key)}
+          >
+            {CATEGORY_INFO[key].icon} {CATEGORY_INFO[key].label}
+          </button>
+        ))}
+        {own.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            aria-pressed={value === c.id}
+            onClick={() => onChange(value === c.id ? null : c.id)}
+            className={cn(chipClass(value === c.id), "break-all")}
+          >
+            {c.emoji} {c.name}
+          </button>
+        ))}
+        {own.length < MAX_CUSTOM_REMINDER_CATEGORIES ? (
+          <button
+            type="button"
+            onClick={() => open(null)}
+            className="min-h-11 rounded-xl border border-dashed border-border px-1 text-xs text-primary"
+          >
+            {t("+ หมวดใหม่")}
+          </button>
+        ) : null}
+      </div>
+      {picked && editing === null ? (
+        <div className="mt-1.5 flex gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => open(picked)}
+            className="min-h-11 px-2 font-semibold text-primary"
+          >
+            {t("แก้หมวดนี้")}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void remove(picked)}
+            className="min-h-11 px-2 font-semibold text-expense"
+          >
+            {t("ลบหมวดนี้")}
+          </button>
+        </div>
+      ) : null}
+      {editing !== null ? (
+        <div
+          className="mt-2 space-y-2 rounded-2xl border border-border p-3"
+          // it sits inside the reminder's form: Enter here adds the category, not the reminder
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+              e.preventDefault();
+              if (!busy) void save();
+            }
+          }}
+        >
+          <label htmlFor="reminder-category-name" className="block text-xs font-semibold">
+            {t("ชื่อหมวด")}
+          </label>
+          <input
+            id="reminder-category-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={MAX_REMINDER_CATEGORY_NAME}
+            placeholder={t("เช่น ออกกำลังกาย")}
+            className={fieldClass}
+          />
+          <EmojiPicker value={emoji} onChange={setEmoji} label={t("อีโมจิ")} />
+          {error ? (
+            <p role="alert" className="text-sm text-expense">
+              {error}
+            </p>
+          ) : null}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing(null)}
+              className="h-11 rounded-2xl border border-border text-sm"
+            >
+              {t("ยกเลิก")}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void save()}
+              className="h-11 rounded-2xl bg-[#3F7A4B] text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {editing === "new" ? t("เพิ่มหมวด") : t("บันทึกหมวด")}
+            </button>
+          </div>
+        </div>
+      ) : error ? (
+        <p role="alert" className="mt-1 text-sm text-expense">
+          {error}
+        </p>
+      ) : null}
+    </fieldset>
   );
 }

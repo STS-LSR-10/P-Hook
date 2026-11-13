@@ -1,12 +1,13 @@
 import { loadBonus } from "@/lib/addons-repo";
-import { z } from "zod";
 import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPlanInfo } from "@/lib/plan-server";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { listReminderCategories } from "@/lib/reminder-category-repo";
 import {
   REMINDER_INVALID_TEXT,
+  categoryProblem,
   reminderRoomProblem,
   reminderSchema,
   reminderTimeProblem,
@@ -30,11 +31,12 @@ export async function GET(request: Request): Promise<Response> {
     const auth = await requireUser(request);
     if (auth instanceof Response) return auth;
     const db = getAdminClient();
-    const [items, active, repeating, { plan }] = await Promise.all([
+    const [items, active, repeating, { plan }, categories] = await Promise.all([
       listRemindersForPage(db, auth.userId),
       countActiveReminders(db, auth.userId, "once"),
       countActiveReminders(db, auth.userId, "repeat"),
       getPlanInfo(db, auth.userId),
+      listReminderCategories(db, auth.userId),
     ]);
     const limit = reminderCapacity(plan, (await loadBonus(db, auth.userId)).alerts);
     const repeatLimit = repeatCapacity(plan);
@@ -49,6 +51,7 @@ export async function GET(request: Request): Promise<Response> {
       canAdd: canAddOnce || canAddRepeat,
       canAddOnce,
       canAddRepeat,
+      categories,
     });
   });
 }
@@ -68,6 +71,8 @@ export async function POST(request: Request): Promise<Response> {
     const remindAt = new Date(parsed.data.remindAt);
     const problem = reminderTimeProblem(remindAt);
     if (problem) return apiError(problem, 400);
+    const badCategory = await categoryProblem(db, auth.userId, parsed.data.category);
+    if (badCategory) return apiError(badCategory, 400);
 
     const full = await reminderRoomProblem(db, auth.userId, reminderKind(parsed.data.repeat));
     if (full) return full;
