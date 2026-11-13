@@ -21,7 +21,7 @@ const CLOCK_RE =
 const KEEP_RE =
   /^\s*(?:ช่วย)?เตือน(?!ใจ)|ต้องซื้อ|ต้องเตรียม|จดไว้|จดว่า|จำไว้ว่า|ฝากจำ|อย่าลืม|(?<!ค่า)ที่อยู่|เก็บ(?:ไฟล์|รูป|เอกสาร|วิดีโอ)|หา(?:ไฟล์|รูป)/;
 const CLOCK_NUMBER_RE =
-  /(\d{1,2})\s*(?:โมง|ทุ่ม)|(\d{1,2}):\d{2}|(\d{1,2}\.\d{2})\s*น|บ่าย\s*(\d)|ตี\s*(\d)|อีก\s*(\d+)\s*(?:นาที|ชั่วโมง|ชม)/g;
+  /วัน(?:อาทิตย์|จันทร์|อังคาร|พุธ|พฤหัสบดี|พฤหัส|ศุกร์|เสาร์)\s*ที่\s*(\d{1,2})|(\d{1,2})\s*(?:โมง|ทุ่ม)|(\d{1,2}):\d{2}|(\d{1,2}\.\d{2})\s*น|บ่าย\s*(\d)|ตี\s*(\d)|อีก\s*(\d+)\s*(?:นาที|ชั่วโมง|ชม)/g;
 
 /**
  * Did the rules take the number of a time for an amount? "กินยา 6 โมงเย็น" read as 6 baht is wrong;
@@ -61,6 +61,8 @@ const FUTURE_RE =
 /** A sentence in English (three words or more) or a day of the month in the words ("วันที่ 5"). */
 const ENGLISH_WORDS_RE = /[a-z]{2,}/gi;
 const DAY_OF_MONTH_RE = /วันที่\s*\d/;
+/** "วันศุกร์ที่ 27": the number is a day, not an amount ("ข้าววันศุกร์ 60" stays an entry). */
+const WEEKDAY_NUMBER_RE = /วัน(?:อาทิตย์|จันทร์|อังคาร|พุธ|พฤหัสบดี|พฤหัส|ศุกร์|เสาร์)\s*ที่\s*\d/;
 
 /** Three lines or more, most with no number: a list of things, not a list of entries. */
 function isPlainList(input: string): boolean {
@@ -84,6 +86,7 @@ export function needsRouter(input: string, result: ParseResult): boolean {
     FUTURE_RE.test(input) ||
     (input.match(ENGLISH_WORDS_RE)?.length ?? 0) >= 3 ||
     (DAY_OF_MONTH_RE.test(input) && result.entries.every((e) => !e.backdated)) ||
+    WEEKDAY_NUMBER_RE.test(input) ||
     isPlainList(input)
   );
 }

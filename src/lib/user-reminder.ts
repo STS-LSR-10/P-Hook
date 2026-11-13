@@ -141,33 +141,43 @@ function takeTime(s: string): { clock: Clock | null; rest: string } {
   }
   r = take(s, /เที่ยงคืน/);
   if (r.m) return { clock: { hour: 0, minute: 0, midnight: true }, rest: r.rest };
-  r = take(s, /เที่ยง(?!คืน)/);
-  if (r.m) return { clock: { hour: 12, minute: 0 }, rest: r.rest };
-  r = take(s, /ตี\s*(\d{1,2})/);
+  // "ครึ่ง" right after a time is half past ("9 โมงครึ่ง", "บ่าย 3 ครึ่ง", "4 โมงเย็นครึ่ง")
+  r = take(s, /เที่ยง(?!คืน)(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/);
+  if (r.m) return { clock: { hour: 12, minute: r.m[1] ? 30 : 0 }, rest: r.rest };
+  r = take(s, /ตี\s*(\d{1,2})(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/);
   if (r.m && Number(r.m[1]) >= 1 && Number(r.m[1]) <= 5) {
-    return { clock: { hour: Number(r.m[1]), minute: 0 }, rest: r.rest };
+    return { clock: { hour: Number(r.m[1]), minute: r.m[2] ? 30 : 0 }, rest: r.rest };
   }
-  r = take(s, /บ่าย\s*(?:(\d{1,2})\s*(?:โมง)?|โมง)/);
+  r = take(
+    s,
+    /บ่าย\s*(?:(\d{1,2})\s*(?:โมง)?|โมง)(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/,
+  );
   if (r.m) {
     const n = r.m[1] ? Number(r.m[1]) : 1;
-    if (n >= 1 && n <= 5) return { clock: { hour: 12 + n, minute: 0 }, rest: r.rest };
+    const minute = r.m[2] ? 30 : 0;
+    if (n >= 1 && n <= 5) return { clock: { hour: 12 + n, minute }, rest: r.rest };
   }
-  r = take(s, /(\d{1,2})\s*โมง\s*(เช้า|เย็น)?/);
+  r = take(
+    s,
+    /(\d{1,2})\s*โมง(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?\s*(เช้า|เย็น)?(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/,
+  );
   if (r.m) {
     const n = Number(r.m[1]);
-    const part = r.m[2];
+    const part = r.m[3];
+    const minute = r.m[2] || r.m[4] ? 30 : 0;
     let hour = -1;
     if (part === "เย็น" && n >= 4 && n <= 6) hour = 12 + n;
     else if (part === "เช้า" && n >= 6 && n <= 11) hour = n;
     else if (!part && n >= 1 && n <= 5)
       hour = 12 + n; // "2 โมง" as people say it: 14:00
     else if (!part && n >= 6 && n <= 12) hour = n;
-    if (hour >= 0) return { clock: { hour, minute: 0 }, rest: r.rest };
+    if (hour >= 0) return { clock: { hour, minute }, rest: r.rest };
   }
-  r = take(s, /(\d{1,2})?\s*ทุ่ม/);
+  r = take(s, /(\d{1,2})?\s*ทุ่ม(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/);
   if (r.m) {
     const n = r.m[1] ? Number(r.m[1]) : 1;
-    if (n >= 1 && n <= 5) return { clock: { hour: 18 + n, minute: 0 }, rest: r.rest };
+    const minute = r.m[2] ? 30 : 0;
+    if (n >= 1 && n <= 5) return { clock: { hour: 18 + n, minute }, rest: r.rest };
   }
   r = take(s, /คืนนี้/);
   if (r.m) return { clock: { hour: 20, minute: 0, today: true }, rest: r.rest };
@@ -192,6 +202,9 @@ function takeDate(s: string): { date: DateSpec | null; rest: string } {
   if (r.m) return { date: { kind: "offset", days: 1 }, rest: r.rest };
   r = take(s, /มะรืน(?:นี้)?/);
   if (r.m) return { date: { kind: "offset", days: 2 }, rest: r.rest };
+  // "วันศุกร์ที่ 27": the day of the month decides (the weekday is how people say it)
+  r = take(s, new RegExp(`วัน(?:${WEEKDAY_RE})\\s*ที่\\s*(\\d{1,2})`));
+  if (r.m) return { date: { kind: "dom", day: Number(r.m[1]) }, rest: r.rest };
   r = take(s, new RegExp(`วัน(${WEEKDAY_RE})(?:\\s*(?:หน้า|นี้|ถัดไป))?`));
   if (r.m) return { date: { kind: "weekday", day: WEEKDAYS[r.m[1] ?? ""] ?? 0 }, rest: r.rest };
   r = take(s, /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
