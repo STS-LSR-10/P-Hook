@@ -43,7 +43,7 @@ beforeEach(() => {
 
 describe("POST /api/addons/checkout", () => {
   it("is for paid plans: Free is sent to upgrade and nothing is created", async () => {
-    const res = await post({ sku: "slips_100" });
+    const res = await post({ sku: "slips_120" });
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ available: false, upgrade: true });
     expect(createAddonCheckout).not.toHaveBeenCalled();
@@ -53,14 +53,14 @@ describe("POST /api/addons/checkout", () => {
     "%s can buy, and the price comes from the catalogue",
     async (p) => {
       plan = p;
-      const res = await post({ sku: "storage_30", method: "promptpay", price: 1 });
+      const res = await post({ sku: "storage_40", method: "promptpay", price: 1 });
       expect(await res.json()).toMatchObject({ available: true, url: "https://pay.example/x" });
       expect(createAddonCheckout).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: "u1",
           method: "promptpay",
           customerId: "cus_1",
-          addon: expect.objectContaining({ sku: "storage_30", baht: 29 }),
+          addon: expect.objectContaining({ sku: "storage_40", baht: 35 }),
         }),
       );
     },

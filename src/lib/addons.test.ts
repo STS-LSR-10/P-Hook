@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ADDONS, NO_BONUS, sumBonus, addonBySku } from "./addons";
+import { ADDONS, NO_BONUS, sumBonus, addonBySku, addonForSale } from "./addons";
 import { fileCapacity } from "./file";
 import { buildQuota } from "./quota";
 import { capacityOf, reminderCapacity } from "./user-reminder";
@@ -25,15 +25,19 @@ describe("sumBonus", () => {
 
   it("the catalogue matches the price list", () => {
     expect(ADDONS.map((a) => [a.sku, a.units, a.baht, a.monthly])).toEqual([
-      ["storage_10", 10, 15, true],
-      ["storage_30", 30, 29, true],
-      ["storage_50", 50, 45, true],
-      ["alerts_s", 50, 15, false],
-      ["alerts_l", 150, 35, false],
-      ["slips_100", 100, 19, false],
-      ["slips_300", 300, 49, false],
-      ["groups_2", 2, 29, true],
+      ["storage_15", 15, 19, true],
+      ["storage_40", 40, 35, true],
+      ["storage_70", 70, 55, true],
+      ["alerts_70", 70, 19, false],
+      ["alerts_200", 200, 39, false],
+      ["slips_120", 120, 19, false],
+      ["slips_350", 350, 49, false],
+      ["groups_3", 3, 29, true],
     ]);
+    // packs bought before the change still renew, but cannot be bought again
+    expect(addonBySku("storage_10")).toMatchObject({ units: 10, baht: 15 });
+    expect(addonForSale("storage_10")).toBeUndefined();
+    expect(addonForSale("storage_15")).toBeDefined();
     expect(addonBySku("nope")).toBeUndefined();
   });
 });

@@ -13,7 +13,62 @@ export interface AddonSku {
   monthly: boolean;
 }
 
+/** On sale now. */
 export const ADDONS: AddonSku[] = [
+  {
+    sku: "storage_15",
+    kind: "storage",
+    label: "Storage Pack 15GB",
+    units: 15,
+    baht: 19,
+    monthly: true,
+  },
+  {
+    sku: "storage_40",
+    kind: "storage",
+    label: "Storage Pack 40GB",
+    units: 40,
+    baht: 35,
+    monthly: true,
+  },
+  {
+    sku: "storage_70",
+    kind: "storage",
+    label: "Storage Pack 70GB",
+    units: 70,
+    baht: 55,
+    monthly: true,
+  },
+  {
+    sku: "alerts_70",
+    kind: "alerts",
+    label: "Alert Booster S",
+    units: 70,
+    baht: 19,
+    monthly: false,
+  },
+  {
+    sku: "alerts_200",
+    kind: "alerts",
+    label: "Alert Booster L",
+    units: 200,
+    baht: 39,
+    monthly: false,
+  },
+  { sku: "slips_120", kind: "slips", label: "Slip Pack 120", units: 120, baht: 19, monthly: false },
+  { sku: "slips_350", kind: "slips", label: "Slip Pack 350", units: 350, baht: 49, monthly: false },
+  {
+    sku: "groups_3",
+    kind: "group_slots",
+    label: "Extra Group Slot",
+    units: 3,
+    baht: 29,
+    monthly: true,
+  },
+];
+
+/** No longer sold, but kept so subscriptions bought earlier renew with what they paid for. */
+export const RETIRED_ADDONS: AddonSku[] = [
   {
     sku: "storage_10",
     kind: "storage",
@@ -66,7 +121,12 @@ export const ADDONS: AddonSku[] = [
   },
 ];
 
-export const addonBySku = (sku: string): AddonSku | undefined => ADDONS.find((a) => a.sku === sku);
+export const addonForSale = (sku: string): AddonSku | undefined =>
+  ADDONS.find((a) => a.sku === sku);
+
+/** Any pack ever sold, for renewals and reports. */
+export const addonBySku = (sku: string): AddonSku | undefined =>
+  [...ADDONS, ...RETIRED_ADDONS].find((a) => a.sku === sku);
 
 /** The extra quota a person has right now, summed over what they bought and has not run out. */
 export interface Bonus {

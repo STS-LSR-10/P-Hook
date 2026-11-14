@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiError, guard, json, readJson } from "@/lib/api";
-import { addonBySku } from "@/lib/addons";
+import { addonForSale } from "@/lib/addons";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPaymentProvider } from "@/lib/payments";
 import { loadBillingState } from "@/lib/payments/billing-state";
@@ -27,7 +27,7 @@ export async function POST(request: Request): Promise<Response> {
     if (limited) return limited;
 
     const parsed = bodySchema.safeParse((await readJson(request)) ?? {});
-    const addon = parsed.success ? addonBySku(parsed.data.sku) : undefined;
+    const addon = parsed.success ? addonForSale(parsed.data.sku) : undefined;
     if (!parsed.success || !addon) return apiError("ข้อมูลไม่ถูกต้อง", 400);
 
     const { plan } = await getPlanInfo(db, auth.userId);

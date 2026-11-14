@@ -32,10 +32,13 @@ describe("countAddons", () => {
     );
     expect(r.find((x) => x.sku === "groups_2")).toEqual({ sku: "groups_2", sold: 2, active: 1 });
     expect(r.find((x) => x.sku === "slips_100")).toEqual({ sku: "slips_100", sold: 2, active: 1 });
-    expect(r.find((x) => x.sku === "storage_10")).toEqual({
-      sku: "storage_10",
+    // a pack no longer on sale shows only while it has sales
+    expect(r.find((x) => x.sku === "storage_15")).toEqual({
+      sku: "storage_15",
       sold: 0,
       active: 0,
     });
+    expect(r.find((x) => x.sku === "storage_10")).toBeUndefined();
+    expect(r.find((x) => x.sku === "slips_100")).toBeDefined();
   });
 });

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ADDONS } from "@/lib/addons";
+import { ADDONS, RETIRED_ADDONS } from "@/lib/addons";
 import { earlyBirdOffers, type EarlyBirdOffer } from "@/lib/early-bird-repo";
 import { effectivePlan, PLAN_ORDER, type Plan } from "@/lib/plan";
 
@@ -27,7 +27,11 @@ export function countAddons(
     if (!ended && (r.remaining === null || r.remaining > 0)) c.active += 1;
     by.set(r.sku, c);
   }
-  return ADDONS.map((a) => ({ sku: a.sku, ...(by.get(a.sku) ?? { sold: 0, active: 0 }) }));
+  const skus = [
+    ...ADDONS.map((a) => a.sku),
+    ...RETIRED_ADDONS.map((a) => a.sku).filter((k) => by.has(k)),
+  ];
+  return skus.map((sku) => ({ sku, ...(by.get(sku) ?? { sold: 0, active: 0 }) }));
 }
 
 /** Count accounts by their plan in force: `rows` are the accounts that are not plain Free. */

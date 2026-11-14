@@ -206,9 +206,9 @@ describe("add-on checkout", () => {
 
   it("a monthly add-on by PromptPay and every pack are a single payment", () => {
     for (const [id, method, baht] of [
-      ["groups_2", "promptpay", 29],
+      ["groups_3", "promptpay", 29],
       ["slips_300", "card", 49],
-      ["alerts_l", "promptpay", 35],
+      ["alerts_200", "promptpay", 39],
     ] as const) {
       const f = buildAddonCheckoutFields({ userId: USER, addon: sku(id), method }, BASE);
       expect(f.mode).toBe("payment");
