@@ -44,7 +44,7 @@ describe("when", () => {
     ["มะรืนนี้ 8 โมง ตัดผม", "2026-10-30 08:00"],
     ["พรุ่งนี้ ตอนเย็น ซื้อของ", "2026-10-29 17:00"],
     ["คืนนี้ ซักผ้า", "2026-10-28 20:00"],
-    ["พรุ่งนี้ จ่ายค่าไฟ", "2026-10-29 09:00"], // no time: 09:00
+    ["พรุ่งนี้ จ่ายค่าไฟ", "2026-10-29 08:30"], // no time: 08:30
     // "ครึ่ง" is half past
     ["พรุ่งนี้ 9 โมงครึ่ง ประชุม", "2026-10-29 09:30"],
     ["พรุ่งนี้ 9 โมง ครึ่ง ประชุม", "2026-10-29 09:30"],
@@ -56,8 +56,8 @@ describe("when", () => {
     ["พรุ่งนี้ 4 โมงเย็นครึ่ง รับลูก", "2026-10-29 16:30"],
     ["พรุ่งนี้ 7 โมงครึ่งเช้า ไปสนามบิน", "2026-10-29 07:30"],
     // a weekday with its day of the month: the day of the month decides
-    ["วันศุกร์ที่ 27 งานเลี้ยงบริษัท", "2026-11-27 09:00"],
-    ["วันศุกร์ ที่ 27 งานเลี้ยงบริษัท", "2026-11-27 09:00"],
+    ["วันศุกร์ที่ 27 งานเลี้ยงบริษัท", "2026-11-27 08:30"],
+    ["วันศุกร์ ที่ 27 งานเลี้ยงบริษัท", "2026-11-27 08:30"],
   ])("%s", (input, expected) => {
     expect(bkk(ok(input).remindAt)).toBe(expected);
   });
@@ -82,26 +82,26 @@ describe("when", () => {
     expect(bkk(ok("วันศุกร์ 8 โมง ส่งรายงาน").remindAt)).toBe("2026-10-30 08:00");
     expect(bkk(ok("วันพุธ 11 โมง ประชุม").remindAt)).toBe("2026-10-28 11:00");
     expect(bkk(ok("วันพุธ 9 โมง ประชุม").remindAt)).toBe("2026-11-04 09:00");
-    expect(bkk(ok("วันจันทร์หน้า ส่งงาน").remindAt)).toBe("2026-11-02 09:00");
+    expect(bkk(ok("วันจันทร์หน้า ส่งงาน").remindAt)).toBe("2026-11-02 08:30");
   });
 
   it.each([
-    ["25/12 ซื้อของขวัญ", "2026-12-25 09:00"],
-    ["25/12/2569 ซื้อของขวัญ", "2026-12-25 09:00"],
+    ["25/12 ซื้อของขวัญ", "2026-12-25 08:30"],
+    ["25/12/2569 ซื้อของขวัญ", "2026-12-25 08:30"],
     ["25 ธ.ค. 8 โมง ซื้อของขวัญ", "2026-12-25 08:00"],
-    ["25 ธันวาคม ซื้อของขวัญ", "2026-12-25 09:00"],
-    ["1/10 ต่อประกัน", "2027-10-01 09:00"], // the 1st of Oct has gone by: next year
-    ["วันที่ 5 จ่ายค่าเน็ต", "2026-11-05 09:00"],
-    ["วันที่ 30 จ่ายค่าเน็ต", "2026-10-30 09:00"],
-    ["วันที่ 31 จ่ายค่าเน็ต", "2026-10-31 09:00"],
+    ["25 ธันวาคม ซื้อของขวัญ", "2026-12-25 08:30"],
+    ["1/10 ต่อประกัน", "2027-10-01 08:30"], // the 1st of Oct has gone by: next year
+    ["วันที่ 5 จ่ายค่าเน็ต", "2026-11-05 08:30"],
+    ["วันที่ 30 จ่ายค่าเน็ต", "2026-10-30 08:30"],
+    ["วันที่ 31 จ่ายค่าเน็ต", "2026-10-31 08:30"],
   ])("%s", (input, expected) => {
     expect(bkk(ok(input).remindAt)).toBe(expected);
   });
 
   it("converts a Buddhist-era year and skips a month that has no such day", () => {
-    expect(bkk(ok("5/1/2570 ต่อภาษี").remindAt)).toBe("2027-01-05 09:00");
+    expect(bkk(ok("5/1/2570 ต่อภาษี").remindAt)).toBe("2027-01-05 08:30");
     expect(bkk(ok("วันที่ 31 จ่ายบิล", new Date("2026-11-10T03:00:00Z")).remindAt)).toBe(
-      "2026-12-31 09:00", // November has no 31st
+      "2026-12-31 08:30", // November has no 31st
     );
   });
 
@@ -121,7 +121,7 @@ describe("how often", () => {
     ["ทุกสัปดาห์ 9 โมง ซักผ้า", "weekly", "2026-10-29 09:00"],
     ["ทุกวันจันทร์ 8 โมง ประชุมทีม", "weekly", "2026-11-02 08:00"],
     ["ทุกเดือน 9 โมง จ่ายค่าเช่า", "monthly", "2026-10-29 09:00"],
-    ["ทุกวันที่ 1 จ่ายค่าเช่า", "monthly", "2026-11-01 09:00"],
+    ["ทุกวันที่ 1 จ่ายค่าเช่า", "monthly", "2026-11-01 08:30"],
   ])("%s", (input, repeat, at) => {
     const r = ok(input);
     expect(r.repeat).toBe(repeat);
@@ -134,7 +134,7 @@ describe("how often", () => {
     ["ทุก วัน จันทร์ 8 โมง ประชุมทีม", "weekly", "2026-11-02 08:00", "ประชุมทีม"],
     ["ทุก พฤหัส 9 โมง ส่งงาน", "weekly", "2026-10-29 09:00", "ส่งงาน"],
     ["ทุก สัปดาห์ 9 โมง ซักผ้า", "weekly", "2026-10-29 09:00", "ซักผ้า"],
-    ["ทุก วัน ที่ 1 จ่ายค่าเช่า", "monthly", "2026-11-01 09:00", "จ่ายค่าเช่า"],
+    ["ทุก วัน ที่ 1 จ่ายค่าเช่า", "monthly", "2026-11-01 08:30", "จ่ายค่าเช่า"],
     ["ทุก เดือน 9 โมง จ่ายค่าเน็ต", "monthly", "2026-10-29 09:00", "จ่ายค่าเน็ต"],
     ["ทุก วัน 8 โมง กินยา", "daily", "2026-10-29 08:00", "กินยา"],
   ])("spoken with spaces: %s", (input, repeat, at, body) => {
@@ -286,10 +286,10 @@ describe("snoozing", () => {
     expect(snoozeTime("60", now).toISOString()).toBe("2026-11-03T04:31:00.000Z");
   });
 
-  it("is 09:00 tomorrow, or this morning when it is still the small hours", () => {
-    expect(snoozeTime("tm", now).toISOString()).toBe("2026-11-04T02:00:00.000Z");
+  it("is 08:30 tomorrow, or this morning when it is still the small hours", () => {
+    expect(snoozeTime("tm", now).toISOString()).toBe("2026-11-04T01:30:00.000Z");
     const late = new Date("2026-11-02T18:30:00Z"); // 01:30 on the 3rd in Bangkok
-    expect(snoozeTime("tm", late).toISOString()).toBe("2026-11-03T02:00:00.000Z");
+    expect(snoozeTime("tm", late).toISOString()).toBe("2026-11-03T01:30:00.000Z");
   });
 
   it("says when as a person would", () => {
@@ -330,16 +330,16 @@ describe("the three chats that went wrong", () => {
 });
 
 describe("a weekday with a day number and no time", () => {
-  it("วันอาทิตย์ 27 is the next 27th that is a Sunday, at 09:00, said so", () => {
+  it("วันอาทิตย์ 27 is the next 27th that is a Sunday, at 08:30, said so", () => {
     const r = ok("วันอาทิตย์ 27 ไปกินข้าวกับเพื่อน");
-    expect(bkk(r.remindAt)).toBe("2026-12-27 09:00");
+    expect(bkk(r.remindAt)).toBe("2026-12-27 08:30");
     expect(r.body).toBe("ไปกินข้าวกับเพื่อน");
     expect(r.timeDefaulted).toBe(true);
   });
   it.each([
-    ["วันอาทิตย์ที่ 27 ไปกินข้าวกับเพื่อน", "2026-12-27 09:00"],
-    ["วันพุธที่ 11 ประชุม", "2026-11-11 09:00"],
-    ["วันศุกร์ที่ 27 งานเลี้ยงบริษัท", "2026-11-27 09:00"],
+    ["วันอาทิตย์ที่ 27 ไปกินข้าวกับเพื่อน", "2026-12-27 08:30"],
+    ["วันพุธที่ 11 ประชุม", "2026-11-11 08:30"],
+    ["วันศุกร์ที่ 27 งานเลี้ยงบริษัท", "2026-11-27 08:30"],
     ["วันอาทิตย์ 27 บ่าย 2 ครึ่ง ไปกินข้าว", "2026-12-27 14:30"],
   ])("%s", (input, at) => expect(bkk(ok(input).remindAt)).toBe(at));
   it("a weekday and a time (no day number) stays the coming weekday", () => {
@@ -349,15 +349,36 @@ describe("a weekday with a day number and no time", () => {
 
 describe("a number after a weekday that is not a day", () => {
   it.each([
-    ["กินยาวันพุธ 2 เม็ด", "2026-11-04 09:00", "กินยา 2 เม็ด"],
-    ["กินยาวันพุธ 5 ครั้ง", "2026-11-04 09:00", "กินยา 5 ครั้ง"],
-    ["วิ่งวันอาทิตย์ 5 กม.", "2026-11-01 09:00", "วิ่ง 5 กม"],
+    ["กินยาวันพุธ 2 เม็ด", "2026-11-04 08:30", "กินยา 2 เม็ด"],
+    ["กินยาวันพุธ 5 ครั้ง", "2026-11-04 08:30", "กินยา 5 ครั้ง"],
+    ["วิ่งวันอาทิตย์ 5 กม.", "2026-11-01 08:30", "วิ่ง 5 กม"],
   ])("%s keeps the count in the words", (input, at, body) => {
     const r = ok(input);
     expect(bkk(r.remindAt)).toBe(at);
     expect(r.body).toBe(body);
   });
   it("a weekday that matches no 27th soon keeps the next 27th", () => {
-    expect(bkk(ok("วันเสาร์ 27 งาน").remindAt)).toBe("2026-11-27 09:00");
+    expect(bkk(ok("วันเสาร์ 27 งาน").remindAt)).toBe("2026-11-27 08:30");
+  });
+});
+
+describe("a weekday that is not the day of the nearest date", () => {
+  it("says so, with the nearest date and the next one on that weekday", () => {
+    const r = ok("วันอาทิตย์ 27 ไปกินข้าวกับเพื่อน");
+    expect(r.weekdayMismatch).toEqual({ asked: 0, nearest: "2026-11-27", match: "2026-12-27" });
+  });
+  it("no weekday soon on that day: the nearest date only", () => {
+    expect(ok("วันเสาร์ 27 งาน").weekdayMismatch).toEqual({
+      asked: 6,
+      nearest: "2026-11-27",
+      match: null,
+    });
+  });
+  it("a weekday that is right says nothing", () => {
+    expect(ok("วันศุกร์ 27 งาน").weekdayMismatch).toBeUndefined();
+    expect(ok("พรุ่งนี้ 9 โมง ประชุม").weekdayMismatch).toBeUndefined();
+  });
+  it("no time given is 08:30", () => {
+    expect(bkk(ok("พรุ่งนี้ จ่ายค่าไฟ").remindAt)).toBe("2026-10-29 08:30");
   });
 });

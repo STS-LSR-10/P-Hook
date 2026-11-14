@@ -36,6 +36,19 @@ vi.mock("@/lib/repo", async (original) => ({
     locale,
   }),
 }));
+const PENDING = "22222222-2222-4222-8222-222222222222";
+let held: { text: string } | null = null;
+vi.mock("@/lib/pending-intent-repo", () => ({
+  putPendingIntent: async (_db: unknown, _u: string, input: { text: string }) => {
+    held = input;
+    return PENDING;
+  },
+  takePendingIntent: async () => {
+    const h = held;
+    held = null;
+    return h ? { id: PENDING, input: h.text, decision: null } : null;
+  },
+}));
 vi.mock("@/lib/user-reminder-repo", () => ({
   countActiveReminders: async (_db: unknown, _u: string, kind?: string) =>
     kind === "repeat" ? repeating : active,
@@ -105,6 +118,7 @@ beforeEach(() => {
   snoozeFound = true;
   snoozed.length = 0;
   ticked.length = 0;
+  held = null;
   process.env.NEXT_PUBLIC_LIFF_ID = "1234-abcd";
 });
 
@@ -128,7 +142,7 @@ describe("setting a reminder from the chat", () => {
     expect(created[0]).toMatchObject({ body: "กินยา", repeat: "daily" });
     const b = setup();
     await handleEvent(say("เตือน พรุ่งนี้ จ่ายค่าเน็ต"), b.deps);
-    expect(said(b.reply)).toContain("ตั้งเป็น 09:00");
+    expect(said(b.reply)).toContain("ตั้งเป็น 08:30");
   });
 
   it("tells what is wrong instead of saving: no text, a time gone by, no time at all", async () => {
@@ -268,12 +282,12 @@ describe("the buttons under a reminder that was sent", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("🌅 พรุ่งนี้เช้า is 09:00 tomorrow", async () => {
+  it("🌅 พรุ่งนี้เช้า is 08:30 tomorrow", async () => {
     stored = once();
     const { deps, reply } = setup();
     await handleEvent(tap(`a=rms&id=${ID}&s=tm`), deps);
-    expect(snoozed).toEqual([[ID, "2026-10-29T02:00:00.000Z"]]);
-    expect(said(reply)).toBe("ได้เลย เดี๋ยวเตือนอีกทีพรุ่งนี้ 09:00 นะ 🌅");
+    expect(snoozed).toEqual([[ID, "2026-10-29T01:30:00.000Z"]]);
+    expect(said(reply)).toBe("ได้เลย เดี๋ยวเตือนอีกทีพรุ่งนี้ 08:30 นะ 🌅");
   });
 
   it("a repeating one gets this round again as a one-off, and keeps its rounds", async () => {
@@ -364,5 +378,64 @@ describe("after a reminder was changed on its page", () => {
     const { deps, reply } = setup();
     await handleEvent(say("แก้ไขเตือนเสร็จแล้ว #deadbeef"), deps);
     expect(said(reply)).toBe(REMINDER_GONE_TEXT);
+  });
+});
+
+describe("a weekday that does not fall on the nearest date asks first", () => {
+  const buttons = (reply: ReturnType<typeof setup>["reply"]) => JSON.stringify(sent(reply));
+
+  it("asks, naming both dates, and saves nothing yet", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("เตือนวันอาทิตย์ 27 ไปกินข้าวกับเพื่อน"), deps);
+    expect(created).toHaveLength(0);
+    expect(said(reply)).toContain("27 พ.ย. 2569");
+    expect(said(reply)).toContain("วันศุกร์");
+    expect(said(reply)).toContain("27 ธ.ค. 2569");
+    expect(buttons(reply)).toContain(`a=irp&id=${PENDING}&p=on:2026-12-27`);
+    expect(buttons(reply)).toContain(`a=irp&id=${PENDING}&p=on:2026-11-27`);
+    expect(buttons(reply)).toContain(`a=irp&id=${PENDING}&p=retype`);
+  });
+
+  it.each([
+    ["on:2026-12-27", "2026-12-27T01:30:00.000Z"],
+    ["on:2026-11-27", "2026-11-27T01:30:00.000Z"],
+  ])("a tap on %s saves it on that day at 08:30", async (pick, at) => {
+    await handleEvent(say("เตือนวันอาทิตย์ 27 ไปกินข้าวกับเพื่อน"), setup().deps);
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=${pick}`), deps);
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ body: "ไปกินข้าวกับเพื่อน" });
+    expect((created[0]?.remindAt as Date).toISOString()).toBe(at);
+    expect(said(reply)).toContain("ตั้งเตือนแล้ว");
+  });
+
+  it("a tap on พิมพ์วันใหม่ saves nothing and says how", async () => {
+    await handleEvent(say("เตือนวันอาทิตย์ 27 ไปกินข้าวกับเพื่อน"), setup().deps);
+    const { deps, reply } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=retype`), deps);
+    expect(created).toHaveLength(0);
+    expect(said(reply)).toContain("วันที่และเดือน");
+  });
+
+  it("no Saturday the 27th soon: offers the nearest 27th", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("เตือนวันเสาร์ 27 งานแต่ง"), deps);
+    expect(created).toHaveLength(0);
+    expect(buttons(reply)).toContain("p=on:2026-11-27");
+    expect(buttons(reply)).not.toContain("p=on:2026-12");
+  });
+
+  it.each(["on:2099-01-01", "on:2026-02-31", "on:2026-11-20"])(
+    "a day that was not offered (%s) saves nothing",
+    async (pick) => {
+      await handleEvent(say("เตือนวันอาทิตย์ 27 ไปกินข้าวกับเพื่อน"), setup().deps);
+      await handleEvent(tap(`a=irp&id=${PENDING}&p=${pick}`), setup().deps);
+      expect(created).toHaveLength(0);
+    },
+  );
+
+  it("a weekday that is right is saved at once", async () => {
+    await handleEvent(say("เตือนวันศุกร์ 27 งานเลี้ยง"), setup().deps);
+    expect(created).toHaveLength(1);
   });
 });

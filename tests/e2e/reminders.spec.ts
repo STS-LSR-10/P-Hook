@@ -458,12 +458,12 @@ test.describe("reminders page (360px)", () => {
     await expect(page.getByLabel("เวลา")).toHaveValue("11:00");
   });
 
-  test("a new reminder for another day starts at nine", async ({ page }) => {
+  test("a new reminder for another day starts at 08:30", async ({ page }) => {
     await mockApi(page, { "GET /api/me": ME_FREE, "GET /api/reminders": LIST(THREE) });
     await page.goto("/reminders");
     await page.getByRole("button", { name: "20 พ.ย. 2569, มีเตือน" }).click();
     await page.getByRole("button", { name: "เพิ่มการเตือนใหม่" }).click();
-    await expect(page.getByLabel("เวลา")).toHaveValue("09:00");
+    await expect(page.getByLabel("เวลา")).toHaveValue("08:30");
   });
 
   test("the newest finished one comes first", async ({ page }) => {

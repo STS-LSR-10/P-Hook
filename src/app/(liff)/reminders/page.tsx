@@ -35,6 +35,7 @@ import {
 } from "@/lib/thai-date";
 import {
   CATEGORY_INFO,
+  DEFAULT_TIME,
   MAX_CUSTOM_REMINDER_CATEGORIES,
   MAX_REMINDER_CATEGORY_NAME,
   MAX_REMINDER_TEXT,
@@ -867,7 +868,7 @@ function ReminderSheet({
   const { api } = useLiff();
   const start = reminder
     ? toBangkokInputValue(new Date(reminder.remindAt))
-    : `${day}T${day === today ? nextHour() : "09:00"}`;
+    : `${day}T${day === today ? nextHour() : DEFAULT_TIME.label}`;
   const series = reminder?.repeat ? reminder : null;
   const [body, setBody] = useState(reminder?.body ?? "");
   const [date, setDate] = useState(start.slice(0, 10));

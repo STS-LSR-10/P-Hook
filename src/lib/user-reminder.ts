@@ -9,7 +9,7 @@ export const MAX_REMINDER_TEXT = 200;
 /** A reminder further ahead than this is probably a typo in the date. */
 export const MAX_AHEAD_DAYS = 366;
 /** The time used when only a day was given ("พรุ่งนี้ จ่ายค่าไฟ"). */
-export const DEFAULT_HOUR = 9;
+export const DEFAULT_TIME = { hour: 8, minute: 30, label: "08:30" } as const;
 
 /** One-off reminders a plan may have waiting at once (each one is a push message, so also a cost guard). */
 const REMINDER_LIMIT: Record<Plan, number> = { free: 5, starter: 50, plus: 100, ultimate: 250 };
@@ -100,6 +100,15 @@ export const REPEAT_LABEL: Record<Repeat, string> = {
   monthly: t("ทุกเดือน"),
 };
 
+/** The weekday asked (0 Sunday), the nearest such day of the month, and the next one on that weekday. */
+export interface WeekdayMismatch {
+  asked: number;
+  /** "2026-11-27" */
+  nearest: string;
+  /** The same day of the month on the weekday asked, within three months; null when none. */
+  match: string | null;
+}
+
 export type ReminderParse =
   | {
       ok: true;
@@ -109,6 +118,8 @@ export type ReminderParse =
       timeDefaulted: boolean;
       /** A time alone had already gone by today, so it was set for tomorrow. */
       rolledToTomorrow: boolean;
+      /** "วันอาทิตย์ 27" when the nearest 27th is not a Sunday: worth asking before saving. */
+      weekdayMismatch?: WeekdayMismatch;
     }
   | { ok: false; reason: "no_text" | "no_time" | "past" | "too_far" };
 
@@ -292,6 +303,11 @@ function takeDate(s: string): { date: DateSpec | null; rest: string } {
   return { date: null, rest: s };
 }
 
+const weekdayOfYmd = (y: number, m: number, d: number) =>
+  new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+const ymdText = (y: number, m: number, d: number) =>
+  `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
 const addDays = (y: number, m: number, d: number, n: number) => {
   const t = new Date(Date.UTC(y, m - 1, d + n));
   return { year: t.getUTCFullYear(), month: t.getUTCMonth() + 1, day: t.getUTCDate() };
@@ -413,13 +429,14 @@ export function parseReminder(input: string, now: Date): ReminderParse {
 
   const today = bangkokParts(now);
   const at = (y: number, m: number, d: number) => {
-    const h = clock?.hour ?? DEFAULT_HOUR;
-    const mi = clock?.minute ?? 0;
+    const h = clock?.hour ?? DEFAULT_TIME.hour;
+    const mi = clock ? clock.minute : DEFAULT_TIME.minute;
     return clock?.midnight ? fromBangkok(y, m, d + 1, 0, 0) : fromBangkok(y, m, d, h, mi);
   };
   const future = (t: Date) => t.getTime() > now.getTime() + 30_000;
   const explicitDay = Boolean(dated.date) || Boolean(clock?.today);
   let remindAt: Date | null = null;
+  let weekdayMismatch: WeekdayMismatch | undefined;
   let rolledToTomorrow = false;
 
   if (!date || clock?.today) {
@@ -445,18 +462,28 @@ export function parseReminder(input: string, now: Date): ReminderParse {
       if (future(t)) remindAt = t;
     }
   } else if (date.kind === "dom") {
-    // with a weekday: a month soon (this one or the next two) where the day falls on it; else the
-    // next such day of the month, so a wrong weekday never pushes it far ahead
-    for (const span of date.weekday === undefined ? [14] : [3, 14]) {
-      for (let i = 0; i < span && !remindAt; i += 1) {
+    // the next such day of the month; with a weekday, also one soon (this month or the next two) that
+    // falls on it: that one is used, and a mismatch is said so it can be asked about
+    const next = (span: number, weekday?: number) => {
+      for (let i = 0; i < span; i += 1) {
         const month = ((today.month - 1 + i) % 12) + 1;
         const year = today.year + Math.floor((today.month - 1 + i) / 12);
         if (!isValidYmd(year, month, date.day)) continue;
-        const wd = new Date(Date.UTC(year, month - 1, date.day)).getUTCDay();
-        if (span === 3 && wd !== date.weekday) continue;
+        if (weekday !== undefined && weekdayOfYmd(year, month, date.day) !== weekday) continue;
         const t = at(year, month, date.day);
-        if (future(t)) remindAt = t;
+        if (future(t)) return { t, ymd: ymdText(year, month, date.day), year, month };
       }
+      return null;
+    };
+    const nearest = next(14);
+    const match = date.weekday === undefined ? null : next(3, date.weekday);
+    remindAt = (match ?? nearest)?.t ?? null;
+    if (
+      nearest &&
+      date.weekday !== undefined &&
+      weekdayOfYmd(nearest.year, nearest.month, date.day) !== date.weekday
+    ) {
+      weekdayMismatch = { asked: date.weekday, nearest: nearest.ymd, match: match?.ymd ?? null };
     }
   } else {
     if (!isValidYmd(date.year ?? today.year, date.month, date.day)) {
@@ -479,7 +506,15 @@ export function parseReminder(input: string, now: Date): ReminderParse {
   }
   if (!remindAt) return { ok: false, reason: explicitDay ? "past" : "no_time" };
   if (remindAt.getTime() > maxAt) return { ok: false, reason: "too_far" };
-  return { ok: true, body, remindAt, repeat, timeDefaulted: !clock, rolledToTomorrow };
+  return {
+    ok: true,
+    body,
+    remindAt,
+    repeat,
+    timeDefaulted: !clock,
+    rolledToTomorrow,
+    ...(weekdayMismatch ? { weekdayMismatch } : {}),
+  };
 }
 
 /** "พรุ่งนี้ 28 ต.ค. 2569 09:00 · ทุกวัน": how a reminder is shown back to the person. */
@@ -520,12 +555,13 @@ export const isSnooze = (s: string | null): s is Snooze => s === "10" || s === "
 
 /**
  * When a snoozed reminder comes back: in 10 minutes or an hour (on the minute, as the cron runs), or
- * at 09:00 tomorrow; in the small hours "tomorrow morning" is this morning.
+ * at 08:30 tomorrow; in the small hours "tomorrow morning" is this morning.
  */
 export function snoozeTime(snooze: Snooze, now: Date): Date {
   if (snooze === "tm") {
     const p = bangkokParts(now);
-    return fromBangkok(p.year, p.month, p.day + (p.hour < 5 ? 0 : 1), DEFAULT_HOUR);
+    const day = p.day + (p.hour < 5 ? 0 : 1);
+    return fromBangkok(p.year, p.month, day, DEFAULT_TIME.hour, DEFAULT_TIME.minute);
   }
   const minute = Math.ceil(now.getTime() / 60_000) * 60_000;
   return new Date(minute + Number(snooze) * 60_000);

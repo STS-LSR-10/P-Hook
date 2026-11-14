@@ -9,6 +9,7 @@ import { queryCommand } from "@/lib/ai/query-command";
 import { syncReminderToGoogle } from "@/lib/google/sync";
 import { later } from "@/lib/later";
 import type { AiCharge } from "@/lib/ai/ai-quota";
+import { REMINDER_RETYPE_TEXT } from "./reminder-weekday";
 import { ASKS_RE, clockIsTheAmount, needsRouter, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
@@ -80,7 +81,11 @@ export interface IntentDeps {
 }
 
 /** A text with postback buttons that answer the waiting message `id`. */
-function choices(message: string, id: string, picks: [label: string, pick: string][]): LineMessage {
+export function choices(
+  message: string,
+  id: string,
+  picks: [label: string, pick: string][],
+): LineMessage {
   return {
     ...text(message),
     quickReply: {
@@ -330,6 +335,10 @@ export async function handleIntentPick(
   if (pick === "yes" && decision) return execute(input, decision, user, deps);
   if (pick === "note") return deps.run({ kind: "note-add", body: input });
   if (pick === "reminder") return deps.run({ kind: "remind-add", text: input });
+  // the day picked under "วันอาทิตย์ 27" when the 27th was not a Sunday
+  if (pick.startsWith("on:"))
+    return deps.run({ kind: "remind-add", text: input, on: pick.slice(3) });
+  if (pick === "retype") return [text(REMINDER_RETYPE_TEXT)];
   if (pick === "money") return deps.recordMoney(input);
   if (pick === "no") {
     return chatting && decision ? deps.ask(input, true) : [text(INTENT_CANCELLED_TEXT)];

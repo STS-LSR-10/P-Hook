@@ -1,4 +1,5 @@
 import { loadBonus } from "@/lib/addons-repo";
+import { weekdayNote } from "./reminder-weekday";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cleanOwlAnswer, MAX_QUESTION_LENGTH, needsPersonalData, splitChat } from "@/lib/ai/owl";
 import { fileCapacity, formatBytes, type FileDto } from "@/lib/file";
@@ -271,6 +272,7 @@ export async function addGroupReminder(
       repeat: parsed.repeat,
       timeDefaulted: parsed.timeDefaulted,
       rolledToTomorrow: parsed.rolledToTomorrow,
+      note: parsed.weekdayMismatch ? weekdayNote(parsed.weekdayMismatch) : undefined,
       title: "ตั้งเตือนกลุ่มแล้ว",
       now: ctx.deps.now(),
       cancelData: `a=grmx&id=${made.id}`,

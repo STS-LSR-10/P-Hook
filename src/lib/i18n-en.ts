@@ -2429,8 +2429,25 @@ export const EN: Record<string, string> = {
   "ตั้งเตือนแล้ว ⏰": "Reminder set ⏰",
   "เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)":
     "That time today has passed, so it's set for tomorrow (if not, cancel and set it again)",
-  "ไม่ได้บอกเวลา พี่ฮูกเลยตั้งเป็น 09:00 ถ้าไม่ใช่ กด “เปลี่ยนเวลา” ได้เลย":
-    "No time given, so P'Hook set 09:00. If that's wrong, tap “Change time”",
+  "ไม่ได้บอกเวลา พี่ฮูกเลยตั้งเป็น 08:30 ถ้าไม่ใช่ กด “เปลี่ยนเวลา” ได้เลย":
+    "No time given, so P'Hook set 08:30. If that's wrong, tap “Change time”",
+  "{0} เป็น{1} ไม่ใช่{2}นะ": "{0} is a {1}, not a {2}.",
+  "{0} {1}ที่ {2} ที่ใกล้ที่สุดคือ {3} ต้องการเตือนวันนั้นใช่ไหม ถ้าไม่ใช่ เลือกด้านล่าง หรือพิมพ์วันที่และเดือนใหม่ได้เลย":
+    "{0} The nearest {1} that falls on day {2} is {3}. Remind you then? If not, pick below or type a new day and month",
+  "{0} ต้องการเตือน {1} ใช่ไหม ถ้าไม่ใช่ พิมพ์วันที่และเดือนใหม่ได้เลย":
+    "{0} Remind you on {1}? If not, type a new day and month",
+  พิมพ์วันใหม่: "Type a new day",
+  วันอาทิตย์: "Sunday",
+  วันจันทร์: "Monday",
+  วันอังคาร: "Tuesday",
+  วันพุธ: "Wednesday",
+  วันพฤหัสบดี: "Thursday",
+  วันศุกร์: "Friday",
+  วันเสาร์: "Saturday",
+  "{0} เป็น{1} ไม่ใช่{2} พี่ฮูกเลยตั้งเป็น {3} ถ้าไม่ใช่ ยกเลิกแล้วพิมพ์วันที่และเดือนใหม่นะ":
+    "{0} is a {1}, not a {2}, so P'Hook set {3}. If that's wrong, cancel and type a new day and month",
+  "ได้เลย พิมพ์ใหม่พร้อมวันที่และเดือนนะ เช่น “เตือน 27 ธ.ค. 8 โมงครึ่ง ไปกินข้าวกับเพื่อน”":
+    "Sure, type it again with the day and month, e.g. “เตือน 27 ธ.ค. 8 โมงครึ่ง ไปกินข้าวกับเพื่อน”",
   "เพิ่มลงปฏิทินในมือถือ ให้มือถือเตือนเองตรงเวลา":
     "Add it to your phone's calendar so the phone reminds you on time",
   ยกเลิกเตือนนี้: "Cancel this reminder",

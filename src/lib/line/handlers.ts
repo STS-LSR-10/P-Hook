@@ -177,6 +177,8 @@ import {
 import { forgetMedia, listFiles, rememberMedia, takeFileWait } from "@/lib/file-repo";
 import type { SaveDeps } from "@/lib/file-save";
 import { handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
+import { onDay, weekdayQuestion } from "./reminder-weekday";
+import { putPendingIntent } from "@/lib/pending-intent-repo";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
 import { countNotes, createNote, deleteNote, listNotes } from "@/lib/note-repo";
 import { looksSecret } from "@/lib/secret-text";
@@ -223,6 +225,7 @@ import {
   TAGS_LOCKED_TEXT,
   ERROR_TEXT,
   MEMORY_PLUS_HINT_TEXT,
+  INTENT_EXPIRED_TEXT,
   NOT_FOUND_TEXT,
   PHOTO_ASK_REPLACE_TEXT,
   PHOTO_ASK_TEXT,
@@ -2690,7 +2693,26 @@ async function runCommand(
     }
 
     case "remind-add": {
-      const parsed = parseReminder(command.text, deps.now());
+      let parsed = parseReminder(command.text, deps.now());
+      if (parsed.ok && command.on) {
+        // a day picked under the question: only one of the two offered, still ahead
+        const at = parsed.weekdayMismatch
+          ? onDay(parsed.remindAt, parsed.weekdayMismatch, command.on)
+          : null;
+        if (!at) return [text(INTENT_EXPIRED_TEXT)];
+        if (at.getTime() <= deps.now().getTime()) return [text(REMINDER_PAST_TEXT)];
+        parsed = { ...parsed, remindAt: at, weekdayMismatch: undefined };
+      }
+      if (parsed.ok && parsed.weekdayMismatch) {
+        // "วันอาทิตย์ 27" and the 27th is a Friday: ask which day before saving
+        const id = await putPendingIntent(
+          db,
+          user.id,
+          { text: command.text, decision: null },
+          deps.now(),
+        );
+        return [weekdayQuestion(parsed.weekdayMismatch, id)];
+      }
       if (!parsed.ok) {
         return [
           text(

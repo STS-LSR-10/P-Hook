@@ -33,7 +33,8 @@ export type Command =
   | { kind: "file-rename"; name: string }
   /** Look for `term` in entries, notes and files at once (or in one of them). */
   | { kind: "find"; term: string; in: FindIn }
-  | { kind: "remind-add"; text: string }
+  /** `on`: a day picked already ("2026-12-27"), when the weekday said did not fit the date. */
+  | { kind: "remind-add"; text: string; on?: string }
   | { kind: "owl-start" }
   | { kind: "open-page"; page: "summary" | "transactions" | "budgets" | "analytics" }
   | { kind: "owl-ask"; question: string }

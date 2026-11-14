@@ -19,6 +19,8 @@ export interface ReminderCardInput {
   listUrl?: string;
   /** What the cancel button sends (a group's reminder has its own). */
   cancelData?: string;
+  /** A line of its own on the card ("the 27th is not a Sunday ..."). */
+  note?: string;
   /** The card's title (a group's reminder says so). */
   title?: string;
   /** "Add to calendar" links (a group's reminder): Google Calendar, and an .ics for the phone. */
@@ -47,11 +49,12 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
   const p = bangkokParts(input.remindAt);
   const clock = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
   const notes = [
+    ...(input.note ? [input.note] : []),
     ...(input.rolledToTomorrow
       ? [t("เวลานี้ของวันนี้ผ่านไปแล้ว เลยตั้งเป็นพรุ่งนี้ (ถ้าไม่ใช่ ยกเลิกแล้วตั้งใหม่ได้)")]
       : []),
     ...(input.timeDefaulted
-      ? [t("ไม่ได้บอกเวลา พี่ฮูกเลยตั้งเป็น 09:00 ถ้าไม่ใช่ กด “เปลี่ยนเวลา” ได้เลย")]
+      ? [t("ไม่ได้บอกเวลา พี่ฮูกเลยตั้งเป็น 08:30 ถ้าไม่ใช่ กด “เปลี่ยนเวลา” ได้เลย")]
       : []),
   ];
   return {
