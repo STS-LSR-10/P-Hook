@@ -8,6 +8,7 @@ import {
   REMINDER_HANDLED_TEXT,
   REMINDER_NO_TEXT_TEXT,
   REMINDER_PAST_TEXT,
+  REMINDER_TOO_FAR_TEXT,
   REMINDER_USAGE_TEXT,
 } from "./messages";
 
@@ -23,6 +24,7 @@ let stored: ReminderDto | null = null;
 let snoozeFound = true;
 const snoozed: [string, string][] = [];
 const ticked: string[] = [];
+const rescheduled: [string, string][] = [];
 const ID = "11111111-1111-4111-8111-111111111111";
 
 vi.mock("@/lib/repo", async (original) => ({
@@ -58,6 +60,10 @@ vi.mock("@/lib/user-reminder-repo", () => ({
     return { id: ID, body: input.body, remindAt: String(input.remindAt), repeat: input.repeat };
   },
   getReminder: async () => stored,
+  rescheduleReminder: async (_db: unknown, _u: string, id: string, input: { remindAt: Date }) => {
+    rescheduled.push([id, input.remindAt.toISOString()]);
+    return stored ? { ...stored, remindAt: input.remindAt.toISOString() } : null;
+  },
   snoozeReminder: async (_db: unknown, _u: string, id: string, at: Date) => {
     snoozed.push([id, at.toISOString()]);
     return snoozeFound ? { ...stored, status: "active", remindAt: at.toISOString() } : null;
@@ -118,6 +124,7 @@ beforeEach(() => {
   snoozeFound = true;
   snoozed.length = 0;
   ticked.length = 0;
+  rescheduled.length = 0;
   held = null;
   process.env.NEXT_PUBLIC_LIFF_ID = "1234-abcd";
 });
@@ -437,5 +444,64 @@ describe("a weekday that does not fall on the nearest date asks first", () => {
   it("a weekday that is right is saved at once", async () => {
     await handleEvent(say("เตือนวันศุกร์ 27 งานเลี้ยง"), setup().deps);
     expect(created).toHaveLength(1);
+  });
+});
+
+describe("เปลี่ยนเวลา with LINE's picker", () => {
+  const pick = (datetime: string): LineEvent => ({
+    type: "postback",
+    replyToken: "rt",
+    source: { type: "user", userId: "U" + "a".repeat(32) },
+    postback: { data: `a=rmt&id=${ID}`, params: { datetime } },
+  });
+  const waiting = (over: Partial<ReminderDto> = {}): ReminderDto => ({
+    id: ID,
+    body: "ไปกินข้าวกับเพื่อน",
+    remindAt: "2026-12-27T01:30:00Z",
+    repeat: null,
+    status: "active",
+    category: null,
+    ...over,
+  });
+
+  it("moves it to the time picked (Bangkok) and answers with a line and a fresh card", async () => {
+    stored = waiting();
+    const { deps, reply } = setup();
+    await handleEvent(pick("2026-11-29T11:00"), deps);
+    expect(rescheduled).toEqual([[ID, "2026-11-29T04:00:00.000Z"]]);
+    expect(said(reply)).toContain("ไปกินข้าวกับเพื่อน");
+    expect(said(reply)).toContain("29 พ.ย. 2569 11:00");
+    expect(said(reply)).toContain("แก้ไขเตือนแล้ว");
+  });
+
+  it("takes a small t too, as LINE may send", async () => {
+    stored = waiting();
+    await handleEvent(pick("2026-11-29t11:00"), setup().deps);
+    expect(rescheduled).toEqual([[ID, "2026-11-29T04:00:00.000Z"]]);
+  });
+
+  it("a repeating one keeps repeating from the new time", async () => {
+    stored = waiting({ repeat: "daily" });
+    await handleEvent(pick("2026-11-29T07:15"), setup().deps);
+    expect(rescheduled).toEqual([[ID, "2026-11-29T00:15:00.000Z"]]);
+  });
+
+  it.each([
+    ["a time already gone", waiting(), "2026-10-28T09:00", REMINDER_PAST_TEXT],
+    ["more than a year ahead", waiting(), "2028-01-01T09:00", REMINDER_TOO_FAR_TEXT],
+    [
+      "a reminder already sent",
+      waiting({ status: "done" }),
+      "2026-11-29T11:00",
+      REMINDER_GONE_TEXT,
+    ],
+    ["a reminder that is gone", null, "2026-11-29T11:00", REMINDER_GONE_TEXT],
+    ["no time from the picker", waiting(), "", REMINDER_GONE_TEXT],
+  ])("%s changes nothing", async (_name, s, datetime, answer) => {
+    stored = s;
+    const { deps, reply } = setup();
+    await handleEvent(pick(datetime), deps);
+    expect(rescheduled).toEqual([]);
+    expect(said(reply)).toBe(answer);
   });
 });

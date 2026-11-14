@@ -1,6 +1,6 @@
 import type { LineMessage } from "@/lib/types";
 import type { ReminderDto } from "@/lib/user-reminder";
-import { REPEAT_LABEL, type Repeat } from "@/lib/user-reminder";
+import { MAX_AHEAD_DAYS, REPEAT_LABEL, type Repeat } from "@/lib/user-reminder";
 import { bangkokParts, formatThaiDate, fromBangkok } from "@/lib/thai-date";
 import { compactFooter, compactHeader, outlinePill } from "./card-style";
 import { COLOR } from "./flex";
@@ -33,14 +33,30 @@ export interface ReminderCardInput {
 
 const INK = "#0B5D4F";
 
+/** "2026-10-29T09:00" in Bangkok, the form LINE's picker takes and gives back. */
+export const pickerTime = (at: Date): string => {
+  const p = bangkokParts(at);
+  const two = (n: number) => String(n).padStart(2, "0");
+  return `${p.year}-${two(p.month)}-${two(p.day)}T${two(p.hour)}:${two(p.minute)}`;
+};
+
+/** LINE's own date and time picker, from now to a year on, starting at the reminder's time. */
+function timePicker(id: string, remindAt: Date, now: Date) {
+  const from = new Date(Math.ceil(now.getTime() / 60_000) * 60_000);
+  return {
+    type: "datetimepicker",
+    label: t("เปลี่ยนเวลา"),
+    data: `a=rmt&id=${id}`,
+    mode: "datetime",
+    initial: pickerTime(remindAt > from ? remindAt : from),
+    min: pickerTime(from),
+    max: pickerTime(new Date(from.getTime() + MAX_AHEAD_DAYS * 86_400_000)),
+  };
+}
+
 /** "Reminder set" card: what, the time large with its day, and buttons to change the time or cancel. */
 export function buildReminderCard(input: ReminderCardInput): LineMessage {
   const now = input.now ?? new Date();
-  // a person's own reminder opens on its page ready to change; a group's goes to the group's page
-  const changeUrl =
-    input.listUrl && !input.cancelData
-      ? `${input.listUrl}${input.listUrl.includes("?") ? "&" : "?"}edit=${input.id}`
-      : input.listUrl;
   // a personal reminder: a page that asks which calendar (a group's has its own two buttons)
   const calendarUrl =
     input.listUrl && !input.cancelData && !input.calendar && !input.listUrl.includes("?")
@@ -95,6 +111,16 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
         backgroundColor: COLOR.surface,
         paddingAll: "12px",
         spacing: "sm",
+        // a person's own: a tap opens its page to change it (LINE on a computer has no picker)
+        ...(input.listUrl && !input.cancelData
+          ? {
+              action: {
+                type: "uri",
+                label: t("แก้ไขเตือน"),
+                uri: `${input.listUrl}${input.listUrl.includes("?") ? "&" : "?"}edit=${input.id}`,
+              },
+            }
+          : {}),
         contents: [
           {
             type: "text",
@@ -188,15 +214,18 @@ export function buildReminderCard(input: ReminderCardInput): LineMessage {
             layout: "horizontal",
             spacing: "sm",
             contents: [
-              ...(input.listUrl
-                ? [
-                    pill(t("เปลี่ยนเวลา"), {
-                      type: "uri",
-                      label: t("เปลี่ยนเวลา"),
-                      uri: changeUrl,
-                    }),
-                  ]
-                : []),
+              // a person's own: LINE's date and time picker (answered by "a=rmt"); a group's: its page
+              ...(!input.cancelData
+                ? [pill(t("เปลี่ยนเวลา"), timePicker(input.id, input.remindAt, now))]
+                : input.listUrl
+                  ? [
+                      pill(t("เปลี่ยนเวลา"), {
+                        type: "uri",
+                        label: t("เปลี่ยนเวลา"),
+                        uri: input.listUrl,
+                      }),
+                    ]
+                  : []),
               pill(
                 t("ยกเลิก"),
                 {

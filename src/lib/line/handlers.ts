@@ -137,11 +137,14 @@ import {
   countActiveReminders,
   createReminder,
   getReminder,
+  rescheduleReminder,
   listReminders,
   snoozeReminder,
 } from "@/lib/user-reminder-repo";
 import {
+  MAX_AHEAD_DAYS,
   capacityOf,
+  describeReminder,
   isSnooze,
   parseReminder,
   reminderKind,
@@ -2946,6 +2949,50 @@ async function answerReminderButton(
 
 // ───────────────────────── postbacks ─────────────────────────
 
+/** A reminder moved to the Bangkok time picked ("2026-11-29T11:00"); a repeat goes on from it. */
+async function changeReminderTime(
+  id: string,
+  picked: string | undefined,
+  user: UserRow,
+  deps: HandlerDeps,
+): Promise<LineMessage[]> {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2})$/.exec(picked ?? "");
+  const reminder = await getReminder(deps.db, user.id, id);
+  if (!m || !reminder || reminder.status !== "active") return [text(REMINDER_GONE_TEXT)];
+  const [year, month, day, hour, minute] = m.slice(1).map(Number) as [
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
+  if (!isValidYmd(year, month, day) || hour > 23 || minute > 59) return [text(REMINDER_GONE_TEXT)];
+  const at = fromBangkok(year, month, day, hour, minute);
+  const now = deps.now().getTime();
+  if (at.getTime() <= now + 30_000) return [text(REMINDER_PAST_TEXT)];
+  if (at.getTime() > now + MAX_AHEAD_DAYS * 86_400_000) return [text(REMINDER_TOO_FAR_TEXT)];
+
+  const moved = await rescheduleReminder(deps.db, user.id, id, {
+    remindAt: at,
+    repeat: reminder.repeat,
+  });
+  if (!moved) return [text(REMINDER_GONE_TEXT)];
+  await later(() => syncReminderToGoogle(deps.db, user.id, moved));
+  return [
+    text(tr("เรียบร้อย เรื่อง {0} จะเตือน {1}", moved.body, describeReminder(at, moved.repeat))),
+    buildReminderCard({
+      id: moved.id,
+      body: moved.body,
+      remindAt: at,
+      repeat: moved.repeat,
+      timeDefaulted: false,
+      listUrl: pageUrl("/reminders"),
+      now: deps.now(),
+      edited: true,
+    }),
+  ];
+}
+
 async function handlePostback(
   data: string,
   user: UserRow,
@@ -2966,6 +3013,12 @@ async function handlePostback(
     if (!(await cancelReminder(deps.db, user.id, id))) return [text(REMINDER_GONE_TEXT)];
     await later(() => removeGoogleEvent(deps.db, user.id, eventId));
     return [text(REMINDER_CANCELLED_TEXT)];
+  }
+  // "เปลี่ยนเวลา" on a reminder's card: the time picked in LINE's own picker.
+  if (action === "rmt") {
+    const id = params.get("id") ?? "";
+    if (!UUID_RE.test(id)) return [text(NOT_FOUND_TEXT)];
+    return changeReminderTime(id, pickerParams?.datetime, user, deps);
   }
   // The buttons that pop up under a reminder when it arrives.
   if (action === "rmd" || action === "rms") {

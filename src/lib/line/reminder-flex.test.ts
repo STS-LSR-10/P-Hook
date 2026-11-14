@@ -52,19 +52,17 @@ describe("reminder card", () => {
     expect(json({ repeat: "daily" })).toContain('"text":"ทุกวัน"');
   });
 
-  it("two outlined buttons: change the time (the reminders page) and cancel", () => {
+  it("two outlined buttons: change the time (LINE's picker) and cancel", () => {
     const out = json({ listUrl: "https://liff.line.me/x/reminders" });
-    // the page opens on this reminder, ready to change
-    expect(out).toContain(
-      `"label":"เปลี่ยนเวลา","uri":"https://liff.line.me/x/reminders?edit=${base.id}"`,
-    );
+    expect(out).toContain(`"label":"เปลี่ยนเวลา","data":"a=rmt&id=${base.id}"`);
     // a group's goes to the group's page as it is
     expect(
       json({ listUrl: "https://liff.line.me/x/reminders?g=g1", cancelData: "a=grmx&id=1" }),
     ).toContain('"uri":"https://liff.line.me/x/reminders?g=g1"');
     expect(out).toContain(`"data":"a=rmx&id=${base.id}"`);
-    // no page known: only cancel
-    expect(json()).not.toContain("เปลี่ยนเวลา");
+    // the picker needs no page; a group's card with no page known has only cancel
+    expect(json()).toContain("a=rmt");
+    expect(json({ cancelData: "a=grmx&id=1" })).not.toContain("เปลี่ยนเวลา");
   });
 
   it("a personal one can be added to a calendar, on a page that asks which", () => {
@@ -153,5 +151,71 @@ describe("the icon in a card's header", () => {
   it("the reminder list has an hourglass", () => {
     const card = buildReminderListCard({ items: [], total: 0, now: NOW });
     expect(title(card)).toBe("⏳ เตือนที่รออยู่");
+  });
+});
+
+describe("changing the time on the card", () => {
+  type Btn = {
+    action: {
+      type: string;
+      data?: string;
+      uri?: string;
+      mode?: string;
+      initial?: string;
+      min?: string;
+      max?: string;
+    };
+  };
+  const buttons = (over: Partial<Parameters<typeof buildReminderCard>[0]> = {}) => {
+    const found: Btn[] = [];
+    const walk = (n: unknown) => {
+      if (Array.isArray(n)) n.forEach(walk);
+      else if (n && typeof n === "object") {
+        const o = n as Record<string, unknown>;
+        if (o.action && (o.action as { label?: string }).label === "เปลี่ยนเวลา")
+          found.push(o as Btn);
+        Object.values(o).forEach(walk);
+      }
+    };
+    walk(card({ listUrl: "https://liff.line.me/x/reminders", ...over }));
+    return found;
+  };
+
+  it("opens LINE's own date and time picker, starting at the reminder's time, never in the past", () => {
+    const [b] = buttons();
+    expect(b?.action).toMatchObject({
+      type: "datetimepicker",
+      data: `a=rmt&id=${base.id}`,
+      mode: "datetime",
+      initial: "2026-10-29T09:00",
+      min: "2026-10-28T10:00",
+      max: "2027-10-29T10:00",
+    });
+  });
+
+  it("a reminder already due starts the picker now", () => {
+    const [b] = buttons({ remindAt: new Date("2026-10-28T01:00:00Z") });
+    expect(b?.action.initial).toBe("2026-10-28T10:00");
+  });
+
+  it("tapping the card opens the page to change it (LINE on a computer has no picker)", () => {
+    const body = (
+      card({ listUrl: "https://liff.line.me/x/reminders" }).contents as unknown as {
+        body: { action?: { type: string; uri: string } };
+      }
+    ).body;
+    expect(body.action).toEqual({
+      type: "uri",
+      label: "แก้ไขเตือน",
+      uri: `https://liff.line.me/x/reminders?edit=${base.id}`,
+    });
+    expect(
+      (card().contents as unknown as { body: { action?: unknown } }).body.action,
+    ).toBeUndefined();
+  });
+
+  it("a group's card still opens the group's page", () => {
+    const [b] = buttons({ cancelData: "a=grmx&id=x" });
+    expect(b?.action.type).toBe("uri");
   });
 });

@@ -2437,6 +2437,8 @@ export const EN: Record<string, string> = {
   "{0} ต้องการเตือน {1} ใช่ไหม ถ้าไม่ใช่ พิมพ์วันที่และเดือนใหม่ได้เลย":
     "{0} Remind you on {1}? If not, type a new day and month",
   พิมพ์วันใหม่: "Type a new day",
+  แก้ไขเตือน: "Edit reminder",
+  "เรียบร้อย เรื่อง {0} จะเตือน {1}": "Done. P'Hook will remind you about {0} on {1}",
   วันอาทิตย์: "Sunday",
   วันจันทร์: "Monday",
   วันอังคาร: "Tuesday",
