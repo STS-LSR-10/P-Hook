@@ -16,19 +16,19 @@ import {
 
 describe("pricing", () => {
   it("has the agreed prices", () => {
-    expect(PRICES.starter).toEqual({ monthly: 49, yearly: 349 });
-    expect(PRICES.plus).toEqual({ monthly: 129, yearly: 699 });
-    expect(PRICES.ultimate).toEqual({ monthly: 299, yearly: 1990 });
+    expect(PRICES.starter).toEqual({ monthly: 49, yearly: 449 });
+    expect(PRICES.plus).toEqual({ monthly: 129, yearly: 1090 });
+    expect(PRICES.ultimate).toEqual({ monthly: 289, yearly: 2590 });
   });
 
   it("yearly is cheaper than twelve months and per-day is derived", () => {
     for (const p of Object.values(PRICES)) expect(p.yearly).toBeLessThan(p.monthly * 12);
-    expect(yearlyPerDay(PRICES.starter)).toBe("1.0");
-    expect(yearlyPerDay(PRICES.plus)).toBe("1.9");
-    expect(yearlyPerDay(PRICES.ultimate)).toBe("5.5");
-    expect(yearlySavingPercent(PRICES.starter)).toBe(41);
-    expect(yearlySavingPercent(PRICES.plus)).toBe(55);
-    expect(yearlySavingPercent(PRICES.ultimate)).toBe(45);
+    expect(yearlyPerDay(PRICES.starter)).toBe("1.2");
+    expect(yearlyPerDay(PRICES.plus)).toBe("3.0");
+    expect(yearlyPerDay(PRICES.ultimate)).toBe("7.1");
+    expect(yearlySavingPercent(PRICES.starter)).toBe(24);
+    expect(yearlySavingPercent(PRICES.plus)).toBe(30);
+    expect(yearlySavingPercent(PRICES.ultimate)).toBe(25);
   });
 
   it("every row has four cells (Free, Starter, Pro, Elite) and a lower plan never has more", () => {
@@ -105,19 +105,19 @@ describe("prepaidUpgradeQuote", () => {
   const inDays = (d: number) => new Date(now.getTime() + d * 86_400_000);
 
   it("monthly prepaid: the daily price difference times the days left, rounded up", () => {
-    // (299 - 129) / 30 * 15 = 85
+    // (289 - 129) / 30 * 15 = 80
     expect(
       prepaidUpgradeQuote({ from: "plus", to: "ultimate", months: 1, expiresAt: inDays(15), now }),
-    ).toEqual({ amountBaht: 85, days: 15 });
-    // 10 days: 170/30*10 = 56.67 -> 57
+    ).toEqual({ amountBaht: 80, days: 15 });
+    // 10 days: 160/30*10 = 53.33 -> 54
     expect(
       prepaidUpgradeQuote({ from: "plus", to: "ultimate", months: 1, expiresAt: inDays(10), now })
         ?.amountBaht,
-    ).toBe(57);
+    ).toBe(54);
   });
 
   it("yearly prepaid uses the yearly rates", () => {
-    // (1990 - 699) / 365 * 200 = 707.4 -> 708
+    // (2590 - 1090) / 365 * 200 = 821.9 -> 822
     expect(
       prepaidUpgradeQuote({
         from: "plus",
@@ -126,7 +126,7 @@ describe("prepaidUpgradeQuote", () => {
         expiresAt: inDays(200),
         now,
       }),
-    ).toEqual({ amountBaht: 708, days: 200 });
+    ).toEqual({ amountBaht: 822, days: 200 });
   });
 
   it("works from Starter too", () => {
@@ -185,9 +185,9 @@ describe("the AI quota on the plan table", () => {
     const row = FEATURE_GROUPS.flatMap((g) => g.rows).find((r) => r.label.includes("ถาม AI"));
     expect(row?.cells).toEqual([
       "50 ครั้ง/เดือน",
-      "600 ครั้ง/เดือน",
-      "1,500 ครั้ง/เดือน",
-      "3,000 ครั้ง/เดือน",
+      "500 ครั้ง/เดือน",
+      "1,200 ครั้ง/เดือน",
+      "2,300 ครั้ง/เดือน",
     ]);
   });
 });

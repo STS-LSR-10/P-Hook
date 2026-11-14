@@ -71,7 +71,7 @@ export const PHOTOS_PER_MONTH = 100;
  * Slips a person can have read per month, by plan. Free has none a month: its first
  * FREE_SLIPS_TOTAL are a taste for life (see below).
  */
-export const SLIP_LIMIT: Record<Plan, number> = { free: 0, starter: 60, plus: 250, ultimate: 600 };
+export const SLIP_LIMIT: Record<Plan, number> = { free: 0, starter: 45, plus: 180, ultimate: 400 };
 
 /** Slip photos a Free account can have read, ever (a taste of the paid plans). */
 export const FREE_SLIPS_TOTAL = 10;
@@ -83,7 +83,7 @@ export const FREE_SLIPS_TOTAL = 10;
 export const FAIR_USE = { smartParse: 300 } as const;
 
 /** Voice messages a person can have read per month, by plan (Free has ten for life). */
-export const VOICE_LIMIT: Record<Plan, number> = { free: 0, starter: 30, plus: 200, ultimate: 400 };
+export const VOICE_LIMIT: Record<Plan, number> = { free: 0, starter: 30, plus: 150, ultimate: 250 };
 
 /** Voice messages a Free account can have read, ever. */
 export const FREE_VOICE_TOTAL = 10;
@@ -106,9 +106,9 @@ export const GROUP_REMINDS_PER_MONTH: Record<Plan, number> = {
  */
 export const GROUP_PUSH_PER_MONTH: Record<Plan, number> = {
   free: 0,
-  starter: 50,
+  starter: 30,
   plus: 100,
-  ultimate: 300,
+  ultimate: 250,
 };
 
 /** LINE groups an owner may keep a ledger in, and how many people one ledger serves, by plan. */
@@ -120,10 +120,10 @@ export const GROUP_LEDGER_LIMIT: Record<Plan, { groups: number; members: number 
 };
 
 /** PDF files (statements, bills, lists) a person can have read per month. Free has none. */
-export const PDF_LIMIT: Record<Plan, number> = { free: 0, starter: 0, plus: 10, ultimate: 30 };
+export const PDF_LIMIT: Record<Plan, number> = { free: 0, starter: 0, plus: 5, ultimate: 15 };
 
 /** Questions to พี่ฮูก (the AI assistant) per month, by plan. Each one is a paid AI call. */
-export const OWL_LIMIT: Record<Plan, number> = { free: 3, starter: 20, plus: 50, ultimate: 200 };
+export const OWL_LIMIT: Record<Plan, number> = { free: 3, starter: 15, plus: 40, ultimate: 100 };
 
 /**
  * "ถาม AI" per month: every chat message the AI reads (money, reminder, note, file, search) and every
@@ -131,9 +131,9 @@ export const OWL_LIMIT: Record<Plan, number> = { free: 3, starter: 20, plus: 50,
  */
 export const AI_CHAT_LIMIT: Record<Plan, number> = {
   free: 50,
-  starter: 600,
-  plus: 1500,
-  ultimate: 3000,
+  starter: 500,
+  plus: 1200,
+  ultimate: 2300,
 };
 
 /** Recurring entries ("รายการประจำ") a plan may have set up at once. */

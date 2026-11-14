@@ -23,20 +23,20 @@ describe("buildCheckoutFields", () => {
     expect(f.mode).toBe("subscription");
     expect(Object.keys(f).some((k) => k.startsWith("payment_method_types"))).toBe(false);
     expect(f["line_items[0][price_data][currency]"]).toBe("thb");
-    expect(f["line_items[0][price_data][unit_amount]"]).toBe("69900"); // ฿699 in satang
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("109000"); // ฿1,090 in satang
     expect(f["line_items[0][price_data][recurring][interval]"]).toBe("year");
     expect(f["subscription_data[metadata][user_id]"]).toBe(USER);
     expect(f["subscription_data[metadata][plan]"]).toBe("plus");
     expect(f["subscription_data[metadata][period]"]).toBe("yearly");
   });
 
-  it("monthly Elite card costs ฿299 and renews monthly", () => {
+  it("monthly Elite card costs ฿289 and renews monthly", () => {
     const f = buildCheckoutFields(
       { userId: USER, plan: "ultimate", period: "monthly", method: "card" },
       BASE,
       AFTER,
     );
-    expect(f["line_items[0][price_data][unit_amount]"]).toBe("29900");
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("28900");
     expect(f["line_items[0][price_data][recurring][interval]"]).toBe("month");
   });
 
@@ -51,11 +51,11 @@ describe("buildCheckoutFields", () => {
       ];
     for (const day of [EARLIER, AFTER]) {
       expect(price("starter", "monthly", day)).toBe("4900");
-      expect(price("starter", "yearly", day)).toBe("34900");
+      expect(price("starter", "yearly", day)).toBe("44900");
       expect(price("plus", "monthly", day)).toBe("12900");
-      expect(price("plus", "yearly", day)).toBe("69900");
-      expect(price("ultimate", "monthly", day)).toBe("29900");
-      expect(price("ultimate", "yearly", day)).toBe("199000");
+      expect(price("plus", "yearly", day)).toBe("109000");
+      expect(price("ultimate", "monthly", day)).toBe("28900");
+      expect(price("ultimate", "yearly", day)).toBe("259000");
     }
   });
 
@@ -68,7 +68,7 @@ describe("buildCheckoutFields", () => {
     expect(f.mode).toBe("payment");
     // payment methods come from the Dashboard settings: the API no longer accepts a list here
     expect(Object.keys(f).some((k) => k.startsWith("payment_method_types"))).toBe(false);
-    expect(f["line_items[0][price_data][unit_amount]"]).toBe("199000");
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("259000");
     expect(Object.keys(f).some((k) => k.includes("recurring"))).toBe(false);
     expect(f["metadata[method]"]).toBe("promptpay");
     expect(f.customer_creation).toBe("always");
@@ -103,7 +103,7 @@ describe("buildCheckoutFields", () => {
       BASE,
       AFTER,
     );
-    expect(f["line_items[0][price_data][unit_amount]"]).toBe("29900");
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("28900");
     expect(f["metadata[kind]"]).toBeUndefined();
   });
 
@@ -135,16 +135,16 @@ describe("Early Bird checkout", () => {
       AFTER,
       "coupon_1",
     );
-    expect(f["line_items[0][price_data][unit_amount]"]).toBe("69900"); // renews at the normal price
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("109000"); // renews at the normal price
     expect(f["discounts[0][coupon]"]).toBe("coupon_1");
     expect(f["subscription_data[metadata][early_bird]"]).toBe("1");
     expect(earlyBirdCouponFields("plus", "yearly", AFTER)).toMatchObject({
-      amount_off: String((699 - 499) * 100),
+      amount_off: String((1090 - 959) * 100),
       duration: "once",
       max_redemptions: "1",
     });
     expect(earlyBirdCouponFields("starter", "monthly", AFTER).amount_off).toBe(
-      String((49 - 29) * 100),
+      String((49 - 39) * 100),
     );
   });
 
@@ -173,7 +173,7 @@ describe("Early Bird checkout", () => {
       BASE,
       AFTER,
     );
-    expect(f["line_items[0][price_data][unit_amount]"]).toBe("149000");
+    expect(f["line_items[0][price_data][unit_amount]"]).toBe("241000");
     expect(f["metadata[early_bird]"]).toBe("1");
   });
 

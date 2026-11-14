@@ -139,21 +139,21 @@ describe("handleVoiceMessage", () => {
     expect(inserted).toHaveLength(1);
   });
 
-  it("a Pro user past 200 a month is told so, and nothing is downloaded", async () => {
-    counters.set("voice|2026-10-01", 200);
+  it("a Pro user past 150 a month is told so, and nothing is downloaded", async () => {
+    counters.set("voice|2026-10-01", 150);
     const d = deps();
     const out = await run(d, PROFESSIONAL_USER as never);
-    expect(textOf(out[0])).toBe(voiceQuotaText("plus", 200));
+    expect(textOf(out[0])).toBe(voiceQuotaText("plus", 150));
     expect(textOf(out[0])).toContain("Elite");
     expect(d.fetchAudio).not.toHaveBeenCalled();
     expect(inserted).toHaveLength(0);
   });
 
-  it("Elite stops at its 400 with its own wording (no plan above it)", async () => {
-    counters.set("voice|2026-10-01", 400);
+  it("Elite stops at its 250 with its own wording (no plan above it)", async () => {
+    counters.set("voice|2026-10-01", 250);
     const d = deps();
     const out = await run(d, ULTIMATE_USER);
-    expect(textOf(out[0])).toBe(voiceQuotaText("ultimate", 400));
+    expect(textOf(out[0])).toBe(voiceQuotaText("ultimate", 250));
     expect(textOf(out[0])).toContain("ต้นเดือนหน้า");
     expect(d.fetchAudio).not.toHaveBeenCalled();
   });

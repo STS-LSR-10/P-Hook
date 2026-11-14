@@ -185,12 +185,12 @@ describe("handlePdfMessage", () => {
     expect(read).toHaveBeenCalledTimes(1);
   });
 
-  it("stops at the monthly quota (Pro 10, Elite 30)", async () => {
+  it("stops at the monthly quota (Pro 5, Elite 15)", async () => {
     usageLeft = 0;
-    expect(textOf(await run())).toBe(pdfQuotaText("plus", 10));
+    expect(textOf(await run())).toBe(pdfQuotaText("plus", 5));
     plan = "ultimate";
     usageLeft = 0;
-    expect(textOf(await run())).toBe(pdfQuotaText("ultimate", 30));
+    expect(textOf(await run())).toBe(pdfQuotaText("ultimate", 15));
     expect(read).not.toHaveBeenCalled();
   });
 });

@@ -62,9 +62,9 @@ describe("a bought slip pack", () => {
 
   it("is not touched while the plan's own slips last, and an empty pack changes nothing", async () => {
     plan = "starter";
-    used = 60;
+    used = 45;
     packLeft = 0;
-    expect(await run()).toBe(slipQuotaText("starter", 60));
+    expect(await run()).toBe(slipQuotaText("starter", 45));
   });
 });
 
@@ -90,9 +90,9 @@ describe("slip quota by plan", () => {
   });
 
   it.each([
-    ["starter", 60],
-    ["plus", 250],
-    ["ultimate", 600],
+    ["starter", 45],
+    ["plus", 180],
+    ["ultimate", 400],
   ] as const)(
     "%s is stopped at %i slips a month, and told what the next plan has",
     async (p, n) => {
@@ -104,9 +104,9 @@ describe("slip quota by plan", () => {
   );
 
   it.each([
-    ["starter", 59],
-    ["plus", 249],
-    ["ultimate", 599],
+    ["starter", 44],
+    ["plus", 179],
+    ["ultimate", 399],
   ] as const)("%s can still read its last slip (the %ith)", async (p, n) => {
     plan = p;
     used = n;

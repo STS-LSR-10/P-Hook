@@ -30,15 +30,15 @@ test.describe("upgrade page (360px)", () => {
     const starter = plans.getByRole("radio", { name: /^Starter/ });
     const pro = plans.getByRole("radio", { name: /^Pro/ });
     const ultimate = plans.getByRole("radio", { name: /^Elite/ });
-    await expect(starter).toContainText("฿349");
-    await expect(pro).toContainText("฿699");
-    await expect(ultimate).toContainText("฿1990");
+    await expect(starter).toContainText("฿449");
+    await expect(pro).toContainText("฿1090");
+    await expect(ultimate).toContainText("฿2590");
     await expect(pro).not.toContainText("ราคาเปิดตัว");
 
     await page.getByRole("radio", { name: /รายเดือน/ }).click();
     await expect(starter).toContainText("฿49");
     await expect(pro).toContainText("฿129");
-    await expect(ultimate).toContainText("฿299");
+    await expect(ultimate).toContainText("฿289");
     await expectNoHorizontalScroll(page);
     await expectNoSeriousA11yViolations(page);
   });
@@ -83,7 +83,7 @@ test.describe("upgrade page (360px)", () => {
     await expect(has(/จดด้วยเสียง/)).toContainText("ลองฟรี 10 ครั้ง");
     await expect(page.getByText("ไม่จำกัดสำหรับการใช้งานตามปกติ")).toBeVisible();
     await expect(has(/อ่านสลิปอัตโนมัติ/)).toContainText("ลองฟรี 10 ใบ");
-    await expect(has(/อ่านสลิปอัตโนมัติ/)).toContainText("60 ใบ/เดือน");
+    await expect(has(/อ่านสลิปอัตโนมัติ/)).toContainText("45 ใบ/เดือน");
     await expect(table.getByText("เร็วๆ นี้")).toHaveCount(0);
     await expectNoHorizontalScroll(page);
   });
@@ -459,8 +459,8 @@ test.describe("upgrade page (360px)", () => {
     await expect(page.getByRole("button", { name: /อัปเกรดส่วนที่เหลือ/ })).toHaveCount(0);
 
     await page.getByRole("radio", { name: /^Elite/ }).click();
-    // (299 - 129) / 30 * 15 days = ฿85
-    const diff = page.getByRole("button", { name: "อัปเกรดส่วนที่เหลือ · จ่ายส่วนต่าง ฿85" });
+    // (289 - 129) / 30 * 15 days = ฿80
+    const diff = page.getByRole("button", { name: "อัปเกรดส่วนที่เหลือ · จ่ายส่วนต่าง ฿80" });
     await expect(diff).toBeVisible();
     await expect(page.getByText(/อีก 15 วัน/)).toBeVisible();
     await expect(page.getByRole("button", { name: /ชำระเงิน · Elite/ })).toBeEnabled(); // full new period

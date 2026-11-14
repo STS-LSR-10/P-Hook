@@ -31,9 +31,9 @@ export interface PlanPrice {
 
 /** The normal prices. */
 export const PRICES: Record<PaidPlan, PlanPrice> = {
-  starter: { monthly: 49, yearly: 349 },
-  plus: { monthly: 129, yearly: 699 },
-  ultimate: { monthly: 299, yearly: 1990 },
+  starter: { monthly: 49, yearly: 449 },
+  plus: { monthly: 129, yearly: 1090 },
+  ultimate: { monthly: 289, yearly: 2590 },
 };
 
 /**
@@ -52,9 +52,9 @@ export const launchActive = (_now: Date): boolean => false;
  * price. Monthly: the first month only. Seat counts live in the database (early_bird_seats).
  */
 export const EARLY_BIRD: Record<PaidPlan, { yearly: number; monthly: number }> = {
-  starter: { yearly: 199, monthly: 29 },
-  plus: { yearly: 499, monthly: 89 },
-  ultimate: { yearly: 1490, monthly: 199 },
+  starter: { yearly: 349, monthly: 39 },
+  plus: { yearly: 959, monthly: 99 },
+  ultimate: { yearly: 2410, monthly: 219 },
 };
 
 /** Early Bird is sold until the end of 31 Jan 2027, Bangkok time (seats may run out first). */

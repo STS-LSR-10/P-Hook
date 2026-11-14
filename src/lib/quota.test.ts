@@ -66,7 +66,7 @@ describe("buildQuota", () => {
 
   it("Starter: monthly slips and voice, one group of five, no PDF yet", () => {
     const q = byKey("starter");
-    expect(q.slips).toMatchObject({ limit: 60, period: "month" });
+    expect(q.slips).toMatchObject({ limit: 45, period: "month" });
     expect(q.voice).toMatchObject({ limit: 30, period: "month" });
     expect(q.repeatReminders?.limit).toBe(20);
     expect(q.groups).toMatchObject({ used: 2, limit: 1, period: "total" });
@@ -79,13 +79,13 @@ describe("buildQuota", () => {
 
   it("Pro: more of everything, and PDFs", () => {
     const q = byKey("plus");
-    expect(q.slips).toMatchObject({ limit: 250, period: "month" });
-    expect(q.voice).toMatchObject({ limit: 200, period: "month" });
+    expect(q.slips).toMatchObject({ limit: 180, period: "month" });
+    expect(q.voice).toMatchObject({ limit: 150, period: "month" });
     expect(q.repeatReminders?.limit).toBe(50);
     expect(q.groups?.limit).toBe(5);
     expect(q.photos?.limit).toBe(100);
-    expect(q.pdf?.limit).toBe(10);
-    expect(q.storage?.limit).toBe(20 * 1024 ** 3);
+    expect(q.pdf?.limit).toBe(5);
+    expect(q.storage?.limit).toBe(15 * 1024 ** 3);
   });
 
   it("Elite: 10 groups, 500 group reminders a month, a real slip limit, unlimited goals", () => {
@@ -93,7 +93,7 @@ describe("buildQuota", () => {
     expect(q.groups).toMatchObject({ used: 2, limit: 10, period: "total" });
     expect(q.groupReminders).toMatchObject({ used: 40, limit: 500, period: "month" });
     expect(q.repeatReminders?.limit).toBe(100);
-    expect(q.slips?.limit).toBe(600);
+    expect(q.slips?.limit).toBe(400);
     expect(q.goals?.limit).toBeNull();
     expect(q.storage?.limit).toBe(100 * 1024 ** 3);
   });
@@ -102,9 +102,9 @@ describe("buildQuota", () => {
     const slips = byKey("plus").slips;
     expect(slips?.plans).toEqual({
       free: { limit: 10, period: "once" },
-      starter: { limit: 60, period: "month" },
-      plus: { limit: 250, period: "month" },
-      ultimate: { limit: 600, period: "month" },
+      starter: { limit: 45, period: "month" },
+      plus: { limit: 180, period: "month" },
+      ultimate: { limit: 400, period: "month" },
     });
   });
 });

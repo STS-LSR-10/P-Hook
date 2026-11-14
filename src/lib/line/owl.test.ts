@@ -217,12 +217,12 @@ describe("asking", () => {
     plan = "plus";
     usageLeft = 0;
     expect(first(await owlAsk(deps(), user(), "x", false, "U1")).text).toBe(
-      aiQuotaText("plus", 1500),
+      aiQuotaText("plus", 1200),
     );
     plan = "ultimate";
     usageLeft = 0;
     expect(first(await owlAsk(deps(), user(), "x", false, "U1")).text).toBe(
-      aiQuotaText("ultimate", 3000),
+      aiQuotaText("ultimate", 2300),
     );
     expect(answer).not.toHaveBeenCalled();
   });

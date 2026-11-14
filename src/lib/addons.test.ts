@@ -40,7 +40,7 @@ describe("sumBonus", () => {
 
 describe("capacities with add-ons", () => {
   it("storage and waiting reminders grow; repeating reminders do not", () => {
-    expect(fileCapacity("starter", 10 * GB)).toBe(15 * GB);
+    expect(fileCapacity("starter", 10 * GB)).toBe(13 * GB);
     expect(reminderCapacity("starter", 50)).toBe(100);
     expect(capacityOf("starter", "once", 50)).toBe(100);
     expect(capacityOf("starter", "repeat", 50)).toBe(20);
@@ -72,8 +72,8 @@ describe("the quota page with add-ons", () => {
   it("shows the plan's slips as used and the pack as what is left", () => {
     const q = buildQuota("starter", used, { ...NO_BONUS, slips: 40 });
     const s = find(q, "slips");
-    expect(s.limit).toBe(60 + 40);
-    expect(s.used).toBe(60); // 70 read: 60 by the plan, 10 by the pack that has 40 left
+    expect(s.limit).toBe(45 + 40);
+    expect(s.used).toBe(45); // 70 read: 45 by the plan, 25 by the pack, which has 40 left
   });
 
   it("adds storage, groups and waiting reminders to the person's own limits only", () => {
@@ -83,9 +83,9 @@ describe("the quota page with add-ons", () => {
       slips: 0,
       groups: 2,
     });
-    expect(find(q, "storage").limit).toBe(15 * GB);
+    expect(find(q, "storage").limit).toBe(13 * GB);
     expect(find(q, "reminders").limit).toBe(100);
     expect(find(q, "groups").limit).toBe(3);
-    expect(find(q, "storage").plans.starter.limit).toBe(5 * GB); // the plan table is unchanged
+    expect(find(q, "storage").plans.starter.limit).toBe(3 * GB); // the plan table is unchanged
   });
 });

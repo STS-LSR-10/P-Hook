@@ -260,8 +260,8 @@ describe("runUserReminders", () => {
       expect(late).toHaveLength(1);
     });
 
-    it("counts each person reached against the same 300 a month", async () => {
-      pushUsed = 299;
+    it("counts each person reached against the same allowance (Elite 250 a month)", async () => {
+      pushUsed = 249;
       due = [group()];
       targets = new Map([
         [
@@ -279,12 +279,12 @@ describe("runUserReminders", () => {
       await runUserReminders({} as SupabaseClient, l as never, NOW);
       // one more fits: the second person and the group are past the allowance, so it waits
       expect(l.push.mock.calls.map((c) => c[0])).toEqual(["U9"]);
-      expect(pushUsed).toBe(300);
+      expect(pushUsed).toBe(250);
       expect(late).toHaveLength(1);
     });
 
     it.each([
-      ["starter", 40, 50],
+      ["starter", 20, 30],
       ["plus", 90, 100],
     ])(
       "a %s owner's groups get a smaller monthly allowance (%i used, %i a month): the rest waits",

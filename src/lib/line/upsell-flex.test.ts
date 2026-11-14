@@ -28,8 +28,8 @@ describe("upgrade card", () => {
     const card = json(buildUpsellCard({ feature: "slip", trialAvailable: true, now: AFTER }));
     expect(card).toContain(`฿${PRICES.starter.monthly}`);
     expect(card).toContain(`฿${PRICES.plus.monthly}`);
-    expect(card).toContain("60 ใบ/เดือน");
-    expect(card).toContain("250 ใบ/เดือน");
+    expect(card).toContain("45 ใบ/เดือน");
+    expect(card).toContain("180 ใบ/เดือน");
     expect(card).not.toContain("a=bdt");
   });
 
@@ -41,7 +41,7 @@ describe("upgrade card", () => {
   it("voice: names the Starter and Pro allowances", () => {
     const card = json(buildUpsellCard({ feature: "voice", trialAvailable: true, now: AFTER }));
     expect(card).toContain("30 ครั้ง/เดือน");
-    expect(card).toContain("200 ครั้ง/เดือน");
+    expect(card).toContain("150 ครั้ง/เดือน");
     expect(card).toContain("a=trial&p=plus");
   });
 
@@ -70,7 +70,7 @@ describe("the AI quota card", () => {
       }),
     );
     expect(out).toContain("ถาม AI");
-    expect(out).toContain("600");
-    expect(out).toContain("1,500");
+    expect(out).toContain("500");
+    expect(out).toContain("1,200");
   });
 });

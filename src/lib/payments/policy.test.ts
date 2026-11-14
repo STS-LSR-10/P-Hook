@@ -220,10 +220,10 @@ describe("prepaidUpgradeFor", () => {
     state({ plan: "plus", planExpiresAt: FUTURE, hasPrepaidPayment: true, prepaidMonths: months });
 
   it("quotes the difference for prepaid time, at the rate of the period that was bought", () => {
-    // 31 days left (2026-10-17 -> 2026-11-17), monthly: (299-129)/30*31 = 175.67 -> 176
-    expect(prepaidUpgradeFor(prepaid(1), "ultimate", NOW)).toEqual({ amountBaht: 176, days: 31 });
-    // yearly: (1990 - 699)/365*31 = 109.6 -> 110
-    expect(prepaidUpgradeFor(prepaid(12), "ultimate", NOW)).toEqual({ amountBaht: 110, days: 31 });
+    // 31 days left (2026-10-17 -> 2026-11-17), monthly: (289-129)/30*31 = 165.33 -> 166
+    expect(prepaidUpgradeFor(prepaid(1), "ultimate", NOW)).toEqual({ amountBaht: 166, days: 31 });
+    // yearly: (2590 - 1090)/365*31 = 127.4 -> 128
+    expect(prepaidUpgradeFor(prepaid(12), "ultimate", NOW)).toEqual({ amountBaht: 128, days: 31 });
   });
 
   it("has no quote without running prepaid time or for a lower tier", () => {

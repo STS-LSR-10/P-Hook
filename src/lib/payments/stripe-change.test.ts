@@ -30,7 +30,7 @@ describe("buildChangeFields", () => {
     });
     expect(f["items[0][id]"]).toBe("si_1");
     expect(f["items[0][price_data][product]"]).toBe("prod_1");
-    expect(f["items[0][price_data][unit_amount]"]).toBe("199000");
+    expect(f["items[0][price_data][unit_amount]"]).toBe("259000");
     expect(f["items[0][price_data][recurring][interval]"]).toBe("year");
     expect(f.proration_behavior).toBe("always_invoice");
     // if the card fails the subscription must stay as it was

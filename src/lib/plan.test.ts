@@ -49,19 +49,19 @@ describe("limits", () => {
   });
 
   it("every paid plan has its own monthly slip number; Free has a taste for life instead", () => {
-    expect(SLIP_LIMIT).toEqual({ free: 0, starter: 60, plus: 250, ultimate: 600 });
+    expect(SLIP_LIMIT).toEqual({ free: 0, starter: 45, plus: 180, ultimate: 400 });
     expect(FREE_SLIPS_TOTAL).toBe(10);
-    expect(slipsRemaining("starter", 0)).toBe(60);
-    expect(slipsRemaining("starter", 59)).toBe(1);
-    expect(slipsRemaining("starter", 60)).toBe(0);
+    expect(slipsRemaining("starter", 0)).toBe(45);
+    expect(slipsRemaining("starter", 44)).toBe(1);
+    expect(slipsRemaining("starter", 45)).toBe(0);
     expect(slipsRemaining("starter", 99)).toBe(0);
-    expect(slipsRemaining("ultimate", 599)).toBe(1);
+    expect(slipsRemaining("ultimate", 399)).toBe(1);
   });
 
   it("voice logging is Starter and above, with a monthly number each", () => {
     expect(can("free", "voiceLog")).toBe(false);
     for (const p of ["starter", "plus", "ultimate"] as const) expect(can(p, "voiceLog")).toBe(true);
-    expect(VOICE_LIMIT).toEqual({ free: 0, starter: 30, plus: 200, ultimate: 400 });
+    expect(VOICE_LIMIT).toEqual({ free: 0, starter: 30, plus: 150, ultimate: 250 });
     expect(FREE_VOICE_TOTAL).toBe(10);
   });
 
