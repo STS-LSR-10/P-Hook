@@ -48,9 +48,12 @@ export type BillCommand =
   | { kind: "bill-announce"; shortId: string }
   | { kind: "bill-usage" }
   | { kind: "bill-chase" }
-  | { kind: "bill-open" }
+  /** `spoken`: asked the way people talk ("ใครค้างเงินบ้าง"), which may be meant for the group. */
+  | { kind: "bill-open"; spoken?: boolean }
   | { kind: "bill-close" }
   | { kind: "bill-cancel" }
+  /** Cancel every bill the one who types it is still setting up (nobody owes on those yet). */
+  | { kind: "bill-cancel-all" }
   | { kind: "bill-paid"; names: string[] }
   | { kind: "bill-unpaid"; names: string[] }
   | { kind: "bill-claim" };
@@ -161,7 +164,7 @@ function parseBillBody(body: string): BillCommand {
 /**
  * "หารบิล หมูกระทะ 1200" · "หารบิล หมูกระทะ 1200 แอน บ๊อบ" · "หารบิล 1200 หมูกระทะ" · "หารบิล ข้าว 100,
  * น้ำ 200" (one bill of ฿300) · "ข้าว 100 หารบิล"; names or "ทั้งหมด" at the end choose the people at
- * once. Also "ตามเงิน", "บิลค้าง", "ปิดรายชื่อ", "ยกเลิกบิล" and "ได้รับแล้ว แอน".
+ * once. Also "ตามเงิน", "บิลค้าง", "ปิดรายชื่อ", "ยกเลิกบิล", "ยกเลิกบิลทั้งหมด" and "ได้รับแล้ว แอน".
  */
 export function parseBillCommand(input: string): BillCommand | null {
   // "หารบิล", "หาร บิล" and "แบ่งบิล" are the same words, wherever they stand
@@ -176,10 +179,12 @@ export function parseBillCommand(input: string): BillCommand | null {
   if (announce?.[1]) return { kind: "bill-announce", shortId: announce[1] };
   if (text === "ตามเงิน") return { kind: "bill-chase" };
   // "ใครค้างบ้าง", "ใครค้างเงินบ้าง", "ใครยังไม่จ่ายบ้าง": asked the way people say it
-  if (text === "บิลค้าง" || /^ใคร(?:ยัง)?(?:ค้าง|ไม่จ่าย)(?:เงิน|จ่าย)?(?:อยู่)?บ้าง$/.test(text))
-    return { kind: "bill-open" };
+  if (text === "บิลค้าง") return { kind: "bill-open" };
+  if (/^ใคร(?:ยัง)?(?:ค้าง|ไม่จ่าย)(?:เงิน|จ่าย)?(?:อยู่)?บ้าง$/.test(text))
+    return { kind: "bill-open", spoken: true };
   if (text === "ปิดรายชื่อ") return { kind: "bill-close" };
   if (text === "ยกเลิกบิล") return { kind: "bill-cancel" };
+  if (text === "ยกเลิกบิลทั้งหมด") return { kind: "bill-cancel-all" };
   if (text === "โอนแล้ว") return { kind: "bill-claim" };
   const unpaidWords = /^ยังไม่ได้รับ\s+(.+)$/.exec(text);
   if (unpaidWords?.[1]) {

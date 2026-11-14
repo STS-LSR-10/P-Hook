@@ -176,8 +176,10 @@ describe("parseBillCommand", () => {
   it("the other words", () => {
     expect(parseBillCommand("ตามเงิน")).toEqual({ kind: "bill-chase" });
     expect(parseBillCommand("บิลค้าง")).toEqual({ kind: "bill-open" });
+    // said the way people talk: may be a question to the group, so it answers only if someone owes
     for (const q of ["ใครค้างบ้าง", "ใครค้างเงินบ้าง", "ใครยังไม่จ่ายบ้าง", "ใครค้างจ่ายอยู่บ้าง"])
-      expect(parseBillCommand(q), q).toEqual({ kind: "bill-open" });
+      expect(parseBillCommand(q), q).toEqual({ kind: "bill-open", spoken: true });
+    expect(parseBillCommand("ยกเลิกบิลทั้งหมด")).toEqual({ kind: "bill-cancel-all" });
     expect(parseBillCommand("ใครค้างเรื่องงานอยู่")).toBeNull();
     expect(parseBillCommand("ปิดรายชื่อ")).toEqual({ kind: "bill-close" });
     expect(parseBillCommand("ยกเลิกบิล")).toEqual({ kind: "bill-cancel" });

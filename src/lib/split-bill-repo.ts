@@ -88,14 +88,16 @@ export async function listBills(
   groupId: string,
   statuses: BillStatus[],
   limit = 20,
+  /** Only the bills this person paid for. */
+  payerLineUserId?: string,
 ): Promise<BillRow[]> {
-  const { data, error } = await db
+  let query = db
     .from("split_bills")
     .select(BILL_COLUMNS)
     .eq("group_id", groupId)
-    .in("status", statuses)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .in("status", statuses);
+  if (payerLineUserId) query = query.eq("payer_line_user_id", payerLineUserId);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
   if (error) fail("list bills", error);
   return ((data ?? []) as BillDb[]).map(toBill);
 }
@@ -237,12 +239,17 @@ export async function markPaid(
   return data === "ok" || data === "already" ? data : "none";
 }
 
-export async function cancelBill(db: SupabaseClient, billId: string): Promise<boolean> {
+/** `statuses`: what it may still be in when cancelled (checked in the same update, so no race). */
+export async function cancelBill(
+  db: SupabaseClient,
+  billId: string,
+  statuses: BillStatus[] = ["setup", "joining", "collecting"],
+): Promise<boolean> {
   const { data, error } = await db
     .from("split_bills")
     .update({ status: "cancelled" })
     .eq("id", billId)
-    .in("status", ["setup", "joining", "collecting"])
+    .in("status", statuses)
     .select("id");
   if (error) fail("cancel bill", error);
   return (data ?? []).length > 0;

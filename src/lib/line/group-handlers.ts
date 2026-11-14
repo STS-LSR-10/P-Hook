@@ -286,8 +286,13 @@ async function handleGroupMessage(
     await reply(out.slice(0, MAX_REPLY_MESSAGES));
     return;
   }
-  // the AI could not help (no AI, quota used up, down): "ฮูก …" is asked as before, a bare tag is quiet
-  if (command) await runGroupCommand(command, event, groupId, deps, reply, mentions);
+  // the AI could not help (no AI, quota used up, down): "ฮูก …" is asked as before, a bare tag is quiet.
+  // "@พี่ฮูก ใครค้างเงินบ้าง" is asked of the bot: answered even when nobody owes
+  const run =
+    called && command?.kind === "bill-open" && command.spoken
+      ? { ...command, spoken: false }
+      : command;
+  if (run) await runGroupCommand(run, event, groupId, deps, reply, mentions);
 }
 
 type Reply = (messages: LineMessage[]) => Promise<void>;
@@ -509,6 +514,7 @@ async function runGroupCommand(
     case "bill-open":
     case "bill-close":
     case "bill-cancel":
+    case "bill-cancel-all":
     case "bill-paid":
     case "bill-unpaid":
     case "bill-claim":

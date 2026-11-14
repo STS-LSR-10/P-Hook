@@ -18,6 +18,7 @@ let ownerPlan = "ultimate";
 let chase = { everyDays: 1, window: "any" };
 let members = new Map<string, { name: string; updatedAt: string }>();
 let bills: BillRow[] = [];
+const cancelAsked: string[][] = [];
 let billMembers: Record<string, (BillMemberRow & { joinedAt: number })[]> = {};
 const payments = new Map<string, PaymentAccount>();
 const usedSlips = new Set<string>();
@@ -89,8 +90,13 @@ vi.mock("@/lib/split-bill-repo", () => ({
     return bill;
   },
   getBill: async (_db: unknown, _g: string, id: string) => bills.find((b) => b.id === id) ?? null,
-  listBills: async (_db: unknown, _g: string, statuses: string[]) =>
-    bills.filter((b) => statuses.includes(b.status)),
+  listBills: async (
+    _db: unknown,
+    _g: string,
+    statuses: string[],
+    _limit?: number,
+    payer?: string,
+  ) => bills.filter((b) => statuses.includes(b.status) && (!payer || b.payerLineUserId === payer)),
   latestBillBy: async (_db: unknown, _g: string, payer: string, statuses: string[]) =>
     bills.filter((b) => b.payerLineUserId === payer && statuses.includes(b.status)).at(-1) ?? null,
   billMembers: async (_db: unknown, id: string) => billMembers[id] ?? [],
@@ -172,9 +178,14 @@ vi.mock("@/lib/split-bill-repo", () => ({
     if (billMembers[id]?.every((x) => x.paid)) bill.status = "settled";
     return "ok";
   },
-  cancelBill: async (_db: unknown, id: string) => {
+  cancelBill: async (
+    _db: unknown,
+    id: string,
+    statuses: string[] = ["setup", "joining", "collecting"],
+  ) => {
+    cancelAsked.push(statuses);
     const bill = bills.find((b) => b.id === id);
-    if (!bill || !["setup", "joining", "collecting"].includes(bill.status)) return false;
+    if (!bill || !statuses.includes(bill.status)) return false;
     bill.status = "cancelled";
     return true;
   },
@@ -247,6 +258,18 @@ const inGroup = (userId: string | undefined, t: string): LineEvent => ({
   replyToken: "rt",
   source: { type: "group", groupId: GID, userId },
   message: { type: "text", id: "1", text: t },
+});
+/** "@พี่ฮูก <text>": a tag of the bot itself in front. */
+const tagged = (userId: string, t: string): LineEvent => ({
+  type: "message",
+  replyToken: "rt",
+  source: { type: "group", groupId: GID, userId },
+  message: {
+    type: "text",
+    id: "1",
+    text: `@พี่ฮูก ${t}`,
+    mention: { mentionees: [{ index: 0, length: 7, type: "user", isSelf: true }] },
+  },
 });
 const photo = (userId: string | undefined): LineEvent => ({
   type: "message",
@@ -737,14 +760,36 @@ describe("chasing", () => {
     expect(await run(inGroup("Uanna", "ตามเงิน"))).toContain("ไม่มียอดค้าง");
   });
 
-  it("บิลค้าง lists the unfinished bills in plain words", async () => {
+  it("บิลค้าง lists who owes apart from the bills still being set up", async () => {
     await openBill();
     await run(inGroup("Uanna", "หารบิล ขนม 100"));
     const out = await run(inGroup("Uanna", "บิลค้าง"));
+    expect(out).toContain("ยังมีคนค้างจ่าย");
     expect(out).toContain("หมูกระทะ");
     expect(out).toContain("ค้าง 2 คน"); // collecting: Bob and Chom have not paid
+    expect(out).toContain("ตั้งไว้ยังไม่เสร็จ");
     expect(out).toContain("ขนม");
     expect(out).toContain("รอเลือกคนหาร"); // the one still being set up
+    expect(out).toContain("ยกเลิกบิลทั้งหมด");
+  });
+
+  it("ใครค้างเงินบ้าง: quiet when nobody owes (bills only being set up do not count)", async () => {
+    await run(inGroup("Uanna", "หารบิล ขนม 100"));
+    expect(await run(inGroup("Uanna", "ใครค้างเงินบ้าง"))).toBe("[]");
+  });
+
+  it("a tag of the bot is a question to it: it answers even when nobody owes", async () => {
+    await run(inGroup("Uanna", "หารบิล ขนม 100"));
+    const out = await run(tagged("Uanna", "ใครค้างเงินบ้าง"));
+    expect(out).not.toBe("[]");
+    expect(out).toContain("ขนม");
+  });
+
+  it("ใครค้างเงินบ้าง: says who owes when someone does", async () => {
+    await openBill();
+    const out = await run(inGroup("Uanna", "ใครค้างเงินบ้าง"));
+    expect(out).toContain("หมูกระทะ");
+    expect(out).toContain("บ๊อบ");
   });
 });
 
@@ -964,5 +1009,36 @@ describe("a slip sent into the group", () => {
     const out = await run(tap("Uanna", "a=gbp&b=b1&u=Uchom"));
     expect(out).toContain("เก็บครบแล้ว");
     expect(bills[0]?.status).toBe("settled");
+  });
+});
+
+describe("ยกเลิกบิลทั้งหมด and ยกเลิกบิล", () => {
+  it("cancels every bill of the one who types it that is still being set up, and no other", async () => {
+    await openBill(); // collecting: people owe on it
+    await run(inGroup("Uanna", "หารบิล ขนม 100")); // setup
+    await run(inGroup("Ubob", "หารบิล น้ำ 60")); // Bob's
+    const out = await run(inGroup("Uanna", "ยกเลิกบิลทั้งหมด"));
+    expect(out).toContain("ขนม");
+    expect(out).toContain("หมูกระทะ"); // named as still collecting, left alone
+    const status = (title: string) => bills.find((b) => b.title === title)?.status;
+    expect(status("ขนม")).toBe("cancelled");
+    expect(status("หมูกระทะ")).toBe("collecting");
+    expect(status("น้ำ")).not.toBe("cancelled");
+  });
+
+  it("asks the database to cancel only a bill still being set up (one that starts collecting meanwhile stays)", async () => {
+    await run(inGroup("Uanna", "หารบิล ขนม 100"));
+    await run(inGroup("Uanna", "ยกเลิกบิลทั้งหมด"));
+    expect(cancelAsked.at(-1)).toEqual(["setup", "joining"]);
+  });
+
+  it("says so when there is nothing of theirs to cancel", async () => {
+    expect(await run(inGroup("Uanna", "ยกเลิกบิลทั้งหมด"))).toContain("ไม่มีบิล");
+  });
+
+  it("ยกเลิกบิล also cancels a bill still waiting for its people to be picked", async () => {
+    await run(inGroup("Uanna", "หารบิล ขนม 100"));
+    expect(await run(inGroup("Uanna", "ยกเลิกบิล"))).toContain('ยกเลิกบิล \\"ขนม\\" แล้ว');
+    expect(bills.find((b) => b.title === "ขนม")?.status).toBe("cancelled");
   });
 });

@@ -257,9 +257,10 @@ async function qrFlow(ctx: BillContext, bill: BillRow): Promise<void> {
   ]);
 }
 
-async function chaseFlow(ctx: BillContext): Promise<void> {
+/** "ตามเงิน": who still owes. `quiet`: say nothing when nobody does (a question maybe meant for the group). */
+async function chaseFlow(ctx: BillContext, quiet = false): Promise<void> {
   const bills = await listBills(ctx.db, ctx.group.id, ["collecting"], 6);
-  if (bills.length === 0) return ctx.reply([text(NONE_OWED_TEXT)]);
+  if (bills.length === 0) return quiet ? undefined : ctx.reply([text(NONE_OWED_TEXT)]);
   const nameOf = await names(ctx.db, ctx.group.id);
   const withMembers = await Promise.all(
     bills.map(async (bill) => ({
@@ -269,29 +270,84 @@ async function chaseFlow(ctx: BillContext): Promise<void> {
     })),
   );
   const owing = withMembers.filter((b) => unpaid(b.members, b.bill.payerLineUserId).length > 0);
-  if (owing.length === 0) return ctx.reply([text(NONE_OWED_TEXT)]);
+  if (owing.length === 0) return quiet ? undefined : ctx.reply([text(NONE_OWED_TEXT)]);
   return ctx.reply([buildChaseCard({ bills: owing, nameOf, appUrl: ctx.appUrl })]);
 }
 
+/** "บิลค้าง": the bills someone still owes on, apart from those still being set up. */
 async function openListFlow(ctx: BillContext): Promise<void> {
-  const bills = await listBills(ctx.db, ctx.group.id, ["setup", "joining", "collecting"], 10);
+  // apart, so many forgotten bills being set up never push out the ones people owe on
+  const [collecting, settingUp] = await Promise.all([
+    listBills(ctx.db, ctx.group.id, ["collecting"], 10),
+    listBills(ctx.db, ctx.group.id, ["setup", "joining"], 10),
+  ]);
+  const bills = [...collecting, ...settingUp];
   if (bills.length === 0) return ctx.reply([text("ตอนนี้ไม่มีบิลที่ค้างอยู่ 🎉")]);
   const nameOf = await names(ctx.db, ctx.group.id);
-  const lines = await Promise.all(
-    bills.map(async (b) => {
-      const members = await billMembers(ctx.db, b.id);
-      const state =
-        b.status === "setup"
-          ? "รอเลือกคนหาร"
-          : b.status === "joining"
-            ? `รอปิดรายชื่อ (${members.length} คน)`
-            : `ค้าง ${unpaid(members, b.payerLineUserId).length} คน ฿${formatBaht(totalOwed(members, b.payerLineUserId))}`;
-      return `• ${b.title} ฿${formatBaht(b.amountSatang)} · จ่ายโดย ${nameOf(b.payerLineUserId)} · ${state}`;
-    }),
+  const owing: string[] = [];
+  const unfinished: string[] = [];
+  for (const b of bills) {
+    const members = await billMembers(ctx.db, b.id);
+    const head = `• ${b.title} ฿${formatBaht(b.amountSatang)} · จ่ายโดย ${nameOf(b.payerLineUserId)}`;
+    if (b.status === "collecting") {
+      const left = unpaid(members, b.payerLineUserId).length;
+      if (left > 0) {
+        owing.push(
+          `${head} · ค้าง ${left} คน ฿${formatBaht(totalOwed(members, b.payerLineUserId))}`,
+        );
+      }
+    } else {
+      unfinished.push(
+        `${head} · ${b.status === "setup" ? "รอเลือกคนหาร" : `รอปิดรายชื่อ (${members.length} คน)`}`,
+      );
+    }
+  }
+  if (owing.length === 0 && unfinished.length === 0) {
+    return ctx.reply([text("ตอนนี้ไม่มีบิลที่ค้างอยู่ 🎉")]);
+  }
+  const lines = [
+    ...(owing.length
+      ? ["ยังมีคนค้างจ่าย", ...owing, 'พิมพ์ "ตามเงิน" ดูว่าใครยังค้าง']
+      : ["ตอนนี้ไม่มีใครค้างจ่าย 🎉"]),
+    ...(unfinished.length
+      ? [
+          "",
+          "บิลที่ตั้งไว้ยังไม่เสร็จ (ยังไม่มีใครติดเงิน)",
+          ...unfinished,
+          'คนจ่ายพิมพ์ "ยกเลิกบิลทั้งหมด" เพื่อยกเลิกบิลที่ตั้งไว้ยังไม่เสร็จของตัวเอง',
+        ]
+      : []),
+  ];
+  return ctx.reply([text(lines.join("\n"))]);
+}
+
+/** "ยกเลิกบิลทั้งหมด": the bills this person is still setting up; those collecting money stay. */
+async function cancelAllFlow(ctx: BillContext, userId: string): Promise<void> {
+  if (!ctx.writable) return ctx.reply([text(PAUSED_TEXT)]);
+  const mine = await listBills(
+    ctx.db,
+    ctx.group.id,
+    ["setup", "joining", "collecting"],
+    50,
+    userId,
   );
-  return ctx.reply([
-    text(["บิลที่ยังไม่เสร็จ", ...lines, 'พิมพ์ "ตามเงิน" ดูว่าใครยังค้าง'].join("\n")),
-  ]);
+  const cancelled: string[] = [];
+  for (const b of mine.filter((x) => x.status !== "collecting")) {
+    // one that started collecting since it was read stays
+    if (await cancelBill(ctx.db, b.id, ["setup", "joining"])) cancelled.push(b.title);
+  }
+  const collecting = mine.filter((b) => b.status === "collecting").map((b) => b.title);
+  const lines = [
+    cancelled.length
+      ? `ยกเลิกบิลที่ตั้งไว้ยังไม่เสร็จ ${cancelled.length} บิลแล้ว: ${cancelled.join(", ")}`
+      : "ไม่มีบิลที่ตั้งไว้ยังไม่เสร็จของคุณ",
+    ...(collecting.length
+      ? [
+          `บิลที่กำลังเก็บเงิน (${collecting.join(", ")}) ไม่ได้ยกเลิก เพราะมีคนติดเงินอยู่ พิมพ์ "ได้รับแล้ว ชื่อ" เมื่อได้เงิน หรือ "ยกเลิกบิล" ทีละบิล`,
+        ]
+      : []),
+  ];
+  return ctx.reply([text(lines.join("\n"))]);
 }
 
 /** The page where the payer ticks the people (opens in LINE; needs the LIFF id). */
@@ -400,7 +456,12 @@ export async function runBillCommand(command: BillCommand, ctx: BillContext): Pr
       return chaseFlow(ctx);
 
     case "bill-open":
-      return openListFlow(ctx);
+      // "ใครค้างเงินบ้าง" may be a question to the group: answer only when someone owes
+      return command.spoken ? chaseFlow(ctx, true) : openListFlow(ctx);
+
+    case "bill-cancel-all":
+      if (!userId) return ctx.reply([text(NO_USER_TEXT)]);
+      return cancelAllFlow(ctx, userId);
 
     case "bill-new": {
       if (!userId) return ctx.reply([text(NO_USER_TEXT)]);
@@ -460,7 +521,7 @@ export async function runBillCommand(command: BillCommand, ctx: BillContext): Pr
 
     case "bill-cancel": {
       if (!userId) return ctx.reply([text(NO_USER_TEXT)]);
-      const bill = await latestBillBy(db, group.id, userId, ["joining", "collecting"]);
+      const bill = await latestBillBy(db, group.id, userId, ["setup", "joining", "collecting"]);
       if (!bill) return ctx.reply([text(NO_BILL_TEXT)]);
       return cancelFlow(ctx, bill);
     }
