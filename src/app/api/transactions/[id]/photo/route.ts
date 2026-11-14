@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { apiError, guard, json } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
-import { can, effectivePlan, PHOTOS_PER_MONTH } from "@/lib/plan";
-import { attachPhotoBytes } from "@/lib/photos";
-import { clearPhoto, countPhotosThisMonth, getPhotoTx } from "@/lib/photo-repo";
+import { can, effectivePlan } from "@/lib/plan";
+import { attachPhotoBytes, PhotoStorageFull } from "@/lib/photos";
+import { clearPhoto, getPhotoTx } from "@/lib/photo-repo";
 import { LIMITS, limitOr429 } from "@/lib/rate-limit";
 import { getUserPlanRow, SLIP_BUCKET } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -83,24 +83,26 @@ export async function POST(
 
     const tx = await getPhotoTx(db, auth.userId, id);
     if (!tx) return apiError("ไม่พบรายการนี้", 404);
-    // replacing the photo of an entry that already has one does not use another of the month's photos
-    if (!tx.photo_path && (await countPhotosThisMonth(db, auth.userId, now)) >= PHOTOS_PER_MONTH) {
-      return apiError(t("แนบรูปครบ {0} รูปของเดือนนี้แล้ว", PHOTOS_PER_MONTH), 429);
-    }
-
     const form = await request.formData().catch(() => null);
     const file = form?.get("file");
     if (!(file instanceof File)) return apiError("ไม่พบไฟล์รูป", 400);
     if (!ALLOWED.has(file.type)) return apiError("รองรับเฉพาะรูป JPG, PNG หรือ WebP", 400);
     if (file.size > MAX_UPLOAD_BYTES) return apiError("รูปใหญ่เกินไป (ไม่เกิน 4 MB)", 413);
 
-    await attachPhotoBytes(
-      db,
-      auth.userId,
-      tx,
-      { bytes: new Uint8Array(await file.arrayBuffer()), mimeType: file.type },
-      now,
-    );
+    try {
+      await attachPhotoBytes(
+        db,
+        auth.userId,
+        tx,
+        { bytes: new Uint8Array(await file.arrayBuffer()), mimeType: file.type },
+        now,
+      );
+    } catch (error) {
+      if (error instanceof PhotoStorageFull) {
+        return apiError(t("พื้นที่จัดเก็บเต็ม แนบรูปไม่ได้ ลบไฟล์เดิมหรือเพิ่มพื้นที่ก่อนนะ"), 413);
+      }
+      throw error;
+    }
     return json({ ok: true });
   });
 }

@@ -47,7 +47,7 @@ import type { LineMessage, TxType } from "@/lib/types";
 import type { SlipImage, SlipOcrProvider } from "@/lib/ocr/provider";
 import { MAX_FEEDBACK_LENGTH, cleanFeedback } from "@/lib/feedback";
 import { addFeedback } from "@/lib/feedback-repo";
-import { can, effectivePlan } from "@/lib/plan";
+import { can, effectivePlan, type Plan } from "@/lib/plan";
 import { applyTheme, DEFAULT_THEME, effectivePrefs, type PersonaId } from "@/lib/personalize";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import { applyReferralCode, awardActivity, currentStreak, recentDailyKeys } from "@/lib/points";
@@ -877,7 +877,7 @@ async function readText(
     !entries.some((e) => e.foreign) &&
     needsSmartParse(typed, parsed)
   ) {
-    const smart = await readWithAi(typed, user, deps);
+    const smart = await readWithAi(typed, user, deps, plan);
     if (smart) return smart;
   }
 
@@ -1584,6 +1584,7 @@ async function readWithAi(
   input: string,
   user: UserRow,
   deps: HandlerDeps,
+  plan: Plan,
 ): Promise<LineMessage[] | null> {
   const { db } = deps;
   const [categories, memory] = await Promise.all([
@@ -1595,7 +1596,7 @@ async function readWithAi(
     {
       text: input,
       subject: user.line_user_id,
-      cap: { db, userId: user.id },
+      cap: { db, userId: user.id, plan },
       categories: categories
         .filter((c) => !c.is_hidden)
         .map((c) => ({ name: c.name, type: c.type })),

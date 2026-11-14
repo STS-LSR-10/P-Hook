@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const ID = "11111111-1111-4111-8111-111111111111";
 let plan = "plus";
-let count = 0;
+let full = false;
 let tx: { id: string; title: string; status: string; photo_path: string | null } | null;
 const attached: unknown[][] = [];
 
@@ -21,16 +21,17 @@ vi.mock("@/lib/slip-repo", async (original) => ({
 vi.mock("@/lib/photo-repo", async (original) => ({
   ...(await original<typeof import("@/lib/photo-repo")>()),
   getPhotoTx: async () => tx,
-  countPhotosThisMonth: async () => count,
 }));
 vi.mock("@/lib/photos", async (original) => ({
   ...(await original<typeof import("@/lib/photos")>()),
   attachPhotoBytes: async (...args: unknown[]) => {
+    if (full) throw new PhotoStorageFull();
     attached.push(args);
   },
 }));
 
 import { POST } from "./route";
+import { PhotoStorageFull } from "@/lib/photos";
 
 const upload = (file: File | null) => {
   const form = new FormData();
@@ -46,7 +47,7 @@ const png = () => new File([new Uint8Array([1, 2, 3])], "a.png", { type: "image/
 
 beforeEach(() => {
   plan = "plus";
-  count = 0;
+  full = false;
   attached.length = 0;
   tx = { id: ID, title: "กาแฟ", status: "confirmed", photo_path: null };
 });
@@ -65,11 +66,10 @@ describe("POST /api/transactions/:id/photo", () => {
     tx = null;
     expect((await upload(png())).status).toBe(404);
   });
-  it("the month's cap stops a new photo (429) but not replacing one", async () => {
-    count = 100;
-    expect((await upload(png())).status).toBe(429);
-    tx = { id: ID, title: "กาแฟ", status: "confirmed", photo_path: "u1/photo-x.jpg" };
-    expect((await upload(png())).status).toBe(200);
+  it("full storage refuses the photo (413) and stores nothing", async () => {
+    full = true;
+    expect((await upload(png())).status).toBe(413);
+    expect(attached).toHaveLength(0);
   });
   it("only pictures, and not too big", async () => {
     expect((await upload(null)).status).toBe(400);

@@ -1316,6 +1316,11 @@ export const EN: Record<string, string> = {
   บันทึกให้เรียบร้อยแล้วค่ะ: "All recorded for you.",
   เพื่อนสนิท: "Best friend",
   "จดให้แล้วจ้า เดี๋ยวเค้าจำให้เอง": "Got it, I'll remember it for you!",
+  "เตือนทาง LINE ส่วนตัว": "Reminders to your LINE chat",
+  "⚠️ โควตาเตือนทาง LINE เดือนนี้เต็มแล้ว เตือนหลังจากนี้จะดูได้ในแอปเท่านั้น จนกว่าจะขึ้นเดือนใหม่":
+    "⚠️ This month's LINE reminders are used up. From now on reminders show in the app only, until next month.",
+  "อยากให้บอทส่งเตือนเข้า LINE ได้มากขึ้น อัปเกรดแผนได้เลย{0}":
+    "Want more reminders in LINE? Upgrade your plan{0}",
   ดุหน่อย: "Strict",
   "เกินงบอีกแล้วนะ! ใจเย็น ๆ ก่อน": "Over budget again! Slow down",
   ชมเยอะ: "Cheerleader",
@@ -1329,7 +1334,6 @@ export const EN: Record<string, string> = {
   อ่านสลิปอัตโนมัติ: "Automatic slip reading",
   "ลองฟรี 1 ใบ": "Try 1 free",
   "30 ใบ/เดือน": "30/month",
-  "ไม่จำกัด*": "Unlimited*",
   จดย้อนหลัง: "Record past days",
   จดหลายรายการในข้อความเดียว: "Several entries in one message",
   "ติดแท็ก #Tag": "#Tags",
@@ -1598,7 +1602,6 @@ export const EN: Record<string, string> = {
     "Write a note that isn't empty and is up to {0} characters",
   "โน้ตของเจ้าของสมุดเต็ม {0} รายการแล้ว ลบอันเก่าก่อนนะ":
     "The ledger owner's notes are full ({0}). Delete old ones first",
-  "แนบรูปครบ {0} รูปของเดือนนี้แล้ว": "You've attached all {0} photos for this month",
   "มีบิลได้สูงสุด {0} รายการ": "You can have up to {0} bills",
   "ฮูกคอยน์ไม่พอ (ต้องใช้ {0} ฮูกคอยน์)": "Not enough HookCoins (needs {0})",
   "ตั้งชื่อกระเป๋าให้ถูกต้องนะ (ไม่เกิน {0} ตัวอักษร)":
@@ -2037,8 +2040,10 @@ export const EN: Record<string, string> = {
     'Attaching photos to entries is for Pro and above. Try it free for 7 days from the "อัปเกรด" menu',
   "📎 เลือกรูปที่จะแนบ": "📎 Choose a photo to attach",
   "📎 เลือกรูปใหม่ (แทนรูปเดิม)": "📎 Choose a new photo (replaces the old one)",
-  "เดือนนี้แนบรูปครบจำนวนแล้ว ไว้เดือนหน้าแนบเพิ่มได้ใหม่นะ ตอนนี้จดรายการได้ตามปกติ":
-    "You've attached all the photos for this month. You can attach more next month; recording works as usual",
+  "พื้นที่จัดเก็บเต็ม แนบรูปไม่ได้ ลบไฟล์เดิม ซื้อแพ็กพื้นที่เพิ่ม หรืออัปเกรดแผนได้เลย ตอนนี้จดรายการได้ตามปกติ":
+    "Your storage is full, so the photo can't be attached. Delete old files, buy a storage pack or upgrade. Recording works as usual",
+  "พื้นที่จัดเก็บเต็ม แนบรูปไม่ได้ ลบไฟล์เดิมหรือเพิ่มพื้นที่ก่อนนะ":
+    "Storage is full, so the photo can't be attached. Delete old files or add space first",
   'แนบรูปกับ "{0}" แล้ว': 'Photo attached to "{0}"',
   'หมดเวลารอรูปของรายการนี้แล้ว กดปุ่ม "แนบรูป" ที่การ์ดรายการอีกครั้งได้เลยนะ':
     'Stopped waiting for this entry\'s photo. Tap "Attach photo" on the entry card again',
@@ -2911,8 +2916,6 @@ export const EN: Record<string, string> = {
     'Credit card limits and statement balances are for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
   'กลุ่มนี้ยังไม่ได้เปิดสมุด สมาชิกที่เป็นแผน Starter ขึ้นไปพิมพ์ "เปิดสมุดกลุ่ม" ได้เลย':
     'This group has no ledger yet. A member on the Starter plan or above can type "open group ledger"',
-  "*ไม่จำกัดสำหรับการใช้งานตามปกติ: สูงสุดราว {0} ครั้ง/เดือน (AI อ่านประโยคยาว) ครบแล้วพิมพ์จดได้ตามปกติ และใช้ได้ใหม่ต้นเดือนหน้า":
-    "*Unlimited for normal use: up to about {0} a month (AI reading long sentences). After that you can still type entries, and it resets next month",
   "จดด้วยเสียงสำหรับสมาชิก Starter ขึ้นไป": "Voice recording is for Starter members and above",
   "การแนบรูปเป็นฟีเจอร์ของแผน Starter ขึ้นไป":
     "Attaching a photo is for the Starter plan and above",

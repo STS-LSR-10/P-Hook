@@ -148,7 +148,7 @@ export async function handleVoiceMessage(
         {
           text: heard,
           subject: lineUserId,
-          cap: { db: deps.db, userId: user.id },
+          cap: { db: deps.db, userId: user.id, plan },
           categories: categories
             .filter((c) => !c.is_hidden)
             .map((c) => ({ name: c.name, type: c.type })),

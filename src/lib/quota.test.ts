@@ -12,6 +12,7 @@ const USED: QuotaUsage = {
   recurring: 4,
   groups: 2,
   groupReminders: 40,
+  privatePush: 1,
   slips: 2,
   photos: 5,
   voice: 1,
@@ -60,6 +61,7 @@ describe("buildQuota", () => {
     expect(q.pdf?.limit).toBe(0);
     expect(q.storage).toMatchObject({ used: 1024, limit: 150 * 1024 * 1024, unit: "bytes" });
     expect(q.owl).toMatchObject({ limit: 3, period: "month" });
+    expect(q.privatePush).toMatchObject({ limit: 3, period: "month" });
     expect(q.ai).toMatchObject({ limit: 50, period: "month", label: "ถาม AI" });
     expect(q.fileSaves).toBeUndefined(); // no daily limit on saving files any more
   });
@@ -70,7 +72,8 @@ describe("buildQuota", () => {
     expect(q.voice).toMatchObject({ limit: 30, period: "month" });
     expect(q.repeatReminders?.limit).toBe(20);
     expect(q.groups).toMatchObject({ used: 2, limit: 1, period: "total" });
-    expect(q.groupReminders).toMatchObject({ limit: 50, period: "month" });
+    expect(q.groupReminders).toMatchObject({ limit: 30, period: "month" });
+    expect(q.privatePush).toMatchObject({ limit: 35, period: "month" });
     expect(q.pdf?.limit).toBe(0);
     expect(q.wallets?.limit).toBe(5);
     expect(q.goals?.limit).toBe(2);
@@ -83,15 +86,16 @@ describe("buildQuota", () => {
     expect(q.voice).toMatchObject({ limit: 150, period: "month" });
     expect(q.repeatReminders?.limit).toBe(50);
     expect(q.groups?.limit).toBe(5);
-    expect(q.photos?.limit).toBe(100);
+    expect(q.photos?.limit).toBeNull(); // unlimited: the photos take storage space
     expect(q.pdf?.limit).toBe(5);
     expect(q.storage?.limit).toBe(15 * 1024 ** 3);
   });
 
-  it("Elite: 10 groups, 500 group reminders a month, a real slip limit, unlimited goals", () => {
+  it("Elite: 10 groups, 250 group pushes a month, a real slip limit, unlimited goals", () => {
     const q = byKey("ultimate");
     expect(q.groups).toMatchObject({ used: 2, limit: 10, period: "total" });
-    expect(q.groupReminders).toMatchObject({ used: 40, limit: 500, period: "month" });
+    expect(q.groupReminders).toMatchObject({ used: 40, limit: 250, period: "month" });
+    expect(q.privatePush).toMatchObject({ limit: 120, period: "month" });
     expect(q.repeatReminders?.limit).toBe(100);
     expect(q.slips?.limit).toBe(400);
     expect(q.goals?.limit).toBeNull();

@@ -64,9 +64,6 @@ export function walletCapacity(plan: Plan): number {
   return WALLET_LIMIT[plan] ?? WALLET_HARD_CAP;
 }
 
-/** Photos a person can attach to entries per month (a cost guard; same for every paid plan). */
-export const PHOTOS_PER_MONTH = 100;
-
 /**
  * Slips a person can have read per month, by plan. Free has none a month: its first
  * FREE_SLIPS_TOTAL are a taste for life (see below).
@@ -75,12 +72,6 @@ export const SLIP_LIMIT: Record<Plan, number> = { free: 0, starter: 45, plus: 18
 
 /** Slip photos a Free account can have read, ever (a taste of the paid plans). */
 export const FREE_SLIPS_TOTAL = 10;
-
-/**
- * Past these a month, the paid-per-use AI calls stop until the 1st (typing still works). smartParse
- * (the AI reading long sentences) has no figure in the plan table, so it keeps a ceiling here.
- */
-export const FAIR_USE = { smartParse: 300 } as const;
 
 /** Voice messages a person can have read per month, by plan (Free has ten for life). */
 export const VOICE_LIMIT: Record<Plan, number> = { free: 0, starter: 30, plus: 150, ultimate: 250 };
@@ -109,6 +100,17 @@ export const GROUP_PUSH_PER_MONTH: Record<Plan, number> = {
   starter: 30,
   plus: 100,
   ultimate: 250,
+};
+
+/**
+ * Reminders pushed to a person's own LINE chat per month, by plan. Each push is a LINE message we
+ * pay for; past it the reminder waits in the app and the person is told once.
+ */
+export const PRIVATE_PUSH_PER_MONTH: Record<Plan, number> = {
+  free: 3,
+  starter: 35,
+  plus: 70,
+  ultimate: 120,
 };
 
 /** LINE groups an owner may keep a ledger in, and how many people one ledger serves, by plan. */

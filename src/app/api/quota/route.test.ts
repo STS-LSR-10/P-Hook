@@ -52,7 +52,7 @@ vi.mock("@/lib/usage", async (original) => ({
     usageAsked.push(keys);
     return keys.map(
       (k) =>
-        ({ voice: 5, teaser_voice: 1, pdf: 2, owl: 8, ai_chat: 9, file_save: 1, group_remind: 40 })[
+        ({ voice: 5, teaser_voice: 1, pdf: 2, owl: 8, ai_chat: 9, file_save: 1, group_push: 40, private_push: 7 })[
           k.kind
         ] ?? 0,
     );
@@ -95,6 +95,7 @@ describe("GET /api/quota", () => {
     expect(q.repeatReminders).toMatchObject({ used: 1 });
     expect(q.groups).toMatchObject({ used: 2 });
     expect(q.groupReminders).toMatchObject({ used: 40 });
+    expect(q.privatePush).toMatchObject({ used: 7, limit: 70 });
     expect(q.recurring).toMatchObject({ used: 2 });
     expect(q.slips).toMatchObject({ used: 4, period: "month" });
     expect(q.photos).toMatchObject({ used: 6 });
@@ -109,7 +110,8 @@ describe("GET /api/quota", () => {
       { kind: "pdf", month: "2026-11-01" },
       { kind: "owl", month: "2026-11-01" },
       { kind: "ai_chat", month: "2026-11-01" },
-      { kind: "group_remind", month: "2026-11-01" },
+      { kind: "group_push", month: "2026-11-01" },
+      { kind: "private_push", month: "2026-11-01" },
     ]);
   });
 

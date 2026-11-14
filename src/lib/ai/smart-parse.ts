@@ -1,8 +1,9 @@
 import { log, safeMessage } from "@/lib/log";
 import { CONFIRM_THRESHOLD, SPLIT_RE, type ParseResult } from "@/lib/parse/text-parser";
-import { FAIR_USE } from "@/lib/plan";
+import { AI_CHAT_LIMIT, type Plan } from "@/lib/plan";
 import { bangkokParts } from "@/lib/thai-date";
-import { monthKey, refundUsage, takeUsage } from "@/lib/usage";
+import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
+import { aiUnits } from "./ai-quota";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import {
@@ -43,28 +44,30 @@ export async function runSmartParse(
     text: string;
     subject: string;
     categories: CategoryHint[];
-    /** Count this read against the month's fair-use ceiling (Elite); past it the rules read instead. */
-    cap?: { db: SupabaseClient; userId: string };
+    /** Count this read against the month's "ถาม AI" quota; past it the rules read instead. */
+    cap?: { db: SupabaseClient; userId: string; plan: Plan };
   },
 ): Promise<SmartEntry[] | null> {
   const { structurer } = deps;
   if (!structurer) return null;
-  let counted: { db: SupabaseClient; userId: string; month: string } | null = null;
+  let counted: { db: SupabaseClient; userId: string; month: string; units: number } | null = null;
   try {
     if (input.cap) {
       const month = monthKey(deps.now());
+      const units = aiUnits(input.text);
       if (
-        !(await takeUsage(
+        !(await takeUsageAmount(
           input.cap.db,
           input.cap.userId,
-          "smart_parse",
-          FAIR_USE.smartParse,
+          "ai_chat",
+          units,
+          AI_CHAT_LIMIT[input.cap.plan],
           month,
         ))
       ) {
         return null;
       }
-      counted = { ...input.cap, month };
+      counted = { db: input.cap.db, userId: input.cap.userId, month, units };
     }
     if (deps.limit) {
       const day = await deps.limit("smart_day", input.subject, LIMITS.smartDay);
@@ -93,12 +96,16 @@ export async function runSmartParse(
   }
 }
 
-/** A read that produced nothing does not count against the ceiling. Best effort. */
+/** A read that produced nothing does not count against the quota. Best effort. */
 async function giveBack(
-  counted: { db: SupabaseClient; userId: string; month: string } | null,
+  counted: { db: SupabaseClient; userId: string; month: string; units: number } | null,
 ): Promise<void> {
   if (!counted) return;
-  await refundUsage(counted.db, counted.userId, "smart_parse", counted.month).catch(
-    () => undefined,
-  );
+  await refundUsageAmount(
+    counted.db,
+    counted.userId,
+    "ai_chat",
+    counted.units,
+    counted.month,
+  ).catch(() => undefined);
 }

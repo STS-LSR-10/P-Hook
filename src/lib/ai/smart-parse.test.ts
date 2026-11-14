@@ -38,35 +38,42 @@ const good = { entries: [{ type: "expense", title: "ค่าข้าว", amou
 const mk = (structure: TextStructurer["structure"]): TextStructurer => ({ name: "t", structure });
 const input = { text: sentence, subject: "U1", categories: [] };
 
-describe("runSmartParse fair-use ceiling", () => {
+describe("runSmartParse and the ask-AI quota", () => {
   const counters = new Map<string, number>();
+  const limits: number[] = [];
   const cap = (limitLeft: boolean) => ({
     db: {
       rpc: async (fn: string, args: Record<string, unknown>) => {
         const key = `${args.p_kind}|${args.p_month}`;
-        if (fn === "take_usage") {
+        const amount = Number(args.p_amount);
+        if (fn === "take_usage_amount") {
+          limits.push(Number(args.p_limit));
           if (!limitLeft) return { data: false, error: null };
-          counters.set(key, (counters.get(key) ?? 0) + 1);
+          counters.set(key, (counters.get(key) ?? 0) + amount);
           return { data: true, error: null };
         }
-        counters.set(key, Math.max(0, (counters.get(key) ?? 0) - 1));
+        counters.set(key, Math.max(0, (counters.get(key) ?? 0) - amount));
         return { data: null, error: null };
       },
     } as never,
     userId: "u1",
+    plan: "ultimate" as const,
   });
 
-  it("counts a successful read for the month", async () => {
+  it("counts a successful read against ask-AI, up to the plan's limit", async () => {
     counters.clear();
+    limits.length = 0;
     const out = await runSmartParse(
       { structurer: mk(async () => good), now: () => NOW },
       { ...input, cap: cap(true) },
     );
     expect(out).not.toBeNull();
-    expect(counters.get("smart_parse|2026-10-01")).toBe(1);
+    expect(counters.get("ai_chat|2026-10-01")).toBe(1);
+    expect(counters.has("smart_parse|2026-10-01")).toBe(false);
+    expect(limits).toEqual([2300]);
   });
 
-  it("past the ceiling the AI is not called and the rules read instead", async () => {
+  it("past the quota the AI is not called and the rules read instead", async () => {
     const structure = vi.fn(async () => good);
     const out = await runSmartParse(
       { structurer: mk(structure), now: () => NOW },
@@ -82,10 +89,10 @@ describe("runSmartParse fair-use ceiling", () => {
       throw new Error("down");
     });
     await runSmartParse({ structurer: boom, now: () => NOW }, { ...input, cap: cap(true) });
-    expect(counters.get("smart_parse|2026-10-01")).toBe(0);
+    expect(counters.get("ai_chat|2026-10-01")).toBe(0);
     const empty = mk(async () => ({ entries: [] }));
     await runSmartParse({ structurer: empty, now: () => NOW }, { ...input, cap: cap(true) });
-    expect(counters.get("smart_parse|2026-10-01")).toBe(0);
+    expect(counters.get("ai_chat|2026-10-01")).toBe(0);
   });
 });
 

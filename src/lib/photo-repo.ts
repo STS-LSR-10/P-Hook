@@ -14,6 +14,7 @@ export interface PhotoTx {
   title: string;
   status: string;
   photo_path: string | null;
+  photo_bytes: number | null;
 }
 
 /** The person's own live entry, or null (other users' ids and deleted entries match nothing). */
@@ -24,7 +25,7 @@ export async function getPhotoTx(
 ): Promise<PhotoTx | null> {
   const { data, error } = await db
     .from("transactions")
-    .select("id,title,status,photo_path")
+    .select("id,title,status,photo_path,photo_bytes")
     .eq("user_id", userId)
     .eq("id", txId)
     .maybeSingle();
@@ -105,10 +106,11 @@ export async function setPhoto(
   txId: string,
   path: string,
   now: Date,
+  bytes: number,
 ): Promise<void> {
   const { error } = await db
     .from("transactions")
-    .update({ photo_path: path, photo_at: now.toISOString() })
+    .update({ photo_path: path, photo_at: now.toISOString(), photo_bytes: bytes })
     .eq("user_id", userId)
     .eq("id", txId);
   if (error) fail("attach photo", error);
@@ -117,7 +119,7 @@ export async function setPhoto(
 export async function clearPhoto(db: SupabaseClient, userId: string, txId: string): Promise<void> {
   const { error } = await db
     .from("transactions")
-    .update({ photo_path: null, photo_at: null })
+    .update({ photo_path: null, photo_at: null, photo_bytes: null })
     .eq("user_id", userId)
     .eq("id", txId);
   if (error) fail("remove photo", error);

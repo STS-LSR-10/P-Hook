@@ -1,11 +1,11 @@
 import { fileCapacity, formatBytes } from "@/lib/file";
 import {
   AI_CHAT_LIMIT,
-  FAIR_USE,
   FREE_SLIPS_TOTAL,
   FREE_VOICE_TOTAL,
   GROUP_LEDGER_LIMIT,
   GROUP_PUSH_PER_MONTH,
+  PRIVATE_PUSH_PER_MONTH,
   SHARED_MEMBER_LIMIT,
   SLIP_LIMIT,
   VOICE_LIMIT,
@@ -100,12 +100,6 @@ export function yearlySavingPercent(price: PlanPrice): number {
 
 /** A cell of the comparison table: included, not included, or a short text. */
 export type Cell = boolean | string;
-
-/** Under the comparison table: what "ไม่จำกัด*" means. Built from the real ceiling so it cannot drift. */
-export const FAIR_USE_NOTE = t(
-  "*ไม่จำกัดสำหรับการใช้งานตามปกติ: สูงสุดราว {0} ครั้ง/เดือน (AI อ่านประโยคยาว) ครบแล้วพิมพ์จดได้ตามปกติ และใช้ได้ใหม่ต้นเดือนหน้า",
-  FAIR_USE.smartParse,
-);
 
 export interface FeatureRow {
   /** Short, one line. */
@@ -220,7 +214,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       {
         label: t("ให้ AI อ่านประโยคยาวๆ"),
         icon: "sparkles",
-        cells: gate("smartParse", { ultimate: t("ไม่จำกัด*") }),
+        cells: gate("smartParse"),
         feature: "smartParse",
       },
       {
@@ -455,6 +449,11 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         cells: perPlan((p) =>
           repeatCapacity(p) === 0 ? false : t("{0} รายการ", repeatCapacity(p)),
         ),
+      },
+      {
+        label: t("เตือนทาง LINE ส่วนตัว"),
+        icon: "bell",
+        cells: perPlan((p) => t("{0} ครั้ง/เดือน", PRIVATE_PUSH_PER_MONTH[p])),
       },
       {
         label: t("เตือนในกลุ่ม LINE"),

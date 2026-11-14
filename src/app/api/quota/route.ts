@@ -60,10 +60,11 @@ export async function GET(request: Request): Promise<Response> {
         { kind: "pdf", month },
         { kind: "owl", month },
         { kind: "ai_chat", month },
-        { kind: "group_remind", month },
+        { kind: "group_push", month },
+        { kind: "private_push", month },
       ]),
     ]);
-    const [voice = 0, pdf = 0, owl = 0, ai = 0, groupReminders = 0] = counters;
+    const [voice = 0, pdf = 0, owl = 0, ai = 0, groupReminders = 0, privatePush = 0] = counters;
     const bonus = await loadBonus(db, auth.userId, now);
 
     return json({
@@ -82,6 +83,7 @@ export async function GET(request: Request): Promise<Response> {
           repeatReminders,
           groups,
           groupReminders,
+          privatePush,
           recurring,
           slips,
           photos,

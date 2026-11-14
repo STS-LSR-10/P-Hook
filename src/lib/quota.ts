@@ -7,11 +7,11 @@ import {
   FREE_VOICE_TOTAL,
   GROUP_LEDGER_LIMIT,
   goalLimit,
-  GROUP_REMINDS_PER_MONTH,
+  GROUP_PUSH_PER_MONTH,
+  PRIVATE_PUSH_PER_MONTH,
   OWL_LIMIT,
   PLAN_ORDER,
   PDF_LIMIT,
-  PHOTOS_PER_MONTH,
   recurringLimit,
   AI_CHAT_LIMIT,
   SLIP_LIMIT,
@@ -78,8 +78,10 @@ export interface QuotaUsage {
   recurring: number;
   /** Group ledgers the person owns. */
   groups: number;
-  /** Unpaid-bill reminders posted in their groups this month. */
+  /** Messages the bot pushed into their groups this month. */
   groupReminders: number;
+  /** Reminders pushed to their own LINE chat this month. */
+  privatePush: number;
   /** This week on Free, this month on a paid plan. */
   slips: number;
   photos: number;
@@ -192,11 +194,11 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     {
       key: "groupReminders",
       label: "เตือนกลุ่ม",
-      hint: "เตือนคนที่ยังไม่จ่ายบิลในกลุ่ม (วันละครั้งต่อกลุ่ม)",
+      hint: "เตือนที่บอทส่งเข้ากลุ่ม (นับตามจำนวนสมาชิกในกลุ่ม) เกินแล้วจะรอส่งตอนมีคนพิมพ์ในกลุ่ม",
       word: "ครั้ง",
       icon: "megaphone",
       used: used.groupReminders,
-      on: (p) => ({ limit: GROUP_REMINDS_PER_MONTH[p], period: "month" }),
+      on: (p) => ({ limit: GROUP_PUSH_PER_MONTH[p], period: "month" }),
     },
     {
       key: "storage",
@@ -215,6 +217,15 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
   ];
 
   const others: Def[] = [
+    {
+      key: "privatePush",
+      label: "เตือนทาง LINE",
+      hint: "เตือนที่บอทส่งเข้าแชทส่วนตัวของคุณ เต็มแล้วดูเตือนในแอปได้ตามปกติ",
+      word: "ครั้ง",
+      icon: "bell",
+      used: used.privatePush,
+      on: (p) => ({ limit: PRIVATE_PUSH_PER_MONTH[p], period: "month" }),
+    },
     {
       key: "ai",
       label: "ถาม AI",
@@ -248,11 +259,11 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     {
       key: "photos",
       label: "แนบรูปกับรายการ",
-      hint: "รูปที่แนบกับรายการที่จดแล้ว",
+      hint: "รูปที่แนบกับรายการที่จดแล้ว (ไม่จำกัดจำนวน แต่นับรวมในพื้นที่จัดเก็บ)",
       word: "รูป",
       icon: "photo",
       used: used.photos,
-      on: (p) => ({ limit: can(p, "entryPhoto") ? PHOTOS_PER_MONTH : 0, period: "month" }),
+      on: (p) => ({ limit: can(p, "entryPhoto") ? null : 0, period: "month" }),
     },
     {
       key: "notes",

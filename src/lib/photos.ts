@@ -1,4 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { loadBonus } from "@/lib/addons-repo";
+import { fileCapacity } from "@/lib/file";
+import { fileUsage } from "@/lib/file-repo";
 import { extensionFor, ImageError } from "@/lib/line/content";
 import {
   ERROR_TEXT,
@@ -13,8 +16,8 @@ import {
 } from "@/lib/line/messages";
 import { log } from "@/lib/log";
 import type { SlipImage } from "@/lib/ocr/provider";
-import { can, effectivePlan, PHOTOS_PER_MONTH } from "@/lib/plan";
-import { clearPhotoWait, countPhotosThisMonth, getPhotoTx, setPhoto } from "@/lib/photo-repo";
+import { can, effectivePlan } from "@/lib/plan";
+import { clearPhotoWait, getPhotoTx, setPhoto } from "@/lib/photo-repo";
 import type { UserRow } from "@/lib/repo";
 import { getUserPlanRow, SLIP_BUCKET } from "@/lib/slip-repo";
 import type { LineMessage } from "@/lib/types";
@@ -30,7 +33,10 @@ export function photoPathFor(userId: string, txId: string, mimeType: string): st
   return `${userId}/photo-${txId}.${extensionFor(mimeType)}`;
 }
 
-/** Plan and monthly cap, shared by the button tap and the image that follows it. Null = allowed. */
+/** The person's storage space cannot take this photo. */
+export class PhotoStorageFull extends Error {}
+
+/** Plan, shared by the button tap and the image that follows it. Null = allowed. */
 export async function photoBlockedReply(
   db: SupabaseClient,
   userId: string,
@@ -40,20 +46,28 @@ export async function photoBlockedReply(
   if (!can(effectivePlan(row.plan, row.plan_expires_at, now), "entryPhoto")) {
     return [text(PHOTO_LOCKED_TEXT)];
   }
-  if ((await countPhotosThisMonth(db, userId, now)) >= PHOTOS_PER_MONTH) {
-    return [text(PHOTO_LIMIT_TEXT)];
-  }
   return null;
 }
 
-/** Store the image as the entry's one photo (replacing a previous one) and record it on the entry. */
+/**
+ * Store the image as the entry's one photo (replacing a previous one) and record it, with its size,
+ * on the entry. The photo takes space like any file: throws PhotoStorageFull when it would not fit
+ * (a photo it replaces gives its own space back). Checked just before storing, not atomically.
+ */
 export async function attachPhotoBytes(
   db: SupabaseClient,
   userId: string,
-  tx: { id: string; photo_path: string | null },
+  tx: { id: string; photo_path: string | null; photo_bytes?: number | null },
   image: SlipImage,
   now: Date,
 ): Promise<void> {
+  const row = await getUserPlanRow(db, userId);
+  const capacity = fileCapacity(
+    effectivePlan(row.plan, row.plan_expires_at, now),
+    (await loadBonus(db, userId)).storageBytes,
+  );
+  const used = (await fileUsage(db, userId)) - (tx.photo_bytes ?? 0);
+  if (used + image.bytes.byteLength > capacity) throw new PhotoStorageFull();
   const path = photoPathFor(userId, tx.id, image.mimeType);
   const upload = await db.storage
     .from(SLIP_BUCKET)
@@ -61,7 +75,7 @@ export async function attachPhotoBytes(
   if (upload.error) throw new Error(`upload photo: ${upload.error.message}`);
 
   try {
-    await setPhoto(db, userId, tx.id, path, now);
+    await setPhoto(db, userId, tx.id, path, now, image.bytes.byteLength);
   } catch (error) {
     await db.storage
       .from(SLIP_BUCKET)
@@ -114,6 +128,7 @@ export async function handlePhotoImage(
     await attachPhotoBytes(db, user.id, tx, image, now);
     return [text(PHOTO_ATTACHED_TEXT(tx.title))];
   } catch (error) {
+    if (error instanceof PhotoStorageFull) return [text(PHOTO_LIMIT_TEXT)];
     log.error("photo_attach_failed", error);
     return [text(ERROR_TEXT)];
   } finally {

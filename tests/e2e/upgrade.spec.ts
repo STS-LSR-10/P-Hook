@@ -81,7 +81,7 @@ test.describe("upgrade page (360px)", () => {
     await expect(has(/จดย้อนหลัง/).getByText("มี", { exact: true })).toHaveCount(3);
     await expect(has(/จดด้วยเสียง/)).toContainText("30 ครั้ง/เดือน");
     await expect(has(/จดด้วยเสียง/)).toContainText("ลองฟรี 10 ครั้ง");
-    await expect(page.getByText("ไม่จำกัดสำหรับการใช้งานตามปกติ")).toBeVisible();
+    await expect(page.getByText("ไม่จำกัดสำหรับการใช้งานตามปกติ")).toHaveCount(0);
     await expect(has(/อ่านสลิปอัตโนมัติ/)).toContainText("ลองฟรี 10 ใบ");
     await expect(has(/อ่านสลิปอัตโนมัติ/)).toContainText("45 ใบ/เดือน");
     await expect(table.getByText("เร็วๆ นี้")).toHaveCount(0);

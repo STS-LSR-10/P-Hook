@@ -3388,6 +3388,22 @@ describe("stored files (0047)", () => {
     expect(r.n).toBe("50");
   });
 
+  it("photos on entries count toward the space, and a file that would not fit is refused", async () => {
+    const u = await newUser(db, `file-photo-${Math.random()}`);
+    await db.query(
+      "insert into transactions (user_id, type, amount, title, photo_path, photo_bytes) values ($1,'expense',1,'x','p/1.jpg',80)",
+      [u],
+    );
+    await db.query(
+      "insert into transactions (user_id, type, amount, title, photo_path, photo_bytes) values ($1,'expense',1,'y',null,500)",
+      [u],
+    );
+    const r = await one<{ n: string }>(db, "select file_usage($1)::text as n", [u]);
+    expect(r.n).toBe("80"); // a removed photo (no path) counts nothing
+    expect((await reserve(u, 30)).ok).toBe(false); // 80 + 30 > 100
+    expect((await reserve(u, 20)).ok).toBe(true);
+  });
+
   it("keeps every table server only", async () => {
     const r = await rows<{ relname: string; on: boolean; n: number }>(
       db,

@@ -62,6 +62,7 @@ describe("the quota page with add-ons", () => {
     repeatReminders: 0,
     groups: 0,
     groupReminders: 0,
+    privatePush: 0,
     recurring: 0,
     slips: 70,
     photos: 0,

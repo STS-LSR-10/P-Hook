@@ -1,11 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { effectivePlan, GROUP_PUSH_PER_MONTH } from "@/lib/plan";
+import { effectivePlan, GROUP_PUSH_PER_MONTH, PRIVATE_PUSH_PER_MONTH } from "@/lib/plan";
 import { getUserPlanRow } from "@/lib/slip-repo";
 import type { Mention } from "@/lib/group-mention";
 import { addLateReminder, purgeLateReminders, reminderTargets } from "@/lib/group-reminder-repo";
 import { getGroup } from "@/lib/group-repo";
 import { groupReminderMessage, refusedAsMalformed } from "@/lib/line/group-riders";
-import { groupReminderDirectText, reminderPushText } from "@/lib/line/messages";
+import {
+  groupReminderDirectText,
+  privatePushFullText,
+  reminderPushText,
+} from "@/lib/line/messages";
 import { reminderActions } from "@/lib/line/reminder-flex";
 import { log } from "@/lib/log";
 import type { LineMessage } from "@/lib/types";
@@ -81,19 +85,34 @@ export async function runUserReminders(
         continue;
       }
       const person = people.get(r.userId);
-      await runInZone(
-        person?.timezone,
-        () =>
-          line.push(r.lineUserId, [
-            {
-              type: "text",
-              text: reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
-              quickReply: reminderActions(r.id),
-            },
-          ]),
-        person?.currency,
-        person?.locale,
-      );
+      const room = await takePrivatePush(db, r.userId, now);
+      if (room === "full") {
+        await tellPushFull(db, line, r, now, liffUrl?.replace(/\/reminders$/, "/upgrade"));
+        continue;
+      }
+      try {
+        await runInZone(
+          person?.timezone,
+          () =>
+            line.push(r.lineUserId, [
+              {
+                type: "text",
+                text: reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
+                quickReply: reminderActions(r.id),
+              },
+            ]),
+          person?.currency,
+          person?.locale,
+        );
+      } catch (error) {
+        // nothing reached them, so it does not count
+        if (room === "taken") {
+          await refundUsageAmount(db, r.userId, "private_push", 1, monthKey(now)).catch(
+            () => undefined,
+          );
+        }
+        throw error;
+      }
       summary.sent += 1;
     } catch (error) {
       summary.errors += 1;
@@ -189,6 +208,48 @@ async function sendGroupReminder(
     dueAt: new Date(Math.floor((now.getTime() - RIDE_MS) / 60_000) * 60_000),
   });
   return "late";
+}
+
+/**
+ * One of the person's monthly pushes to their own chat. "full" when they are used up; a plan or
+ * counter that cannot be read lets the reminder through ("unknown"), so it is never lost to a fault.
+ */
+async function takePrivatePush(
+  db: SupabaseClient,
+  userId: string,
+  now: Date,
+): Promise<"taken" | "full" | "unknown"> {
+  try {
+    const row = await getUserPlanRow(db, userId);
+    const cap = PRIVATE_PUSH_PER_MONTH[effectivePlan(row.plan, row.plan_expires_at, now)];
+    const ok = await takeUsageAmount(db, userId, "private_push", 1, cap, monthKey(now));
+    return ok ? "taken" : "full";
+  } catch (error) {
+    log.error("private_push_count_failed", error);
+    return "unknown";
+  }
+}
+
+/** The month's pushes are used up: say so once, with the reminder itself, and push nothing more. */
+async function tellPushFull(
+  db: SupabaseClient,
+  line: ReminderLine,
+  r: DueReminder,
+  now: Date,
+  upgradeUrl?: string,
+): Promise<void> {
+  const first = await takeUsageAmount(
+    db,
+    r.userId,
+    "private_push_notice",
+    1,
+    1,
+    monthKey(now),
+  ).catch(() => false);
+  if (!first) return;
+  await line
+    .push(r.lineUserId, [{ type: "text", text: privatePushFullText(r.body, upgradeUrl) }])
+    .catch((error: unknown) => log.warn("private_push_notice_failed", { reason: String(error) }));
 }
 
 /** The zone, currency and language of these people (none when they cannot be read: Thai, Bangkok). */

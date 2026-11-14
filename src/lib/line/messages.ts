@@ -237,7 +237,7 @@ export const PHOTO_LOCKED_TEXT = t(
 export const PHOTO_ASK_TEXT = t("📎 เลือกรูปที่จะแนบ");
 export const PHOTO_ASK_REPLACE_TEXT = t("📎 เลือกรูปใหม่ (แทนรูปเดิม)");
 export const PHOTO_LIMIT_TEXT = t(
-  "เดือนนี้แนบรูปครบจำนวนแล้ว ไว้เดือนหน้าแนบเพิ่มได้ใหม่นะ ตอนนี้จดรายการได้ตามปกติ",
+  "พื้นที่จัดเก็บเต็ม แนบรูปไม่ได้ ลบไฟล์เดิม ซื้อแพ็กพื้นที่เพิ่ม หรืออัปเกรดแผนได้เลย ตอนนี้จดรายการได้ตามปกติ",
 );
 export const PHOTO_ATTACHED_TEXT = (title: string) => t('แนบรูปกับ "{0}" แล้ว', title);
 export const PHOTO_EXPIRED_TEXT = t(
@@ -758,6 +758,19 @@ export const reminderPushText = (body: string, repeatLabel: string | null, url?:
   [
     t("⏰ เตือน: {0}", body),
     ...(repeatLabel ? [`(${repeatLabel}${url ? ` · ยกเลิกได้ที่ ${url}` : ""})`] : []),
+  ].join("\n");
+
+/** Said once a month, in place of a reminder, when the month's reminders to LINE are used up. */
+export const privatePushFullText = (body: string, upgradeUrl?: string) =>
+  [
+    t("⏰ เตือน: {0}", body),
+    t(
+      "⚠️ โควตาเตือนทาง LINE เดือนนี้เต็มแล้ว เตือนหลังจากนี้จะดูได้ในแอปเท่านั้น จนกว่าจะขึ้นเดือนใหม่",
+    ),
+    t(
+      "อยากให้บอทส่งเตือนเข้า LINE ได้มากขึ้น อัปเกรดแผนได้เลย{0}",
+      upgradeUrl ? ` ${upgradeUrl}` : "",
+    ),
   ].join("\n");
 
 /** A group's reminder: no link, which would open the owner's own page for everyone. */

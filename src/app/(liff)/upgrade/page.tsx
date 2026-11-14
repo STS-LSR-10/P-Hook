@@ -58,7 +58,6 @@ import {
   type Cell,
   type FeatureIcon,
   PLAN_HIGHLIGHTS,
-  FAIR_USE_NOTE,
   pricingAt,
   yearlyPerDay,
   yearlySavingPercent,
@@ -691,7 +690,6 @@ function Comparison({ mark, onMark }: { mark: Plan | null; onMark: (plan: Plan) 
           ))}
         </table>
       </div>
-      <p className="border-t border-border px-4 py-3 text-xs text-muted">{FAIR_USE_NOTE}</p>
     </section>
   );
 }

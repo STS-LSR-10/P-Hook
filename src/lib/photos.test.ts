@@ -10,13 +10,18 @@ import {
   PHOTO_LIMIT_TEXT,
   PHOTO_LOCKED_TEXT,
 } from "@/lib/line/messages";
-import { PHOTOS_PER_MONTH } from "@/lib/plan";
 import type { UserRow } from "@/lib/repo";
 import { handlePhotoImage, photoPathFor } from "./photos";
 
 let plan = "plus";
-let used = 0;
-let tx: { id: string; title: string; status: string; photo_path: string | null } | null = null;
+let spaceUsed = 0;
+let tx: {
+  id: string;
+  title: string;
+  status: string;
+  photo_path: string | null;
+  photo_bytes?: number | null;
+} | null = null;
 const setPhoto = vi.fn(async () => undefined);
 const clearPhotoWait = vi.fn(async () => undefined);
 
@@ -24,8 +29,9 @@ vi.mock("@/lib/slip-repo", async (original) => ({
   ...(await original<typeof import("@/lib/slip-repo")>()),
   getUserPlanRow: async () => ({ plan, plan_expires_at: null }),
 }));
+vi.mock("@/lib/file-repo", () => ({ fileUsage: async () => spaceUsed }));
+vi.mock("@/lib/addons-repo", () => ({ loadBonus: async () => ({ storageBytes: 0 }) }));
 vi.mock("@/lib/photo-repo", () => ({
-  countPhotosThisMonth: async () => used,
   getPhotoTx: async () => tx,
   setPhoto: (...args: unknown[]) => (setPhoto as unknown as (...a: unknown[]) => unknown)(...args),
   clearPhotoWait: (...args: unknown[]) =>
@@ -49,7 +55,7 @@ const textOf = (m: unknown[]) => (m[0] as { text?: string }).text;
 
 beforeEach(() => {
   plan = "plus";
-  used = 0;
+  spaceUsed = 0;
   tx = { id: "t1", title: "ข้าวมันไก่", status: "confirmed", photo_path: null };
   for (const f of [setPhoto, clearPhotoWait, upload, remove, fetchImage]) f.mockClear();
   fetchImage.mockImplementation(async () => ({
@@ -83,11 +89,31 @@ describe("handlePhotoImage", () => {
     expect(clearPhotoWait).toHaveBeenCalledTimes(1);
   });
 
-  it("stops at the monthly cap", async () => {
-    used = PHOTOS_PER_MONTH;
+  it("there is no monthly cap on photos", async () => {
+    const out = await handlePhotoImage(deps, user, "m1", live);
+    expect(textOf(out)).toBe(PHOTO_ATTACHED_TEXT("ข้าวมันไก่"));
+  });
+
+  it("when the space is full nothing is uploaded and the person is told", async () => {
+    spaceUsed = 3 * 1024 ** 3 - 2; // Pro has 15 GB, so this is Starter's size: use Starter
+    plan = "starter";
     const out = await handlePhotoImage(deps, user, "m1", live);
     expect(textOf(out)).toBe(PHOTO_LIMIT_TEXT);
-    expect(fetchImage).not.toHaveBeenCalled();
+    expect(upload).not.toHaveBeenCalled();
+    expect(setPhoto).not.toHaveBeenCalled();
+  });
+
+  it("replacing a photo gives its space back first", async () => {
+    spaceUsed = 3 * 1024 ** 3 - 2;
+    plan = "starter";
+    tx = { ...(tx as NonNullable<typeof tx>), photo_path: "u1/photo-t1.jpg", photo_bytes: 100 };
+    const out = await handlePhotoImage(deps, user, "m1", live);
+    expect(textOf(out)).toBe(PHOTO_ATTACHED_TEXT("ข้าวมันไก่"));
+  });
+
+  it("the size of the photo is kept on the entry", async () => {
+    await handlePhotoImage(deps, user, "m1", live);
+    expect((setPhoto.mock.calls[0] as unknown[])[5]).toBe(3);
   });
 
   it("an expired wait asks to tap the button again", async () => {

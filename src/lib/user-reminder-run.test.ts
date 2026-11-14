@@ -38,6 +38,7 @@ vi.mock("@/lib/slip-repo", () => ({
   },
 }));
 let pushUsed = 0;
+const personal = { push: 0, notice: 0 };
 const refunds: number[] = [];
 vi.mock("./usage", async (original) => ({
   ...(await original<typeof import("./usage")>()),
@@ -48,7 +49,13 @@ vi.mock("./usage", async (original) => ({
     amount: number,
     limit: number,
   ) => {
-    if (usageFail) throw new Error("db down");
+    if (usageFail && kind === "group_push") throw new Error("db down");
+    if (kind === "private_push" || kind === "private_push_notice") {
+      const key = kind === "private_push" ? "push" : "notice";
+      if (personal[key] + amount > limit) return false;
+      personal[key] += amount;
+      return true;
+    }
     if (kind !== "group_push" || pushUsed + amount > limit) return false;
     pushUsed += amount;
     return true;
@@ -79,6 +86,8 @@ beforeEach(() => {
   late.length = 0;
   purged = 0;
   pushUsed = 0;
+  personal.push = 0;
+  personal.notice = 0;
   refunds.length = 0;
   targetsFail = false;
   usageFail = false;
@@ -170,6 +179,51 @@ describe("runUserReminders", () => {
     const out = await runUserReminders({} as SupabaseClient, { push } as never, NOW);
     expect(out).toEqual({ claimed: 3, sent: 2, errors: 1, late: 0 });
     expect(push).toHaveBeenCalledTimes(3);
+  });
+
+  describe("the month's pushes to a person's own chat", () => {
+    const four = () => [1, 2, 3, 4].map((n) => r({ id: `r${n}`, body: `เตือน ${n}` }));
+
+    it("Free gets three, then one notice with the reminder and the upgrade link, then nothing", async () => {
+      ownerPlan = "free";
+      due = [...four(), r({ id: "r5", body: "เตือน 5" })];
+      const push = vi.fn(async (...args: unknown[]) => void args.length);
+      const url = "https://liff.line.me/L/reminders";
+      const out = await runUserReminders({} as SupabaseClient, { push } as never, NOW, url);
+      expect(out).toMatchObject({ claimed: 5, sent: 3, errors: 0 });
+      expect(push).toHaveBeenCalledTimes(4); // three reminders and one notice
+      const notice = sentText(push.mock.calls[3] ?? []);
+      expect(notice).toContain("เตือน 4");
+      expect(notice).toContain("เต็มแล้ว");
+      expect(notice).toContain("https://liff.line.me/L/upgrade");
+    });
+
+    it("each plan has its own number", async () => {
+      ownerPlan = "starter";
+      due = Array.from({ length: 36 }, (_, i) => r({ id: `r${i}` }));
+      const push = vi.fn(async (...args: unknown[]) => void args.length);
+      const out = await runUserReminders({} as SupabaseClient, { push } as never, NOW);
+      expect(out.sent).toBe(35);
+    });
+
+    it("a push that fails gives its use back", async () => {
+      ownerPlan = "free";
+      due = [r()];
+      const push = vi.fn(async () => {
+        throw new Error("LINE push failed: 403");
+      });
+      const out = await runUserReminders({} as SupabaseClient, { push } as never, NOW);
+      expect(out.errors).toBe(1);
+      expect(refunds).toEqual([1]);
+    });
+
+    it("a plan that cannot be read lets the reminder through", async () => {
+      planFails = true;
+      due = four();
+      const push = vi.fn(async (...args: unknown[]) => void args.length);
+      const out = await runUserReminders({} as SupabaseClient, { push } as never, NOW);
+      expect(out.sent).toBe(4);
+    });
   });
 
   it("does nothing when nothing is due", async () => {

@@ -13,7 +13,9 @@ export type UsageKind =
   | "ai_out_notice"
   | "file_save"
   | "group_remind"
-  | "group_push";
+  | "group_push"
+  | "private_push"
+  | "private_push_notice";
 
 /** The "lifetime" bucket: a counter that never rolls over. */
 export const LIFETIME = "2000-01-01";
