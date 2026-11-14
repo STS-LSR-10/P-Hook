@@ -2739,6 +2739,7 @@ async function runCommand(
         body: parsed.body,
         remindAt: parsed.remindAt,
         repeat: parsed.repeat,
+        via: "chat",
       });
       return [
         buildReminderCard({

@@ -81,6 +81,7 @@ export async function POST(request: Request): Promise<Response> {
       remindAt,
       repeat: parsed.data.repeat ?? null,
       category: parsed.data.category ?? null,
+      via: "page",
     });
     return json({ reminder }, 201);
   });

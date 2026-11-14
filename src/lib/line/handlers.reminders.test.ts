@@ -127,7 +127,7 @@ describe("setting a reminder from the chat", () => {
     const { deps, reply } = setup();
     await handleEvent(say("เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ"), deps);
     expect(created).toHaveLength(1);
-    expect(created[0]).toMatchObject({ body: "จ่ายค่าไฟ", repeat: null });
+    expect(created[0]).toMatchObject({ body: "จ่ายค่าไฟ", repeat: null, via: "chat" });
     expect((created[0]?.remindAt as Date).toISOString()).toBe("2026-10-29T02:00:00.000Z");
     expect(sent(reply)[0]?.type).toBe("flex");
     expect(said(reply)).toContain('"text":"09:00"');

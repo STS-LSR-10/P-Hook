@@ -1,5 +1,6 @@
 import { tokenSecrets } from "@/lib/auth/keys";
 import { verifyCalendarToken } from "@/lib/auth/calendar-token";
+import { logActivity } from "@/lib/activity";
 import { buildIcs, googleCalendarUrl } from "@/lib/calendar";
 import { getCalendarReminder } from "@/lib/group-reminder-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -27,9 +28,18 @@ export async function GET(request: Request, { params }: Params): Promise<Respons
   const named = await verifyCalendarToken(url.searchParams.get("t") ?? "", tokenSecrets());
   if (named !== id) return plain("ไม่พบเตือนนี้", 404);
 
-  const reminder = await getCalendarReminder(getAdminClient(), id);
+  const db = getAdminClient();
+  const reminder = await getCalendarReminder(db, id);
   if (!reminder) return plain("ไม่พบเตือนนี้", 404);
   if (!reminder.active) return plain("เตือนนี้ถูกยกเลิกหรือเตือนไปแล้ว", 410);
+  // a group card's button (a personal one was counted when it was tapped in the app)
+  if (url.searchParams.get("from") !== "app") {
+    await logActivity(
+      db,
+      reminder.userId,
+      url.searchParams.get("to") === "google" ? "calendar_google" : "calendar_device",
+    );
+  }
 
   const event = { body: reminder.body, at: new Date(reminder.remindAt), repeat: reminder.repeat };
   if (url.searchParams.get("to") === "google") {

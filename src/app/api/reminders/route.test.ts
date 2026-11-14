@@ -297,6 +297,7 @@ describe("reminders on the page", () => {
       201,
     );
     expect(created.map((c) => c.category)).toEqual(["travel", OWN]);
+    expect(created.every((c) => c.via === "page")).toBe(true);
   });
 
   it("refuses an id that is not one of the person's categories", async () => {

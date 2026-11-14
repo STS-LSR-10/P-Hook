@@ -109,15 +109,33 @@ export async function purgeLateReminders(db: SupabaseClient, now: Date): Promise
 export async function getCalendarReminder(
   db: SupabaseClient,
   id: string,
-): Promise<{ body: string; remindAt: string; repeat: Repeat | null; active: boolean } | null> {
+): Promise<{
+  body: string;
+  remindAt: string;
+  repeat: Repeat | null;
+  active: boolean;
+  userId: string;
+} | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { data, error } = await db
     .from("user_reminders")
-    .select("body,remind_at,repeat,status")
+    .select("body,remind_at,repeat,status,user_id")
     .eq("id", id)
     .maybeSingle();
   if (error) fail("calendar reminder", error);
   if (!data) return null;
-  const r = data as { body: string; remind_at: string; repeat: Repeat | null; status: string };
-  return { body: r.body, remindAt: r.remind_at, repeat: r.repeat, active: r.status === "active" };
+  const r = data as {
+    body: string;
+    remind_at: string;
+    repeat: Repeat | null;
+    status: string;
+    user_id: string;
+  };
+  return {
+    body: r.body,
+    remindAt: r.remind_at,
+    repeat: r.repeat,
+    active: r.status === "active",
+    userId: r.user_id,
+  };
 }

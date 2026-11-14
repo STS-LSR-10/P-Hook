@@ -3656,3 +3656,82 @@ describe("groups the bot was taken out of (0062)", () => {
     }
   });
 });
+
+describe("usage counts for the admin (0071)", () => {
+  type Row = { grp: string; kind: string | null; uses: number; people: number };
+  const summary = async (from = "2000-01-01", to = "2100-01-01") =>
+    await rows<Row>(db, "select grp, kind, uses::int, people::int from activity_summary($1, $2)", [
+      from,
+      to,
+    ]);
+  const find = (all: Row[], grp: string, kind: string | null) =>
+    all.find((r) => r.grp === grp && r.kind === kind);
+
+  it("counts notes and kept files on their own, and only once per file", async () => {
+    await db.query("delete from activity_events");
+    const u = await newUser(db, `act-${Math.random()}`);
+    await db.query("insert into notes (user_id, body) values ($1, 'a'), ($1, 'b')", [u]);
+    const file = (mime: string) =>
+      db.query(
+        "insert into stored_files (id, user_id, name, mime_type, size_bytes, r2_key) values (gen_random_uuid(), $1, 'x', $2, 1, gen_random_uuid()::text) returning id",
+        [u, mime],
+      );
+    const pic = (await file("image/jpeg")).rows[0] as { id: string };
+    await file("application/pdf");
+    expect(find(await summary(), "image", "image")).toBeUndefined(); // still uploading
+    await db.query("update stored_files set status = 'ready' where user_id = $1", [u]);
+    await db.query("update stored_files set status = 'ready' where id = $1", [pic.id]);
+    const all = await summary();
+    expect(find(all, "note", null)).toMatchObject({ uses: 2, people: 1 });
+    expect(find(all, "image", null)).toMatchObject({ uses: 1, people: 1 });
+    expect(find(all, "file", null)).toMatchObject({ uses: 1, people: 1 });
+  });
+
+  it("adds up a group's kinds, with people counted once, inside the dates asked", async () => {
+    await db.query("delete from activity_events");
+    const a = await newUser(db, `act-${Math.random()}`);
+    const b = await newUser(db, `act-${Math.random()}`);
+    await db.query(
+      `insert into activity_events (kind, user_id, created_at) values
+        ('reminder_chat', $1, '2026-11-02'), ('reminder_page', $1, '2026-11-03'),
+        ('reminder_chat', $2, '2026-11-04'), ('reminder_chat', $2, '2026-10-20')`,
+      [a, b],
+    );
+    const nov = await summary("2026-11-01", "2026-12-01");
+    expect(find(nov, "reminder", "reminder_chat")).toMatchObject({ uses: 2, people: 2 });
+    expect(find(nov, "reminder", "reminder_page")).toMatchObject({ uses: 1, people: 1 });
+    expect(find(nov, "reminder", null)).toMatchObject({ uses: 3, people: 2 });
+  });
+
+  it("reads entries by how they were made (kept ones only), and new members", async () => {
+    const u = await newUser(db, `act-${Math.random()}`);
+    // a cancelled import or a split slip turns its waiting rows to 'deleted': not entries made
+    await db.query(
+      "insert into transactions (user_id,type,amount,title,source,status,created_at) values ($1,'expense',10,'a','slip','confirmed','2031-05-05'), ($1,'expense',10,'b','slip','deleted','2031-05-05'), ($1,'expense',10,'c','slip','pending_confirm','2031-05-05')",
+      [u],
+    );
+    const may = await summary("2031-05-01", "2031-06-01");
+    expect(find(may, "entry", "entry_slip")).toMatchObject({ uses: 1, people: 1 });
+    const all = await summary();
+    expect(find(all, "newuser", null)?.uses).toBeGreaterThanOrEqual(1);
+  });
+
+  it("fills the past in once, from what is kept, into an empty table only", async () => {
+    await db.query("delete from activity_events");
+    const u = await newUser(db, `act-${Math.random()}`);
+    await db.query(
+      "insert into user_reminders (user_id, body, remind_at) values ($1, 'a', now())",
+      [u],
+    );
+    await db.query("delete from activity_events");
+    const sql = readFileSync(
+      join(__dirname, "../../supabase/migrations/0071_activity_events.sql"),
+      "utf8",
+    );
+    await db.exec(sql);
+    const once = find(await summary(), "reminder", "reminder")?.uses ?? 0;
+    expect(once).toBeGreaterThanOrEqual(1);
+    await db.exec(sql);
+    expect(find(await summary(), "reminder", "reminder")?.uses).toBe(once);
+  });
+});

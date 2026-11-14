@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/activity";
 import type { Mention } from "@/lib/group-mention";
 import type { ReminderDto, ReminderKind, ReminderStatus, Repeat } from "@/lib/user-reminder";
 
@@ -115,6 +116,8 @@ export async function createReminder(
     createdBy?: string;
     /** Who it tags in the group, tagged again when it is sent. */
     mentions?: Mention[];
+    /** Where it was set, counted for the admin's usage tab; left out for a snooze's copy. */
+    via?: "chat" | "page" | "group";
   },
 ): Promise<ReminderDto> {
   const { data, error } = await db
@@ -136,6 +139,7 @@ export async function createReminder(
     .select(COLUMNS)
     .single();
   if (error) fail("create reminder", error);
+  if (input.via) await logActivity(db, userId, `reminder_${input.via}`);
   return toDto(data as Row);
 }
 

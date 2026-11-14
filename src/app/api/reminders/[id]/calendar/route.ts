@@ -4,6 +4,7 @@ import { signCalendarToken } from "@/lib/auth/calendar-token";
 import { signGoogleLinkToken } from "@/lib/auth/google-token";
 import { requireUser } from "@/lib/auth/require-user";
 import { getServerEnv } from "@/lib/env";
+import { logActivity } from "@/lib/activity";
 import { googleConfig } from "@/lib/google/config";
 import { getGoogleLink, maskEmail } from "@/lib/google/link-repo";
 import { addReminderToGoogle } from "@/lib/google/sync";
@@ -70,13 +71,22 @@ export async function POST(request: Request, { params }: Params): Promise<Respon
 
     const secret = getServerEnv().SESSION_JWT_SECRET;
     const calendarLink = async (to: "ics" | "google") =>
-      `${base()}/api/calendar/${reminder.id}?t=${await signCalendarToken(reminder.id, secret, PERSONAL_LINK_TTL_SECONDS)}&to=${to}`;
+      `${base()}/api/calendar/${reminder.id}?t=${await signCalendarToken(reminder.id, secret, PERSONAL_LINK_TTL_SECONDS)}&to=${to}&from=app`;
 
-    if (parsed.data.to === "device") return json({ open: await calendarLink("ics") });
-    if (!googleConfig()) return json({ open: await calendarLink("google") });
+    if (parsed.data.to === "device") {
+      await logActivity(db, auth.userId, "calendar_device");
+      return json({ open: await calendarLink("ics") });
+    }
+    if (!googleConfig()) {
+      await logActivity(db, auth.userId, "calendar_google");
+      return json({ open: await calendarLink("google") });
+    }
 
     const added = await addReminderToGoogle(db, auth.userId, reminder);
-    if (added.kind === "added") return json({ added: true, email: maskEmail(added.email) });
+    if (added.kind === "added") {
+      await logActivity(db, auth.userId, "calendar_google");
+      return json({ added: true, email: maskEmail(added.email) });
+    }
     if (added.kind === "failed")
       return apiError("เพิ่มลง Google Calendar ไม่สำเร็จ ลองใหม่อีกครั้งนะ", 502);
     const token = await signGoogleLinkToken(

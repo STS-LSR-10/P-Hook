@@ -255,6 +255,7 @@ export async function addGroupReminder(
     createdBy: ctx.userId,
     // only the tags still in what it will say (one in the time part, "@แอน 9 โมง", is gone)
     mentions: (ctx.mentions ?? []).filter((m) => parsed.body.includes(m.label)),
+    via: "group",
   });
   // the phone's own calendar reminds for free; opened outside LINE, which cannot add it
   const link = await ctx.deps.calendarLink?.(made.id).catch(() => undefined);
