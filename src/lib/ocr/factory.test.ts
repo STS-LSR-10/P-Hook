@@ -2,31 +2,22 @@ import { describe, expect, it } from "vitest";
 import { buildSlipReader, readerOrder } from "./factory";
 
 describe("readerOrder", () => {
-  it("default: slip APIs, then the chosen AI, then the other AIs", () => {
-    expect(readerOrder({ AI_PROVIDER: "gemini" })).toEqual([
-      "easyslip",
-      "slip2go",
-      "gemini",
-      "anthropic",
-      "openai",
-    ]);
-    expect(readerOrder({ AI_PROVIDER: "anthropic" })).toEqual([
-      "easyslip",
-      "slip2go",
-      "anthropic",
-      "gemini",
-      "openai",
-    ]);
+  it("default: the chosen AI, then the other AIs (slips are read by AI only)", () => {
+    expect(readerOrder({ AI_PROVIDER: "gemini" })).toEqual(["gemini", "anthropic", "openai"]);
+    expect(readerOrder({ AI_PROVIDER: "anthropic" })).toEqual(["anthropic", "gemini", "openai"]);
   });
 
   it("SLIP_READERS overrides, ignoring unknown names and duplicates", () => {
     expect(
-      readerOrder({ AI_PROVIDER: "gemini", SLIP_READERS: " Gemini, nope, easyslip ,gemini" }),
-    ).toEqual(["gemini", "easyslip"]);
+      readerOrder({
+        AI_PROVIDER: "gemini",
+        SLIP_READERS: " Gemini, nope, easyslip ,openai,gemini",
+      }),
+    ).toEqual(["gemini", "openai"]);
   });
 
   it("an empty/invalid override falls back to the default", () => {
-    expect(readerOrder({ AI_PROVIDER: "openai", SLIP_READERS: "nope" })[0]).toBe("easyslip");
+    expect(readerOrder({ AI_PROVIDER: "openai", SLIP_READERS: "easyslip" })[0]).toBe("openai");
   });
 });
 
@@ -34,13 +25,12 @@ describe("buildSlipReader", () => {
   it("includes only configured readers, in order", () => {
     const built = buildSlipReader({
       AI_PROVIDER: "gemini",
-      EASYSLIP_API_KEY: "e",
       GEMINI_API_KEY: "g",
       OPENAI_API_KEY: "o",
     });
-    expect(built.active).toEqual(["easyslip", "gemini", "openai"]);
-    expect(built.skipped).toEqual(["slip2go", "anthropic"]);
-    expect(built.reader.name).toBe("easyslip > gemini:gemini-3.5-flash-lite > openai:gpt-4o-mini");
+    expect(built.active).toEqual(["gemini", "openai"]);
+    expect(built.skipped).toEqual(["anthropic"]);
+    expect(built.reader.name).toBe("gemini:gemini-3.5-flash-lite > openai:gpt-4o-mini");
   });
 
   it("works with just an AI key", () => {

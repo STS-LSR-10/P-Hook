@@ -42,7 +42,7 @@
 3. ใส่ secrets ทั้งหมดเอง (ชื่อด้านล่าง) ด้วย `wrangler secret put` หรือแดชบอร์ด — **อย่าส่งค่าในแชท**
 4. ตอนสลับ: เปลี่ยน URL ที่ LINE (Webhook + LIFF Endpoint), Stripe (Webhook), env `APP_BASE_URL` และ GitHub secret `APP_BASE_URL`
 
-**ชื่อ secrets/ตัวแปรที่ต้องย้ายไปด้วย:** `LINE_CHANNEL_ID`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_LOGIN_CHANNEL_ID`, `NEXT_PUBLIC_LIFF_ID`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_JWT_SECRET`, `CRON_SECRET`, `APP_BASE_URL`, `AI_PROVIDER` (+ `AI_MODEL`) และ key ของค่าย AI, `EASYSLIP_API_KEY`, `SLIP_READERS`, `NEXT_PUBLIC_CONTACT_EMAIL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` · ตัวแปร `NEXT_PUBLIC_*` ต้องมีตอน **บิลด์** ด้วย (ไม่ใช่แค่ตอนรัน)
+**ชื่อ secrets/ตัวแปรที่ต้องย้ายไปด้วย:** `LINE_CHANNEL_ID`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_LOGIN_CHANNEL_ID`, `NEXT_PUBLIC_LIFF_ID`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_JWT_SECRET`, `CRON_SECRET`, `APP_BASE_URL`, `AI_PROVIDER` (+ `AI_MODEL`) และ key ของค่าย AI, `SLIP_READERS`, `NEXT_PUBLIC_CONTACT_EMAIL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` · ตัวแปร `NEXT_PUBLIC_*` ต้องมีตอน **บิลด์** ด้วย (ไม่ใช่แค่ตอนรัน)
 
 **ลำดับสลับ (ไม่หยุดบริการ):**
 

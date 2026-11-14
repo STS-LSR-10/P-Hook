@@ -11,7 +11,7 @@
 ```
 LINE ──► Cloudflare Workers (Next.js ผ่าน OpenNext: /api/line/webhook, LIFF pages, /api/*) ──► Supabase (Postgres + Storage)
                       │                                         ▲
-                      ├──► ผู้ให้บริการอ่านสลิป (EasySlip → AI)  │
+                      ├──► ผู้ให้บริการอ่านสลิป (AI)             │
 Cloudflare Cron (รายชั่วโมง) ──► /api/cron/recurring + /api/cron/reminders ─┘
 Cloudflare Cron (ทุกนาที) ─► /api/cron/user-reminders (เตือนที่ผู้ใช้ตั้ง)
 ```
@@ -29,7 +29,7 @@ Cloudflare Cron (ทุกนาที) ─► /api/cron/user-reminders (เต�
 | `CRON_SECRET`                                                           | Cloudflare | ใช่                | ค่าเดียวกัน 2 ที่                                                              |
 | `APP_BASE_URL`                                                          | Cloudflare | ไม่                | เช่น `https://app.p-hook.com`                                                  |
 | `AI_PROVIDER` (+ `AI_MODEL`) และ key ของค่าย                            | Cloudflare | key = ใช่          | `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`                      |
-| `EASYSLIP_API_KEY`, `SLIP_READERS`                                      | Cloudflare | key = ใช่          | ไม่บังคับ                                                                      |
+| `SLIP_READERS`                                                          | Cloudflare | key = ใช่          | ไม่บังคับ                                                                      |
 | `NEXT_PUBLIC_CONTACT_EMAIL`                                             | Cloudflare | ไม่                | แสดงในหน้า Privacy/Terms                                                       |
 | `NEXT_PUBLIC_LINE_OA_BASIC_ID`                                          | Cloudflare | ไม่                | Basic ID ของ OA (ขึ้นต้นด้วย @) ใช้ทำลิงก์เพิ่มเพื่อน; ไม่ตั้ง = `@p-hook`   |
 
@@ -94,7 +94,7 @@ Migration ที่ต้องรันใน Supabase SQL Editor ก่อน 
 | `SESSION_JWT_SECRET`        | ตั้งค่าใหม่ → Deploy ใหม่                                             | ผู้ใช้ที่ล็อกอินอยู่ถูกให้ล็อกอินใหม่อัตโนมัติ 1 ครั้ง |
 | `CRON_SECRET`               | แก้ secret ที่ Cloudflare (และ GitHub Secrets ถ้าใช้รัน workflow เอง) | cron ใช้ไม่ได้ถ้าสองที่ไม่ตรงกัน                       |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → roll key → แก้ secret ที่ Cloudflare      | ระบบหยุดชั่วคราวระหว่างสลับ                            |
-| Key ของ AI / EasySlip       | ออก key ใหม่ → แก้ secret ที่ Cloudflare                              | ไม่มี (chain จะข้ามเจ้าที่ล้มเอง)                      |
+| Key ของ AI                  | ออก key ใหม่ → แก้ secret ที่ Cloudflare                              | ไม่มี (chain จะข้ามเจ้าที่ล้มเอง)                      |
 
 ## 5.2) ตั้งค่า Stripe (ชำระเงิน / subscription)
 

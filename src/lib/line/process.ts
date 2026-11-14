@@ -62,7 +62,7 @@ export async function processEvents(rawEvents: unknown[]): Promise<void> {
     return;
   }
 
-  // Slip readers: EasySlip first (when configured), then the AI models in order.
+  // Slip readers: the AI models in order (the chosen one first).
   // Skips are logged with the reader name and a status-only reason (never the payload).
   const deps: HandlerDeps = {
     db,

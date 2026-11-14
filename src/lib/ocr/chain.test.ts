@@ -42,11 +42,11 @@ describe("createSlipReaderChain", () => {
   it("falls through readers that throw, in order", async () => {
     const calls: string[] = [];
     const chain = createSlipReaderChain(
-      [boom("easyslip", "quota"), boom("gemini", "503"), ok("anthropic", GOOD)],
+      [boom("openai", "quota"), boom("gemini", "503"), ok("anthropic", GOOD)],
       { now: NOW, onSkip: (name) => calls.push(name) },
     );
     expect(await chain.extract(image)).toEqual(GOOD);
-    expect(calls).toEqual(["easyslip", "gemini"]);
+    expect(calls).toEqual(["openai", "gemini"]);
   });
 
   it("falls through an unusable reply to the next reader", async () => {
@@ -75,8 +75,8 @@ describe("createSlipReaderChain", () => {
   });
 
   it("names itself after its readers", () => {
-    expect(createSlipReaderChain([ok("easyslip", GOOD), ok("gemini", GOOD)]).name).toBe(
-      "easyslip > gemini",
+    expect(createSlipReaderChain([ok("openai", GOOD), ok("gemini", GOOD)]).name).toBe(
+      "openai > gemini",
     );
   });
 
