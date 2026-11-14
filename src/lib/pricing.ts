@@ -5,7 +5,7 @@ import {
   FREE_SLIPS_TOTAL,
   FREE_VOICE_TOTAL,
   GROUP_LEDGER_LIMIT,
-  GROUP_REMINDS_PER_MONTH,
+  GROUP_PUSH_PER_MONTH,
   SHARED_MEMBER_LIMIT,
   SLIP_LIMIT,
   VOICE_LIMIT,
@@ -460,9 +460,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         label: t("เตือนในกลุ่ม LINE"),
         icon: "group",
         cells: perPlan((p) =>
-          GROUP_REMINDS_PER_MONTH[p] === 0
-            ? false
-            : t("{0} ครั้ง/เดือน", GROUP_REMINDS_PER_MONTH[p]),
+          GROUP_PUSH_PER_MONTH[p] === 0 ? false : t("{0} ครั้ง/เดือน", GROUP_PUSH_PER_MONTH[p]),
         ),
       },
       {

@@ -192,6 +192,14 @@ describe("the AI quota on the plan table", () => {
   });
 });
 
+describe("the group reminder row on the plan table", () => {
+  it("shows the monthly push cap of each plan", async () => {
+    const { FEATURE_GROUPS } = await import("./pricing");
+    const row = FEATURE_GROUPS.flatMap((g) => g.rows).find((r) => r.label === "เตือนในกลุ่ม LINE");
+    expect(row?.cells).toEqual([false, "30 ครั้ง/เดือน", "100 ครั้ง/เดือน", "250 ครั้ง/เดือน"]);
+  });
+});
+
 describe("Early Bird ends", () => {
   it("is open until the end of 31 Jan 2027 in Bangkok, and closed after", async () => {
     const { earlyBirdOpen } = await import("./pricing");
