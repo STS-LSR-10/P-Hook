@@ -527,11 +527,83 @@ function splitRun(segment: string, now: Date): ParsedEntry[] | null {
 }
 
 /** Parse a chat message into zero or more transaction entries. */
+// a number with no stray comma at its end ("50," before "+100" is a list, not a sum)
+const NUMBER = String.raw`\d(?:[\d,]*\d)?(?:\.\d+)?`;
+// what makes the number before it something else: a multiplier ("5k", "2พัน") or a count ("1 ลัง")
+const COUNT_WORDS =
+  "หลอด|แผง|จาน|คน|ชิ้น|อัน|กล่อง|แพ็ก|แพ็ค|ถุง|ขวด|ตัว|แก้ว|ชุด|ห่อ|เม็ด|ฟอง|เล่ม|คู่|โหล|ถ้วย|ชาม|ซอง|กระป๋อง|ลัง|กก|กิโล|ลิตร|กรัม|ใบ|ครั้ง|รอบ|คืน|คัน|ลูก|เส้น|นาที|ชั่วโมง|ชม|กม|ก้าว";
+const NOT_A_SUM_AFTER = String.raw`(?![\d.,:]|[ \t]*(?:k|K|พัน|หมื่น|แสน|ล้าน|${COUNT_WORDS}))`;
+// on one line only; "35+55" or "35 + 55", but "100 +200" keeps its + as income. Not inside a
+// word, a model name ("S24+"), a clock time ("08:00+50") or a longer number.
+const ADDED_RE = new RegExp(
+  String.raw`(?<![A-Za-z\d:.,])${NUMBER}(?:(?:\+[ \t]*|[ \t]+\+[ \t]+)${NUMBER})+${NOT_A_SUM_AFTER}`,
+  "g",
+);
+
+// "10x3", "2*45", "15 X 4", "50 x2", "4.5×10": a count and a price that make the entry's amount.
+// The numbers take commas only in groups of three ("3x50,20" is not 3 x 5020); the "x" has no
+// space after it unless it has one before ("55x 15000" is a TV size, then a price).
+const FACTOR = String.raw`\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?`;
+const TIMES_RE = new RegExp(
+  String.raw`(?<![A-Za-z\d:.,(])(${FACTOR})(?:[xX×*]|[ \t]+[xX×*][ \t]*)(${FACTOR})` +
+    // what follows is not more of a number, a size or chain ("x2"), a unit, a word in English,
+    // another number on the line ("4x5 500" is a size, then the price), "=", or a + of income
+    String.raw`(?![\d.,:/xX×*A-Za-z)-]|[ \t]*[\d=]|[ \t]+[+-])` +
+    // a word that ties a later number to this one: its price, a total, a discount, a date
+    String.raw`(?![ \t]*(?:ราคา|รวม|ลด|ส่วนลด|จ่าย|เหลือ|หาร|ร้าน|โต๊ะ|วันที่|ทอน|ทั้งหมด|vat|VAT))` +
+    String.raw`(?![ \t]*(?:k|K|พัน|หมื่น|แสน|ล้าน|${COUNT_WORDS}|ซม|เมตร|นิ้ว|ฟุต|หลา|งวด|แผ่น|ม้วน))`,
+  "g",
+);
+/** A product larger than this is not one buy ("999x1000"). */
+const MAX_PRODUCT = 100_000;
+const satangText = (satang: number) =>
+  satang % 100 === 0 ? String(satang / 100) : (satang / 100).toFixed(2);
+
+/**
+ * "น้ำ 10x3" -> "น้ำ 30". Left as written: sizes (two small numbers, "ไม้ 2x4", or two large ones,
+ * "1920x1080"), installments ("ผ่อน 12x500"), a phone number, and anything over MAX_PRODUCT.
+ */
+function multiply(text: string): string {
+  return text.replace(TIMES_RE, (all, a: string, b: string, at: number, whole: string) => {
+    const line = whole.slice(whole.lastIndexOf("\n", at) + 1, whole.indexOf("\n", at) >>> 0);
+    // installments, and lottery bets ("หวย 45x50" is a number and its stake)
+    if (/ผ่อน|งวด|หวย|ลอตเตอรี่|ล็อตเตอรี่/.test(line) || /^0\d/.test(a) || /^0\d/.test(b)) {
+      return all;
+    }
+    const [x, y] = [a, b].map((n) => Number(n.replace(/,/g, ""))) as [number, number];
+    if ((x < 5 && y < 5) || (x >= 1000 && y >= 1000) || x * y > MAX_PRODUCT || x * y === 0) {
+      return all;
+    }
+    return satangText(Math.round(x * y * 100));
+  });
+}
+
+/**
+ * "ข้าว35+55" -> "ข้าว90" (after any "x" is multiplied): numbers joined by + are one amount (counted in satang, so no float
+ * drift). Left as written: a promotion ("1+1", "4+1", "10+1"), and anything that looks like a
+ * phone number (a leading 0, or more than 7 digits).
+ */
+export function workOutAmounts(text: string): string {
+  return multiply(normalizeThaiDigits(text)).replace(ADDED_RE, (sum) => {
+    const raw = sum.split("+").map((n) => n.trim());
+    if (raw.some((n) => /^0\d/.test(n) || (n.split(".")[0] ?? "").replace(/,/g, "").length > 7)) {
+      return sum;
+    }
+    const parts = raw.map((n) => Number(n.replace(/,/g, "")));
+    // "1+1", "2+1", "4+1", "10+1": a promotion, not a sum
+    if (parts.every((n) => n <= 3) || (Math.min(...parts) === 1 && Math.max(...parts) <= 12)) {
+      return sum;
+    }
+    return satangText(parts.reduce((total, n) => total + Math.round(n * 100), 0));
+  });
+}
+
 export function parseMessage(
-  input: string,
+  rawInput: string,
   now: Date = new Date(),
   options: { currencies?: boolean } = {},
 ): ParseResult {
+  const input = workOutAmounts(rawInput);
   const entries: ParsedEntry[] = [];
   const unparsed: string[] = [];
   for (const segment of input.split(SPLIT_RE)) {
