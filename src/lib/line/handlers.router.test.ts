@@ -13,6 +13,7 @@ import {
   REMINDER_NOT_MATCHED_TEXT,
   REMINDER_WHICH_MORE_TEXT,
   QUESTION_NOT_RECORDED_TEXT,
+  REMINDER_PAST_TEXT,
   ROUTER_REMINDER_HINT_TEXT,
   AI_OUT_NOTICE_TEXT,
   SEARCH_LOCKED_TEXT,
@@ -125,6 +126,13 @@ vi.mock("@/lib/pending-intent-repo", () => ({
     return p;
   },
 }));
+const memory: { role: "user" | "bot"; body: string }[] = [];
+vi.mock("@/lib/chat-memory", async (original) => ({
+  ...(await original<typeof import("@/lib/chat-memory")>()),
+  recentTurns: async () => [...memory],
+  rememberTurns: async (_db: unknown, _u: string, turns: typeof memory) =>
+    void memory.push(...turns),
+}));
 vi.mock("./owl", async (original) => ({
   ...(await original<typeof import("./owl")>()),
   inOwlMode: async () => owlMode,
@@ -217,6 +225,7 @@ beforeEach(() => {
   moves.length = 0;
   vi.clearAllMocks();
   route.mockReset();
+  memory.length = 0;
   process.env.NEXT_PUBLIC_LIFF_ID = "1234-abcd";
 });
 
@@ -348,7 +357,9 @@ describe("plain messages", () => {
     const { deps } = setup();
     await handleEvent(say("ทำไมฟ้าสีฟ้า"), deps);
     // what the router took, so it can be given back if พี่ฮูก gives no answer
-    expect(askedWith).toHaveBeenCalledWith({ prepaid: { units: 1, month: "2026-11-01" } });
+    expect(askedWith).toHaveBeenCalledWith(
+      expect.objectContaining({ prepaid: { units: 1, month: "2026-11-01" } }),
+    );
   });
 
   it("sets a reminder", async () => {
@@ -912,5 +923,79 @@ describe("answering the buttons", () => {
     const { deps } = setup();
     await handleEvent(tap(`a=irp&id=${PENDING}&p=rm:${ID}`), deps);
     expect(moves[0]).toMatchObject({ id: ID, repeat: "weekly" });
+  });
+});
+
+describe("the chat so far", () => {
+  it("the AI reads the last messages, so a follow-up stays on the topic", async () => {
+    route.mockResolvedValue(decision({ intent: "ask" }));
+    await handleEvent(say("เมกาบางนา รถติดไหมถ้าไปตอนนี้"), setup().deps);
+    await handleEvent(say("ไปเมกาบางนา"), setup().deps);
+    const second = route.mock.calls[1]?.[0] as { history?: string };
+    expect(second.history).toContain("เมกาบางนา รถติดไหมถ้าไปตอนนี้");
+    expect(second.history).toContain("ตอบแล้ว"); // what the bot answered
+    expect(asked).toHaveBeenLastCalledWith("ไปเมกาบางนา");
+  });
+
+  it("a reminder the AI guessed with no day or time is talk: it is answered, not explained", async () => {
+    route.mockResolvedValue(decision({ intent: "reminder_add", reminderText: "ไปเมกาบางนา" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("ไปเมกาบางนา"), deps);
+    expect(madeReminders).toHaveLength(0);
+    expect(asked).toHaveBeenCalledWith("ไปเมกาบางนา");
+    expect(said(reply)).not.toContain("ตั้งเตือน พิมพ์วันเวลา");
+  });
+
+  it("a map is a button to Google Maps with the way there", async () => {
+    route.mockResolvedValue(decision({ intent: "map", place: "เมกาบางนา" }));
+    const { deps, reply } = setup();
+    await handleEvent(say("เปิดแผนที่นำทางให้หน่อย"), deps);
+    expect(JSON.stringify(sent(reply))).toContain(
+      "https://www.google.com/maps/dir/?api=1&destination=%E0%B9%80",
+    );
+  });
+
+  it("a map with no place asks where to", async () => {
+    route.mockResolvedValue(decision({ intent: "map", place: null }));
+    const { deps, reply } = setup();
+    await handleEvent(say("เปิดแผนที่นำทางให้หน่อย"), deps);
+    expect(said(reply)).toContain("อยากไปที่ไหน");
+  });
+
+  it("นำทางไป … opens the map at once, with no AI", async () => {
+    const { deps, reply } = setup();
+    await handleEvent(say("นำทางไปเซ็นทรัลเวิลด์"), deps);
+    expect(route).not.toHaveBeenCalled();
+    expect(JSON.stringify(sent(reply))).toContain("google.com/maps/dir");
+  });
+});
+
+describe("a reminder the AI routed, with a time", () => {
+  it("a time already gone is said so, not answered as talk", async () => {
+    route.mockResolvedValue(
+      decision({ intent: "reminder_add", reminderText: "ประชุม วันนี้ 9 โมง" }),
+    );
+    const { deps, reply } = setup();
+    await handleEvent(say("ประชุมวันนี้ 9 โมง"), deps);
+    expect(asked).not.toHaveBeenCalled();
+    expect(said(reply)).toContain(REMINDER_PAST_TEXT);
+  });
+
+  it("ฝากเตือน … with no time still explains how to set it", async () => {
+    route.mockResolvedValue(decision({ intent: "reminder_add", reminderText: "ไปเมกาบางนา" }));
+    const { deps } = setup();
+    await handleEvent(say("ฝากเตือนไปเมกาบางนาด้วย"), deps);
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  it("a yes tapped to ตั้งเตือน? does what was confirmed, never an AI answer", async () => {
+    pending = {
+      id: PENDING,
+      input: "ไปเมกาบางนา",
+      decision: decision({ intent: "reminder_add", reminderText: "ไปเมกาบางนา" }),
+    };
+    const { deps } = setup();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=yes`), deps);
+    expect(asked).not.toHaveBeenCalled();
   });
 });

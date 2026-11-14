@@ -250,3 +250,11 @@ describe("splitChat", () => {
     expect(splitChat("  \n \n")).toEqual([]);
   });
 });
+
+describe("owlUserPrompt with the chat so far", () => {
+  it("adds the recent turns as context, not instructions", () => {
+    const p = owlUserPrompt({ question: "ไปเมกาบางนา", data: "", history: "ผู้ใช้: รถติดไหม" });
+    expect(p).toContain("RECENT CHAT");
+    expect(p).toContain("รถติดไหม");
+  });
+});

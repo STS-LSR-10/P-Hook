@@ -126,7 +126,7 @@ export async function owlAsk(
    * `prepaid`: the AI already read this message and found a question. With what it took, that is
    * given back if no answer comes; `true` when it is no longer known.
    */
-  options: { prepaid?: AiCharge | boolean } = {},
+  options: { prepaid?: AiCharge | boolean; history?: () => Promise<string> } = {},
 ): Promise<LineMessage[]> {
   const prepaid = typeof options.prepaid === "object" ? options.prepaid : null;
   const outcome = { answered: false };
@@ -139,6 +139,7 @@ export async function owlAsk(
       lineUserId,
       Boolean(options.prepaid),
       outcome,
+      options.history,
     );
   } finally {
     if (!outcome.answered && prepaid) {
@@ -157,6 +158,7 @@ async function askOwl(
   lineUserId: string,
   paid: boolean,
   outcome: { answered: boolean },
+  history?: () => Promise<string>,
 ): Promise<LineMessage[]> {
   const { db } = deps;
   const owl = deps.owl;
@@ -201,10 +203,12 @@ async function askOwl(
       log.warn("owl_manner_failed", { reason: safeMessage(e) });
       return undefined;
     });
+    const recent = (await history?.().catch(() => "")) ?? "";
     const reply = cleanOwlAnswer(
       await owl.answer({
         question: q,
         data,
+        ...(recent ? { history: recent } : {}),
         ...(manner ? { persona: manner.persona, callName: manner.name } : {}),
       }),
     );

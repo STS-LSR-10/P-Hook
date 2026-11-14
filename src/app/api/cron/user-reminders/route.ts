@@ -4,6 +4,7 @@ import { getServerEnv } from "@/lib/env";
 import { createLineClient } from "@/lib/line/client";
 import { log } from "@/lib/log";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { forgetQuietChats } from "@/lib/chat-memory";
 import { runUserReminders } from "@/lib/user-reminder-run";
 
 export const runtime = "nodejs";
@@ -38,6 +39,10 @@ export async function GET(request: Request): Promise<Response> {
       },
       new Date(),
       liffId ? `https://liff.line.me/${liffId}/reminders` : undefined,
+    );
+    // the chat memory of chats gone quiet (it never fails the reminders)
+    await forgetQuietChats(getAdminClient(), new Date()).catch((e) =>
+      log.warn("chat_memory_sweep_failed", { reason: String(e) }),
     );
     return json({ ok: true, ...summary });
   } catch (error) {

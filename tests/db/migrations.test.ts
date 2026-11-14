@@ -3735,3 +3735,22 @@ describe("usage counts for the admin (0071)", () => {
     expect(find(await summary(), "reminder", "reminder")?.uses).toBe(once);
   });
 });
+
+describe("chat memory (0072)", () => {
+  it("keeps a turn of either side, and goes with the account", async () => {
+    const u = await newUser(db, `chat-${Math.random()}`);
+    await db.query(
+      "insert into chat_turns (user_id, role, body) values ($1, 'user', 'รถติดไหม'), ($1, 'bot', 'ติดนะ')",
+      [u],
+    );
+    await expect(
+      db.query("insert into chat_turns (user_id, role, body) values ($1, 'admin', 'x')", [u]),
+    ).rejects.toThrow();
+    await expect(
+      db.query("insert into chat_turns (user_id, role, body) values ($1, 'user', '')", [u]),
+    ).rejects.toThrow();
+    await db.query("delete from users where id = $1", [u]);
+    const left = await rows(db, "select 1 from chat_turns where user_id = $1", [u]);
+    expect(left).toHaveLength(0);
+  });
+});

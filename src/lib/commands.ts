@@ -14,6 +14,8 @@ export type Command =
   | { kind: "help" }
   /** A greeting or thanks: answered with a fixed line. */
   | { kind: "chitchat"; say: "hello" | "thanks" }
+  /** "นำทางไปเซ็นทรัลเวิลด์": a button to Google Maps. */
+  | { kind: "map"; place: string }
   /** A budget said in the chat: the budgets page opens with it filled in, and the person confirms there. `name` null: the overall budget. */
   | { kind: "budget-set"; name: string | null; amountSatang: number }
   | { kind: "summary-range"; start: DaySpec; end: DaySpec | "today" }

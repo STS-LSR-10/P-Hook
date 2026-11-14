@@ -181,6 +181,14 @@ import { forgetMedia, listFiles, rememberMedia, takeFileWait } from "@/lib/file-
 import type { SaveDeps } from "@/lib/file-save";
 import { handleIntentPick, routeText, type IntentDeps } from "./intent-handlers";
 import { onDay, weekdayQuestion } from "./reminder-weekday";
+import { buildMapCard } from "./map-flex";
+import {
+  historyText,
+  recentTurns,
+  rememberTurns,
+  replyText,
+  type ChatTurn,
+} from "@/lib/chat-memory";
 import { putPendingIntent } from "@/lib/pending-intent-repo";
 import { cleanNoteBody, MAX_NOTE_LENGTH, noteCapacity, noteTitle } from "@/lib/note";
 import { countNotes, createNote, deleteNote, listNotes } from "@/lib/note-repo";
@@ -692,15 +700,17 @@ function intentDeps(
   deps: HandlerDeps,
   inOwl = false,
   aiOut?: { out: boolean },
+  history?: () => Promise<string>,
 ): IntentDeps {
   return {
     db: deps.db,
     now: deps.now,
     router: deps.router,
+    history,
     onQuotaOut: aiOut ? () => (aiOut.out = true) : undefined,
     run: (command) => runCommand(command, user, deps),
     ask: (question, prepaid) =>
-      owlAsk(owlDeps(deps), user, question, inOwl, user.line_user_id, { prepaid }),
+      owlAsk(owlDeps(deps), user, question, inOwl, user.line_user_id, { prepaid, history }),
     recordMoney: (input) => handleText(input, user, deps, { routed: true, showCard: inOwl }),
     listUrl: pageUrl("/reminders"),
   };
@@ -733,7 +743,28 @@ async function handleText(
 ): Promise<LineMessage[]> {
   if (options.aiOut) return readText(input, user, deps, options);
   const aiOut = { out: false };
-  const replies = await readText(input, user, deps, { ...options, aiOut });
+  // the chat of the last few minutes, read only if the AI is asked (a plain "กาแฟ 50" never waits)
+  let turns: Promise<ChatTurn[]> | null = null;
+  const history = () =>
+    (turns ??= recentTurns(deps.db, user.id, deps.now())).then((t) => historyText(t));
+  const replies = await readText(input, user, deps, {
+    ...options,
+    aiOut,
+    ...(options.routed ? {} : { history }),
+  });
+  if (!options.routed) {
+    await later(() =>
+      rememberTurns(
+        deps.db,
+        user.id,
+        [
+          { role: "user", body: input },
+          { role: "bot", body: replyText(replies) },
+        ],
+        deps.now(),
+      ),
+    );
+  }
   if (!aiOut.out || replies.length >= MAX_REPLY_MESSAGES) return replies;
   const tell = await takeUsage(deps.db, user.id, "ai_out_notice", 1, dayKey(deps.now())).catch(
     () => false,
@@ -748,6 +779,8 @@ interface TextOptions {
   entry?: string;
   /** Set when the AI quota turned out to be used up while reading this message. */
   aiOut?: { out: boolean };
+  /** The chat of the last few minutes, for the AI (a private chat's typed message only). */
+  history?: () => Promise<string>;
 }
 
 async function readText(
@@ -802,7 +835,7 @@ async function readText(
   // goes straight to the money path.
   if (!options.routed && (await inOwlMode(owlDeps(deps), user))) {
     // in the mode the owl says the quota is out itself: no second notice
-    const owlIntents = intentDeps(user, deps, true);
+    const owlIntents = intentDeps(user, deps, true, undefined, options.history);
     const replies =
       (await routeText(typed, parsed, user, owlIntents, true)) ??
       (await owlIntents.recordMoney(typed));
@@ -831,7 +864,7 @@ async function readText(
       typed,
       parsed,
       user,
-      intentDeps(user, deps, false, options.aiOut),
+      intentDeps(user, deps, false, options.aiOut, options.history),
     );
     if (routed) return routed;
   }
@@ -2284,6 +2317,9 @@ async function runCommand(
           : text(tr("ตั้งงบได้ที่หน้างบ (เมนูด้านล่างของแอป) นะ")),
       ];
     }
+
+    case "map":
+      return [buildMapCard(command.place)];
 
     case "chitchat":
       return [text(command.say === "hello" ? CHITCHAT_HELLO_TEXT : CHITCHAT_THANKS_TEXT)];

@@ -2437,6 +2437,13 @@ export const EN: Record<string, string> = {
   "{0} ต้องการเตือน {1} ใช่ไหม ถ้าไม่ใช่ พิมพ์วันที่และเดือนใหม่ได้เลย":
     "{0} Remind you on {1}? If not, type a new day and month",
   พิมพ์วันใหม่: "Type a new day",
+  เปิดแผนที่: "Open a map",
+  'อยากไปที่ไหนดี พิมพ์ชื่อที่นั้นได้เลย เช่น "นำทางไปเซ็นทรัลเวิลด์"':
+    'Where to? Type the place, e.g. "นำทางไปเซ็นทรัลเวิลด์"',
+  "เปิดแผนที่ไป {0}": "Map to {0}",
+  "กดเปิด Google Maps นำทางไป {0} ได้เลย (ดูสภาพรถติดในแอปได้ด้วย)":
+    "Open Google Maps for the way to {0} (traffic shows there too)",
+  "เปิด Google Maps": "Open Google Maps",
   แก้ไขเตือน: "Edit reminder",
   "เรียบร้อย เรื่อง {0} จะเตือน {1}": "Done. P'Hook will remind you about {0} on {1}",
   วันอาทิตย์: "Sunday",

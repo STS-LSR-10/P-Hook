@@ -152,7 +152,7 @@ export async function runRouter(
     /** Told what the message took, when a decision came of it. */
     onCharged?: (charge: AiCharge) => void;
   },
-  input: { db: SupabaseClient; userId: string; plan: Plan; text: string },
+  input: { db: SupabaseClient; userId: string; plan: Plan; text: string; history?: string },
 ): Promise<IntentDecision | null> {
   const { router } = deps;
   if (!router || looksSecret(input.text)) return null;
@@ -194,7 +194,12 @@ export async function runRouter(
     asked = true;
     const hints = await hintsRead;
     const decision = sanitizeDecision(
-      await router.route({ text: input.text, today: dayOf(deps.now()), hints }),
+      await router.route({
+        text: input.text,
+        today: dayOf(deps.now()),
+        hints,
+        ...(input.history ? { history: input.history } : {}),
+      }),
     );
     if (decision) {
       failureTimes = [];

@@ -88,6 +88,21 @@ export function parseNaturalCommand(input: string, now: Date): Command | null {
   // the same without the polite ending ("ขอบคุณค่ะ" → "ขอบคุณ")
   const plain = compact.replace(POLITE, "");
 
+  // a map: "นำทางไปเซ็นทรัลเวิลด์", "เปิดแผนที่ไปเมกาบางนา" (no place named: left to the AI, which
+  // may find it in the chat before)
+  const map =
+    /^(?:ช่วย)?(?:(?:เปิด)?แผนที่(?:นำทาง)?\s*ไป(?:ที่)?|นำทาง\s*ไป(?:ที่)?)\s*(.+)$/.exec(
+      raw,
+    )?.[1];
+  const place = map
+    ?.replace(/\s*(?:ให้หน่อย|หน่อย|ให้ที|ด้วย)(?:ครับ|ค่ะ|คะ|นะ|จ้า)*\s*$/, "")
+    .trim();
+  // not a place: "แผนที่ไปเที่ยว…", "นำทางไปสู่ความสำเร็จ", or a question about one
+  const notAPlace = /^(?:เที่ยว|สู่)|(?:ไหน|อะไร|ยังไง|อย่างไร|ไหม|มั้ย|\?)$/;
+  if (place && place.length >= 2 && place.length <= 80 && !notAPlace.test(place)) {
+    return { kind: "map", place };
+  }
+
   // chit-chat: answered with a fixed line
   if (HELLO.test(plain)) return { kind: "chitchat", say: "hello" };
   if (THANKS.test(plain)) return { kind: "chitchat", say: "thanks" };

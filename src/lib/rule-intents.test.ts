@@ -208,3 +208,26 @@ describe("what the rules must not record as an expense without the AI", () => {
     expect(nat("หา ของขวัญ")).toEqual({ kind: "find", term: "ของขวัญ", in: "any" });
   });
 });
+
+describe("a map to a place", () => {
+  const NOW = new Date("2026-11-14T05:00:00Z");
+  it.each([
+    ["นำทางไปเซ็นทรัลเวิลด์", "เซ็นทรัลเวิลด์"],
+    ["นำทาง ไปสนามบินสุวรรณภูมิ หน่อย", "สนามบินสุวรรณภูมิ"],
+    ["เปิดแผนที่ไปเมกาบางนาให้หน่อย", "เมกาบางนา"],
+    ["แผนที่ไปที่ สยาม", "สยาม"],
+  ])("%s", (text, place) => {
+    expect(parseNaturalCommand(text, NOW)).toEqual({ kind: "map", place });
+  });
+  it.each([
+    "เปิดแผนที่นำทางให้หน่อย",
+    "แผนที่เที่ยวญี่ปุ่น",
+    "นำทาง",
+    "แผนที่ไปเที่ยวญี่ปุ่นอยู่ไหน",
+    "แผนที่ไปเที่ยว",
+    "นำทางไปสู่ความสำเร็จ",
+    "นำทาง ชีวิตยังไงดี",
+  ])("%s is left to the AI (no place, or not a map)", (text) => {
+    expect(parseNaturalCommand(text, NOW)).toBeNull();
+  });
+});

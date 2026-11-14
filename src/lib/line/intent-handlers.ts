@@ -10,6 +10,7 @@ import { syncReminderToGoogle } from "@/lib/google/sync";
 import { later } from "@/lib/later";
 import type { AiCharge } from "@/lib/ai/ai-quota";
 import { REMINDER_RETYPE_TEXT } from "./reminder-weekday";
+import { buildMapCard } from "./map-flex";
 import { ASKS_RE, clockIsTheAmount, needsRouter, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
@@ -20,7 +21,13 @@ import type { UserRow } from "@/lib/repo";
 import { looksSecret } from "@/lib/secret-text";
 import type { LineMessage } from "@/lib/types";
 import { bangkokParts } from "@/lib/thai-date";
-import { capacityOf, moveReminderTime, reminderKind, type ReminderDto } from "@/lib/user-reminder";
+import {
+  capacityOf,
+  moveReminderTime,
+  parseReminder,
+  reminderKind,
+  type ReminderDto,
+} from "@/lib/user-reminder";
 import { countActiveReminders, listReminders, rescheduleReminder } from "@/lib/user-reminder-repo";
 import {
   INTENT_CANCELLED_TEXT,
@@ -60,6 +67,7 @@ const CONFIRM_LABEL: Record<RoutedIntent, string> = {
   search: t("ค้นหาไฟล์และโน้ต"),
   query: t("ดูยอดเงิน"),
   file_save: t("เก็บไฟล์"),
+  map: t("เปิดแผนที่"),
   ask: t("ให้พี่ฮูกตอบ"),
   unclear: t("จัดการข้อความนี้"),
 };
@@ -78,7 +86,11 @@ export interface IntentDeps {
   onQuotaOut?: () => void;
   recordMoney: (input: string) => Promise<LineMessage[]>;
   listUrl: string | undefined;
+  /** The chat of the last few minutes, oldest first ("" when none): the AI reads it as context. */
+  history?: () => Promise<string>;
 }
+
+const MAP_WHERE_TEXT = t('อยากไปที่ไหนดี พิมพ์ชื่อที่นั้นได้เลย เช่น "นำทางไปเซ็นทรัลเวิลด์"');
 
 /** A text with postback buttons that answer the waiting message `id`. */
 export function choices(
@@ -177,10 +189,29 @@ function execute(
   user: UserRow,
   deps: IntentDeps,
   prepaid: AiCharge | true = true,
+  /** Tapped yes to what the AI guessed: do that, never answer it as talk instead. */
+  confirmed = false,
 ): Promise<LineMessage[]> {
   switch (decision.intent) {
-    case "reminder_add":
-      return deps.run({ kind: "remind-add", text: decision.reminderText ?? input });
+    case "reminder_add": {
+      const wanted = decision.reminderText ?? input;
+      // the AI guessed a reminder but no day or time is in it ("ไปเมกาบางนา"): unless they said
+      // "เตือน", it is talk, so answer it rather than explain how to set a reminder
+      const read = parseReminder(wanted, deps.now());
+      if (
+        !confirmed &&
+        !read.ok &&
+        read.reason === "no_time" &&
+        !/เตือน(?!ใจ)|อย่าลืม/.test(input)
+      ) {
+        return deps.ask(input, prepaid);
+      }
+      return deps.run({ kind: "remind-add", text: wanted });
+    }
+    case "map":
+      return Promise.resolve(
+        decision.place ? [buildMapCard(decision.place)] : [text(MAP_WHERE_TEXT)],
+      );
     case "reminder_edit":
       return editReminder(input, decision, user, deps);
     case "note_add":
@@ -256,7 +287,7 @@ export async function routeText(
       onQuotaOut: deps.onQuotaOut,
       onCharged: (c) => (charge = c),
     },
-    { db, userId: user.id, plan, text: input },
+    { db, userId: user.id, plan, text: input, history: (await deps.history?.()) ?? "" },
   );
   const reads = QUESTION_RE.test(input);
   if (chatting && !decision) {
@@ -332,7 +363,7 @@ export async function handleIntentPick(
   if (!pending) return [text(INTENT_EXPIRED_TEXT)];
   const { input, decision } = pending;
 
-  if (pick === "yes" && decision) return execute(input, decision, user, deps);
+  if (pick === "yes" && decision) return execute(input, decision, user, deps, true, true);
   if (pick === "note") return deps.run({ kind: "note-add", body: input });
   if (pick === "reminder") return deps.run({ kind: "remind-add", text: input });
   // the day picked under "วันอาทิตย์ 27" when the 27th was not a Sunday
