@@ -372,6 +372,7 @@ describe("plain messages", () => {
   });
 
   it("a reminder's card can add it to a calendar", async () => {
+    plan = "starter"; // a repeating reminder: not on Free
     route.mockResolvedValue(
       decision({ intent: "reminder_add", reminderText: "ทำ weekly ทุก วัน พฤหัสบดี 15:00 น." }),
     );
@@ -734,7 +735,8 @@ describe("moving a reminder", () => {
   });
 
   it("turning a one-off into a repeat needs room among the repeats", async () => {
-    repeating = 5; // Free holds 5
+    plan = "starter";
+    repeating = 20; // Starter holds 20
     reminders = [reminder(ID, "กินยา")];
     moved = reminder(ID, "กินยา", "daily");
     route.mockResolvedValue({ ...edit, whenText: "ทุกวัน 8 โมง" });

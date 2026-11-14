@@ -43,7 +43,7 @@ describe("questions to พี่ฮูก take from the one AI quota", () => {
       "u1",
       "ai_chat",
       1,
-      200,
+      50,
       "2026-11-01",
     );
     expect(take).not.toHaveBeenCalledWith(

@@ -99,6 +99,18 @@ export const GROUP_REMINDS_PER_MONTH: Record<Plan, number> = {
   ultimate: 500,
 };
 
+/**
+ * Messages an owner's group reminders may push to groups in a month, by the owner's plan. A push to a
+ * group counts once per member against the LINE account's monthly messages (a group of 20 uses 20);
+ * past it a reminder waits for the next message in the group, which costs nothing.
+ */
+export const GROUP_PUSH_PER_MONTH: Record<Plan, number> = {
+  free: 0,
+  starter: 50,
+  plus: 100,
+  ultimate: 300,
+};
+
 /** LINE groups an owner may keep a ledger in, and how many people one ledger serves, by plan. */
 export const GROUP_LEDGER_LIMIT: Record<Plan, { groups: number; members: number }> = {
   free: { groups: 0, members: 0 },
@@ -111,17 +123,17 @@ export const GROUP_LEDGER_LIMIT: Record<Plan, { groups: number; members: number 
 export const PDF_LIMIT: Record<Plan, number> = { free: 0, starter: 0, plus: 10, ultimate: 30 };
 
 /** Questions to พี่ฮูก (the AI assistant) per month, by plan. Each one is a paid AI call. */
-export const OWL_LIMIT: Record<Plan, number> = { free: 5, starter: 20, plus: 50, ultimate: 300 };
+export const OWL_LIMIT: Record<Plan, number> = { free: 3, starter: 20, plus: 50, ultimate: 200 };
 
 /**
  * "ถาม AI" per month: every chat message the AI reads (money, reminder, note, file, search) and every
  * question to พี่ฮูก, one use for each 20 words. Past it the ordinary rules read the chat instead.
  */
 export const AI_CHAT_LIMIT: Record<Plan, number> = {
-  free: 200,
+  free: 50,
   starter: 600,
   plus: 1500,
-  ultimate: 5000,
+  ultimate: 3000,
 };
 
 /** Recurring entries ("รายการประจำ") a plan may have set up at once. */

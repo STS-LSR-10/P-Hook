@@ -6,6 +6,7 @@ import { getPlanInfo } from "@/lib/plan-server";
 import {
   MAX_AHEAD_DAYS,
   MAX_REMINDER_TEXT,
+  REPEAT_LOCKED_TEXT,
   capacityOf,
   isBuiltInCategory,
   type ReminderKind,
@@ -50,9 +51,11 @@ export async function reminderRoomProblem(
   return json(
     {
       error:
-        kind === "repeat"
-          ? `มีเตือนประจำ (เตือนซ้ำ) ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`
-          : `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`,
+        kind === "repeat" && limit === 0
+          ? REPEAT_LOCKED_TEXT
+          : kind === "repeat"
+            ? `มีเตือนประจำ (เตือนซ้ำ) ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`
+            : `มีเตือนที่รออยู่ครบ ${limit} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ`,
       upgrade: plan !== "ultimate",
     },
     409,

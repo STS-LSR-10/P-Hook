@@ -41,6 +41,7 @@ import {
   MAX_REMINDER_TEXT,
   REMINDER_CATEGORIES,
   REPEAT_LABEL,
+  REPEAT_LOCKED_TEXT,
   categoryLook,
   reminderKind,
   type CustomReminderCategory,
@@ -984,15 +985,17 @@ function ReminderSheet({
         </div>
         {full ? (
           <p className="text-sm text-warn">
-            {kind === "repeat"
-              ? t(
-                  'มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ',
-                  limit,
-                )
-              : t(
-                  "มีเตือนที่รออยู่ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ",
-                  limit,
-                )}
+            {kind === "repeat" && limit === 0
+              ? REPEAT_LOCKED_TEXT
+              : kind === "repeat"
+                ? t(
+                    'มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว เลือก "ครั้งเดียว" ลบอันที่ไม่ใช้ หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ',
+                    limit,
+                  )
+                : t(
+                    "มีเตือนที่รออยู่ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ",
+                    limit,
+                  )}
           </p>
         ) : null}
         {error ? (

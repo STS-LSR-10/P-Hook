@@ -192,7 +192,7 @@ describe("runRouter", () => {
   it("counts the month in Bangkok, not in UTC", async () => {
     const late = { router, now: () => new Date("2026-11-30T18:00:00Z") };
     await runRouter(late, input);
-    expect(takeAmount).toHaveBeenCalledWith(db, "u1", "ai_chat", 1, 200, "2026-12-01");
+    expect(takeAmount).toHaveBeenCalledWith(db, "u1", "ai_chat", 1, 50, "2026-12-01");
   });
 
   it("quota used up: no AI, null (the rules read it), and says the quota is out", async () => {

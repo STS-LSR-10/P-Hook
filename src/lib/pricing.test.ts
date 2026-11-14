@@ -184,10 +184,19 @@ describe("the AI quota on the plan table", () => {
     const { FEATURE_GROUPS } = await import("./pricing");
     const row = FEATURE_GROUPS.flatMap((g) => g.rows).find((r) => r.label.includes("ถาม AI"));
     expect(row?.cells).toEqual([
-      "200 ครั้ง/เดือน",
+      "50 ครั้ง/เดือน",
       "600 ครั้ง/เดือน",
       "1,500 ครั้ง/เดือน",
-      "5,000 ครั้ง/เดือน",
+      "3,000 ครั้ง/เดือน",
     ]);
+  });
+});
+
+describe("Early Bird ends", () => {
+  it("is open until the end of 31 Jan 2027 in Bangkok, and closed after", async () => {
+    const { earlyBirdOpen } = await import("./pricing");
+    expect(earlyBirdOpen(new Date("2027-01-31T16:59:59Z"))).toBe(true); // 23:59:59 in Bangkok
+    expect(earlyBirdOpen(new Date("2027-01-31T17:00:00Z"))).toBe(false); // 1 Feb, 00:00
+    expect(earlyBirdOpen(new Date("2026-11-14T05:00:00Z"))).toBe(true);
   });
 });

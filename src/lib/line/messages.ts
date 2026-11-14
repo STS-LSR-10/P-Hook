@@ -1,4 +1,5 @@
 import { noteTitle } from "@/lib/note";
+import { REPEAT_LOCKED_TEXT } from "@/lib/user-reminder";
 import { formatThaiDate } from "@/lib/thai-date";
 import { REFERRAL_BONUS_REFEREE, REFERRAL_WINDOW_DAYS } from "@/lib/config";
 import type { LineMessage } from "@/lib/types";
@@ -617,11 +618,13 @@ export const GROUP_REMIND_GONE_TEXT = t(
 export const GROUP_REMIND_DENIED_TEXT = t("ยกเลิกได้เฉพาะคนที่ตั้งเตือนนี้ หรือเจ้าของสมุดนะ");
 export const groupRemindCancelledText = (body: string) => t("ยกเลิกเตือนกลุ่มแล้ว: {0}", body);
 export const groupReminderFullText = (limit: number, repeat: boolean) =>
-  t(
-    "{0}ของเจ้าของสมุดครบ {1} รายการแล้ว (ใช้ร่วมกับเตือนส่วนตัว) ยกเลิกอันที่ไม่ใช้ก่อนนะ",
-    repeat ? t("เตือนประจำ") : t("เตือนครั้งเดียว"),
-    limit,
-  );
+  repeat && limit === 0
+    ? REPEAT_LOCKED_TEXT
+    : t(
+        "{0}ของเจ้าของสมุดครบ {1} รายการแล้ว (ใช้ร่วมกับเตือนส่วนตัว) ยกเลิกอันที่ไม่ใช้ก่อนนะ",
+        repeat ? t("เตือนประจำ") : t("เตือนครั้งเดียว"),
+        limit,
+      );
 export const groupNoteSavedText = (preview: string, url?: string) =>
   `จดโน้ตกลุ่มแล้ว 📝\n"${preview}"${url ? `\nดู แก้ไข หรือค้นหาโน้ตของกลุ่ม: ${url}` : ""}`;
 export const GROUP_NOTE_SECRET_TEXT = t(
@@ -721,15 +724,17 @@ export const REMINDER_NO_TEXT_TEXT = t(
 export const REMINDER_PAST_TEXT = t('เวลานั้นผ่านไปแล้ว ลองระบุใหม่ เช่น "เตือน พรุ่งนี้ 9 โมง …"');
 export const REMINDER_TOO_FAR_TEXT = t("ตั้งเตือนล่วงหน้าได้ไม่เกิน 1 ปีนะ ลองเช็กวันที่อีกครั้ง");
 export const REMINDER_FULL_TEXT = (limit: number, repeat = false) =>
-  repeat
-    ? t(
-        "มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ",
-        limit,
-      )
-    : t(
-        "มีเตือนที่รออยู่ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ",
-        limit,
-      );
+  repeat && limit === 0
+    ? REPEAT_LOCKED_TEXT
+    : repeat
+      ? t(
+          "มีเตือนประจำ (เตือนซ้ำ) ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ",
+          limit,
+        )
+      : t(
+          "มีเตือนที่รออยู่ครบ {0} รายการแล้ว ลบอันที่ไม่ใช้ที่หน้าเตือน หรืออัปเกรดแผนเพื่อตั้งเพิ่มนะ",
+          limit,
+        );
 export const REMINDER_EMPTY_TEXT = [t("ยังไม่มีเตือนที่รออยู่"), "", REMINDER_USAGE_TEXT].join(
   "\n",
 );

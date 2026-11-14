@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { effectivePlan, GROUP_PUSH_PER_MONTH } from "@/lib/plan";
+import { getUserPlanRow } from "@/lib/slip-repo";
 import type { Mention } from "@/lib/group-mention";
 import { addLateReminder, purgeLateReminders, reminderTargets } from "@/lib/group-reminder-repo";
 import { getGroup } from "@/lib/group-repo";
@@ -12,11 +14,6 @@ import { claimDueReminders, type DueReminder } from "@/lib/user-reminder-repo";
 import { REPEAT_LABEL } from "@/lib/user-reminder";
 import { runInZone } from "@/lib/zone-scope";
 
-/**
- * Messages an owner's group reminders may push to groups in a month. A push to a group counts once per
- * member against the LINE account's monthly messages, so a group of 20 uses 20.
- */
-export const GROUP_PUSH_PER_MONTH = 300;
 /** The cron takes a group's reminder this long after its time (until then a message may carry it). */
 const RIDE_MS = 5 * 60_000;
 
@@ -121,10 +118,18 @@ async function sendGroupReminder(
   const everyone = target.mentions.some((m) => m.all);
 
   const month = monthKey(now);
+  // the owner's plan sets the month's allowance; a plan that cannot be read gives none, so the
+  // reminder waits for the next message in the group rather than being lost
+  const allowance = await getUserPlanRow(db, r.userId)
+    .then((row) => GROUP_PUSH_PER_MONTH[effectivePlan(row.plan, row.plan_expires_at, now)])
+    .catch((e) => {
+      log.error("group_push_plan_failed", e);
+      return 0;
+    });
   // every message pushed counts against the owner's allowance; a counter that cannot be reached
   // counts as no room, so the reminder waits rather than being lost
   const take = (amount: number) =>
-    takeUsageAmount(db, r.userId, "group_push", amount, GROUP_PUSH_PER_MONTH, month).catch((e) => {
+    takeUsageAmount(db, r.userId, "group_push", amount, allowance, month).catch((e) => {
       log.error("group_push_count_failed", e);
       return false;
     });

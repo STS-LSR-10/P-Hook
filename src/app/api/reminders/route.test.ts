@@ -6,6 +6,8 @@ const FREE_ONCE = reminderCapacity("free");
 const PRO_ONCE = reminderCapacity("plus");
 const ULT_ONCE = reminderCapacity("ultimate");
 const FREE_REPEAT = repeatCapacity("free");
+const STARTER_ONCE = reminderCapacity("starter");
+const STARTER_REPEAT = repeatCapacity("starter");
 const PRO_REPEAT = repeatCapacity("plus");
 const ULT_REPEAT = repeatCapacity("ultimate");
 
@@ -190,22 +192,29 @@ describe("repeating reminders have their own limit", () => {
     ).toBe(409);
   });
 
-  it("one-offs full do not stop a repeating one", async () => {
+  it("Free has no repeating reminder: refused, saying so plainly", async () => {
     plan = "free";
-    active = FREE_ONCE;
+    const res = await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "daily" }));
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toContain("ตั้งเตือนประจำ (เตือนซ้ำ) ไม่ได้");
+  });
+
+  it("one-offs full do not stop a repeating one", async () => {
+    plan = "starter";
+    active = STARTER_ONCE;
     expect((await POST(req("POST", { body: "ก", remindAt: soon(), repeat: "daily" }))).status).toBe(
       201,
     );
   });
 
   it("GET gives each kind's count and limit; it can add while either has room", async () => {
-    plan = "free";
-    active = FREE_ONCE;
+    plan = "starter";
+    active = STARTER_ONCE;
     repeating = 0;
     expect(await (await GET(req("GET"))).json()).toMatchObject({
-      limit: FREE_ONCE,
-      repeatLimit: FREE_REPEAT,
-      active: FREE_ONCE,
+      limit: STARTER_ONCE,
+      repeatLimit: STARTER_REPEAT,
+      active: STARTER_ONCE,
       repeating: 0,
       canAdd: true,
       canAddOnce: false,
@@ -417,21 +426,21 @@ describe("reminders on the page", () => {
 
   it("a done one-off edited into a repeat needs room among the repeats", async () => {
     stored = { ...stored, status: "done" };
-    plan = "free";
-    repeating = FREE_REPEAT;
+    plan = "starter";
+    repeating = STARTER_REPEAT;
     expect((await patch({ body: "a", remindAt: future(), repeat: "daily" })).status).toBe(409);
     repeating = 0;
-    active = FREE_ONCE; // the one-offs being full does not matter for a repeat
+    active = STARTER_ONCE; // the one-offs being full does not matter for a repeat
     expect((await patch({ body: "a", remindAt: future(), repeat: "daily" })).status).toBe(200);
   });
 
   it("taking a tick back on a repeat needs room among the repeats", async () => {
     stored = { ...stored, status: "done", repeat: "weekly" };
-    plan = "free";
-    repeating = FREE_REPEAT;
+    plan = "starter";
+    repeating = STARTER_REPEAT;
     expect((await patch({ action: "undo" })).status).toBe(409);
     repeating = 0;
-    active = FREE_ONCE;
+    active = STARTER_ONCE;
     expect((await patch({ action: "undo" })).status).toBe(200);
   });
 

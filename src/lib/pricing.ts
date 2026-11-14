@@ -57,6 +57,10 @@ export const EARLY_BIRD: Record<PaidPlan, { yearly: number; monthly: number }> =
   ultimate: { yearly: 1490, monthly: 199 },
 };
 
+/** Early Bird is sold until the end of 31 Jan 2027, Bangkok time (seats may run out first). */
+export const EARLY_BIRD_ENDS_AT = "2027-02-01T00:00:00+07:00";
+export const earlyBirdOpen = (now: Date): boolean => now.getTime() < Date.parse(EARLY_BIRD_ENDS_AT);
+
 /** What a plan costs right now. */
 export function priceFor(plan: PaidPlan, now: Date): PlanPrice {
   return (launchActive(now) ? LAUNCH_PRICES : PRICES)[plan];
@@ -448,7 +452,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       {
         label: t("เตือนประจำ"),
         icon: "repeat",
-        cells: perPlan((p) => t("{0} รายการ", repeatCapacity(p))),
+        cells: perPlan((p) =>
+          repeatCapacity(p) === 0 ? false : t("{0} รายการ", repeatCapacity(p)),
+        ),
       },
       {
         label: t("เตือนในกลุ่ม LINE"),

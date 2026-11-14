@@ -53,6 +53,7 @@ import { PageHeader } from "@/components/liff/states";
 import { planAction, prepaidUpgradeFor } from "@/lib/payments/policy";
 import { PLAN_LABEL, type Plan } from "@/lib/plan";
 import {
+  EARLY_BIRD_ENDS_AT,
   FEATURE_GROUPS,
   type Cell,
   type FeatureIcon,
@@ -65,6 +66,7 @@ import {
   type Period,
   type PricingNow,
 } from "@/lib/pricing";
+import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 
@@ -473,6 +475,9 @@ function PlanCard({
                   {t("เหลือ")} {early.remaining} {t("สิทธิ์")}
                 </span>
               ) : null}
+              <span className="text-foreground/80">
+                {t("ถึง {0}", formatThaiDate(new Date(Date.parse(EARLY_BIRD_ENDS_AT) - 1)))}
+              </span>
             </p>
           ) : null}
           {period === "yearly" ? (

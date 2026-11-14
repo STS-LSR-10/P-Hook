@@ -222,7 +222,7 @@ describe("asking", () => {
     plan = "ultimate";
     usageLeft = 0;
     expect(first(await owlAsk(deps(), user(), "x", false, "U1")).text).toBe(
-      aiQuotaText("ultimate", 5000),
+      aiQuotaText("ultimate", 3000),
     );
     expect(answer).not.toHaveBeenCalled();
   });

@@ -29,6 +29,14 @@ vi.mock("./group-reminder-repo", () => ({
     purged += 1;
   },
 }));
+let ownerPlan = "ultimate";
+let planFails = false;
+vi.mock("@/lib/slip-repo", () => ({
+  getUserPlanRow: async () => {
+    if (planFails) throw new Error("db down");
+    return { plan: ownerPlan, plan_expires_at: null };
+  },
+}));
 let pushUsed = 0;
 const refunds: number[] = [];
 vi.mock("./usage", async (original) => ({
@@ -74,6 +82,8 @@ beforeEach(() => {
   refunds.length = 0;
   targetsFail = false;
   usageFail = false;
+  ownerPlan = "ultimate";
+  planFails = false;
 });
 
 describe("runUserReminders", () => {
@@ -271,6 +281,43 @@ describe("runUserReminders", () => {
       expect(l.push.mock.calls.map((c) => c[0])).toEqual(["U9"]);
       expect(pushUsed).toBe(300);
       expect(late).toHaveLength(1);
+    });
+
+    it.each([
+      ["starter", 40, 50],
+      ["plus", 90, 100],
+    ])(
+      "a %s owner's groups get a smaller monthly allowance (%i used, %i a month): the rest waits",
+      async (plan, used) => {
+        ownerPlan = plan;
+        pushUsed = used;
+        due = [group({ body: "ประชุม" })];
+        targets = new Map([["r1", { groupId: "g1", mentions: [] }]]);
+        const l = line([], 20);
+        const out = await runUserReminders({} as SupabaseClient, l as never, NOW);
+        expect(l.push).not.toHaveBeenCalled();
+        expect(out).toMatchObject({ sent: 0, late: 1 });
+      },
+    );
+
+    it("an owner on Free (a plan that ran out) pushes nothing: it waits for the next message", async () => {
+      ownerPlan = "free";
+      due = [group({ body: "ประชุม" })];
+      targets = new Map([["r1", { groupId: "g1", mentions: [] }]]);
+      const l = line([], 3);
+      const out = await runUserReminders({} as SupabaseClient, l as never, NOW);
+      expect(l.push).not.toHaveBeenCalled();
+      expect(out).toMatchObject({ late: 1 });
+    });
+
+    it("an owner whose plan cannot be read gets no push: it waits for the next message in the group", async () => {
+      planFails = true;
+      due = [group({ body: "ประชุม" })];
+      targets = new Map([["r1", { groupId: "g1", mentions: [] }]]);
+      const l = line([], 3);
+      const out = await runUserReminders({} as SupabaseClient, l as never, NOW);
+      expect(l.push).not.toHaveBeenCalled();
+      expect(out).toMatchObject({ late: 1 });
     });
 
     it("still sends the personal ones when the group details cannot be read", async () => {

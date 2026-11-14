@@ -53,14 +53,14 @@ describe("buildQuota", () => {
     const q = byKey("free");
     expect(q.slips).toMatchObject({ used: 2, limit: 10, period: "once", word: "ครั้ง" });
     expect(q.voice).toMatchObject({ used: 1, limit: 10, period: "once" });
-    expect(q.reminders).toMatchObject({ used: 3, limit: 5, period: "total" });
-    expect(q.repeatReminders).toMatchObject({ used: 1, limit: 1 });
+    expect(q.reminders).toMatchObject({ used: 3, limit: 3, period: "total" });
+    expect(q.repeatReminders).toMatchObject({ used: 1, limit: 0 });
     expect(q.groups?.limit).toBe(0);
     expect(q.groupReminders?.limit).toBe(0);
     expect(q.pdf?.limit).toBe(0);
     expect(q.storage).toMatchObject({ used: 1024, limit: 150 * 1024 * 1024, unit: "bytes" });
-    expect(q.owl).toMatchObject({ limit: 5, period: "month" });
-    expect(q.ai).toMatchObject({ limit: 200, period: "month", label: "ถาม AI" });
+    expect(q.owl).toMatchObject({ limit: 3, period: "month" });
+    expect(q.ai).toMatchObject({ limit: 50, period: "month", label: "ถาม AI" });
     expect(q.fileSaves).toBeUndefined(); // no daily limit on saving files any more
   });
 

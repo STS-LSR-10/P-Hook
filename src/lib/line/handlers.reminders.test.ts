@@ -144,6 +144,7 @@ describe("setting a reminder from the chat", () => {
   });
 
   it("a repeating one, and a day with no time (09:00 used and said so)", async () => {
+    plan = "starter"; // Free has no repeating reminder
     const a = setup();
     await handleEvent(say("เตือน ทุกวัน 8 โมง กินยา"), a.deps);
     expect(created[0]).toMatchObject({ body: "กินยา", repeat: "daily" });
@@ -165,23 +166,23 @@ describe("setting a reminder from the chat", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("Free holds 5 waiting reminders, Pro more", async () => {
-    active = 5;
+  it("Free holds 3 waiting reminders, Pro more", async () => {
+    active = 3;
     const free = setup();
     await handleEvent(say("เตือน พรุ่งนี้ 9 โมง อีกอัน"), free.deps);
     expect(created).toHaveLength(0);
-    expect(said(free.reply)).toContain("ครบ 5 รายการ");
+    expect(said(free.reply)).toContain("ครบ 3 รายการ");
     plan = "plus";
     await handleEvent(say("เตือน พรุ่งนี้ 9 โมง อีกอัน"), setup().deps);
     expect(created).toHaveLength(1);
   });
 
-  it("a repeating reminder has its own limit: Free holds 1", async () => {
-    repeating = 1;
+  it('Free has no repeating reminder: it says so plainly (not "0 of 0"), a one-off still works', async () => {
     const full = setup();
     await handleEvent(say("เตือน ทุกวัน 8 โมง กินยา"), full.deps);
     expect(created).toHaveLength(0);
-    expect(said(full.reply)).toContain("เตือนประจำ");
+    expect(said(full.reply)).toContain("ตั้งเตือนประจำ (เตือนซ้ำ) ไม่ได้");
+    expect(said(full.reply)).not.toContain("ครบ 0");
     await handleEvent(say("เตือน พรุ่งนี้ 9 โมง จ่ายค่าไฟ"), setup().deps);
     expect(created).toHaveLength(1);
   });
@@ -310,11 +311,11 @@ describe("the buttons under a reminder that was sent", () => {
 
   it("a repeating one's extra round needs room for a one-off", async () => {
     stored = once({ repeat: "daily", status: "active" });
-    active = 5;
+    active = 3;
     const { deps, reply } = setup();
     await handleEvent(tap(`a=rms&id=${ID}&s=10`), deps);
     expect(created).toHaveLength(0);
-    expect(said(reply)).toContain("ครบ 5 รายการ");
+    expect(said(reply)).toContain("ครบ 3 รายการ");
   });
 
   it("a second tap, or a reminder that has gone, is already handled", async () => {

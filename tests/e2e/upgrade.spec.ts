@@ -189,6 +189,17 @@ test.describe("upgrade page (360px)", () => {
     await expect(sheet.getByRole("button", { name: /พร้อมเพย์/ })).toContainText("฿499");
   });
 
+  test("the Early Bird badge says when the offer ends", async ({ page }) => {
+    await mockApi(page, {
+      "GET /api/me": {
+        ...ME_FREE,
+        earlyBird: [{ plan: "plus", period: "yearly", remaining: 10, price: 499 }],
+      },
+    });
+    await page.goto("/upgrade");
+    await expect(page.getByText("ถึง 31 ม.ค. 2570").first()).toBeVisible();
+  });
+
   test("when the last Early Bird seat goes, the page says so instead of opening a normal-price payment", async ({
     page,
   }) => {

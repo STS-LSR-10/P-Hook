@@ -184,17 +184,17 @@ describe("Early Bird seats (0065)", () => {
       ])
     ).ok;
 
-  it("seeds the offers with their seat counts", async () => {
+  it("seat counts after 0073: 200 / 100 / 30, the same for a month and a year", async () => {
     const r = await rows<{ plan: string; period: string; total: number | null }>(
       db,
       "select plan::text, period, total from early_bird_seats order by plan, period",
     );
     expect(r).toEqual([
-      { plan: "plus", period: "monthly", total: 200 },
+      { plan: "plus", period: "monthly", total: 100 },
       { plan: "plus", period: "yearly", total: 100 },
-      { plan: "starter", period: "monthly", total: null },
-      { plan: "starter", period: "yearly", total: 500 },
-      { plan: "ultimate", period: "monthly", total: 50 },
+      { plan: "starter", period: "monthly", total: 200 },
+      { plan: "starter", period: "yearly", total: 200 },
+      { plan: "ultimate", period: "monthly", total: 30 },
       { plan: "ultimate", period: "yearly", total: 30 },
     ]);
   });

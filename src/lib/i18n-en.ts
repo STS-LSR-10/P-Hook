@@ -2437,6 +2437,9 @@ export const EN: Record<string, string> = {
   "{0} ต้องการเตือน {1} ใช่ไหม ถ้าไม่ใช่ พิมพ์วันที่และเดือนใหม่ได้เลย":
     "{0} Remind you on {1}? If not, type a new day and month",
   พิมพ์วันใหม่: "Type a new day",
+  "แผน Free ตั้งเตือนประจำ (เตือนซ้ำ) ไม่ได้ ใช้เตือนครั้งเดียว หรืออัปเกรดแผนเพื่อตั้งเตือนประจำนะ":
+    "Repeating reminders aren't on the Free plan. Use a one-off reminder, or upgrade to set repeating ones",
+  "ถึง {0}": "until {0}",
   เปิดแผนที่: "Open a map",
   'อยากไปที่ไหนดี พิมพ์ชื่อที่นั้นได้เลย เช่น "นำทางไปเซ็นทรัลเวิลด์"':
     'Where to? Type the place, e.g. "นำทางไปเซ็นทรัลเวิลด์"',

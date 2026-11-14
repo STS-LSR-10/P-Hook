@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { earlyBirdOpen } from "@/lib/pricing";
 import { apiError, guard, json, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPaymentProvider } from "@/lib/payments";
@@ -66,7 +67,11 @@ export async function POST(request: Request): Promise<Response> {
     // Early Bird: a seat is reserved for this checkout when there is one (a card subscription gets the
     // first month or year cheaper; PromptPay is one prepaid period, so only the yearly one qualifies)
     let earlyBird = false;
-    if (!upgrade && (period === "yearly" || choice.method === "card")) {
+    if (
+      !upgrade &&
+      earlyBirdOpen(new Date()) &&
+      (period === "yearly" || choice.method === "card")
+    ) {
       await releaseEarlyBird(db).catch(() => undefined);
       earlyBird = await claimEarlyBird(db, auth.userId, choice.plan, period);
     }
