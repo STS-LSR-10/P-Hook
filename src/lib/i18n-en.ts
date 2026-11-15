@@ -1329,6 +1329,13 @@ export const EN: Record<string, string> = {
   "ซื้อแพ็กเตือนเพิ่ม (Starter ขึ้นไป): {0}": "Buy a reminder pack (Starter and above): {0}",
   "หรืออัปเกรดแผน: {0}": "Or upgrade your plan: {0}",
   ซื้อแพ็กเตือนเพิ่มหรืออัปเกรดแผนได้ในแอปนะ: "Buy a reminder pack or upgrade your plan in the app",
+  'โอนให้ {0} ฿{1} คือค่าอะไรคะ? กดเลือกหมวด หรือพิมพ์บอกได้เลย เช่น "ค่าข้าว"':
+    'Transfer to {0}, ฿{1}: what was it for? Tap a category or just type it, e.g. "food"',
+  ผู้รับ: "the recipient",
+  'โอเคค่ะ เก็บไว้ในหมวด "อื่นๆ" ตามเดิม แก้ทีหลังได้ที่ปุ่ม ✏️ บนการ์ด':
+    'Okay, I\'ll keep it in "อื่นๆ" (Other). You can change it later with the ✏️ button on the card',
+  'จดเป็น "{0}" หมวด {1} แล้วค่ะ ✅': 'Recorded as "{0}" in {1} ✅',
+  ข้าม: "Skip",
   ดุหน่อย: "Strict",
   "เกินงบอีกแล้วนะ! ใจเย็น ๆ ก่อน": "Over budget again! Slow down",
   ชมเยอะ: "Cheerleader",
@@ -2967,7 +2974,7 @@ export const EN: Record<string, string> = {
     'Tagging (like "bbq 500 #party") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the "Upgrade" menu, or record it without the tag',
   "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Starter ขึ้นไป ทดลองใช้ฟรี 7 วันได้":
     "Friends in the group can record for free; only the person who opens the ledger must be on Starter or above. You can try it free for 7 days",
-  "เตือนในกลุ่ม": "Group reminders",
+  เตือนในกลุ่ม: "Group reminders",
   'งบรายวัน (บอทเตือนทันทีเมื่อวันนี้ใช้เกิน) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
     'A daily budget (the bot warns you the moment today goes over) is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
   "ทุกอย่างใน Starter": "Everything in Starter",

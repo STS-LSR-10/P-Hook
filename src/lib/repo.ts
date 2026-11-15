@@ -443,6 +443,7 @@ export async function updateTransaction(
     type: TxType;
     amountSatang: number;
     categoryId: string | null;
+    title: string;
     status: "confirmed" | "deleted";
   }>,
 ): Promise<TxRow | null> {
@@ -450,6 +451,7 @@ export async function updateTransaction(
   if (patch.type !== undefined) row.type = patch.type;
   if (patch.amountSatang !== undefined) row.amount = satangToString(patch.amountSatang);
   if (patch.categoryId !== undefined) row.category_id = patch.categoryId;
+  if (patch.title !== undefined) row.title = patch.title;
   if (patch.status !== undefined) row.status = patch.status;
 
   const { data, error } = await db

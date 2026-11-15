@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { categorizeByRules } from "@/lib/categorize/rules";
 import { buildReceiptCard, type ReceiptCardEntry } from "@/lib/line/receipt-flex";
+import { buildSlipAsk } from "@/lib/line/slip-flex";
+import { clearSlipAsk, startSlipAsk } from "@/lib/slip-ask-repo";
 import { extensionFor, ImageError } from "@/lib/line/content";
 import {
   ALREADY_RECORDED_TEXT,
@@ -14,6 +16,7 @@ import {
   FIRST_SLIP_BONUS_TEXT,
   SLIP_LOCKED_TEXT,
   slipQuotaText,
+  SLIP_ASK_TEXT,
   SLIP_FREE_LEFT_TEXT,
   SLIP_UNREADABLE_TEXT,
   text,
@@ -115,15 +118,19 @@ export async function handleSlipImage(
     } else freeLeft = FREE_SLIPS_TOTAL - used - 1;
   }
   let recorded = false;
+  // "what was this for?", sent last so LINE shows its buttons
+  let ask: LineMessage | null = null;
   const messages = await readSlip();
   if (!recorded) return messages;
   // the first slip read for good pays a one-time bonus (once per account)
   const first = await awardOnce(db, user.id, "first_slip", FIRST_SLIP_BONUS);
-  return [
+  const body = [
     ...messages,
     ...(first ? [text(FIRST_SLIP_BONUS_TEXT(FIRST_SLIP_BONUS))] : []),
     ...(freeLeft !== null ? [text(SLIP_FREE_LEFT_TEXT(freeLeft))] : []),
   ];
+  // LINE takes five messages in a reply: the question keeps its place, as the last
+  return ask ? [...body.slice(0, 4), ask] : body;
 
   async function readSlip(): Promise<LineMessage[]> {
     if (freeLeft === null && !usePack) {
@@ -225,9 +232,10 @@ export async function handleSlipImage(
 
     const made: TxRow[] = [];
     const entries: ReceiptCardEntry[] = [];
+    let unsorted = false;
     try {
       for (const line of lines) {
-        const { categoryId } = categorizeByRules({
+        const { categoryId, via } = categorizeByRules({
           title: line.rule,
           type: "expense",
           categories,
@@ -246,6 +254,7 @@ export async function handleSlipImage(
           slipId: slip.id,
         });
         made.push(tx);
+        unsorted = via === "fallback" || via === "none";
         const category = categories.find((c) => c.id === categoryId);
         entries.push({
           txId: tx.id,
@@ -263,6 +272,25 @@ export async function handleSlipImage(
         await updateTransaction(db, user.id, t.id, { status: "deleted" }).catch(() => undefined);
       }
       throw error;
+    }
+
+    // a transfer the rules could not sort ("โอนให้ นาย ก." says nothing of what it was for): ask
+    const only = made.length === 1 ? made[0] : undefined;
+    const choices = categories
+      .filter((c) => c.type === "expense" && !c.is_hidden && c.name !== "อื่นๆ")
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((c) => ({ id: c.id, name: c.name, icon: c.icon }));
+    if (data.kind === "transfer" && unsorted && only && choices.length > 0) {
+      if (await startSlipAsk(db, user.id, only.id, now)) {
+        ask = buildSlipAsk(
+          only.id,
+          SLIP_ASK_TEXT(data.payeeName ?? null, formatBaht(data.amountSatang)),
+          choices,
+        );
+      }
+    } else {
+      // an older question must not take the typed answer meant for words about this slip
+      await clearSlipAsk(db, user.id);
     }
 
     let extras: SlipCardExtras = {};

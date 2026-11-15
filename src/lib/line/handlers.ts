@@ -217,6 +217,8 @@ import {
   buildTypeQuestion,
 } from "./flex";
 import { buildCategoryChooser } from "./slip-flex";
+import { getLiveSlipAsk } from "@/lib/slip-ask-repo";
+import { answerSlipAsk, isSkipWord, looksLikeSlipAnswer } from "@/lib/slip-ask";
 import { buildBatchConfirmMessage, type BatchBudget, type BatchRow } from "./batch-flex";
 import { startTrialFromChat, upsellReply } from "./upsell-reply";
 import { runPaymentCommand } from "./payment-handlers";
@@ -741,6 +743,24 @@ async function handleText(
   options: TextOptions = {},
 ): Promise<LineMessage[]> {
   if (options.aiOut) return readText(input, user, deps, options);
+  // the words after "โอนให้ … คือค่าอะไร?" answer it, unless they are a command or an amount
+  if (!options.routed && looksLikeSlipAnswer(input)) {
+    const ask = await getLiveSlipAsk(deps.db, user.id, deps.now());
+    if (
+      ask &&
+      !parseCommand(input) &&
+      !parseNaturalCommand(input, deps.now()) &&
+      !(await inOwlMode(owlDeps(deps), user))
+    ) {
+      const done = await answerSlipAsk(
+        deps,
+        user,
+        ask.txId,
+        isSkipWord(input) ? { skip: true } : { typed: input },
+      );
+      if (done) return done;
+    }
+  }
   const aiOut = { out: false };
   // the chat of the last few minutes, read only if the AI is asked (a plain "กาแฟ 50" never waits)
   let turns: Promise<ChatTurn[]> | null = null;
@@ -3304,6 +3324,18 @@ async function handlePostback(
   if (action === "del") {
     await updateTransaction(db, user.id, id, { status: "deleted" });
     return [text(tr("ลบแล้ว: {0} {1}", tx.title, money(txAmountSatang(tx))))];
+  }
+
+  // "คือค่าอะไร?" under a transfer slip: a tap on a category, or on ข้าม
+  if (action === "sq" || action === "sqx") {
+    return (
+      (await answerSlipAsk(
+        deps,
+        user,
+        id,
+        action === "sqx" ? { skip: true } : { categoryId: params.get("c") ?? "" },
+      )) ?? []
+    );
   }
 
   if (action === "edit") {

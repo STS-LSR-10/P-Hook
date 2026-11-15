@@ -71,6 +71,18 @@ export const slipQuotaText = (plan: Plan, limit: number) => {
 };
 export const SLIP_CANCELLED_TEXT = t("ยกเลิกแล้ว ไม่ได้จดสลิปนี้");
 export const PICK_CATEGORY_TEXT = t("เลือกหมวดที่ถูกต้องนะ");
+/** After a transfer slip the rules could not sort: what was it for? */
+export const SLIP_ASK_TEXT = (payee: string | null, baht: string) =>
+  t(
+    'โอนให้ {0} ฿{1} คือค่าอะไรคะ? กดเลือกหมวด หรือพิมพ์บอกได้เลย เช่น "ค่าข้าว"',
+    payee ?? t("ผู้รับ"),
+    baht,
+  );
+export const SLIP_ASK_SKIPPED_TEXT = t(
+  'โอเคค่ะ เก็บไว้ในหมวด "อื่นๆ" ตามเดิม แก้ทีหลังได้ที่ปุ่ม ✏️ บนการ์ด',
+);
+export const SLIP_ASK_DONE_TEXT = (title: string, category: string) =>
+  t('จดเป็น "{0}" หมวด {1} แล้วค่ะ ✅', title, category);
 export const REFERRAL_BONUS_TEXT = t(
   "ได้โบนัสชวนเพื่อน +{0} ฮูกคอยน์แล้ว! ตรวจดูได้ที่หน้าตั้งค่า",
   REFERRAL_BONUS_REFEREE,
