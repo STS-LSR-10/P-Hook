@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeText } from "@/lib/categorize/rules";
 import { satangToString } from "@/lib/money";
-import type { Plan } from "@/lib/plan";
+import { onTrial, type Plan } from "@/lib/plan";
 import { fromBangkok, bangkokParts } from "@/lib/thai-date";
 import { parseStoredItems, type ReceiptItem, type SlipData } from "@/lib/ocr/slip-schema";
 
@@ -32,14 +32,35 @@ export async function getUserPlanRow(
   return data as { plan: Plan; plan_expires_at: string | null };
 }
 
+/** When the running free trial started (Starter or Pro; Elite trials from before keep full limits), or null. */
+export async function trialStartOf(
+  db: SupabaseClient,
+  userId: string,
+  plan: Plan,
+  planExpiresAt: string | null,
+  now: Date,
+): Promise<string | null> {
+  if (plan === "free" || plan === "ultimate" || !planExpiresAt) return null;
+  const { data } = await db
+    .from("plan_trials")
+    .select("started_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const started = (data as { started_at: string } | null)?.started_at;
+  return onTrial(started, planExpiresAt, now) ? (started ?? null) : null;
+}
+
 /** Slips this user has sent in the current Bangkok calendar month (counts toward the Free quota). */
 export async function countSlipsThisMonth(
   db: SupabaseClient,
   userId: string,
   now: Date,
+  /** A trial's start: slips read before it (on Free) do not count against the trial. */
+  since?: string | null,
 ): Promise<number> {
   const p = bangkokParts(now);
-  const from = fromBangkok(p.year, p.month, 1);
+  const monthStart = fromBangkok(p.year, p.month, 1);
+  const from = since && new Date(since) > monthStart ? new Date(since) : monthStart;
   const to = fromBangkok(p.year, p.month + 1, 1);
   const { count, error } = await db
     .from("slips")

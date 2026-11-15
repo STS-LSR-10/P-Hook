@@ -64,6 +64,36 @@ export function MembersView({
             </Panel>
 
             <Panel
+              title="ทดลองใช้ที่ใช้โควตาเร็วผิดปกติ"
+              tag="Trial"
+              color={COLORS.plan}
+              cost={n(data.trialBurn.length)}
+              costSub="ใช้ถึง 80% ของโควตาทดลองใน 2 วันแรก"
+              delay={110}
+            >
+              {data.trialBurn.length === 0 ? (
+                <p className="text-sm text-muted">ยังไม่มีบัญชีที่เข้าเกณฑ์</p>
+              ) : (
+                <ul className="divide-y divide-border text-sm">
+                  {data.trialBurn.map((f) => (
+                    <li
+                      key={`${f.code}-${f.what}`}
+                      className="flex items-center justify-between py-2"
+                    >
+                      <span>
+                        {f.code} · {PLAN_LABEL[f.plan]} · {f.what}
+                      </span>
+                      <span className="font-semibold tabular-nums">{f.percent}%</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-[11px] text-muted">
+                เป็นแค่สัญญาณให้ดู ไม่ได้ระงับบัญชี · นับจากโควตาของเดือนนี้
+              </p>
+            </Panel>
+
+            <Panel
               title="สิทธิ์ Early Bird คงเหลือ"
               tag="Early Bird"
               color={COLORS.line}

@@ -246,7 +246,31 @@ export function can(plan: Plan, feature: Feature): boolean {
   return planAtLeast(plan, MIN_PLAN[feature]);
 }
 
+/** Free trial length (once per person). */
+export const TRIAL_DAYS = 7;
+
+/** A free trial gets 1 in this many of a plan's monthly limits that cost us money per use (SQL: 0081). */
+export const TRIAL_QUOTA_DIVISOR = 5;
+export const trialLimit = (limit: number): number =>
+  limit <= 0 ? limit : Math.max(1, Math.ceil(limit / TRIAL_QUOTA_DIVISOR));
+
+/**
+ * Is the running plan a trial? It started as one and its end is still the trial's own: a plan
+ * bought on top ends later, and then the full limits apply.
+ */
+export function onTrial(
+  trialStartedAt: string | null | undefined,
+  planExpiresAt: string | null | undefined,
+  now: Date,
+): boolean {
+  if (!trialStartedAt || !planExpiresAt) return false;
+  const end = new Date(planExpiresAt).getTime();
+  const trialEnd = new Date(trialStartedAt).getTime() + (TRIAL_DAYS * 24 + 1) * 3_600_000;
+  return end > now.getTime() && end <= trialEnd;
+}
+
 /** Slips still allowed this month. */
-export function slipsRemaining(plan: Plan, usedThisMonth: number): number {
-  return Math.max(0, SLIP_LIMIT[plan] - usedThisMonth);
+export function slipsRemaining(plan: Plan, usedThisMonth: number, trial = false): number {
+  const limit = trial ? trialLimit(SLIP_LIMIT[plan]) : SLIP_LIMIT[plan];
+  return Math.max(0, limit - usedThisMonth);
 }

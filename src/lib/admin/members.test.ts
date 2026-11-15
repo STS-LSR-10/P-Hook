@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countAddons, countByPlan } from "./members";
+import { countAddons, countByPlan, flagTrialBurn } from "./members";
 
 const NOW = new Date("2026-11-09T00:00:00Z");
 
@@ -40,5 +40,54 @@ describe("countAddons", () => {
     });
     expect(r.find((x) => x.sku === "storage_10")).toBeUndefined();
     expect(r.find((x) => x.sku === "slips_100")).toBeDefined();
+  });
+});
+
+describe("flagTrialBurn", () => {
+  const trials = [
+    {
+      user_id: "a",
+      plan: "plus" as const,
+      started_at: "2026-11-08T12:00:00Z",
+      code: "PH-P2600001",
+    },
+    {
+      user_id: "b",
+      plan: "starter" as const,
+      started_at: "2026-11-08T12:00:00Z",
+      code: "PH-S2600002",
+    },
+  ];
+
+  it("flags a trial that used 80% of a trial limit in its first two days", () => {
+    const flags = flagTrialBurn(
+      trials,
+      [
+        { user_id: "a", kind: "ai_chat", used: 200 }, // 200 of 240 = 83%
+        { user_id: "b", kind: "voice", used: 3 }, // 3 of 6 = 50%
+      ],
+      Array.from({ length: 8 }, () => ({ user_id: "b", created_at: "2026-11-08T13:00:00Z" })), // 8 slips of 9
+      NOW,
+    );
+    expect(flags.map((f) => [f.code, f.what, f.percent])).toEqual([
+      ["PH-S2600002", "slips", 89],
+      ["PH-P2600001", "ai_chat", 83],
+    ]);
+  });
+
+  it("does not count slips read before the trial started", () => {
+    const before = Array.from({ length: 8 }, () => ({
+      user_id: "b",
+      created_at: "2026-11-08T10:00:00Z",
+    }));
+    expect(flagTrialBurn([trials[1]!], [], before, NOW)).toEqual([]);
+  });
+
+  it("ignores trials older than two days and limits a plan does not have", () => {
+    const old = [{ ...trials[0]!, started_at: "2026-11-01T00:00:00Z" }];
+    expect(flagTrialBurn(old, [{ user_id: "a", kind: "ai_chat", used: 240 }], [], NOW)).toEqual([]);
+    expect(flagTrialBurn([trials[1]!], [{ user_id: "b", kind: "pdf", used: 5 }], [], NOW)).toEqual(
+      [],
+    );
   });
 });

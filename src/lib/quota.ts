@@ -15,6 +15,7 @@ import {
   recurringLimit,
   AI_CHAT_LIMIT,
   SLIP_LIMIT,
+  trialLimit,
   VOICE_LIMIT,
   walletCapacity,
   type Plan,
@@ -112,6 +113,8 @@ interface Def {
   on: (plan: Plan) => { limit: number | null; period: QuotaPeriod };
   /** Extra room the person bought (add-ons): added to their own limit, not to the plan table. */
   extra?: number;
+  /** Costs us money per use: a free trial gets only a fifth of it. */
+  cost?: boolean;
   /** Slip packs: what the pack covered is not shown as used, so what is left is the pack's. */
   capUsed?: boolean;
 }
@@ -119,8 +122,10 @@ interface Def {
 const each = (on: Def["on"]) =>
   Object.fromEntries(PLANS.map((p) => [p, on(p)])) as QuotaItem["plans"];
 
-function item(plan: Plan, def: Def): QuotaItem {
-  const { limit: base, period } = def.on(plan);
+function item(plan: Plan, def: Def, trial: boolean): QuotaItem {
+  const on = def.on(plan);
+  const { period } = on;
+  const base = trial && def.cost && on.limit !== null ? trialLimit(on.limit) : on.limit;
   const limit = base === null ? null : base + (def.extra ?? 0);
   return {
     key: def.key,
@@ -137,10 +142,16 @@ function item(plan: Plan, def: Def): QuotaItem {
 }
 
 /** Every quota of `plan` with what was used, in the order the quota page shows them. */
-export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS): Quota {
+export function buildQuota(
+  plan: Plan,
+  used: QuotaUsage,
+  bonus: Bonus = NO_BONUS,
+  trial = false,
+): Quota {
   const main: Def[] = [
     {
       key: "slips",
+      cost: true,
       label: "จดด้วยสลิป/ใบเสร็จ",
       hint: "รูปสลิปหรือใบเสร็จที่ให้บอทอ่านเป็นรายการ (Free ลองฟรี 10 ใบแรก)",
       word: "ครั้ง",
@@ -155,6 +166,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     },
     {
       key: "pdf",
+      cost: true,
       label: "จดด้วย PDF",
       hint: "ไฟล์ PDF (statement บิล รายการ) ที่ให้บอทอ่าน",
       word: "ไฟล์",
@@ -174,6 +186,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     },
     {
       key: "reminders",
+      cost: true,
       label: "เตือนครั้งเดียว",
       hint: "เตือนครั้งเดียวที่บอทส่งเข้าแชทส่วนตัวของคุณ ตั้งค้างไว้ได้ไม่จำกัด เต็มแล้วดูเตือนในแอปได้ตามปกติ หรือซื้อแพ็กเพิ่ม",
       word: "ครั้ง",
@@ -194,6 +207,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     },
     {
       key: "groupReminders",
+      cost: true,
       label: "เตือนกลุ่ม",
       hint: "เตือนที่บอทส่งเข้ากลุ่ม (นับตามจำนวนสมาชิกในกลุ่ม) เกินแล้วจะรอส่งตอนมีคนพิมพ์ในกลุ่ม",
       word: "ครั้ง",
@@ -222,6 +236,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
   const others: Def[] = [
     {
       key: "ai",
+      cost: true,
       label: "ถาม AI",
       hint: "ทุกข้อความที่ AI ช่วยอ่านและคำถามถึงพี่ฮูก (ไม่เกิน 20 คำนับ 1 ครั้ง) หมดแล้วบอทยังจดตามคำสั่งปกติได้",
       word: "ครั้ง",
@@ -233,6 +248,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     },
     {
       key: "owl",
+      cost: true,
       label: "ถามพี่ฮูกในกลุ่ม",
       hint: "คำถามที่ให้พี่ฮูกตอบในกลุ่มที่คุณเป็นเจ้าของ",
       word: "ครั้ง",
@@ -242,6 +258,7 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     },
     {
       key: "voice",
+      cost: true,
       label: "จดด้วยเสียง",
       hint: "ข้อความเสียงที่ให้บอทฟังแล้วจด",
       word: "ครั้ง",
@@ -299,5 +316,8 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     },
   ];
 
-  return { main: main.map((d) => item(plan, d)), others: others.map((d) => item(plan, d)) };
+  return {
+    main: main.map((d) => item(plan, d, trial)),
+    others: others.map((d) => item(plan, d, trial)),
+  };
 }

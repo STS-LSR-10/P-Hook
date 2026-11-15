@@ -6,6 +6,7 @@ import {
   effectivePlan,
   recurringLimit,
   SLIP_LIMIT,
+  trialLimit,
   slipsRemaining,
   walletCapacity,
   type Feature,
@@ -17,7 +18,7 @@ import { EARLY_BIRD, earlyBirdOpen, pricingAt, TRIAL_DAYS } from "@/lib/pricing"
 import { earlyBirdOffers, hasPaidEarlyBird } from "@/lib/early-bird-repo";
 import { memberCodeOf } from "@/lib/member";
 import { currentStreak, recentDailyKeys } from "@/lib/points";
-import { countSlipsThisMonth } from "@/lib/slip-repo";
+import { countSlipsThisMonth, trialStartOf } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -90,12 +91,18 @@ export async function GET(request: Request): Promise<Response> {
     const now = new Date();
     const plan = effectivePlan(data.plan, data.plan_expires_at, now);
     const billing = await loadBillingState(db, auth.userId, now);
-    const [slipsUsed, dailyKeys, payments, referrals] = await Promise.all([
-      countSlipsThisMonth(db, auth.userId, now),
+    const [slipsTrial, dailyKeys, payments, referrals] = await Promise.all([
+      trialStartOf(db, auth.userId, plan, data.plan_expires_at, now).then(async (start) => ({
+        start,
+        used: await countSlipsThisMonth(db, auth.userId, now, start),
+      })),
       recentDailyKeys(db, auth.userId),
       getPaymentProvider().listPayments(auth.userId),
       countReferrals(db, auth.userId),
     ]);
+
+    const slipsUsed = slipsTrial.used;
+    const trial = slipsTrial.start !== null;
 
     return json({
       displayName: data.display_name,
@@ -106,8 +113,8 @@ export async function GET(request: Request): Promise<Response> {
       features: Object.fromEntries(FEATURES.map((f) => [f, can(plan, f)])),
       slips: {
         used: slipsUsed,
-        limit: SLIP_LIMIT[plan],
-        remaining: slipsRemaining(plan, slipsUsed),
+        limit: trial ? trialLimit(SLIP_LIMIT[plan]) : SLIP_LIMIT[plan],
+        remaining: slipsRemaining(plan, slipsUsed, trial),
       },
       points: data.points,
       streak: currentStreak(dailyKeys, now),

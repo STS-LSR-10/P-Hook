@@ -370,9 +370,8 @@ describe("push packs (0075)", () => {
 
 describe("hourly reminders (0080)", () => {
   const claim = async (now: string) =>
-    (
-      await db.query("select * from claim_due_reminders_with_groups($1::timestamptz, 100)", [now])
-    ).rows as { r_id: string; r_repeat: string }[];
+    (await db.query("select * from claim_due_reminders_with_groups($1::timestamptz, 100)", [now]))
+      .rows as { r_id: string; r_repeat: string }[];
   const state = async (id: string) =>
     one<{ status: string; remind_at: string; sent_rounds: number; ask_until: string | null }>(
       db,
@@ -387,8 +386,7 @@ describe("hourly reminders (0080)", () => {
       "insert into user_reminders (user_id, body, remind_at, repeat) values ($1,'ชาตรามือ','2030-01-01T03:00:00Z','hourly') returning id",
       [u],
     );
-    const mine = (rows: { r_id: string; r_repeat: string }[]) =>
-      rows.filter((r) => r.r_id === id);
+    const mine = (rows: { r_id: string; r_repeat: string }[]) => rows.filter((r) => r.r_id === id);
 
     expect(mine(await claim("2030-01-01T03:00:00Z")).map((r) => r.r_repeat)).toEqual(["hourly"]);
     expect((await state(id)).sent_rounds).toBe(1);
@@ -415,7 +413,8 @@ describe("AI packs (0079)", () => {
       [u],
     );
     const take = async (n: number) =>
-      (await one<{ ok: boolean }>(db, "select take_push_pack($1::uuid, 'ai', $2) as ok", [u, n])).ok;
+      (await one<{ ok: boolean }>(db, "select take_push_pack($1::uuid, 'ai', $2) as ok", [u, n]))
+        .ok;
     expect(await take(30)).toBe(true);
     expect(await take(41)).toBe(false); // only 40 left: nothing is spent
     await db.query("select refund_push_pack($1::uuid, 'ai', 100)", [u]);
@@ -446,5 +445,83 @@ describe("member codes (0078)", () => {
     await expect(
       db.query("update users set member_code = $1 where id = $2", [await code(a), b]),
     ).rejects.toThrow();
+  });
+});
+
+describe("trial quotas (0081)", () => {
+  const take = async (user: string, kind: string, limit: number) =>
+    (
+      await one<{ take_usage: boolean }>(
+        db,
+        "select take_usage($1::uuid, $2, date '2026-11-01', $3)",
+        [user, kind, limit],
+      )
+    ).take_usage;
+
+  it("a trial can take only a fifth of a costly limit, rounded up", async () => {
+    const u = await newUser(db, "tq-a");
+    await trial(u, "plus");
+    let taken = 0;
+    while (await take(u, "voice", 10)) taken += 1;
+    expect(taken).toBe(2);
+  });
+
+  it("a paid plan, and a trial that was extended by a purchase, take the whole limit", async () => {
+    const paid = await newUser(db, "tq-b");
+    await db.query(
+      "update users set plan = 'plus', plan_expires_at = now() + interval '20 days' where id = $1",
+      [paid],
+    );
+    let taken = 0;
+    while (await take(paid, "voice", 10)) taken += 1;
+    expect(taken).toBe(10);
+
+    const bought = await newUser(db, "tq-c");
+    await trial(bought, "plus");
+    await db.query("update users set plan_expires_at = now() + interval '30 days' where id = $1", [
+      bought,
+    ]);
+    taken = 0;
+    while (await take(bought, "voice", 10)) taken += 1;
+    expect(taken).toBe(10);
+  });
+
+  it("starting a trial wipes this month's costly use from before it, and group slip checks are cut too", async () => {
+    const u = await newUser(db, "tq-e");
+    await db.query(
+      "insert into usage_counters (user_id, kind, month, used) values ($1, 'owl', date_trunc('month', now() at time zone 'Asia/Bangkok')::date, 3)",
+      [u],
+    );
+    await trial(u, "starter");
+    expect(
+      (
+        await one<{ n: number }>(
+          db,
+          "select count(*)::int as n from usage_counters where user_id = $1",
+          [u],
+        )
+      ).n,
+    ).toBe(0);
+    let taken = 0;
+    while (await take(u, "group_slip", 10)) taken += 1;
+    expect(taken).toBe(2);
+  });
+
+  it("keeps kinds that cost nothing per use whole, and amounts count against the fifth too", async () => {
+    const u = await newUser(db, "tq-d");
+    await trial(u, "plus");
+    let taken = 0;
+    while (await take(u, "group_remind", 10)) taken += 1;
+    expect(taken).toBe(10);
+    const ok = async (n: number) =>
+      (
+        await one<{ take_usage_amount: boolean }>(
+          db,
+          "select take_usage_amount($1::uuid, 'group_push', date '2026-11-01', $2, 100)",
+          [u, n],
+        )
+      ).take_usage_amount;
+    expect(await ok(20)).toBe(true);
+    expect(await ok(1)).toBe(false);
   });
 });

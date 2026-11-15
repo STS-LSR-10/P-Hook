@@ -24,7 +24,13 @@ import {
 import { formatBaht, toSatang } from "@/lib/money";
 import type { SlipImage, SlipOcrProvider } from "@/lib/ocr/provider";
 import { sanitizeSlip } from "@/lib/ocr/slip-schema";
-import { effectivePlan, FREE_SLIPS_TOTAL, SLIP_LIMIT, slipsRemaining } from "@/lib/plan";
+import {
+  effectivePlan,
+  FREE_SLIPS_TOTAL,
+  SLIP_LIMIT,
+  slipsRemaining,
+  trialLimit,
+} from "@/lib/plan";
 import { planReceiptSplit } from "@/lib/receipt-split";
 import {
   insertTransaction,
@@ -42,6 +48,7 @@ import {
   findTransactionBySlip,
   getUserPlanRow,
   insertSlip,
+  trialStartOf,
   SLIP_BUCKET,
 } from "@/lib/slip-repo";
 import { upsellReply } from "@/lib/line/upsell-reply";
@@ -104,6 +111,8 @@ export async function handleSlipImage(
   // 1. quota (failed reads are never inserted, so they never count)
   const planRow = await getUserPlanRow(db, user.id);
   const plan = effectivePlan(planRow.plan, planRow.plan_expires_at, now);
+  const trialStart = await trialStartOf(db, user.id, plan, planRow.plan_expires_at, now);
+  const trial = trialStart !== null;
   // Free: a taste for life (FREE_SLIPS_TOTAL); past that the upgrade pitch. Failed reads are never
   // inserted, so they never count.
   let freeLeft: number | null = null;
@@ -134,9 +143,12 @@ export async function handleSlipImage(
 
   async function readSlip(): Promise<LineMessage[]> {
     if (freeLeft === null && !usePack) {
-      const used = await countSlipsThisMonth(db, user.id, now);
-      if (slipsRemaining(plan, used) <= 0) {
-        if ((await packLeft()) <= 0) return [text(slipQuotaText(plan, SLIP_LIMIT[plan]))];
+      const used = await countSlipsThisMonth(db, user.id, now, trialStart);
+      if (slipsRemaining(plan, used, trial) <= 0) {
+        if ((await packLeft()) <= 0)
+          return [
+            text(slipQuotaText(plan, trial ? trialLimit(SLIP_LIMIT[plan]) : SLIP_LIMIT[plan])),
+          ];
         usePack = true;
       }
     }

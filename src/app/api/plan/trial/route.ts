@@ -10,10 +10,10 @@ import { getAdminClient } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({ plan: z.enum(["starter", "plus", "ultimate"]) });
+const bodySchema = z.object({ plan: z.enum(["starter", "plus"]) });
 
 /**
- * POST /api/plan/trial { plan } — start the free trial of a tier (once per person and tier, only
+ * POST /api/plan/trial { plan } — start the free trial of a tier (Starter or Pro, once per person, only
  * while no other plan is running). No card is needed; the plan simply ends after TRIAL_DAYS.
  */
 export async function POST(request: Request): Promise<Response> {

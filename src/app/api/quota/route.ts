@@ -9,7 +9,7 @@ import { countPhotosThisMonth } from "@/lib/photo-repo";
 import { getPlanInfo } from "@/lib/plan-server";
 import { buildQuota } from "@/lib/quota";
 import { countRules } from "@/lib/recurring-repo";
-import { countSlipsEver, countSlipsThisMonth } from "@/lib/slip-repo";
+import { countSlipsEver, countSlipsThisMonth, trialStartOf } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { LIFETIME, monthKey, readUsage } from "@/lib/usage";
 import { countActiveReminders } from "@/lib/user-reminder-repo";
@@ -28,6 +28,8 @@ export async function GET(request: Request): Promise<Response> {
     const now = new Date();
     const { plan, expiresAt } = await getPlanInfo(db, auth.userId, now);
     const paid = plan !== "free";
+    const trialStart = await trialStartOf(db, auth.userId, plan, expiresAt, now);
+    const trial = trialStart !== null;
     const month = monthKey(now);
 
     const [
@@ -53,7 +55,9 @@ export async function GET(request: Request): Promise<Response> {
       countActiveReminders(db, auth.userId, "repeat"),
       countOwnedGroups(db, auth.userId),
       countRules(db, auth.userId),
-      paid ? countSlipsThisMonth(db, auth.userId, now) : countSlipsEver(db, auth.userId),
+      paid
+        ? countSlipsThisMonth(db, auth.userId, now, trialStart)
+        : countSlipsEver(db, auth.userId),
       countPhotosThisMonth(db, auth.userId, now),
       readUsage(db, auth.userId, [
         paid ? { kind: "voice", month } : { kind: "teaser_voice", month: LIFETIME },
@@ -93,6 +97,7 @@ export async function GET(request: Request): Promise<Response> {
           ai,
         },
         bonus,
+        trial,
       ),
     });
   });

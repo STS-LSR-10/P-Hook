@@ -8,6 +8,7 @@ import {
   PRIVATE_PUSH_PER_MONTH,
   SHARED_MEMBER_LIMIT,
   SLIP_LIMIT,
+  TRIAL_DAYS,
   VOICE_LIMIT,
   WALLET_LIMIT,
   can,
@@ -506,8 +507,8 @@ export const PLAN_HIGHLIGHTS: Record<Plan, string[]> = {
   ],
 };
 
-/** Free trial length (once per person and tier). */
-export const TRIAL_DAYS = 7;
+/** Free trial length (once per person). */
+export { TRIAL_DAYS };
 
 /** Stripe's smallest THB charge. */
 export const MIN_CHARGE_BAHT = 10;

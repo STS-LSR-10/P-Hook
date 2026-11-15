@@ -191,9 +191,10 @@ describe("planAction: prepaid (PromptPay) time", () => {
 });
 
 describe("trialBlock", () => {
-  it("a person with no plan can try either tier once", () => {
+  it("a person with no plan can try Starter or Pro once, but not Elite", () => {
+    expect(trialBlock(state(), "starter")).toBeNull();
     expect(trialBlock(state(), "plus")).toBeNull();
-    expect(trialBlock(state(), "ultimate")).toBeNull();
+    expect(trialBlock(state(), "ultimate")).toMatch(/Starter และ Pro/);
   });
 
   it("one trial per account: after any tier was tried, no tier can be tried again", () => {

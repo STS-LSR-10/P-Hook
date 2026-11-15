@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 let plan = "plus";
 let expires: string | null = "2027-10-17T00:00:00Z";
 let signedIn = true;
+let trialNow = false;
 const usageAsked: { kind: string; month: string }[][] = [];
 let failNotes = false;
 
@@ -16,6 +17,7 @@ vi.mock("@/lib/slip-repo", () => ({
   getUserPlanRow: async () => ({ plan, plan_expires_at: expires }),
   countSlipsThisMonth: async () => 4,
   countSlipsEver: async () => 1,
+  trialStartOf: async () => (trialNow ? "2026-11-01T00:00:00Z" : null),
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => ({}) }));
 vi.mock("@/lib/file-repo", () => ({
@@ -77,6 +79,7 @@ const items = async (res: Response) => {
 };
 
 beforeEach(() => {
+  trialNow = false;
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-02T05:00:00Z")); // 2 Nov 2026, 12:00 Bangkok
   plan = "plus";
@@ -119,6 +122,14 @@ describe("GET /api/quota", () => {
       { kind: "group_push", month: "2026-11-01" },
       { kind: "private_push", month: "2026-11-01" },
     ]);
+  });
+
+  it("on a free trial the costly limits are a fifth", async () => {
+    trialNow = true;
+    const q = await items(await get());
+    expect(q.slips).toMatchObject({ limit: 36 });
+    expect(q.ai).toMatchObject({ limit: 240 });
+    expect(q.groups).toMatchObject({ limit: 5 });
   });
 
   it("a free row with days still running (redeemed coins) counts as Pro", async () => {

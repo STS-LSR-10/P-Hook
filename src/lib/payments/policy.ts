@@ -123,7 +123,7 @@ export function planAction(state: BillingState, request: PlanRequest): PlanActio
 }
 
 /** Why a free trial of `plan` cannot start now, or null when it can. */
-export function trialBlock(state: BillingState, _plan: PaidPlan): string | null {
+export function trialBlock(state: BillingState, plan: PaidPlan): string | null {
   if (state.plan !== "free") {
     return "ทดลองใช้ฟรีได้เฉพาะตอนที่ยังไม่มีแผนที่ใช้งานอยู่";
   }
@@ -131,6 +131,7 @@ export function trialBlock(state: BillingState, _plan: PaidPlan): string | null 
   if (state.trialsUsed.length > 0) {
     return "คุณเคยทดลองใช้ฟรีแล้ว (ทดลองได้ครั้งเดียวต่อบัญชี)";
   }
+  if (plan === "ultimate") return "ทดลองใช้ฟรีได้เฉพาะแผน Starter และ Pro";
   return null;
 }
 

@@ -7,11 +7,13 @@ import {
   GROUP_LEDGER_LIMIT,
   MIN_PLAN,
   nextPlanUp,
+  onTrial,
   planAtLeast,
   PLAN_ORDER,
   recurringLimit,
   slipsRemaining,
   SLIP_LIMIT,
+  trialLimit,
   VOICE_LIMIT,
   type Feature,
 } from "./plan";
@@ -129,5 +131,31 @@ describe("export and dashboard", () => {
       expect(can("plus", feature)).toBe(true);
       expect(can("ultimate", feature)).toBe(true);
     }
+  });
+});
+
+describe("free trial quotas", () => {
+  it("a trial gets one fifth of a limit, rounded up, and never zero from something", () => {
+    expect(trialLimit(45)).toBe(9);
+    expect(trialLimit(180)).toBe(36);
+    expect(trialLimit(1200)).toBe(240);
+    expect(trialLimit(5)).toBe(1);
+    expect(trialLimit(3)).toBe(1);
+    expect(trialLimit(0)).toBe(0);
+  });
+
+  it("slips left on a trial count against the fifth", () => {
+    expect(slipsRemaining("starter", 0, true)).toBe(9);
+    expect(slipsRemaining("starter", 9, true)).toBe(0);
+    expect(slipsRemaining("starter", 9)).toBe(36);
+  });
+
+  it("is a trial only while its own 7 days run (a longer plan bought on top is not one)", () => {
+    const started = "2026-10-14T08:00:00Z";
+    expect(onTrial(started, "2026-10-21T08:00:00Z", NOW)).toBe(true);
+    expect(onTrial(started, "2026-11-14T08:00:00Z", NOW)).toBe(false); // extended by a purchase
+    expect(onTrial(started, "2026-10-15T07:00:00Z", NOW)).toBe(false); // already over
+    expect(onTrial(null, "2026-10-21T08:00:00Z", NOW)).toBe(false);
+    expect(onTrial(started, null, NOW)).toBe(false);
   });
 });

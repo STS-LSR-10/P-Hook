@@ -101,6 +101,25 @@ describe("buildQuota", () => {
     expect(q.storage?.limit).toBe(100 * 1024 ** 3);
   });
 
+  it("on a trial the costly limits are a fifth, the rest stay whole, and the plan table is unchanged", () => {
+    const q = Object.fromEntries(
+      (({ main, others }) => [...main, ...others])(buildQuota("plus", USED, undefined, true)).map(
+        (i) => [i.key, i],
+      ),
+    );
+    expect(q.slips?.limit).toBe(36);
+    expect(q.pdf?.limit).toBe(1);
+    expect(q.voice?.limit).toBe(30);
+    expect(q.ai?.limit).toBe(240);
+    expect(q.owl?.limit).toBe(8);
+    expect(q.reminders?.limit).toBe(14);
+    expect(q.groupReminders?.limit).toBe(20);
+    expect(q.groups?.limit).toBe(5);
+    expect(q.wallets?.limit).toBe(20);
+    expect(q.storage?.limit).toBe(15 * 1024 ** 3);
+    expect(q.slips?.plans.plus.limit).toBe(180);
+  });
+
   it("each item says what every plan gets, so they can be compared", () => {
     const slips = byKey("plus").slips;
     expect(slips?.plans).toEqual({
