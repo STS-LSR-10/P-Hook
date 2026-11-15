@@ -204,6 +204,10 @@ interface Clock {
   today?: boolean;
 }
 
+/** Minutes said after an hour: "บ่าย 3 40" (15:40). Not when the number is an amount or a span. */
+const MINUTES_AFTER =
+  "(?:\\s+([0-5]\\d)(?!\\d|\\s*(?:บาท|฿|ครั้ง|ชม|ชั่วโมง|วัน|เดือน|ปี|%))(?:\\s*นาที)?)?";
+
 /** Thai ways to say a time of day. Null when none is in the text. */
 function takeTime(s: string): { clock: Clock | null; rest: string } {
   let r = take(s, /(\d{1,2})[:.](\d{2})\s*(?:น\.?)?/);
@@ -217,27 +221,37 @@ function takeTime(s: string): { clock: Clock | null; rest: string } {
   // "ครึ่ง" right after a time is half past ("9 โมงครึ่ง", "บ่าย 3 ครึ่ง", "4 โมงเย็นครึ่ง")
   r = take(s, /เที่ยง(?!คืน)(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/);
   if (r.m) return { clock: { hour: 12, minute: r.m[1] ? 30 : 0 }, rest: r.rest };
-  r = take(s, /ตี\s*(\d{1,2})(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/);
+  r = take(
+    s,
+    new RegExp(`ตี\\s*(\\d{1,2})(\\s*ครึ่ง(?!\\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?${MINUTES_AFTER}`),
+  );
   if (r.m && Number(r.m[1]) >= 1 && Number(r.m[1]) <= 5) {
-    return { clock: { hour: Number(r.m[1]), minute: r.m[2] ? 30 : 0 }, rest: r.rest };
+    return {
+      clock: { hour: Number(r.m[1]), minute: r.m[2] ? 30 : Number(r.m[3] ?? 0) },
+      rest: r.rest,
+    };
   }
   r = take(
     s,
-    /บ่าย\s*(?:(\d{1,2})\s*(?:โมง)?|โมง)(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/,
+    new RegExp(
+      `บ่าย\\s*(?:(\\d{1,2})(?:\\s*โมง)?|โมง)(\\s*ครึ่ง(?!\\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?${MINUTES_AFTER}`,
+    ),
   );
   if (r.m) {
     const n = r.m[1] ? Number(r.m[1]) : 1;
-    const minute = r.m[2] ? 30 : 0;
+    const minute = r.m[2] ? 30 : Number(r.m[3] ?? 0);
     if (n >= 1 && n <= 5) return { clock: { hour: 12 + n, minute }, rest: r.rest };
   }
   r = take(
     s,
-    /(\d{1,2})\s*โมง(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?\s*(เช้า|เย็น)?(\s*ครึ่ง(?!\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?/,
+    new RegExp(
+      `(\\d{1,2})\\s*โมง(\\s*ครึ่ง(?!\\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?(?:\\s*(เช้า|เย็น))?(\\s*ครึ่ง(?!\\s*(?:ชั่วโมง|ชม|นึง|หนึ่ง|วัน|เดือน|ปี|ทาง)))?${MINUTES_AFTER}`,
+    ),
   );
   if (r.m) {
     const n = Number(r.m[1]);
     const part = r.m[3];
-    const minute = r.m[2] || r.m[4] ? 30 : 0;
+    const minute = r.m[2] || r.m[4] ? 30 : Number(r.m[5] ?? 0);
     let hour = -1;
     if (part === "เย็น" && n >= 4 && n <= 6) hour = 12 + n;
     else if (part === "เช้า" && n >= 6 && n <= 11) hour = n;
