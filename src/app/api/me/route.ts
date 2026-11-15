@@ -79,7 +79,9 @@ export async function GET(request: Request): Promise<Response> {
     const db = getAdminClient();
     const { data, error } = await db
       .from("users")
-      .select("display_name,picture_url,plan,plan_expires_at,points,referral_code,referred_by")
+      .select(
+        "display_name,picture_url,plan,plan_expires_at,points,referral_code,referred_by,member_code,created_at",
+      )
       .eq("id", auth.userId)
       .single();
     if (error) throw new Error(`load me: ${error.message}`);
@@ -109,6 +111,8 @@ export async function GET(request: Request): Promise<Response> {
       points: data.points,
       streak: currentStreak(dailyKeys, now),
       referralCode: data.referral_code,
+      memberCode: data.member_code,
+      joinedAt: data.created_at,
       referred: Boolean(data.referred_by),
       referrals,
       limits: { recurringRules: recurringLimit(plan), wallets: walletCapacity(plan) },

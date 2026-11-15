@@ -513,12 +513,17 @@ test.describe("settings sections and search (360px)", () => {
   });
 
   test("the profile shows the plan, coins and streak, with a quota button", async ({ page }) => {
-    await mockApi(page, { ...COMMON, "GET /api/me": ME_PLUS });
+    await mockApi(page, {
+      ...COMMON,
+      "GET /api/me": { ...ME_PLUS, memberCode: "PH-7K4M-29QX", joinedAt: "2026-11-02T03:00:00Z" },
+    });
     await page.goto("/settings");
     const profile = page.getByRole("region", { name: "โปรไฟล์และแผน" });
     await expect(profile.getByText("แผน Pro")).toBeVisible();
     await expect(profile.getByText("ฮูกคอยน์")).toBeVisible();
     await expect(profile.getByText("จดต่อเนื่อง")).toBeVisible();
+    await expect(profile.getByText("PH-7K4M-29QX")).toBeVisible();
+    await expect(profile.getByText(/ตั้งแต่ 2 พ\.ย\. 2569 \(\d+ วัน\)/)).toBeVisible();
     await expect(profile.getByRole("link", { name: "โควตา" })).toHaveAttribute(
       "href",
       "/settings/quota",

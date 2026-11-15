@@ -1,0 +1,18 @@
+import { t } from "@/lib/i18n";
+import { bangkokParts, formatThaiDate, fromBangkok } from "@/lib/thai-date";
+
+/** Whole calendar days (Bangkok) from the day they joined to `now`: 0 on the first day. */
+export function memberDays(joinedAt: Date, now: Date): number {
+  const day = (d: Date) => {
+    const p = bangkokParts(d);
+    return fromBangkok(p.year, p.month, p.day).getTime();
+  };
+  return Math.max(0, Math.round((day(now) - day(joinedAt)) / 86_400_000));
+}
+
+/** "2 พ.ย. 2569 (12 วัน)", or "(วันนี้)" on the first day. */
+export function joinedLabel(joinedAt: string, now: Date): string {
+  const at = new Date(joinedAt);
+  const days = memberDays(at, now);
+  return `${formatThaiDate(at)} ${days === 0 ? t("(วันนี้)") : t("({0} วัน)", days)}`;
+}

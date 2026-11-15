@@ -3,6 +3,7 @@
 import { Crown, Flame, Gauge, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { PLAN_LABEL } from "@/lib/plan";
+import { joinedLabel } from "@/lib/member";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
 import type { Me } from "./types";
@@ -60,6 +61,12 @@ export function ProfileCard({ me }: { me: Me }) {
             {paid && me.planExpiresAt
               ? t("ใช้ได้ถึง {0}", formatThaiDate(new Date(me.planExpiresAt)))
               : t("แผนฟรี ใช้ได้ตลอด")}
+          </p>
+          <p className="mt-0.5 text-xs text-muted">
+            {t("สมาชิก")} <span className="num font-semibold tracking-wide">{me.memberCode}</span>
+          </p>
+          <p className="mt-0.5 text-xs text-muted">
+            {t("เป็นเพื่อนพี่ฮูกตั้งแต่ {0}", joinedLabel(me.joinedAt, new Date()))}
           </p>
         </div>
       </div>
