@@ -439,11 +439,6 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     title: t("เตือนและคลังไฟล์"),
     rows: [
       {
-        label: t("เตือนที่ตั้งไว้ได้"),
-        icon: "bell",
-        cells: [t("ไม่จำกัด"), t("ไม่จำกัด"), t("ไม่จำกัด"), t("ไม่จำกัด")],
-      },
-      {
         label: t("เตือนประจำ"),
         icon: "repeat",
         cells: perPlan((p) =>

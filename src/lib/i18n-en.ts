@@ -3008,7 +3008,6 @@ export const EN: Record<string, string> = {
     'Transfers between wallets are for the Starter plan and above (up to 5 wallets). Try it free for 7 days from the "Upgrade" menu',
   "จดย้อนหลังสำหรับสมาชิก Starter ขึ้นไป":
     "Recording earlier days is for Starter members and above",
-  เตือนที่ตั้งไว้ได้: "Reminders you can keep",
   "สมุดกลุ่มนี้มีคนใช้ครบ {0} คนแล้วตามแผนของเจ้าของสมุด เจ้าของอัปเกรดแผนเพื่อเพิ่มคนได้นะ":
     "This group ledger already has {0} people using it, which is what its owner's plan allows. The owner can upgrade to add more",
   'เป้าหมายการออม (กระปุก) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
