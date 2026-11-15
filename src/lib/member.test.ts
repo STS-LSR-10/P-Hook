@@ -27,10 +27,10 @@ describe("joinedLabel", () => {
 });
 
 describe("memberCodeOf", () => {
-  it("puts the plan letter before the stored number", () => {
-    expect(memberCodeOf("free", "2601")).toBe("PH-F2601");
-    expect(memberCodeOf("starter", "26100")).toBe("PH-S26100");
-    expect(memberCodeOf("plus", "2610")).toBe("PH-P2610");
-    expect(memberCodeOf("ultimate", "261500")).toBe("PH-E261500");
+  it("puts the plan letter first and pads the number to five digits", () => {
+    expect(memberCodeOf("ultimate", "261")).toBe("PH-E2600001");
+    expect(memberCodeOf("free", "26250")).toBe("PH-F2600250");
+    expect(memberCodeOf("starter", "2730")).toBe("PH-S2700030");
+    expect(memberCodeOf("plus", "26123456")).toBe("PH-P26123456");
   });
 });

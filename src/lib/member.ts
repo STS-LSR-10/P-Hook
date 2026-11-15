@@ -20,6 +20,6 @@ export function joinedLabel(joinedAt: string, now: Date): string {
 
 const PLAN_LETTER: Record<Plan, string> = { free: "F", starter: "S", plus: "P", ultimate: "E" };
 
-/** "PH-P2610": the stored number (year 26, 10th to join) behind the letter of the plan in force. */
+/** "PH-P2600010": the plan letter, the year (26), then the number to join that year, 5 digits. */
 export const memberCodeOf = (plan: Plan, stored: string): string =>
-  `PH-${PLAN_LETTER[plan]}${stored}`;
+  `PH-${PLAN_LETTER[plan]}${stored.slice(0, 2)}${stored.slice(2).padStart(5, "0")}`;

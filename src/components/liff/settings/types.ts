@@ -20,7 +20,7 @@ export interface Me {
   points: number;
   streak: number;
   referralCode: string;
-  /** "PH-P2610": the number to quote to support. */
+  /** "PH-P2600010": the number to quote to support. */
   memberCode: string;
   /** When the account was made (the day they became a friend of พี่ฮูก). */
   joinedAt: string;
