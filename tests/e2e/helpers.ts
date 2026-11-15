@@ -131,7 +131,7 @@ export const ME_FREE = {
   points: 7,
   streak: 3,
   referralCode: "ABCD1234",
-  memberCode: "PH-ABCD-2345",
+  memberCode: "PH-F2601",
   joinedAt: "2026-10-01T03:00:00Z",
   referrals: 3,
   referred: false,

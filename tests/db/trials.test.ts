@@ -368,15 +368,16 @@ describe("push packs (0075)", () => {
   });
 });
 
-describe("member codes (0077)", () => {
+describe("member codes (0078)", () => {
   const code = async (u: string) =>
     (await one<{ member_code: string }>(db, "select member_code from users where id = $1", [u]))
       .member_code;
 
-  it("every account gets its own PH-XXXX-XXXX code, with no look-alike letters", async () => {
-    const codes = [await code(await newUser(db, "mc-a")), await code(await newUser(db, "mc-b"))];
-    for (const c of codes) expect(c).toMatch(/^PH-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
-    expect(new Set(codes).size).toBe(2);
+  it("numbers accounts by sign-up order within the year, one after the other", async () => {
+    const [a, b] = [await code(await newUser(db, "mc-a")), await code(await newUser(db, "mc-b"))];
+    for (const c of [a, b]) expect(c).toMatch(/^\d{3,}$/);
+    expect(a.slice(0, 2)).toBe(b.slice(0, 2));
+    expect(Number(b.slice(2))).toBe(Number(a.slice(2)) + 1);
   });
 
   it("two accounts cannot share a code", async () => {

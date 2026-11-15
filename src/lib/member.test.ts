@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { joinedLabel, memberDays } from "./member";
+import { joinedLabel, memberCodeOf, memberDays } from "./member";
 
 describe("memberDays", () => {
   it("counts whole days by the calendar day, not by 24 hours", () => {
@@ -23,5 +23,14 @@ describe("joinedLabel", () => {
     expect(joinedLabel("2026-11-14T03:00:00Z", new Date("2026-11-14T08:00:00Z"))).toBe(
       "14 พ.ย. 2569 (วันนี้)",
     );
+  });
+});
+
+describe("memberCodeOf", () => {
+  it("puts the plan letter before the stored number", () => {
+    expect(memberCodeOf("free", "2601")).toBe("PH-F2601");
+    expect(memberCodeOf("starter", "26100")).toBe("PH-S26100");
+    expect(memberCodeOf("plus", "2610")).toBe("PH-P2610");
+    expect(memberCodeOf("ultimate", "261500")).toBe("PH-E261500");
   });
 });

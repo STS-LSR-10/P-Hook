@@ -15,6 +15,7 @@ import { loadBillingState } from "@/lib/payments/billing-state";
 import { trialBlock } from "@/lib/payments/policy";
 import { EARLY_BIRD, earlyBirdOpen, pricingAt, TRIAL_DAYS } from "@/lib/pricing";
 import { earlyBirdOffers, hasPaidEarlyBird } from "@/lib/early-bird-repo";
+import { memberCodeOf } from "@/lib/member";
 import { currentStreak, recentDailyKeys } from "@/lib/points";
 import { countSlipsThisMonth } from "@/lib/slip-repo";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -111,7 +112,7 @@ export async function GET(request: Request): Promise<Response> {
       points: data.points,
       streak: currentStreak(dailyKeys, now),
       referralCode: data.referral_code,
-      memberCode: data.member_code,
+      memberCode: memberCodeOf(plan, data.member_code),
       joinedAt: data.created_at,
       referred: Boolean(data.referred_by),
       referrals,

@@ -1,4 +1,5 @@
 import { t } from "@/lib/i18n";
+import type { Plan } from "@/lib/plan";
 import { bangkokParts, formatThaiDate, fromBangkok } from "@/lib/thai-date";
 
 /** Whole calendar days (Bangkok) from the day they joined to `now`: 0 on the first day. */
@@ -16,3 +17,9 @@ export function joinedLabel(joinedAt: string, now: Date): string {
   const days = memberDays(at, now);
   return `${formatThaiDate(at)} ${days === 0 ? t("(วันนี้)") : t("({0} วัน)", days)}`;
 }
+
+const PLAN_LETTER: Record<Plan, string> = { free: "F", starter: "S", plus: "P", ultimate: "E" };
+
+/** "PH-P2610": the stored number (year 26, 10th to join) behind the letter of the plan in force. */
+export const memberCodeOf = (plan: Plan, stored: string): string =>
+  `PH-${PLAN_LETTER[plan]}${stored}`;
