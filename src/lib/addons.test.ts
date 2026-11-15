@@ -29,6 +29,7 @@ describe("sumBonus", () => {
       groups: 4,
       privatePush: 12,
       groupPush: 100,
+      ai: 0,
     });
   });
 
@@ -45,6 +46,9 @@ describe("sumBonus", () => {
       ["gpush_60", 60, 19, false],
       ["gpush_180", 180, 35, false],
       ["gpush_450", 450, 69, false],
+      ["ai_70", 70, 19, false],
+      ["ai_150", 150, 29, false],
+      ["ai_250", 250, 39, false],
       ["groups_3", 3, 29, true],
     ]);
     // packs bought before the change still renew, but cannot be bought again
@@ -104,6 +108,7 @@ describe("the quota page with add-ons", () => {
       groups: 2,
       privatePush: 40,
       groupPush: 100,
+      ai: 0,
     });
     expect(find(q, "storage").limit).toBe(13 * GB);
     expect(find(q, "reminders").limit).toBe(35 + 40); // one-off reminders pushed to LINE

@@ -227,6 +227,8 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
       word: "ครั้ง",
       icon: "ai",
       used: used.ai,
+      extra: bonus.ai,
+      capUsed: true,
       on: (p) => ({ limit: AI_CHAT_LIMIT[p], period: "month" }),
     },
     {

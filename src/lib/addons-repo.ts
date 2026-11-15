@@ -48,12 +48,14 @@ export async function takeSlipPack(db: SupabaseClient, userId: string): Promise<
 }
 
 export type PushKind = "private_push" | "group_push";
+/** The packs counted down through the same take/refund functions as the pushes. */
+export type PackKind = PushKind | "ai";
 
 /** Spend `amount` pushes from the person's packs (all or nothing). False when they hold less. */
 export async function takePushPack(
   db: SupabaseClient,
   userId: string,
-  kind: PushKind,
+  kind: PackKind,
   amount: number,
 ): Promise<boolean> {
   const { data, error } = await db.rpc("take_push_pack", {
@@ -69,7 +71,7 @@ export async function takePushPack(
 export async function refundPushPack(
   db: SupabaseClient,
   userId: string,
-  kind: PushKind,
+  kind: PackKind,
   amount: number,
 ): Promise<void> {
   const { error } = await db.rpc("refund_push_pack", {

@@ -358,7 +358,7 @@ describe("plain messages", () => {
     await handleEvent(say("ทำไมฟ้าสีฟ้า"), deps);
     // what the router took, so it can be given back if พี่ฮูก gives no answer
     expect(askedWith).toHaveBeenCalledWith(
-      expect.objectContaining({ prepaid: { units: 1, month: "2026-11-01" } }),
+      expect.objectContaining({ prepaid: { units: 1, month: "2026-11-01", source: "plan" } }),
     );
   });
 

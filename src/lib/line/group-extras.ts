@@ -26,7 +26,8 @@ import { effectivePlan, OWL_LIMIT, type Plan } from "@/lib/plan";
 import { LIMITS } from "@/lib/rate-limit";
 import { looksSecret } from "@/lib/secret-text";
 import type { LineMessage } from "@/lib/types";
-import { monthKey, refundUsage, refundUsageAmount, takeUsage } from "@/lib/usage";
+import { giveAi } from "@/lib/ai/ai-pack";
+import { monthKey, refundUsage, takeUsage } from "@/lib/usage";
 import { capacityOf, parseReminder, reminderKind } from "@/lib/user-reminder";
 import {
   cancelGroupReminder,
@@ -405,13 +406,9 @@ export async function askOwlInGroup(
     return await askOwl(ctx, question, prepaid, outcome);
   } finally {
     if (!outcome.answered && prepaid) {
-      await refundUsageAmount(
-        ctx.db,
-        prepaid.userId,
-        "ai_chat",
-        prepaid.units,
-        prepaid.month,
-      ).catch((e) => log.error("owl_refund_failed", e));
+      await giveAi(ctx.db, prepaid.userId, prepaid.units, prepaid.month, prepaid.source).catch((e) =>
+        log.error("owl_refund_failed", e),
+      );
     }
   }
 }

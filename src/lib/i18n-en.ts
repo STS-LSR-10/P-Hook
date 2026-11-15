@@ -2743,6 +2743,10 @@ export const EN: Record<string, string> = {
   "โควตา ถาม AI เดือนนี้หมดแล้ว ข้อความนี้บอทอ่านแบบปกติ พิมพ์คำสั่งหรือจดแบบ กาแฟ 30 ได้เหมือนเดิม":
     'This month\'s AI uses are gone, so this message was read the usual way. Commands and entries like "coffee 30" still work',
   "ถาม AI": "Ask AI",
+  "หรือซื้อแพ็ก AI เพิ่มได้ในแอป หน้าซื้อโควตาเพิ่ม":
+    "Or buy an AI pack in the app, on the extra quota page",
+  "ถาม AI เพิ่ม (AI Pack)": "More AI uses (AI Pack)",
+  "ถาม AI เหลือ": "AI uses left",
   ถามพี่ฮูกในกลุ่ม: "Ask P'Hook in groups",
   "ถาม AI (AI อ่านทุกข้อความในแชท)": "Ask AI (the AI reads every chat message)",
   "{0} ครั้ง/เดือน": "{0}/month",

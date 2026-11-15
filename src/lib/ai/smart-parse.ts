@@ -1,8 +1,9 @@
 import { log, safeMessage } from "@/lib/log";
 import { CONFIRM_THRESHOLD, SPLIT_RE, type ParseResult } from "@/lib/parse/text-parser";
-import { AI_CHAT_LIMIT, type Plan } from "@/lib/plan";
+import type { Plan } from "@/lib/plan";
 import { bangkokParts } from "@/lib/thai-date";
-import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
+import { monthKey } from "@/lib/usage";
+import { giveAi, takeAi, type AiSource } from "./ai-pack";
 import { aiUnits } from "./ai-quota";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
@@ -50,24 +51,14 @@ export async function runSmartParse(
 ): Promise<SmartEntry[] | null> {
   const { structurer } = deps;
   if (!structurer) return null;
-  let counted: { db: SupabaseClient; userId: string; month: string; units: number } | null = null;
+  let counted: Counted | null = null;
   try {
     if (input.cap) {
       const month = monthKey(deps.now());
       const units = aiUnits(input.text);
-      if (
-        !(await takeUsageAmount(
-          input.cap.db,
-          input.cap.userId,
-          "ai_chat",
-          units,
-          AI_CHAT_LIMIT[input.cap.plan],
-          month,
-        ))
-      ) {
-        return null;
-      }
-      counted = { db: input.cap.db, userId: input.cap.userId, month, units };
+      const source = await takeAi(input.cap.db, input.cap.userId, input.cap.plan, units, month);
+      if (!source) return null;
+      counted = { db: input.cap.db, userId: input.cap.userId, month, units, source };
     }
     if (deps.limit) {
       const day = await deps.limit("smart_day", input.subject, LIMITS.smartDay);
@@ -97,15 +88,17 @@ export async function runSmartParse(
 }
 
 /** A read that produced nothing does not count against the quota. Best effort. */
-async function giveBack(
-  counted: { db: SupabaseClient; userId: string; month: string; units: number } | null,
-): Promise<void> {
+async function giveBack(counted: Counted | null): Promise<void> {
   if (!counted) return;
-  await refundUsageAmount(
-    counted.db,
-    counted.userId,
-    "ai_chat",
-    counted.units,
-    counted.month,
-  ).catch(() => undefined);
+  await giveAi(counted.db, counted.userId, counted.units, counted.month, counted.source).catch(
+    () => undefined,
+  );
+}
+
+interface Counted {
+  db: SupabaseClient;
+  userId: string;
+  month: string;
+  units: number;
+  source: AiSource;
 }

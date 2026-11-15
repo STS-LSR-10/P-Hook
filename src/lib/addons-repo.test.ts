@@ -39,6 +39,7 @@ describe("loadBonus", () => {
       groups: 2,
       privatePush: 30,
       groupPush: 60,
+      ai: 0,
     });
   });
 
@@ -50,6 +51,7 @@ describe("loadBonus", () => {
       groups: 0,
       privatePush: 30,
       groupPush: 60,
+      ai: 0,
     });
   });
 
@@ -60,6 +62,7 @@ describe("loadBonus", () => {
       groups: 0,
       privatePush: 0,
       groupPush: 0,
+      ai: 0,
     });
     const broken = {
       from: () => {

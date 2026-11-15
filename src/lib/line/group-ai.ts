@@ -7,7 +7,7 @@ import { log, safeMessage } from "@/lib/log";
 import { parseMessage } from "@/lib/parse/text-parser";
 import { looksSecret } from "@/lib/secret-text";
 import { parseReminder } from "@/lib/user-reminder";
-import { refundUsageAmount } from "@/lib/usage";
+import { giveAi } from "@/lib/ai/ai-pack";
 import { effectivePlan } from "@/lib/plan";
 import { ensureUser } from "@/lib/repo";
 import type { HandlerDeps } from "./handlers";
@@ -60,8 +60,8 @@ export async function readGroupWithAi(
 
 /** Give a use back: the AI read the message but nothing came of it. Never throws. */
 export async function refundGroupCharge(deps: HandlerDeps, charge: GroupCharge): Promise<void> {
-  await refundUsageAmount(deps.db, charge.userId, "ai_chat", charge.units, charge.month).catch(
-    (error) => log.error("group_ai_refund_failed", error),
+  await giveAi(deps.db, charge.userId, charge.units, charge.month, charge.source).catch((error) =>
+    log.error("group_ai_refund_failed", error),
   );
 }
 

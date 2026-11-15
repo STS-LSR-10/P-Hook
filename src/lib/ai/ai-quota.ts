@@ -9,6 +9,8 @@ export interface AiCharge {
   units: number;
   /** The counter's month ("2026-11-01"). */
   month: string;
+  /** Where it was paid from; none means the plan. */
+  source?: "plan" | "pack";
 }
 
 const segmenter =

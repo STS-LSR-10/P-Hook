@@ -46,6 +46,7 @@ export interface GroupAiCharge {
   userId: string;
   units: number;
   month: string;
+  source?: "plan" | "pack";
 }
 
 export type GroupCommand =

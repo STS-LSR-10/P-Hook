@@ -16,7 +16,8 @@ import { LIMITS, type LimitRule, type RateLimitResult } from "@/lib/rate-limit";
 import type { UserRow } from "@/lib/repo";
 import type { PersonaId } from "@/lib/personalize";
 import type { LineMessage } from "@/lib/types";
-import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
+import { giveAi, takeAi, type AiSource } from "@/lib/ai/ai-pack";
+import { monthKey } from "@/lib/usage";
 import {
   OWL_DAY_LIMIT_TEXT,
   OWL_END_TEXT,
@@ -143,8 +144,8 @@ export async function owlAsk(
     );
   } finally {
     if (!outcome.answered && prepaid) {
-      await refundUsageAmount(deps.db, user.id, "ai_chat", prepaid.units, prepaid.month).catch(
-        (e) => log.error("owl_refund_failed", e),
+      await giveAi(deps.db, user.id, prepaid.units, prepaid.month, prepaid.source).catch((e) =>
+        log.error("owl_refund_failed", e),
       );
     }
   }
@@ -179,15 +180,15 @@ async function askOwl(
   const limit = AI_CHAT_LIMIT[plan];
   const month = monthKey(now);
   const units = paid ? 0 : aiUnits(q);
+  let source: AiSource | null = null;
   if (units > 0) {
-    let allowed = false;
     try {
-      allowed = await takeUsageAmount(db, user.id, "ai_chat", units, limit, month);
+      source = await takeAi(db, user.id, plan, units, month);
     } catch (error) {
       log.error("owl_quota_failed", error);
       return [text(OWL_FAILED_TEXT)];
     }
-    if (!allowed) {
+    if (!source) {
       return plan === "free"
         ? upsellReply(db, user.id, now, "owl", aiQuotaText(plan, limit))
         : [text(aiQuotaText(plan, limit))];
@@ -228,8 +229,8 @@ async function askOwl(
     log.warn("owl_failed", { owl: owl.name, reason: safeMessage(error) });
     return [text(OWL_FAILED_TEXT)];
   } finally {
-    if (!outcome.answered && units > 0) {
-      await refundUsageAmount(db, user.id, "ai_chat", units, month).catch((e) =>
+    if (!outcome.answered && source) {
+      await giveAi(db, user.id, units, month, source).catch((e) =>
         log.error("owl_refund_failed", e),
       );
     }

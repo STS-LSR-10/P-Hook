@@ -1,16 +1,16 @@
 /** Add-on boosters: extra quota bought on top of a plan. */
 export type AddonKind =
-  "storage" | "alerts" | "slips" | "group_slots" | "private_push" | "group_push";
+  "storage" | "alerts" | "slips" | "group_slots" | "private_push" | "group_push" | "ai";
 
 /** Packs bought once that count down in `remaining` (the rest are fixed amounts that renew or stay). */
 export const isCountdownPack = (kind: string): boolean =>
-  kind === "slips" || kind === "private_push" || kind === "group_push";
+  kind === "slips" || kind === "private_push" || kind === "group_push" || kind === "ai";
 
 export interface AddonSku {
   sku: string;
   kind: AddonKind;
   label: string;
-  /** What it adds: GB, slip reads, LINE pushes or LINE groups, by kind. */
+  /** What it adds: GB, slip reads, LINE pushes, AI uses or LINE groups, by kind. */
   units: number;
   /** Whole baht. */
   baht: number;
@@ -94,6 +94,9 @@ export const ADDONS: AddonSku[] = [
     baht: 69,
     monthly: false,
   },
+  { sku: "ai_70", kind: "ai", label: "AI Pack S", units: 70, baht: 19, monthly: false },
+  { sku: "ai_150", kind: "ai", label: "AI Pack M", units: 150, baht: 29, monthly: false },
+  { sku: "ai_250", kind: "ai", label: "AI Pack L", units: 250, baht: 39, monthly: false },
   {
     sku: "groups_3",
     kind: "group_slots",
@@ -191,6 +194,8 @@ export interface Bonus {
   /** Pushes left in packs: reminders to the person's own chat, and messages into their groups. */
   privatePush: number;
   groupPush: number;
+  /** "ถาม AI" uses left in packs. */
+  ai: number;
 }
 
 export const NO_BONUS: Bonus = {
@@ -199,6 +204,7 @@ export const NO_BONUS: Bonus = {
   groups: 0,
   privatePush: 0,
   groupPush: 0,
+  ai: 0,
 };
 
 const GB = 1024 ** 3;
@@ -217,6 +223,7 @@ export function sumBonus(rows: AddonRow[], now: Date): Bonus {
     if (r.kind === "storage") out.storageBytes += r.units * GB;
     else if (r.kind === "private_push") out.privatePush += r.remaining ?? 0;
     else if (r.kind === "group_push") out.groupPush += r.remaining ?? 0;
+    else if (r.kind === "ai") out.ai += r.remaining ?? 0;
     else if (r.kind === "slips") out.slips += r.remaining ?? 0;
     else if (r.kind === "group_slots") out.groups += r.units;
   }

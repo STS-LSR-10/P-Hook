@@ -2,12 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { log, safeMessage } from "@/lib/log";
 import type { ParsedEntry, ParseResult } from "@/lib/parse/text-parser";
 import { normalizeThaiDigits } from "@/lib/parse/thai-number";
-import { AI_CHAT_LIMIT, type Plan } from "@/lib/plan";
+import type { Plan } from "@/lib/plan";
 import { looksSecret } from "@/lib/secret-text";
 import { bangkokParts } from "@/lib/thai-date";
 import { WEEKDAY_DAY_SOURCE } from "@/lib/user-reminder";
 import { loadStyleHints } from "@/lib/style-repo";
-import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
+import { monthKey } from "@/lib/usage";
+import { giveAi, takeAi, type AiSource } from "./ai-pack";
 import { aiUnits, type AiCharge } from "./ai-quota";
 import {
   MAX_ROUTER_INPUT,
@@ -174,20 +175,13 @@ export async function runRouter(
 
   const month = monthKey(deps.now());
   const units = aiUnits(input.text);
-  let counted = false;
+  let source: AiSource | null = null;
   let asked = false;
   try {
     // read in step with the count, not after it: it is on the way of every message
     const hintsRead = loadStyleHints(input.db, input.userId);
-    counted = await takeUsageAmount(
-      input.db,
-      input.userId,
-      "ai_chat",
-      units,
-      AI_CHAT_LIMIT[input.plan],
-      month,
-    );
-    if (!counted) {
+    source = await takeAi(input.db, input.userId, input.plan, units, month);
+    if (!source) {
       deps.onQuotaOut?.();
       return null;
     }
@@ -203,7 +197,7 @@ export async function runRouter(
     );
     if (decision) {
       failureTimes = [];
-      deps.onCharged?.({ units, month });
+      deps.onCharged?.({ units, month, source });
       return decision;
     }
     log.warn("intent_router_failed", { provider: router.name, reason: "unusable reply" });
@@ -211,8 +205,8 @@ export async function runRouter(
     if (asked && isProviderFailure(error)) noteFailure(deps.now().getTime());
     log.warn("intent_router_failed", { provider: router.name, reason: safeMessage(error) });
   }
-  if (counted) {
-    await refundUsageAmount(input.db, input.userId, "ai_chat", units, month).catch(() => undefined);
+  if (source) {
+    await giveAi(input.db, input.userId, units, month, source).catch(() => undefined);
   }
   return null;
 }

@@ -32,6 +32,7 @@ const GROUPS: { kind: AddonKind; title: string; unit: string }[] = [
     title: t("เตือนเข้ากลุ่มเพิ่ม (Reminder Pack Group)"),
     unit: t("ข้อความ"),
   },
+  { kind: "ai", title: t("ถาม AI เพิ่ม (AI Pack)"), unit: t("ครั้ง") },
   { kind: "slips", title: t("อ่านสลิปเพิ่ม (Smart OCR Slip)"), unit: t("ใบ") },
   { kind: "group_slots", title: t("กลุ่ม LINE เพิ่ม (Group Slot)"), unit: t("กลุ่ม LINE") },
 ];
@@ -68,6 +69,7 @@ export default function AddonsPage() {
         d.bonus.storageBytes > 0 && `${t("พื้นที่")} +${formatBytes(d.bonus.storageBytes)}`,
         d.bonus.privatePush > 0 && `${t("เตือนส่วนตัวเหลือ")} ${d.bonus.privatePush} ${t("ครั้ง")}`,
         d.bonus.groupPush > 0 && `${t("เตือนกลุ่มเหลือ")} ${d.bonus.groupPush} ${t("ข้อความ")}`,
+        d.bonus.ai > 0 && `${t("ถาม AI เหลือ")} ${d.bonus.ai} ${t("ครั้ง")}`,
         d.bonus.slips > 0 && `${t("สลิปเหลือ")} ${d.bonus.slips} ${t("ใบ")}`,
         d.bonus.groups > 0 && `${t("กลุ่ม LINE")} +${d.bonus.groups}`,
       ].filter(Boolean)

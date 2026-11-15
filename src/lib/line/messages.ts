@@ -838,7 +838,7 @@ export const findNothingText = (term: string) =>
 /** "ถาม AI" of the month is used up: the chat still works with the ordinary commands. */
 export const aiQuotaText = (plan: Plan, limit: number) => {
   const next = nextPlanUp(plan);
-  return next
+  const base = next
     ? t(
         "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน {1}) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น {2} ได้ {3} ครั้ง/เดือน หรือรอต้นเดือนหน้านะ",
         limit,
@@ -850,6 +850,8 @@ export const aiQuotaText = (plan: Plan, limit: number) => {
         "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว พิมพ์จดแบบปกติได้เหมือนเดิม และใช้ได้ใหม่ต้นเดือนหน้านะ",
         limit,
       );
+  // packs are sold to paid plans (Starter up)
+  return plan === "free" ? base : `${base}\n${t("หรือซื้อแพ็ก AI เพิ่มได้ในแอป หน้าซื้อโควตาเพิ่ม")}`;
 };
 
 /** Once a day when the month's "ถาม AI" is out: the message was read by the ordinary rules. */

@@ -368,6 +368,27 @@ describe("push packs (0075)", () => {
   });
 });
 
+describe("AI packs (0079)", () => {
+  it("count down and refund through the same functions as the push packs", async () => {
+    const u = await newUser(db, "ai-a");
+    await db.query(
+      "insert into addons (user_id, kind, sku, units, remaining) values ($1,'ai','ai_70',70,70)",
+      [u],
+    );
+    const take = async (n: number) =>
+      (await one<{ ok: boolean }>(db, "select take_push_pack($1::uuid, 'ai', $2) as ok", [u, n])).ok;
+    expect(await take(30)).toBe(true);
+    expect(await take(41)).toBe(false); // only 40 left: nothing is spent
+    await db.query("select refund_push_pack($1::uuid, 'ai', 100)", [u]);
+    const left = await one<{ remaining: number }>(
+      db,
+      "select remaining from addons where user_id = $1",
+      [u],
+    );
+    expect(left.remaining).toBe(70);
+  });
+});
+
 describe("member codes (0078)", () => {
   const code = async (u: string) =>
     (await one<{ member_code: string }>(db, "select member_code from users where id = $1", [u]))
