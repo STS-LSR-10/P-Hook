@@ -446,12 +446,12 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         ),
       },
       {
-        label: t("เตือนทาง LINE ส่วนตัว"),
+        label: t("เตือนครั้งเดียว"),
         icon: "bell",
         cells: perPlan((p) => t("{0} ครั้ง/เดือน", PRIVATE_PUSH_PER_MONTH[p])),
       },
       {
-        label: t("เตือนในกลุ่ม LINE"),
+        label: t("เตือนในกลุ่ม"),
         icon: "group",
         cells: perPlan((p) =>
           GROUP_PUSH_PER_MONTH[p] === 0 ? false : t("{0} ครั้ง/เดือน", GROUP_PUSH_PER_MONTH[p]),

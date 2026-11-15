@@ -1316,7 +1316,6 @@ export const EN: Record<string, string> = {
   บันทึกให้เรียบร้อยแล้วค่ะ: "All recorded for you.",
   เพื่อนสนิท: "Best friend",
   "จดให้แล้วจ้า เดี๋ยวเค้าจำให้เอง": "Got it, I'll remember it for you!",
-  "เตือนทาง LINE ส่วนตัว": "Reminders to your LINE chat",
   "⚠️ โควตาเตือนทาง LINE เดือนนี้เต็มแล้ว เตือนหลังจากนี้จะดูได้ในแอปเท่านั้น จนกว่าจะขึ้นเดือนใหม่":
     "⚠️ This month's LINE reminders are used up. From now on reminders show in the app only, until next month.",
   "อยากให้บอทส่งเตือนเข้า LINE ได้มากขึ้น อัปเกรดแผนได้เลย{0}":
@@ -2968,7 +2967,7 @@ export const EN: Record<string, string> = {
     'Tagging (like "bbq 500 #party") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the "Upgrade" menu, or record it without the tag',
   "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Starter ขึ้นไป ทดลองใช้ฟรี 7 วันได้":
     "Friends in the group can record for free; only the person who opens the ledger must be on Starter or above. You can try it free for 7 days",
-  "เตือนในกลุ่ม LINE": "Reminders in LINE groups",
+  "เตือนในกลุ่ม": "Group reminders",
   'งบรายวัน (บอทเตือนทันทีเมื่อวันนี้ใช้เกิน) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
     'A daily budget (the bot warns you the moment today goes over) is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
   "ทุกอย่างใน Starter": "Everything in Starter",
