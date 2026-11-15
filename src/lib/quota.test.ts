@@ -54,14 +54,13 @@ describe("buildQuota", () => {
     const q = byKey("free");
     expect(q.slips).toMatchObject({ used: 2, limit: 10, period: "once", word: "ครั้ง" });
     expect(q.voice).toMatchObject({ used: 1, limit: 10, period: "once" });
-    expect(q.reminders).toMatchObject({ used: 3, limit: null, period: "total" });
+    expect(q.reminders).toMatchObject({ used: 1, limit: 3, period: "month" });
     expect(q.repeatReminders).toMatchObject({ used: 1, limit: 0 });
     expect(q.groups?.limit).toBe(0);
     expect(q.groupReminders?.limit).toBe(0);
     expect(q.pdf?.limit).toBe(0);
     expect(q.storage).toMatchObject({ used: 1024, limit: 150 * 1024 * 1024, unit: "bytes" });
     expect(q.owl).toMatchObject({ limit: 3, period: "month" });
-    expect(q.privatePush).toMatchObject({ limit: 3, period: "month" });
     expect(q.ai).toMatchObject({ limit: 50, period: "month", label: "ถาม AI" });
     expect(q.fileSaves).toBeUndefined(); // no daily limit on saving files any more
   });
@@ -73,7 +72,7 @@ describe("buildQuota", () => {
     expect(q.repeatReminders?.limit).toBe(20);
     expect(q.groups).toMatchObject({ used: 2, limit: 1, period: "total" });
     expect(q.groupReminders).toMatchObject({ limit: 30, period: "month" });
-    expect(q.privatePush).toMatchObject({ limit: 35, period: "month" });
+    expect(q.reminders).toMatchObject({ limit: 35, period: "month" });
     expect(q.pdf?.limit).toBe(0);
     expect(q.wallets?.limit).toBe(5);
     expect(q.goals?.limit).toBe(2);
@@ -95,7 +94,7 @@ describe("buildQuota", () => {
     const q = byKey("ultimate");
     expect(q.groups).toMatchObject({ used: 2, limit: 10, period: "total" });
     expect(q.groupReminders).toMatchObject({ used: 40, limit: 250, period: "month" });
-    expect(q.privatePush).toMatchObject({ limit: 120, period: "month" });
+    expect(q.reminders).toMatchObject({ limit: 120, period: "month" });
     expect(q.repeatReminders?.limit).toBe(100);
     expect(q.slips?.limit).toBe(400);
     expect(q.goals?.limit).toBeNull();

@@ -52,9 +52,16 @@ vi.mock("@/lib/usage", async (original) => ({
     usageAsked.push(keys);
     return keys.map(
       (k) =>
-        ({ voice: 5, teaser_voice: 1, pdf: 2, owl: 8, ai_chat: 9, file_save: 1, group_push: 40, private_push: 7 })[
-          k.kind
-        ] ?? 0,
+        ({
+          voice: 5,
+          teaser_voice: 1,
+          pdf: 2,
+          owl: 8,
+          ai_chat: 9,
+          file_save: 1,
+          group_push: 40,
+          private_push: 7,
+        })[k.kind] ?? 0,
     );
   },
 }));
@@ -91,11 +98,10 @@ describe("GET /api/quota", () => {
     expect(q.wallets).toMatchObject({ used: 2 }); // only the person's own
     expect(q.goals).toMatchObject({ used: 1 }); // not the archived one
     expect(q.notes).toMatchObject({ used: 12 });
-    expect(q.reminders).toMatchObject({ used: 3 }); // the one-offs only
+    expect(q.reminders).toMatchObject({ used: 7, limit: 70 }); // pushes to their own chat
     expect(q.repeatReminders).toMatchObject({ used: 1 });
     expect(q.groups).toMatchObject({ used: 2 });
     expect(q.groupReminders).toMatchObject({ used: 40 });
-    expect(q.privatePush).toMatchObject({ used: 7, limit: 70 });
     expect(q.recurring).toMatchObject({ used: 2 });
     expect(q.slips).toMatchObject({ used: 4, period: "month" });
     expect(q.photos).toMatchObject({ used: 6 });

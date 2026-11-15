@@ -106,8 +106,7 @@ describe("the quota page with add-ons", () => {
       groupPush: 100,
     });
     expect(find(q, "storage").limit).toBe(13 * GB);
-    expect(find(q, "reminders").limit).toBeNull(); // waiting reminders have no limit
-    expect(findAny(q, "privatePush").limit).toBe(35 + 40);
+    expect(find(q, "reminders").limit).toBe(35 + 40); // one-off reminders pushed to LINE
     expect(findAny(q, "groupReminders").limit).toBe(30 + 100);
     expect(find(q, "groups").limit).toBe(3);
     expect(find(q, "storage").plans.starter.limit).toBe(3 * GB); // the plan table is unchanged

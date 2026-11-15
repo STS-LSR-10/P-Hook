@@ -175,11 +175,13 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     {
       key: "reminders",
       label: "เตือนครั้งเดียว",
-      hint: "เตือนที่ตั้งไว้และยังไม่ถึงเวลา ไม่จำกัดจำนวน (จำกัดที่การส่งเข้า LINE ต่อเดือน)",
-      word: "รายการ",
+      hint: "เตือนครั้งเดียวที่บอทส่งเข้าแชทส่วนตัวของคุณ ตั้งค้างไว้ได้ไม่จำกัด เต็มแล้วดูเตือนในแอปได้ตามปกติ หรือซื้อแพ็กเพิ่ม",
+      word: "ครั้ง",
       icon: "bell",
-      used: used.reminders,
-      on: () => ({ limit: null, period: "total" }),
+      used: used.privatePush,
+      extra: bonus.privatePush,
+      capUsed: true,
+      on: (p) => ({ limit: PRIVATE_PUSH_PER_MONTH[p], period: "month" }),
     },
     {
       key: "repeatReminders",
@@ -218,17 +220,6 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
   ];
 
   const others: Def[] = [
-    {
-      key: "privatePush",
-      label: "เตือนทาง LINE",
-      hint: "เตือนที่บอทส่งเข้าแชทส่วนตัวของคุณ เต็มแล้วดูเตือนในแอปได้ตามปกติ หรือซื้อแพ็กเพิ่ม",
-      word: "ครั้ง",
-      icon: "bell",
-      used: used.privatePush,
-      extra: bonus.privatePush,
-      capUsed: true,
-      on: (p) => ({ limit: PRIVATE_PUSH_PER_MONTH[p], period: "month" }),
-    },
     {
       key: "ai",
       label: "ถาม AI",
