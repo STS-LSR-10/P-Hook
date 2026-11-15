@@ -18,6 +18,8 @@ interface Row {
   status?: ReminderStatus;
   category?: string | null;
 }
+/** A hourly reminder's rounds and open question start over whenever it is moved or edited. */
+const FRESH_ROUNDS = { sent_rounds: 0, ask_until: null, resume_at: null } as const;
 const COLUMNS = "id,body,remind_at,repeat,status,category";
 const toDto = (r: Row): ReminderDto => ({
   id: r.id,
@@ -174,6 +176,7 @@ export async function rescheduleReminder(
       remind_at: input.remindAt.toISOString(),
       repeat: input.repeat,
       last_sent_at: null,
+      ...FRESH_ROUNDS,
     })
     .eq("id", id)
     .eq("user_id", userId)
@@ -230,6 +233,7 @@ export async function updateReminder(
       repeat: input.repeat,
       category: input.category,
       status: input.status,
+      ...FRESH_ROUNDS,
       ...(input.status === "active" ? { last_sent_at: null } : {}),
     })
     .eq("id", id)
@@ -254,7 +258,7 @@ export async function skipReminderRound(
 ): Promise<boolean> {
   const { data, error } = await db
     .from("user_reminders")
-    .update({ remind_at: to.toISOString() })
+    .update({ remind_at: to.toISOString(), ...FRESH_ROUNDS })
     .eq("id", id)
     .eq("user_id", userId)
     .is("group_id", null)
@@ -275,7 +279,7 @@ async function moveStatus(
 ): Promise<boolean> {
   const { data, error } = await db
     .from("user_reminders")
-    .update({ status: to })
+    .update({ status: to, ...FRESH_ROUNDS })
     .eq("id", id)
     .eq("user_id", userId)
     .is("group_id", null)
@@ -362,6 +366,8 @@ export interface DueReminder {
   lineGroupId: string | null;
   /** False when the bot has left that group: taken, but not sent. */
   groupOpen: boolean;
+  /** The third push of an hourly round: it carries the "go on / stop" buttons. */
+  ask: boolean;
 }
 
 /** Take the reminders due at `now` (each one once; repeating ones are moved to their next time). */
@@ -381,7 +387,7 @@ export async function claimDueReminders(
       r_user: string;
       r_line: string;
       r_body: string;
-      r_repeat: Repeat | null;
+      r_repeat: Repeat | "hourly_ask" | null;
       r_group?: string | null;
       r_group_open?: boolean | null;
     }[]
@@ -390,8 +396,60 @@ export async function claimDueReminders(
     userId: r.r_user,
     lineUserId: r.r_line,
     body: r.r_body,
-    repeat: r.r_repeat,
+    // the function says "hourly_ask" for the third push of a round
+    repeat: r.r_repeat === "hourly_ask" ? "hourly" : r.r_repeat,
     lineGroupId: r.r_group ?? null,
     groupOpen: r.r_group_open === true,
+    ask: r.r_repeat === "hourly_ask",
   }));
+}
+
+/**
+ * "เตือนต่อ" under the third push of an hourly round: three more rounds start at the next hour.
+ * False when it is not theirs, was already answered, or the 10 minutes have run out.
+ */
+export async function continueHourly(
+  db: SupabaseClient,
+  userId: string,
+  id: string,
+  now: Date,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("user_reminders")
+    .select("ask_until,resume_at")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .eq("repeat", "hourly")
+    .maybeSingle();
+  if (error) fail("continue hourly reminder", error);
+  const row = data as { ask_until: string | null; resume_at: string | null } | null;
+  if (!row?.ask_until || new Date(row.ask_until).getTime() <= now.getTime()) return false;
+  const soonest = now.getTime() + 60_000;
+  const at = new Date(Math.max(soonest, row.resume_at ? new Date(row.resume_at).getTime() : 0));
+  const { data: moved, error: moveError } = await db
+    .from("user_reminders")
+    .update({ sent_rounds: 0, ask_until: null, resume_at: null, remind_at: at.toISOString() })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .eq("ask_until", row.ask_until) // a second tap finds it already moved
+    .select("id")
+    .maybeSingle();
+  if (moveError) fail("continue hourly reminder", moveError);
+  return moved !== null;
+}
+
+/** "หยุดเตือน" on an hourly reminder. False when it is not theirs or is already over. */
+export async function stopHourly(db: SupabaseClient, userId: string, id: string): Promise<boolean> {
+  const { data, error } = await db
+    .from("user_reminders")
+    .update({ status: "done", ask_until: null, resume_at: null })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .eq("repeat", "hourly")
+    .select("id")
+    .maybeSingle();
+  if (error) fail("stop hourly reminder", error);
+  return data !== null;
 }

@@ -139,6 +139,8 @@ import {
   rescheduleReminder,
   listReminders,
   snoozeReminder,
+  continueHourly,
+  stopHourly,
 } from "@/lib/user-reminder-repo";
 import {
   MAX_AHEAD_DAYS,
@@ -282,6 +284,10 @@ import {
   REMINDER_FULL_TEXT,
   REMINDER_GONE_TEXT,
   REMINDER_HANDLED_TEXT,
+  HOURLY_CONTINUED_TEXT,
+  HOURLY_ENDED_TEXT,
+  HOURLY_NOTE_TEXT,
+  HOURLY_STOPPED_TEXT,
   reminderDoneText,
   reminderSnoozedText,
   REMINDER_NO_TEXT_TEXT,
@@ -2806,6 +2812,7 @@ async function runCommand(
           rolledToTomorrow: parsed.rolledToTomorrow,
           listUrl: pageUrl("/reminders"),
           now: deps.now(),
+          ...(parsed.repeat === "hourly" ? { note: HOURLY_NOTE_TEXT } : {}),
         }),
       ];
     }
@@ -3067,6 +3074,21 @@ async function handlePostback(
     const id = params.get("id") ?? "";
     if (!UUID_RE.test(id)) return [text(NOT_FOUND_TEXT)];
     return changeReminderTime(id, pickerParams?.datetime, user, deps);
+  }
+  // The buttons under an hourly reminder: go on for three more rounds, or stop.
+  if (action === "rmc" || action === "rmz") {
+    const id = params.get("id") ?? "";
+    if (!UUID_RE.test(id)) return [text(NOT_FOUND_TEXT)];
+    if (action === "rmz") {
+      return [text((await stopHourly(deps.db, user.id, id)) ? HOURLY_STOPPED_TEXT : HOURLY_ENDED_TEXT)];
+    }
+    return [
+      text(
+        (await continueHourly(deps.db, user.id, id, deps.now()))
+          ? HOURLY_CONTINUED_TEXT
+          : HOURLY_ENDED_TEXT,
+      ),
+    ];
   }
   // The buttons that pop up under a reminder when it arrives.
   if (action === "rmd" || action === "rms") {

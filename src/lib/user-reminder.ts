@@ -3,7 +3,7 @@ import { normalizeThaiDigits } from "@/lib/parse/thai-number";
 import { bangkokParts, formatThaiDate, fromBangkok, isValidYmd } from "@/lib/thai-date";
 import { t } from "@/lib/i18n";
 
-export type Repeat = "daily" | "weekly" | "monthly";
+export type Repeat = "daily" | "weekly" | "monthly" | "hourly";
 
 export const MAX_REMINDER_TEXT = 200;
 /** A reminder further ahead than this is probably a typo in the date. */
@@ -105,6 +105,7 @@ export const REPEAT_LABEL: Record<Repeat, string> = {
   daily: t("ทุกวัน"),
   weekly: t("ทุกสัปดาห์"),
   monthly: t("ทุกเดือน"),
+  hourly: t("ทุกชั่วโมง"),
 };
 
 /** The weekday asked (0 Sunday), the nearest such day of the month, and the next one on that weekday. */
@@ -381,8 +382,11 @@ export function parseReminder(input: string, now: Date): ReminderParse {
   let repeat: Repeat | null = null;
   let anchorWeekday: number | null = null;
   let anchorDom: number | null = null;
-  let r = take(s, new RegExp(`ทุก(?:วัน)?(${WEEKDAY_RE})`));
+  let r = take(s, /ทุก(?:ๆ)?\s*(?:1|หนึ่ง)?\s*(?:ชั่วโมง|ชม\.?)(?![ก-๙])/);
   if (r.m) {
+    repeat = "hourly";
+    s = r.rest;
+  } else if ((r = take(s, new RegExp(`ทุก(?:วัน)?(${WEEKDAY_RE})`))).m) {
     repeat = "weekly";
     anchorWeekday = WEEKDAYS[r.m[1] ?? ""] ?? 0;
     s = r.rest;
@@ -442,6 +446,11 @@ export function parseReminder(input: string, now: Date): ReminderParse {
   }
 
   const clock = timed.clock;
+  // "ทุก 1 ชั่วโมง" alone: the first one comes an hour from now
+  if (repeat === "hourly" && !clock && !dated.date) {
+    const remindAt = new Date(Math.floor((now.getTime() + 3_600_000) / 60_000) * 60_000);
+    return { ok: true, body, remindAt, repeat, timeDefaulted: false, rolledToTomorrow: false };
+  }
   const date: DateSpec | null =
     dated.date ??
     (anchorWeekday !== null ? { kind: "weekday", day: anchorWeekday } : null) ??

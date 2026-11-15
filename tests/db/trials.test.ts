@@ -368,6 +368,45 @@ describe("push packs (0075)", () => {
   });
 });
 
+describe("hourly reminders (0080)", () => {
+  const claim = async (now: string) =>
+    (
+      await db.query("select * from claim_due_reminders_with_groups($1::timestamptz, 100)", [now])
+    ).rows as { r_id: string; r_repeat: string }[];
+  const state = async (id: string) =>
+    one<{ status: string; remind_at: string; sent_rounds: number; ask_until: string | null }>(
+      db,
+      "select status, remind_at::text, sent_rounds, ask_until::text from user_reminders where id = $1",
+      [id],
+    );
+
+  it("sends three rounds an hour apart, asks on the third, and stops when nobody answers", async () => {
+    const u = await newUser(db, "hr-a");
+    const { id } = await one<{ id: string }>(
+      db,
+      "insert into user_reminders (user_id, body, remind_at, repeat) values ($1,'ชาตรามือ','2030-01-01T03:00:00Z','hourly') returning id",
+      [u],
+    );
+    const mine = (rows: { r_id: string; r_repeat: string }[]) =>
+      rows.filter((r) => r.r_id === id);
+
+    expect(mine(await claim("2030-01-01T03:00:00Z")).map((r) => r.r_repeat)).toEqual(["hourly"]);
+    expect((await state(id)).sent_rounds).toBe(1);
+    expect(mine(await claim("2030-01-01T03:30:00Z"))).toEqual([]); // not due before the next hour
+    expect(mine(await claim("2030-01-01T04:00:00Z")).map((r) => r.r_repeat)).toEqual(["hourly"]);
+    // late by half an hour: the next round is still on the hour grid
+    const third = mine(await claim("2030-01-01T05:30:00Z"));
+    expect(third.map((r) => r.r_repeat)).toEqual(["hourly_ask"]);
+    const asked = await state(id);
+    expect([asked.status, asked.sent_rounds]).toEqual(["active", 3]);
+    expect(asked.ask_until).not.toBeNull();
+
+    // no answer within 10 minutes: it ends, nothing is sent
+    expect(mine(await claim("2030-01-01T05:40:00Z"))).toEqual([]);
+    expect((await state(id)).status).toBe("done");
+  });
+});
+
 describe("AI packs (0079)", () => {
   it("count down and refund through the same functions as the push packs", async () => {
     const u = await newUser(db, "ai-a");

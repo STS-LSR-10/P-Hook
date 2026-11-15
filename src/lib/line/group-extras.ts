@@ -76,6 +76,7 @@ import {
   NOTE_TOO_LONG_TEXT,
   NOTE_UNDONE_TEXT,
   text,
+  HOURLY_PERSONAL_ONLY_TEXT,
 } from "./messages";
 import { buildGroupRemindersCard, buildNoteListCard } from "./list-flex";
 import { t } from "@/lib/i18n";
@@ -239,6 +240,7 @@ export async function addGroupReminder(
     if (parsed.reason === "no_text") return [text(REMINDER_NO_TEXT_TEXT)];
     return [];
   }
+  if (parsed.repeat === "hourly") return [text(HOURLY_PERSONAL_ONLY_TEXT)];
   if (!ctx.userId) return [text(GROUP_NO_USER_TEXT)];
   const owner = ownerOf(ctx);
   if (!ctx.writable || !owner) return [text(GROUP_PAUSED_TEXT)];

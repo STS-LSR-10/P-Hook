@@ -329,6 +329,7 @@ const WEEKDAYS = ["อาทิตย์", "จันทร์", "อังค�
 /** Beside the time: "วันนี้", "พรุ่งนี้" or the date; for a repeating one, which days. */
 export function dayLabel(at: Date, repeat: Repeat | null, now: Date): string {
   const p = bangkokParts(at);
+  if (repeat === "hourly") return t("ทุกชั่วโมง");
   if (repeat === "daily") return t("ทุกวัน");
   if (repeat === "weekly") return t("ทุกวัน{0}", t(WEEKDAYS[p.weekday] ?? ""));
   if (repeat === "monthly") return t("ทุกวันที่ {0}", p.day);
@@ -343,6 +344,19 @@ export function dayLabel(at: Date, repeat: Repeat | null, now: Date): string {
 }
 
 /** The buttons that pop up under a reminder when it arrives: done, or remind me again later. */
+export function hourlyActions(id: string, ask: boolean) {
+  const picks: [label: string, data: string][] = [
+    ...(ask ? ([[t("▶️ เตือนต่อ"), `a=rmc&id=${id}`]] as [string, string][]) : []),
+    [t("⏹ หยุดเตือน"), `a=rmz&id=${id}`],
+  ];
+  return {
+    items: picks.map(([label, data]) => ({
+      type: "action",
+      action: { type: "postback", label, data, displayText: label },
+    })),
+  };
+}
+
 export function reminderActions(id: string) {
   const picks: [label: string, data: string][] = [
     [t("✅ ทำแล้ว"), `a=rmd&id=${id}`],

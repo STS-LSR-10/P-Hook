@@ -15,7 +15,7 @@ interface CalendarInfo {
     id: string;
     body: string;
     remindAt: string;
-    repeat: "daily" | "weekly" | "monthly" | null;
+    repeat: "daily" | "weekly" | "monthly" | "hourly" | null;
   };
   google: { available: boolean; linked: boolean; email: string | null };
 }
@@ -24,7 +24,12 @@ type AddReply = { added: true; email: string | null } | { open: string };
 /** How long "เพิ่มแล้ว" shows before the page closes back to the chat. */
 const CLOSE_AFTER_MS = 1200;
 
-const REPEAT_LABEL = { daily: "ทุกวัน", weekly: "ทุกสัปดาห์", monthly: "ทุกเดือน" } as const;
+const REPEAT_LABEL = {
+  daily: "ทุกวัน",
+  weekly: "ทุกสัปดาห์",
+  monthly: "ทุกเดือน",
+  hourly: "ทุกชั่วโมง",
+} as const;
 
 /**
  * Opened from "📅 เพิ่มลงปฏิทิน" on a reminder's card: Google Calendar (signed in once, then added

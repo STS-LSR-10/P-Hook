@@ -2743,6 +2743,18 @@ export const EN: Record<string, string> = {
   "โควตา ถาม AI เดือนนี้หมดแล้ว ข้อความนี้บอทอ่านแบบปกติ พิมพ์คำสั่งหรือจดแบบ กาแฟ 30 ได้เหมือนเดิม":
     'This month\'s AI uses are gone, so this message was read the usual way. Commands and entries like "coffee 30" still work',
   "ถาม AI": "Ask AI",
+  "(ทุกชั่วโมง · ครบ 3 รอบแล้ว) จะให้เตือนต่ออีก 3 รอบไหม ถ้าไม่ตอบใน 10 นาทีจะหยุดเตือนเอง":
+    "(every hour · 3 rounds done) Keep reminding for 3 more rounds? If you do not answer in 10 minutes it stops",
+  "ได้เลย เตือนต่ออีก 3 รอบ เริ่มชั่วโมงถัดไปนะ": "Okay, 3 more rounds, starting next hour",
+  "เตือนทุกชั่วโมงตั้งได้ในแชทส่วนตัวกับพี่ฮูกเท่านั้นนะ ในกลุ่มใช้เตือนทุกวัน ทุกสัปดาห์ หรือทุกเดือนได้":
+    "Hourly reminders can only be set in your own chat with P'Hook. In a group use daily, weekly or monthly ones",
+  "เตือนทุกชั่วโมง ครบ 3 รอบจะถามว่าจะให้เตือนต่อไหม":
+    "Hourly reminder: after 3 rounds I will ask whether to go on",
+  "หยุดเตือนแล้วนะ": "Stopped reminding",
+  "เตือนนี้จบไปแล้วนะ": "This reminder is already over",
+  "ทุกชั่วโมง": "Every hour",
+  "▶️ เตือนต่อ": "▶️ Keep going",
+  "⏹ หยุดเตือน": "⏹ Stop",
   "หรือซื้อแพ็ก AI เพิ่มได้ในแอป หน้าซื้อโควตาเพิ่ม":
     "Or buy an AI pack in the app, on the extra quota page",
   "ถาม AI เพิ่ม (AI Pack)": "More AI uses (AI Pack)",

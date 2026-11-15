@@ -18,7 +18,7 @@ export const reminderSchema = z.object({
   body: z.string().trim().min(1).max(MAX_REMINDER_TEXT),
   /** ISO moment with an offset (the page sends the Bangkok time the person picked). */
   remindAt: z.string().datetime({ offset: true }),
-  repeat: z.enum(["daily", "weekly", "monthly"]).nullable().optional(),
+  repeat: z.enum(["daily", "weekly", "monthly", "hourly"]).nullable().optional(),
   /** A built-in key or the id of one of the person's own categories (checked by `categoryProblem`). */
   category: z.string().min(1).max(40).nullable().optional(),
 });

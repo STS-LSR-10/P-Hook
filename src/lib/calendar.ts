@@ -7,6 +7,8 @@ export const RRULE: Record<Repeat, string> = {
   daily: "RRULE:FREQ=DAILY",
   weekly: "RRULE:FREQ=WEEKLY",
   monthly: "RRULE:FREQ=MONTHLY",
+  // one round of an hourly reminder; the person decides after it whether to go on
+  hourly: "RRULE:FREQ=HOURLY;COUNT=3",
 };
 
 /** 2026-11-03T03:00:00Z as 20261103T030000Z. */

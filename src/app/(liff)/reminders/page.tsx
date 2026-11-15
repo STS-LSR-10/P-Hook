@@ -976,7 +976,7 @@ function ReminderSheet({
             className={fieldClass}
           >
             <option value="">{t("ครั้งเดียว")}</option>
-            {(Object.keys(REPEAT_LABEL) as Repeat[]).map((key) => (
+            {(["daily", "weekly", "monthly"] as const).map((key) => (
               <option key={key} value={key}>
                 {REPEAT_LABEL[key]}
               </option>

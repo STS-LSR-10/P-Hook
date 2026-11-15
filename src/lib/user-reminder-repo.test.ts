@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import {
+  continueHourly,
+  stopHourly,
   getReminder,
   listRemindersForPage,
   reopenReminder,
@@ -58,6 +60,7 @@ describe("rescheduleReminder", () => {
       remind_at: when.toISOString(),
       repeat: "daily",
       last_sent_at: null,
+      sent_rounds: 0, ask_until: null, resume_at: null,
     });
   });
 
@@ -104,7 +107,7 @@ describe("skipping a round", () => {
       ["status", "active"],
       ["remind_at", seen],
     ]);
-    expect(sets[0]).toEqual({ remind_at: when.toISOString() });
+    expect(sets[0]).toEqual({ remind_at: when.toISOString(), sent_rounds: 0, ask_until: null, resume_at: null });
   });
 
   it("is false when the round has moved", async () => {
@@ -136,6 +139,7 @@ describe("changing a reminder", () => {
       category: "bill",
       status: "active",
       last_sent_at: null,
+      sent_rounds: 0, ask_until: null, resume_at: null,
     });
   });
 
@@ -156,14 +160,14 @@ describe("changing a reminder", () => {
     const { db, filters, sets } = fakeDb(row);
     await expect(setReminderDone(db, "u1", "r1")).resolves.toBe(true);
     expect(filters).toContainEqual(["status", "active"]);
-    expect(sets[0]).toEqual({ status: "done" });
+    expect(sets[0]).toEqual({ status: "done", sent_rounds: 0, ask_until: null, resume_at: null });
   });
 
   it("reopening applies only to one done", async () => {
     const { db, filters, sets } = fakeDb(row);
     await expect(reopenReminder(db, "u1", "r1")).resolves.toBe(true);
     expect(filters).toContainEqual(["status", "done"]);
-    expect(sets[0]).toEqual({ status: "active" });
+    expect(sets[0]).toEqual({ status: "active", sent_rounds: 0, ask_until: null, resume_at: null });
   });
 
   it("is false when the job got there first", async () => {
@@ -198,5 +202,46 @@ describe("snoozing a reminder that was just sent", () => {
 
   it("is null when it was already brought back, or has gone", async () => {
     await expect(snoozeReminder(fakeDb(null).db, "u1", "r1", when)).resolves.toBeNull();
+  });
+});
+
+describe("hourly reminders: go on or stop", () => {
+  const now = new Date("2026-11-02T12:00:00Z");
+  const waiting = (askUntil: string | null, resumeAt: string | null = "2026-11-02T12:50:00Z") => ({
+    ask_until: askUntil,
+    resume_at: resumeAt,
+    id: "r1",
+  });
+
+  it("goes on from the next hour of the round, and only for a question still open", async () => {
+    const { db, sets } = fakeDb(waiting("2026-11-02T12:05:00Z"));
+    expect(await continueHourly(db, "u1", "r1", now)).toBe(true);
+    expect(sets[0]).toMatchObject({
+      sent_rounds: 0,
+      ask_until: null,
+      remind_at: "2026-11-02T12:50:00.000Z",
+    });
+  });
+
+  it("will not go on once the 10 minutes have run out, or with nothing asked", async () => {
+    expect(await continueHourly(fakeDb(waiting("2026-11-02T11:59:00Z")).db, "u1", "r1", now)).toBe(
+      false,
+    );
+    expect(await continueHourly(fakeDb(waiting(null)).db, "u1", "r1", now)).toBe(false);
+  });
+
+  it("never schedules a round sooner than a minute from now", async () => {
+    const { db, sets } = fakeDb(waiting("2026-11-02T12:05:00Z", "2026-11-02T11:00:00Z"));
+    await continueHourly(db, "u1", "r1", now);
+    expect(sets[0]?.remind_at).toBe("2026-11-02T12:01:00.000Z");
+  });
+
+  it("stops only their own hourly reminder that is still going", async () => {
+    const { db, filters, sets } = fakeDb({ id: "r1" });
+    expect(await stopHourly(db, "u1", "r1")).toBe(true);
+    expect(sets[0]).toMatchObject({ status: "done" });
+    expect(filters).toContainEqual(["user_id", "u1"]);
+    expect(filters).toContainEqual(["repeat", "hourly"]);
+    expect(await stopHourly(fakeDb(null).db, "u1", "r1")).toBe(false);
   });
 });

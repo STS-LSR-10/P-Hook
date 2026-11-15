@@ -5,6 +5,7 @@ const MAX_STEPS = 5000;
 
 /** The round after `at`, in Bangkok time, stepping as `claim_due_reminders` does. */
 export function nextOccurrence(at: Date, repeat: Repeat): Date {
+  if (repeat === "hourly") return new Date(at.getTime() + 3_600_000);
   const { year, month, day, hour, minute } = bangkokParts(at);
   if (repeat === "daily") return fromBangkok(year, month, day + 1, hour, minute);
   if (repeat === "weekly") return fromBangkok(year, month, day + 7, hour, minute);
@@ -75,7 +76,8 @@ export function buildDayMap(
     const first = new Date(reminder.remindAt);
     add(reminder, first, true);
     const { repeat } = reminder;
-    if (!repeat || reminder.status === "done") continue;
+    // an hourly one sends three rounds and then asks: only its first is drawn
+    if (!repeat || repeat === "hourly" || reminder.status === "done") continue;
     let at = nextOccurrence(first, repeat);
     for (let i = 0; ymdOf(at) <= range.to && i < MAX_STEPS; i += 1) {
       add(reminder, at, false);

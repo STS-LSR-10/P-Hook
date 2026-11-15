@@ -134,6 +134,23 @@ describe("how often", () => {
     expect(bkk(r.remindAt)).toBe(at);
   });
 
+  // every hour: the first one comes an hour from now (it is 10:00 in these tests)
+  it.each([
+    ["กินน้ำ ทุก 1 ชั่วโมง", "กินน้ำ"],
+    ["ทุกชั่วโมง กินน้ำ", "กินน้ำ"],
+    ["เอาชาตรามือ ทุกๆ 1 ชม.", "เอาชาตรามือ"],
+    ["ทุก หนึ่ง ชั่วโมง ยืดเส้น", "ยืดเส้น"],
+  ])("hourly: %s", (input, body) => {
+    const r = ok(input);
+    expect([r.repeat, bkk(r.remindAt), r.body]).toEqual(["hourly", "2026-10-28 11:00", body]);
+    expect(r.timeDefaulted).toBe(false);
+  });
+
+  it("hourly starting at a given time keeps that time", () => {
+    const r = ok("พรุ่งนี้ 9 โมง ทุกชั่วโมง กินน้ำ");
+    expect([r.repeat, bkk(r.remindAt)]).toEqual(["hourly", "2026-10-29 09:00"]);
+  });
+
   // what a voice message is heard as: the words of the repeat come apart
   it.each([
     ["ทำ weekly ทุก วัน พฤหัสบดี 15:00 น.", "weekly", "2026-10-29 15:00", "ทำ weekly"],

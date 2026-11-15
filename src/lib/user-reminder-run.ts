@@ -8,14 +8,15 @@ import { groupReminderMessage, refusedAsMalformed } from "@/lib/line/group-rider
 import {
   groupReminderDirectText,
   privatePushFullText,
+  hourlyAskText,
   reminderPushText,
 } from "@/lib/line/messages";
-import { reminderActions } from "@/lib/line/reminder-flex";
+import { hourlyActions, reminderActions } from "@/lib/line/reminder-flex";
 import { log } from "@/lib/log";
 import type { LineMessage } from "@/lib/types";
 import { givePush, type PushSource, takePush } from "@/lib/push-quota";
 import { monthKey, takeUsageAmount } from "@/lib/usage";
-import { claimDueReminders, type DueReminder } from "@/lib/user-reminder-repo";
+import { claimDueReminders, stopHourly, type DueReminder } from "@/lib/user-reminder-repo";
 import { REPEAT_LABEL } from "@/lib/user-reminder";
 import { runInZone } from "@/lib/zone-scope";
 
@@ -89,6 +90,8 @@ export async function runUserReminders(
       const room = await takePrivatePush(db, r.userId, now);
       if (room === "full") {
         await tellPushFull(db, line, r, now, liffUrl?.replace(/\/reminders$/, ""));
+        // an hourly one would only ask again next hour: it ends with the quota
+        if (r.repeat === "hourly") await stopHourly(db, r.userId, r.id).catch(() => undefined);
         continue;
       }
       try {
@@ -98,8 +101,12 @@ export async function runUserReminders(
             line.push(r.lineUserId, [
               {
                 type: "text",
-                text: reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
-                quickReply: reminderActions(r.id),
+                text:
+                  r.repeat === "hourly" && r.ask
+                    ? hourlyAskText(r.body)
+                    : reminderPushText(r.body, r.repeat ? REPEAT_LABEL[r.repeat] : null, liffUrl),
+                quickReply:
+                  r.repeat === "hourly" ? hourlyActions(r.id, r.ask) : reminderActions(r.id),
               },
             ]),
           person?.currency,

@@ -22,6 +22,12 @@ const reminder = (over: Partial<ReminderDto>): ReminderDto => ({
 });
 
 describe("nextOccurrence", () => {
+  it("steps an hourly reminder by an hour", () => {
+    expect(nextOccurrence(at("2026-11-02T11:00:00Z"), "hourly").toISOString()).toBe(
+      "2026-11-02T12:00:00.000Z",
+    );
+  });
+
   it("steps a day and a week in Bangkok", () => {
     expect(nextOccurrence(at("2026-11-02T11:00:00Z"), "daily").toISOString()).toBe(
       "2026-11-03T11:00:00.000Z",
@@ -87,6 +93,12 @@ describe("buildDayMap", () => {
     const map = buildDayMap([reminder({})], range);
     expect(map.get("2026-11-02")?.[0]?.next).toBe(true);
     expect(map.size).toBe(1);
+  });
+
+  it("draws an hourly reminder once: it sends three rounds and then asks", () => {
+    const map = buildDayMap([reminder({ repeat: "hourly" })], range);
+    expect(map.size).toBe(1);
+    expect(map.get("2026-11-02")).toHaveLength(1);
   });
 
   it("puts a repeat on every coming day, only the first being the next round", () => {

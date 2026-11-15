@@ -772,6 +772,20 @@ export const reminderPushText = (body: string, repeatLabel: string | null, url?:
     ...(repeatLabel ? [`(${repeatLabel}${url ? ` · ยกเลิกได้ที่ ${url}` : ""})`] : []),
   ].join("\n");
 
+/** The third push of an hourly round: asks whether to go on (10 minutes to answer). */
+export const hourlyAskText = (body: string) =>
+  [
+    t("⏰ เตือน: {0}", body),
+    t("(ทุกชั่วโมง · ครบ 3 รอบแล้ว) จะให้เตือนต่ออีก 3 รอบไหม ถ้าไม่ตอบใน 10 นาทีจะหยุดเตือนเอง"),
+  ].join("\n");
+export const HOURLY_CONTINUED_TEXT = t("ได้เลย เตือนต่ออีก 3 รอบ เริ่มชั่วโมงถัดไปนะ");
+export const HOURLY_PERSONAL_ONLY_TEXT = t(
+  "เตือนทุกชั่วโมงตั้งได้ในแชทส่วนตัวกับพี่ฮูกเท่านั้นนะ ในกลุ่มใช้เตือนทุกวัน ทุกสัปดาห์ หรือทุกเดือนได้",
+);
+export const HOURLY_NOTE_TEXT = t("เตือนทุกชั่วโมง ครบ 3 รอบจะถามว่าจะให้เตือนต่อไหม");
+export const HOURLY_STOPPED_TEXT = t("หยุดเตือนแล้วนะ");
+export const HOURLY_ENDED_TEXT = t("เตือนนี้จบไปแล้วนะ");
+
 /** Said once a month, in place of a reminder, when the month's reminders to LINE are used up. */
 export const privatePushFullText = (body: string, base?: string) =>
   [

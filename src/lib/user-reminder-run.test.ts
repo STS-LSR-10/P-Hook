@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DueReminder } from "./user-reminder-repo";
 
 let due: DueReminder[] = [];
-vi.mock("./user-reminder-repo", () => ({ claimDueReminders: async () => due }));
+const stopped: string[] = [];
+vi.mock("./user-reminder-repo", () => ({
+  claimDueReminders: async () => due,
+  stopHourly: async (_db: unknown, _u: string, id: string) => {
+    stopped.push(id);
+    return true;
+  },
+}));
 let targets = new Map<string, { groupId: string | null; mentions: unknown[] }>();
 const late: unknown[] = [];
 let purged = 0;
@@ -87,6 +94,7 @@ const r = (over: Partial<DueReminder> = {}): DueReminder => ({
   repeat: null,
   lineGroupId: null,
   groupOpen: false,
+  ask: false,
   ...over,
 });
 const sentText = (call: unknown[]) => ((call[1] as { text: string }[])[0] ?? { text: "" }).text;
@@ -101,10 +109,45 @@ beforeEach(() => {
   personal.push = 0;
   personal.notice = 0;
   refunds.length = 0;
+  stopped.length = 0;
   targetsFail = false;
   usageFail = false;
   ownerPlan = "ultimate";
   planFails = false;
+});
+
+describe("hourly reminders", () => {
+  const send = async () => {
+    const push = vi.fn(async (...args: unknown[]) => void args.length);
+    await runUserReminders({} as SupabaseClient, { push } as never, NOW);
+    const msg = (push.mock.calls[0]?.[1] as Record<string, unknown>[])[0] as {
+      text: string;
+      quickReply: { items: { action: { data: string } }[] };
+    };
+    return { msg, buttons: msg.quickReply.items.map((i) => i.action.data) };
+  };
+
+  it("an ordinary round comes with a stop button only", async () => {
+    due = [r({ repeat: "hourly" })];
+    const { msg, buttons } = await send();
+    expect(msg.text).toContain("ทุกชั่วโมง");
+    expect(buttons).toEqual(["a=rmz&id=r1"]);
+  });
+
+  it("the third round asks whether to go on, with a go-on and a stop button", async () => {
+    due = [r({ repeat: "hourly", ask: true })];
+    const { msg, buttons } = await send();
+    expect(msg.text).toContain("10 นาที");
+    expect(buttons).toEqual(["a=rmc&id=r1", "a=rmz&id=r1"]);
+  });
+
+  it("ends with the quota: when this month's pushes are used up it stops", async () => {
+    personal.push = 1_000_000;
+    due = [r({ repeat: "hourly" })];
+    const push = vi.fn(async (...args: unknown[]) => void args.length);
+    await runUserReminders({} as SupabaseClient, { push } as never, NOW);
+    expect(stopped).toEqual(["r1"]);
+  });
 });
 
 describe("runUserReminders", () => {
