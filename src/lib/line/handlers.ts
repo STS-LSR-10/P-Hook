@@ -1,5 +1,4 @@
 import { CHEAPEST_PACK } from "@/lib/config";
-import { loadBonus } from "@/lib/addons-repo";
 import type { LineMentionee } from "@/lib/group-mention";
 import { googleEventOf, removeGoogleEvent, syncReminderToGoogle } from "@/lib/google/sync";
 import { later } from "@/lib/later";
@@ -2767,11 +2766,7 @@ async function runCommand(
         ];
       }
       const kind = reminderKind(parsed.repeat);
-      const limit = capacityOf(
-        effectivePlan(user.plan, user.plan_expires_at, deps.now()),
-        kind,
-        kind === "once" ? (await loadBonus(db, user.id)).alerts : 0,
-      );
+      const limit = capacityOf(effectivePlan(user.plan, user.plan_expires_at, deps.now()), kind);
       if ((await countActiveReminders(db, user.id, kind)) >= limit) {
         return [text(REMINDER_FULL_TEXT(limit, kind === "repeat"))];
       }
@@ -2962,11 +2957,7 @@ async function answerReminderButton(
 
   const at = snoozeTime(snooze, now);
   if (reminder.repeat) {
-    const limit = capacityOf(
-      effectivePlan(user.plan, user.plan_expires_at, now),
-      "once",
-      (await loadBonus(db, user.id)).alerts,
-    );
+    const limit = capacityOf(effectivePlan(user.plan, user.plan_expires_at, now), "once");
     if ((await countActiveReminders(db, user.id, "once")) >= limit) {
       return REMINDER_FULL_TEXT(limit);
     }

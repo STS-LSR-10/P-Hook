@@ -17,7 +17,7 @@ import {
   type Feature,
   type Plan,
 } from "@/lib/plan";
-import { reminderCapacity, repeatCapacity } from "@/lib/user-reminder";
+import { repeatCapacity } from "@/lib/user-reminder";
 import { t } from "@/lib/i18n";
 
 export type Period = "monthly" | "yearly";
@@ -441,7 +441,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       {
         label: t("เตือนที่ตั้งไว้ได้"),
         icon: "bell",
-        cells: perPlan((p) => t("{0} ครั้ง", reminderCapacity(p))),
+        cells: [t("ไม่จำกัด"), t("ไม่จำกัด"), t("ไม่จำกัด"), t("ไม่จำกัด")],
       },
       {
         label: t("เตือนประจำ"),

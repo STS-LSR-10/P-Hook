@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PERIOD_MONTHS, type Period } from "@/lib/pricing";
 import type { PaidPlan } from "@/lib/pricing";
-import { addonBySku } from "@/lib/addons";
+import { addonBySku, isCountdownPack } from "@/lib/addons";
 import { PAID_REFERRAL_COINS, PAID_REFERRAL_DAYS, PAID_REFERRAL_MONTHLY_CAP } from "@/lib/config";
 import { log } from "@/lib/log";
 
@@ -352,7 +352,7 @@ export async function applyAction(
           kind: sku.kind,
           sku: sku.sku,
           units: sku.units,
-          remaining: sku.kind === "slips" ? sku.units : null,
+          remaining: isCountdownPack(sku.kind) ? sku.units : null,
           expires_at: action.expiresAt ? action.expiresAt.toISOString() : null,
           source_ref: action.ref,
         },

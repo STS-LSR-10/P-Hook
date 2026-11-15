@@ -37,6 +37,17 @@ vi.mock("@/lib/slip-repo", () => ({
     return { plan: ownerPlan, plan_expires_at: null };
   },
 }));
+let packLeft = 0;
+vi.mock("./addons-repo", () => ({
+  takePushPack: async (_db: unknown, _u: string, _k: string, amount: number) => {
+    if (packLeft < amount) return false;
+    packLeft -= amount;
+    return true;
+  },
+  refundPushPack: async (_db: unknown, _u: string, _k: string, amount: number) => {
+    packLeft += amount;
+  },
+}));
 let pushUsed = 0;
 const personal = { push: 0, notice: 0 };
 const refunds: number[] = [];
@@ -86,6 +97,7 @@ beforeEach(() => {
   late.length = 0;
   purged = 0;
   pushUsed = 0;
+  packLeft = 0;
   personal.push = 0;
   personal.notice = 0;
   refunds.length = 0;
@@ -195,7 +207,24 @@ describe("runUserReminders", () => {
       const notice = sentText(push.mock.calls[3] ?? []);
       expect(notice).toContain("เตือน 4");
       expect(notice).toContain("เต็มแล้ว");
+      expect(notice).toContain("https://liff.line.me/L/addons");
       expect(notice).toContain("https://liff.line.me/L/upgrade");
+    });
+
+    it("a pack carries on where the plan's allowance ends, and a failed push gives back to it", async () => {
+      ownerPlan = "free";
+      packLeft = 2;
+      due = four();
+      const push = vi.fn(async (...args: unknown[]) => void args.length);
+      const out = await runUserReminders({} as SupabaseClient, { push } as never, NOW);
+      expect(out.sent).toBe(4); // 3 from the plan, 1 from the pack
+      expect(packLeft).toBe(1);
+      due = [r()];
+      const broken = vi.fn(async () => {
+        throw new Error("LINE push failed: 403");
+      });
+      await runUserReminders({} as SupabaseClient, { push: broken } as never, NOW);
+      expect(packLeft).toBe(1); // the one it took came back
     });
 
     it("each plan has its own number", async () => {
@@ -302,6 +331,22 @@ describe("runUserReminders", () => {
         },
       ]);
       expect(out).toMatchObject({ sent: 0, late: 1 });
+    });
+
+    it("past the plan's allowance a group push is paid from a pack, and goes back to it on failure", async () => {
+      pushUsed = 250; // Elite is at its allowance
+      packLeft = 25;
+      due = [group({ body: "ประชุม" })];
+      targets = new Map([["r1", { groupId: "g1", mentions: [] }]]);
+      const l = line([], 20);
+      await runUserReminders({} as SupabaseClient, l as never, NOW);
+      expect(l.push).toHaveBeenCalledTimes(1);
+      expect(packLeft).toBe(5);
+      due = [group({ body: "ประชุม" })];
+      const broken = line([], 5);
+      broken.push.mockRejectedValue(new Error("LINE push failed: 500"));
+      await runUserReminders({} as SupabaseClient, broken as never, NOW);
+      expect(packLeft).toBe(5); // taken 5, given back 5
     });
 
     it("gives the count back and waits when the push to the group fails", async () => {

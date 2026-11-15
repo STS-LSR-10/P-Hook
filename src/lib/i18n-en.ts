@@ -1321,6 +1321,15 @@ export const EN: Record<string, string> = {
     "⚠️ This month's LINE reminders are used up. From now on reminders show in the app only, until next month.",
   "อยากให้บอทส่งเตือนเข้า LINE ได้มากขึ้น อัปเกรดแผนได้เลย{0}":
     "Want more reminders in LINE? Upgrade your plan{0}",
+  "เตือนเข้า LINE ส่วนตัวเพิ่ม (Reminder Pack Personal)":
+    "Extra reminders to your LINE chat (Reminder Pack Personal)",
+  "เตือนเข้ากลุ่มเพิ่ม (Reminder Pack Group)": "Extra reminders to groups (Reminder Pack Group)",
+  ข้อความ: "messages",
+  เตือนส่วนตัวเหลือ: "Personal reminders left",
+  เตือนกลุ่มเหลือ: "Group reminders left",
+  "ซื้อแพ็กเตือนเพิ่ม (Starter ขึ้นไป): {0}": "Buy a reminder pack (Starter and above): {0}",
+  "หรืออัปเกรดแผน: {0}": "Or upgrade your plan: {0}",
+  ซื้อแพ็กเตือนเพิ่มหรืออัปเกรดแผนได้ในแอปนะ: "Buy a reminder pack or upgrade your plan in the app",
   ดุหน่อย: "Strict",
   "เกินงบอีกแล้วนะ! ใจเย็น ๆ ก่อน": "Over budget again! Slow down",
   ชมเยอะ: "Cheerleader",

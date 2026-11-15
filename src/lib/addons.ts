@@ -1,11 +1,16 @@
 /** Add-on boosters: extra quota bought on top of a plan. */
-export type AddonKind = "storage" | "alerts" | "slips" | "group_slots";
+export type AddonKind =
+  "storage" | "alerts" | "slips" | "group_slots" | "private_push" | "group_push";
+
+/** Packs bought once that count down in `remaining` (the rest are fixed amounts that renew or stay). */
+export const isCountdownPack = (kind: string): boolean =>
+  kind === "slips" || kind === "private_push" || kind === "group_push";
 
 export interface AddonSku {
   sku: string;
   kind: AddonKind;
   label: string;
-  /** What it adds: GB, waiting reminders, slip reads or LINE groups, by kind. */
+  /** What it adds: GB, slip reads, LINE pushes or LINE groups, by kind. */
   units: number;
   /** Whole baht. */
   baht: number;
@@ -39,6 +44,68 @@ export const ADDONS: AddonSku[] = [
     baht: 55,
     monthly: true,
   },
+  { sku: "slips_120", kind: "slips", label: "Slip Pack 120", units: 120, baht: 19, monthly: false },
+  { sku: "slips_350", kind: "slips", label: "Slip Pack 350", units: 350, baht: 49, monthly: false },
+  {
+    sku: "ppush_50",
+    kind: "private_push",
+    label: "Reminder Pack Personal S",
+    units: 50,
+    baht: 19,
+    monthly: false,
+  },
+  {
+    sku: "ppush_100",
+    kind: "private_push",
+    label: "Reminder Pack Personal M",
+    units: 100,
+    baht: 29,
+    monthly: false,
+  },
+  {
+    sku: "ppush_250",
+    kind: "private_push",
+    label: "Reminder Pack Personal L",
+    units: 250,
+    baht: 49,
+    monthly: false,
+  },
+  {
+    sku: "gpush_60",
+    kind: "group_push",
+    label: "Reminder Pack Group S",
+    units: 60,
+    baht: 19,
+    monthly: false,
+  },
+  {
+    sku: "gpush_180",
+    kind: "group_push",
+    label: "Reminder Pack Group M",
+    units: 180,
+    baht: 35,
+    monthly: false,
+  },
+  {
+    sku: "gpush_450",
+    kind: "group_push",
+    label: "Reminder Pack Group L",
+    units: 450,
+    baht: 69,
+    monthly: false,
+  },
+  {
+    sku: "groups_3",
+    kind: "group_slots",
+    label: "Extra Group Slot",
+    units: 3,
+    baht: 29,
+    monthly: true,
+  },
+];
+
+/** No longer sold, but kept so subscriptions bought earlier renew with what they paid for. */
+export const RETIRED_ADDONS: AddonSku[] = [
   {
     sku: "alerts_70",
     kind: "alerts",
@@ -55,20 +122,6 @@ export const ADDONS: AddonSku[] = [
     baht: 39,
     monthly: false,
   },
-  { sku: "slips_120", kind: "slips", label: "Slip Pack 120", units: 120, baht: 19, monthly: false },
-  { sku: "slips_350", kind: "slips", label: "Slip Pack 350", units: 350, baht: 49, monthly: false },
-  {
-    sku: "groups_3",
-    kind: "group_slots",
-    label: "Extra Group Slot",
-    units: 3,
-    baht: 29,
-    monthly: true,
-  },
-];
-
-/** No longer sold, but kept so subscriptions bought earlier renew with what they paid for. */
-export const RETIRED_ADDONS: AddonSku[] = [
   {
     sku: "storage_10",
     kind: "storage",
@@ -131,15 +184,22 @@ export const addonBySku = (sku: string): AddonSku | undefined =>
 /** The extra quota a person has right now, summed over what they bought and has not run out. */
 export interface Bonus {
   storageBytes: number;
-  /** Extra waiting (one-off) reminders. */
-  alerts: number;
   /** Slip reads left in packs. */
   slips: number;
   /** Extra LINE group ledgers. */
   groups: number;
+  /** Pushes left in packs: reminders to the person's own chat, and messages into their groups. */
+  privatePush: number;
+  groupPush: number;
 }
 
-export const NO_BONUS: Bonus = { storageBytes: 0, alerts: 0, slips: 0, groups: 0 };
+export const NO_BONUS: Bonus = {
+  storageBytes: 0,
+  slips: 0,
+  groups: 0,
+  privatePush: 0,
+  groupPush: 0,
+};
 
 const GB = 1024 ** 3;
 
@@ -155,7 +215,8 @@ export function sumBonus(rows: AddonRow[], now: Date): Bonus {
   for (const r of rows) {
     if (r.expires_at && Date.parse(r.expires_at) <= now.getTime()) continue;
     if (r.kind === "storage") out.storageBytes += r.units * GB;
-    else if (r.kind === "alerts") out.alerts += r.units;
+    else if (r.kind === "private_push") out.privatePush += r.remaining ?? 0;
+    else if (r.kind === "group_push") out.groupPush += r.remaining ?? 0;
     else if (r.kind === "slips") out.slips += r.remaining ?? 0;
     else if (r.kind === "group_slots") out.groups += r.units;
   }

@@ -46,3 +46,36 @@ export async function takeSlipPack(db: SupabaseClient, userId: string): Promise<
   if (error) throw new Error(`take slip pack: ${error.message}`);
   return data === true;
 }
+
+export type PushKind = "private_push" | "group_push";
+
+/** Spend `amount` pushes from the person's packs (all or nothing). False when they hold less. */
+export async function takePushPack(
+  db: SupabaseClient,
+  userId: string,
+  kind: PushKind,
+  amount: number,
+): Promise<boolean> {
+  const { data, error } = await db.rpc("take_push_pack", {
+    p_user: userId,
+    p_kind: kind,
+    p_amount: amount,
+  });
+  if (error) throw new Error(`take push pack: ${error.message}`);
+  return data === true;
+}
+
+/** Give pushes back to the packs because the message did not go out. */
+export async function refundPushPack(
+  db: SupabaseClient,
+  userId: string,
+  kind: PushKind,
+  amount: number,
+): Promise<void> {
+  const { error } = await db.rpc("refund_push_pack", {
+    p_user: userId,
+    p_kind: kind,
+    p_amount: amount,
+  });
+  if (error) throw new Error(`refund push pack: ${error.message}`);
+}

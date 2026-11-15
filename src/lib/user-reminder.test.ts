@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   describeReminder,
   parseReminder,
+  capacityOf,
   reminderCapacity,
   moveReminderTime,
   snoozeTime,
@@ -193,10 +194,10 @@ describe("what it refuses", () => {
 });
 
 describe("reminderCapacity and describeReminder", () => {
-  it("grows with the plan", () => {
-    expect(
-      (["free", "starter", "plus", "ultimate"] as const).map((p) => reminderCapacity(p)),
-    ).toEqual([3, 50, 100, 250]);
+  it("has no plan limit, only a guard of 1000 against runaway data", () => {
+    expect(reminderCapacity()).toBe(1000);
+    expect(capacityOf("free", "once")).toBe(1000);
+    expect(capacityOf("free", "repeat")).toBe(0); // repeating ones keep their plan limit
   });
   it("shows the date, the time and how often", () => {
     expect(describeReminder(new Date("2026-10-29T02:00:00Z"), null)).toBe("29 ต.ค. 2569 09:00");

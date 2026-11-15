@@ -11,10 +11,13 @@ export const MAX_AHEAD_DAYS = 366;
 /** The time used when only a day was given ("พรุ่งนี้ จ่ายค่าไฟ"). */
 export const DEFAULT_TIME = { hour: 8, minute: 30, label: "08:30" } as const;
 
-/** One-off reminders a plan may have waiting at once (each one is a push message, so also a cost guard). */
-const REMINDER_LIMIT: Record<Plan, number> = { free: 3, starter: 50, plus: 100, ultimate: 250 };
-/** `extra`: waiting reminders bought on top (add-ons). */
-export const reminderCapacity = (plan: Plan, extra = 0): number => REMINDER_LIMIT[plan] + extra;
+/**
+ * One-off reminders anyone may have waiting at once. The plan table says "ไม่จำกัด": what each plan
+ * may actually send is limited by its monthly pushes to LINE. This is only a guard against runaway
+ * data, far above what a person sets.
+ */
+export const WAITING_REMINDER_CAP = 1000;
+export const reminderCapacity = (): number => WAITING_REMINDER_CAP;
 
 /** Repeating reminders a plan may have, apart from the one-offs: each sends again every round. */
 const REPEAT_LIMIT: Record<Plan, number> = { free: 0, starter: 20, plus: 50, ultimate: 100 };
@@ -28,8 +31,8 @@ export const REPEAT_LOCKED_TEXT = t(
 export type ReminderKind = "once" | "repeat";
 export const reminderKind = (repeat: string | null | undefined): ReminderKind =>
   repeat ? "repeat" : "once";
-export const capacityOf = (plan: Plan, kind: ReminderKind, extra = 0): number =>
-  kind === "repeat" ? repeatCapacity(plan) : reminderCapacity(plan, extra);
+export const capacityOf = (plan: Plan, kind: ReminderKind): number =>
+  kind === "repeat" ? repeatCapacity(plan) : reminderCapacity();
 
 /** A reminder as the web app receives it. */
 export interface ReminderDto {

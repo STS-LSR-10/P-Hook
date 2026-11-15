@@ -1,4 +1,3 @@
-import { loadBonus } from "@/lib/addons-repo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { json } from "@/lib/api";
@@ -46,7 +45,7 @@ export async function reminderRoomProblem(
     getPlanInfo(db, userId),
     countActiveReminders(db, userId, kind),
   ]);
-  const limit = capacityOf(plan, kind, (await loadBonus(db, userId)).alerts);
+  const limit = capacityOf(plan, kind);
   if (count < limit) return null;
   return json(
     {

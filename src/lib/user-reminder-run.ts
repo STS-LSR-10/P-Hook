@@ -13,7 +13,8 @@ import {
 import { reminderActions } from "@/lib/line/reminder-flex";
 import { log } from "@/lib/log";
 import type { LineMessage } from "@/lib/types";
-import { monthKey, refundUsageAmount, takeUsageAmount } from "@/lib/usage";
+import { givePush, type PushSource, takePush } from "@/lib/push-quota";
+import { monthKey, takeUsageAmount } from "@/lib/usage";
 import { claimDueReminders, type DueReminder } from "@/lib/user-reminder-repo";
 import { REPEAT_LABEL } from "@/lib/user-reminder";
 import { runInZone } from "@/lib/zone-scope";
@@ -87,7 +88,7 @@ export async function runUserReminders(
       const person = people.get(r.userId);
       const room = await takePrivatePush(db, r.userId, now);
       if (room === "full") {
-        await tellPushFull(db, line, r, now, liffUrl?.replace(/\/reminders$/, "/upgrade"));
+        await tellPushFull(db, line, r, now, liffUrl?.replace(/\/reminders$/, ""));
         continue;
       }
       try {
@@ -106,8 +107,8 @@ export async function runUserReminders(
         );
       } catch (error) {
         // nothing reached them, so it does not count
-        if (room === "taken") {
-          await refundUsageAmount(db, r.userId, "private_push", 1, monthKey(now)).catch(
+        if (room === "plan" || room === "pack") {
+          await givePush(db, r.userId, "private_push", 1, room, monthKey(now)).catch(
             () => undefined,
           );
         }
@@ -148,12 +149,12 @@ async function sendGroupReminder(
   // every message pushed counts against the owner's allowance; a counter that cannot be reached
   // counts as no room, so the reminder waits rather than being lost
   const take = (amount: number) =>
-    takeUsageAmount(db, r.userId, "group_push", amount, allowance, month).catch((e) => {
+    takePush(db, r.userId, "group_push", amount, allowance, month).catch((e) => {
       log.error("group_push_count_failed", e);
-      return false;
+      return null;
     });
-  const giveBack = (amount: number) =>
-    refundUsageAmount(db, r.userId, "group_push", amount, month).catch(() => undefined);
+  const giveBack = (amount: number, source: PushSource) =>
+    givePush(db, r.userId, "group_push", amount, source, month).catch(() => undefined);
 
   // 1. tagged people only: one message each, to those who have พี่ฮูก as a friend
   let unreached: Mention[] = target.mentions;
@@ -164,12 +165,13 @@ async function sendGroupReminder(
     for (const person of people) {
       const id = person.userId;
       let reached = false;
-      if (id && (await line.isFriend(id).catch(() => false)) && (await take(1))) {
+      const paid = id && (await line.isFriend(id).catch(() => false)) ? await take(1) : null;
+      if (paid) {
         reached = await line
-          .push(id, [{ type: "text", text }])
+          .push(id as string, [{ type: "text", text }])
           .then(() => true)
           .catch(() => false);
-        if (!reached) await giveBack(1);
+        if (!reached) await giveBack(1, paid);
       }
       if (!reached) unreached.push(person);
     }
@@ -178,7 +180,8 @@ async function sendGroupReminder(
 
   // 2. the group, tagging whoever was not reached, within the owner's monthly allowance
   const members = await line.groupMemberCount?.(lineGroupId).catch(() => null);
-  if (members && (await take(members))) {
+  const paidGroup = members ? await take(members) : null;
+  if (members && paidGroup) {
     const { tagged, plain } = groupReminderMessage([
       { body: r.body, repeat: r.repeat, mentions: unreached },
     ]);
@@ -193,7 +196,7 @@ async function sendGroupReminder(
       log.warn("group_reminder_push_failed", {
         reason: error instanceof Error ? error.message : "unknown",
       });
-      await giveBack(members);
+      await giveBack(members, paidGroup);
     }
   }
 
@@ -218,12 +221,11 @@ async function takePrivatePush(
   db: SupabaseClient,
   userId: string,
   now: Date,
-): Promise<"taken" | "full" | "unknown"> {
+): Promise<PushSource | "full" | "unknown"> {
   try {
     const row = await getUserPlanRow(db, userId);
     const cap = PRIVATE_PUSH_PER_MONTH[effectivePlan(row.plan, row.plan_expires_at, now)];
-    const ok = await takeUsageAmount(db, userId, "private_push", 1, cap, monthKey(now));
-    return ok ? "taken" : "full";
+    return (await takePush(db, userId, "private_push", 1, cap, monthKey(now))) ?? "full";
   } catch (error) {
     log.error("private_push_count_failed", error);
     return "unknown";
@@ -236,7 +238,7 @@ async function tellPushFull(
   line: ReminderLine,
   r: DueReminder,
   now: Date,
-  upgradeUrl?: string,
+  appUrl?: string,
 ): Promise<void> {
   const first = await takeUsageAmount(
     db,
@@ -248,7 +250,7 @@ async function tellPushFull(
   ).catch(() => false);
   if (!first) return;
   await line
-    .push(r.lineUserId, [{ type: "text", text: privatePushFullText(r.body, upgradeUrl) }])
+    .push(r.lineUserId, [{ type: "text", text: privatePushFullText(r.body, appUrl) }])
     .catch((error: unknown) => log.warn("private_push_notice_failed", { reason: String(error) }));
 }
 

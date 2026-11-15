@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ADDONS, NO_BONUS, sumBonus, addonBySku, addonForSale } from "./addons";
 import { fileCapacity } from "./file";
 import { buildQuota } from "./quota";
-import { capacityOf, reminderCapacity } from "./user-reminder";
+import { capacityOf } from "./user-reminder";
 
 const NOW = new Date("2026-11-10T00:00:00Z");
 const GB = 1024 ** 3;
@@ -13,14 +13,23 @@ describe("sumBonus", () => {
       [
         { kind: "storage", units: 10, remaining: null, expires_at: "2026-12-01T00:00:00Z" },
         { kind: "storage", units: 30, remaining: null, expires_at: "2026-11-01T00:00:00Z" }, // ended
-        { kind: "alerts", units: 50, remaining: null, expires_at: null },
+        { kind: "alerts", units: 50, remaining: null, expires_at: null }, // retired: counts for nothing
+        { kind: "private_push", units: 50, remaining: 12, expires_at: null },
+        { kind: "group_push", units: 100, remaining: 100, expires_at: null },
+        { kind: "group_push", units: 60, remaining: 0, expires_at: null },
         { kind: "slips", units: 100, remaining: 64, expires_at: null },
         { kind: "group_slots", units: 2, remaining: null, expires_at: "2026-12-01T00:00:00Z" },
         { kind: "group_slots", units: 2, remaining: null, expires_at: "2026-12-05T00:00:00Z" },
       ],
       NOW,
     );
-    expect(b).toEqual({ storageBytes: 10 * GB, alerts: 50, slips: 64, groups: 4 });
+    expect(b).toEqual({
+      storageBytes: 10 * GB,
+      slips: 64,
+      groups: 4,
+      privatePush: 12,
+      groupPush: 100,
+    });
   });
 
   it("the catalogue matches the price list", () => {
@@ -28,26 +37,31 @@ describe("sumBonus", () => {
       ["storage_15", 15, 19, true],
       ["storage_40", 40, 35, true],
       ["storage_70", 70, 55, true],
-      ["alerts_70", 70, 19, false],
-      ["alerts_200", 200, 39, false],
       ["slips_120", 120, 19, false],
       ["slips_350", 350, 49, false],
+      ["ppush_50", 50, 19, false],
+      ["ppush_100", 100, 29, false],
+      ["ppush_250", 250, 49, false],
+      ["gpush_60", 60, 19, false],
+      ["gpush_180", 180, 35, false],
+      ["gpush_450", 450, 69, false],
       ["groups_3", 3, 29, true],
     ]);
     // packs bought before the change still renew, but cannot be bought again
     expect(addonBySku("storage_10")).toMatchObject({ units: 10, baht: 15 });
     expect(addonForSale("storage_10")).toBeUndefined();
+    expect(addonBySku("alerts_70")).toMatchObject({ kind: "alerts" });
+    expect(addonForSale("alerts_70")).toBeUndefined(); // the boosters are no longer sold
     expect(addonForSale("storage_15")).toBeDefined();
     expect(addonBySku("nope")).toBeUndefined();
   });
 });
 
 describe("capacities with add-ons", () => {
-  it("storage and waiting reminders grow; repeating reminders do not", () => {
+  it("storage grows; waiting reminders have no limit and repeating ones keep the plan's", () => {
     expect(fileCapacity("starter", 10 * GB)).toBe(13 * GB);
-    expect(reminderCapacity("starter", 50)).toBe(100);
-    expect(capacityOf("starter", "once", 50)).toBe(100);
-    expect(capacityOf("starter", "repeat", 50)).toBe(20);
+    expect(capacityOf("starter", "once")).toBe(1000);
+    expect(capacityOf("starter", "repeat")).toBe(20);
   });
 });
 
@@ -73,6 +87,8 @@ describe("the quota page with add-ons", () => {
   };
   const find = (q: ReturnType<typeof buildQuota>, key: string) =>
     q.main.find((i) => i.key === key)!;
+  const findAny = (q: ReturnType<typeof buildQuota>, key: string) =>
+    [...q.main, ...q.others].find((i) => i.key === key)!;
 
   it("shows the plan's slips as used and the pack as what is left", () => {
     const q = buildQuota("starter", used, { ...NO_BONUS, slips: 40 });
@@ -81,15 +97,18 @@ describe("the quota page with add-ons", () => {
     expect(s.used).toBe(45); // 70 read: 45 by the plan, 25 by the pack, which has 40 left
   });
 
-  it("adds storage, groups and waiting reminders to the person's own limits only", () => {
+  it("adds storage, groups and push packs to the person's own limits only", () => {
     const q = buildQuota("starter", used, {
       storageBytes: 10 * GB,
-      alerts: 50,
       slips: 0,
       groups: 2,
+      privatePush: 40,
+      groupPush: 100,
     });
     expect(find(q, "storage").limit).toBe(13 * GB);
-    expect(find(q, "reminders").limit).toBe(100);
+    expect(find(q, "reminders").limit).toBeNull(); // waiting reminders have no limit
+    expect(findAny(q, "privatePush").limit).toBe(35 + 40);
+    expect(findAny(q, "groupReminders").limit).toBe(30 + 100);
     expect(find(q, "groups").limit).toBe(3);
     expect(find(q, "storage").plans.starter.limit).toBe(3 * GB); // the plan table is unchanged
   });

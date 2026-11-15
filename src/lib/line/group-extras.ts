@@ -243,7 +243,7 @@ export async function addGroupReminder(
   if (!ctx.writable || !owner) return [text(GROUP_PAUSED_TEXT)];
 
   const kind = reminderKind(parsed.repeat);
-  const limit = capacityOf(ownerPlan(ctx, owner), kind, (await loadBonus(ctx.db, owner.id)).alerts);
+  const limit = capacityOf(ownerPlan(ctx, owner), kind);
   if ((await countActiveReminders(ctx.db, owner.id, kind)) >= limit) {
     return [text(groupReminderFullText(limit, kind === "repeat"))];
   }

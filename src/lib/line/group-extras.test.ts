@@ -410,11 +410,11 @@ describe("reminders in a group", () => {
   });
 
   it("is refused when the owner's one-off reminders are full", async () => {
-    activeCount = 250; // Elite holds 250
+    activeCount = 1000; // the guard for waiting reminders
     const { deps, reply } = setup();
     await handleEvent(say("Uanna", "เตือน พรุ่งนี้ 9 โมง ประชุม"), deps);
     expect(created).toEqual([]);
-    expect(said(reply)).toContain("ครบ 250 รายการแล้ว");
+    expect(said(reply)).toContain("ครบ 1000 รายการแล้ว");
   });
 
   const waiting = (id: string, createdBy: string, body: string) => ({

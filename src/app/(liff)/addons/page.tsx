@@ -22,7 +22,16 @@ interface AddonsResponse {
 
 const GROUPS: { kind: AddonKind; title: string; unit: string }[] = [
   { kind: "storage", title: t("พื้นที่เก็บไฟล์ (Storage)"), unit: "GB" },
-  { kind: "alerts", title: t("เตือนที่รออยู่ (Notification)"), unit: t("รายการ") },
+  {
+    kind: "private_push",
+    title: t("เตือนเข้า LINE ส่วนตัวเพิ่ม (Reminder Pack Personal)"),
+    unit: t("ครั้ง"),
+  },
+  {
+    kind: "group_push",
+    title: t("เตือนเข้ากลุ่มเพิ่ม (Reminder Pack Group)"),
+    unit: t("ข้อความ"),
+  },
   { kind: "slips", title: t("อ่านสลิปเพิ่ม (Smart OCR Slip)"), unit: t("ใบ") },
   { kind: "group_slots", title: t("กลุ่ม LINE เพิ่ม (Group Slot)"), unit: t("กลุ่ม LINE") },
 ];
@@ -57,7 +66,8 @@ export default function AddonsPage() {
   const have = d
     ? [
         d.bonus.storageBytes > 0 && `${t("พื้นที่")} +${formatBytes(d.bonus.storageBytes)}`,
-        d.bonus.alerts > 0 && `${t("เตือนที่รออยู่")} +${d.bonus.alerts}`,
+        d.bonus.privatePush > 0 && `${t("เตือนส่วนตัวเหลือ")} ${d.bonus.privatePush} ${t("ครั้ง")}`,
+        d.bonus.groupPush > 0 && `${t("เตือนกลุ่มเหลือ")} ${d.bonus.groupPush} ${t("ข้อความ")}`,
         d.bonus.slips > 0 && `${t("สลิปเหลือ")} ${d.bonus.slips} ${t("ใบ")}`,
         d.bonus.groups > 0 && `${t("กลุ่ม LINE")} +${d.bonus.groups}`,
       ].filter(Boolean)

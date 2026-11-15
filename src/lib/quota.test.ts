@@ -54,7 +54,7 @@ describe("buildQuota", () => {
     const q = byKey("free");
     expect(q.slips).toMatchObject({ used: 2, limit: 10, period: "once", word: "ครั้ง" });
     expect(q.voice).toMatchObject({ used: 1, limit: 10, period: "once" });
-    expect(q.reminders).toMatchObject({ used: 3, limit: 3, period: "total" });
+    expect(q.reminders).toMatchObject({ used: 3, limit: null, period: "total" });
     expect(q.repeatReminders).toMatchObject({ used: 1, limit: 0 });
     expect(q.groups?.limit).toBe(0);
     expect(q.groupReminders?.limit).toBe(0);

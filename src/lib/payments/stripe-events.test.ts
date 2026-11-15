@@ -311,6 +311,19 @@ describe("applying an add-on payment", () => {
     return { db: db as never, calls };
   };
 
+  it("a push pack starts with all its pushes, like a slip pack", async () => {
+    const { db, calls } = fakeDb();
+    await applyAction(db, {
+      kind: "addon",
+      userId: USER,
+      sku: "gpush_180",
+      ref: "cs_9",
+      expiresAt: null,
+      customer: null,
+    });
+    expect(calls[0]?.row).toMatchObject({ kind: "group_push", units: 180, remaining: 180 });
+  });
+
   it("a slip pack starts with all its reads, and a retried payment is not added twice", async () => {
     const { db, calls } = fakeDb();
     const action = {

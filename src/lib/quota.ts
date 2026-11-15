@@ -19,7 +19,7 @@ import {
   walletCapacity,
   type Plan,
 } from "@/lib/plan";
-import { reminderCapacity, repeatCapacity } from "@/lib/user-reminder";
+import { repeatCapacity } from "@/lib/user-reminder";
 
 /** How a quota counts: what you keep ("total"), per day / week / month, or once for life. */
 export type QuotaPeriod = "total" | "day" | "week" | "month" | "once";
@@ -175,12 +175,11 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     {
       key: "reminders",
       label: "เตือนครั้งเดียว",
-      hint: "เตือนที่ตั้งไว้และยังไม่ถึงเวลา (รวมเตือนในกลุ่มที่คุณเป็นเจ้าของ)",
+      hint: "เตือนที่ตั้งไว้และยังไม่ถึงเวลา ไม่จำกัดจำนวน (จำกัดที่การส่งเข้า LINE ต่อเดือน)",
       word: "รายการ",
       icon: "bell",
       used: used.reminders,
-      extra: bonus.alerts,
-      on: (p) => ({ limit: reminderCapacity(p), period: "total" }),
+      on: () => ({ limit: null, period: "total" }),
     },
     {
       key: "repeatReminders",
@@ -198,6 +197,8 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
       word: "ครั้ง",
       icon: "megaphone",
       used: used.groupReminders,
+      extra: bonus.groupPush,
+      capUsed: true,
       on: (p) => ({ limit: GROUP_PUSH_PER_MONTH[p], period: "month" }),
     },
     {
@@ -220,10 +221,12 @@ export function buildQuota(plan: Plan, used: QuotaUsage, bonus: Bonus = NO_BONUS
     {
       key: "privatePush",
       label: "เตือนทาง LINE",
-      hint: "เตือนที่บอทส่งเข้าแชทส่วนตัวของคุณ เต็มแล้วดูเตือนในแอปได้ตามปกติ",
+      hint: "เตือนที่บอทส่งเข้าแชทส่วนตัวของคุณ เต็มแล้วดูเตือนในแอปได้ตามปกติ หรือซื้อแพ็กเพิ่ม",
       word: "ครั้ง",
       icon: "bell",
       used: used.privatePush,
+      extra: bonus.privatePush,
+      capUsed: true,
       on: (p) => ({ limit: PRIVATE_PUSH_PER_MONTH[p], period: "month" }),
     },
     {

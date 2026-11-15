@@ -761,16 +761,18 @@ export const reminderPushText = (body: string, repeatLabel: string | null, url?:
   ].join("\n");
 
 /** Said once a month, in place of a reminder, when the month's reminders to LINE are used up. */
-export const privatePushFullText = (body: string, upgradeUrl?: string) =>
+export const privatePushFullText = (body: string, base?: string) =>
   [
     t("⏰ เตือน: {0}", body),
     t(
       "⚠️ โควตาเตือนทาง LINE เดือนนี้เต็มแล้ว เตือนหลังจากนี้จะดูได้ในแอปเท่านั้น จนกว่าจะขึ้นเดือนใหม่",
     ),
-    t(
-      "อยากให้บอทส่งเตือนเข้า LINE ได้มากขึ้น อัปเกรดแผนได้เลย{0}",
-      upgradeUrl ? ` ${upgradeUrl}` : "",
-    ),
+    ...(base
+      ? [
+          t("ซื้อแพ็กเตือนเพิ่ม (Starter ขึ้นไป): {0}", `${base}/addons`),
+          t("หรืออัปเกรดแผน: {0}", `${base}/upgrade`),
+        ]
+      : [t("ซื้อแพ็กเตือนเพิ่มหรืออัปเกรดแผนได้ในแอปนะ")]),
   ].join("\n");
 
 /** A group's reminder: no link, which would open the owner's own page for everyone. */

@@ -323,3 +323,47 @@ describe("add-ons (0066)", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("push packs (0075)", () => {
+  const pack = (u: string, kind: string, units: number, remaining: number, source: string) =>
+    db.query(
+      "insert into addons (user_id, kind, sku, units, remaining, source_ref, created_at) values ($1,$2,'p',$3,$4,$5, now() - ($6 || ' minutes')::interval)",
+      [u, kind, units, remaining, source, `${10 - Number(source.slice(-1))}`],
+    );
+  const take = async (u: string, kind: string, n: number) =>
+    (await one<{ ok: boolean }>(db, "select take_push_pack($1::uuid, $2, $3) as ok", [u, kind, n]))
+      .ok;
+  const left = async (u: string) =>
+    (
+      await rows<{ remaining: number }>(
+        db,
+        "select remaining from addons where user_id = $1 order by created_at, source_ref",
+        [u],
+      )
+    ).map((r) => r.remaining);
+
+  it("takes from the oldest pack first and across packs, all or nothing", async () => {
+    const u = await newUser(db, "pp-a");
+    await pack(u, "group_push", 50, 30, "pp-a1");
+    await pack(u, "group_push", 100, 100, "pp-a2");
+    expect(await take(u, "group_push", 40)).toBe(true);
+    expect(await left(u)).toEqual([0, 90]);
+    expect(await take(u, "group_push", 91)).toBe(false); // not enough: nothing is spent
+    expect(await left(u)).toEqual([0, 90]);
+  });
+
+  it("keeps private and group packs apart", async () => {
+    const u = await newUser(db, "pp-b");
+    await pack(u, "private_push", 50, 50, "pp-b1");
+    expect(await take(u, "group_push", 1)).toBe(false);
+    expect(await take(u, "private_push", 1)).toBe(true);
+  });
+
+  it("gives pushes back without going past what a pack held", async () => {
+    const u = await newUser(db, "pp-c");
+    await pack(u, "private_push", 50, 50, "pp-c1");
+    await take(u, "private_push", 10);
+    await db.query("select refund_push_pack($1::uuid, 'private_push', 100)", [u]);
+    expect(await left(u)).toEqual([50]);
+  });
+});

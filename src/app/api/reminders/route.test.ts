@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reminderCapacity, repeatCapacity } from "@/lib/user-reminder";
 
 let plan = "plus";
-const FREE_ONCE = reminderCapacity("free");
-const PRO_ONCE = reminderCapacity("plus");
-const ULT_ONCE = reminderCapacity("ultimate");
+const FREE_ONCE = reminderCapacity();
+const PRO_ONCE = reminderCapacity();
+const ULT_ONCE = reminderCapacity();
 const FREE_REPEAT = repeatCapacity("free");
-const STARTER_ONCE = reminderCapacity("starter");
+const STARTER_ONCE = reminderCapacity();
 const STARTER_REPEAT = repeatCapacity("starter");
 const PRO_REPEAT = repeatCapacity("plus");
 const ULT_REPEAT = repeatCapacity("ultimate");
