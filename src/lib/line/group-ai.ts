@@ -49,7 +49,8 @@ export async function readGroupWithAi(
         text: said,
       },
     );
-    if (!decision || !charged) return null;
+    // several things in one message are for the owl: a group acts on one thing only
+    if (!decision || !charged || decision.more?.length) return null;
     const charge: GroupCharge = { userId: user.id, ...(charged as AiCharge) };
     return { commands: toGroupCommands(decision, said, charge, deps.now()), charge };
   } catch (error) {

@@ -581,6 +581,13 @@ export const SECRET_ASK_TEXT = t(
 );
 export const INTENT_CONFIRM_TEXT = (label: string) => t("พี่ฮูกเข้าใจว่าให้{0} ใช่ไหม?", label);
 export const INTENT_UNCLEAR_TEXT = t("พี่ฮูกไม่แน่ใจ อยากให้ทำอะไรกับข้อความนี้?");
+export const PARTS_CUT_TEXT = (max: number) =>
+  t(
+    "ทำรายการได้สูงสุด {0} รายการต่อข้อความ พี่ฮูกทำ {0} รายการแรกให้แล้ว ที่เหลือส่งแยกอีกทีนะ",
+    max,
+  );
+export const PART_FAILED_TEXT = (words: string) =>
+  t('ส่วน "{0}" ทำไม่สำเร็จ ลองส่งแยกอีกทีนะ', words);
 export const INTENT_CANCELLED_TEXT = t("ยกเลิกแล้ว ไม่ได้บันทึกอะไร");
 export const INTENT_EXPIRED_TEXT = t("รายการนี้หมดเวลาหรือทำไปแล้ว ลองพิมพ์ใหม่อีกครั้งนะ");
 export const ROUTER_REMINDER_HINT_TEXT = t(
@@ -865,7 +872,9 @@ export const aiQuotaText = (plan: Plan, limit: number) => {
         limit,
       );
   // packs are sold to paid plans (Starter up)
-  return plan === "free" ? base : `${base}\n${t("หรือซื้อแพ็ก AI เพิ่มได้ในแอป หน้าซื้อโควตาเพิ่ม")}`;
+  return plan === "free"
+    ? base
+    : `${base}\n${t("หรือซื้อแพ็ก AI เพิ่มได้ในแอป หน้าซื้อโควตาเพิ่ม")}`;
 };
 
 /** Once a day when the month's "ถาม AI" is out: the message was read by the ordinary rules. */

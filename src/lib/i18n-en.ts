@@ -2270,6 +2270,10 @@ export const EN: Record<string, string> = {
   "ข้อความนี้ดูเหมือนรหัสหรือเลขสำคัญ พี่ฮูกเลยไม่ส่งให้ AI อ่าน จะบันทึกเป็นโน้ตไหม?\n⚠️ โน้ตเก็บเป็นข้อความธรรมดา ไม่ควรเก็บรหัสผ่านสำคัญ":
     "This looks like a password or an important number, so P'Hook didn't send it to the AI. Save it as a note?\n⚠️ Notes are stored as plain text; don't keep important passwords there",
   "พี่ฮูกเข้าใจว่าให้{0} ใช่ไหม?": "Did you want me to {0}?",
+  "ทำรายการได้สูงสุด {0} รายการต่อข้อความ พี่ฮูกทำ {0} รายการแรกให้แล้ว ที่เหลือส่งแยกอีกทีนะ":
+    "I can do at most {0} things per message. I did the first {0}; send the rest again separately.",
+  'ส่วน "{0}" ทำไม่สำเร็จ ลองส่งแยกอีกทีนะ':
+    'I could not do "{0}". Please send it again on its own.',
   "พี่ฮูกไม่แน่ใจ อยากให้ทำอะไรกับข้อความนี้?": "I'm not sure. What should I do with this message?",
   "ยกเลิกแล้ว ไม่ได้บันทึกอะไร": "Cancelled; nothing was saved",
   "รายการนี้หมดเวลาหรือทำไปแล้ว ลองพิมพ์ใหม่อีกครั้งนะ":
@@ -2750,9 +2754,9 @@ export const EN: Record<string, string> = {
     "Hourly reminders can only be set in your own chat with P'Hook. In a group use daily, weekly or monthly ones",
   "เตือนทุกชั่วโมง ครบ 3 รอบจะถามว่าจะให้เตือนต่อไหม":
     "Hourly reminder: after 3 rounds I will ask whether to go on",
-  "หยุดเตือนแล้วนะ": "Stopped reminding",
-  "เตือนนี้จบไปแล้วนะ": "This reminder is already over",
-  "ทุกชั่วโมง": "Every hour",
+  หยุดเตือนแล้วนะ: "Stopped reminding",
+  เตือนนี้จบไปแล้วนะ: "This reminder is already over",
+  ทุกชั่วโมง: "Every hour",
   "▶️ เตือนต่อ": "▶️ Keep going",
   "⏹ หยุดเตือน": "⏹ Stop",
   "หรือซื้อแพ็ก AI เพิ่มได้ในแอป หน้าซื้อโควตาเพิ่ม":

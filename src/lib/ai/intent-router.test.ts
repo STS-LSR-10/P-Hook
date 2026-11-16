@@ -6,6 +6,30 @@ import {
   sanitizeDecision,
 } from "./intent-router";
 
+describe("sanitizeDecision, several things", () => {
+  const note = (n: number) => ({ intent: "note_add", confidence: 0.9, segment: `โน้ต ${n}` });
+
+  it("keeps the other things in order, and drops one it cannot read", () => {
+    const d = sanitizeDecision({
+      ...note(1),
+      more: [note(2), { intent: "delete_all" }, { intent: "reminder_add", confidence: 0.9, segment: "เตือน" }],
+    });
+    expect(d?.more?.map((p) => p.intent)).toEqual(["note_add", "unclear"]);
+    expect(d?.more?.[0]?.segment).toBe("โน้ต 2");
+  });
+
+  it("allows five things and marks the rest as cut", () => {
+    const d = sanitizeDecision({ ...note(1), more: [2, 3, 4, 5, 6].map(note) });
+    expect(d?.more).toHaveLength(4);
+    expect(d?.cut).toBe(true);
+    expect(sanitizeDecision({ ...note(1), more: [2, 3, 4, 5].map(note) })?.cut).toBeUndefined();
+  });
+
+  it("an empty list is one thing", () => {
+    expect(sanitizeDecision({ ...note(1), more: [] })?.more).toBeUndefined();
+  });
+});
+
 describe("sanitizeDecision", () => {
   it("accepts a full reminder", () => {
     const d = sanitizeDecision({
@@ -233,5 +257,17 @@ describe("routerPrompt: the chat cannot break out of its block", () => {
     const block = p.slice(p.indexOf("<chat>"), p.indexOf("</chat>") + 7);
     expect(block.match(/<\/?\s*chat/gi)?.length).toBe(2);
     expect(block).toContain('"');
+  });
+});
+
+describe("sanitizeDecision, parts without their words", () => {
+  it("is unclear when any part has no segment", () => {
+    const d = sanitizeDecision({
+      intent: "money",
+      confidence: 0.9,
+      more: [{ intent: "money", confidence: 0.9, segment: "ข้าว 50" }],
+    });
+    expect(d?.intent).toBe("unclear");
+    expect(d?.more).toBeUndefined();
   });
 });

@@ -1001,3 +1001,75 @@ describe("a reminder the AI routed, with a time", () => {
     expect(asked).not.toHaveBeenCalled();
   });
 });
+
+describe("several things in one message", () => {
+  const MIXED = "ค่ากาแฟ 60 บาทและช่วยตั้งแจ้งเตือนกินยา 6 โมงเย็นด้วย";
+  const money = { intent: "money", confidence: 0.9, segment: "ค่ากาแฟ 60 บาท" };
+  const remind = {
+    intent: "reminder_add",
+    confidence: 0.9,
+    segment: "ตั้งแจ้งเตือนกินยา 6 โมงเย็น",
+    reminderText: "กินยา 6 โมงเย็น",
+  };
+
+  it("records the money and sets the reminder from one message", async () => {
+    route.mockResolvedValue({ ...money, more: [remind] });
+    const { deps, reply } = setup();
+    await handleEvent(say(MIXED), deps);
+    expect(entries).toEqual(["ค่ากาแฟ"]);
+    expect(madeReminders).toHaveLength(1);
+    expect(sent(reply)).toHaveLength(1); // the money entry is silent here, the reminder has its card
+  });
+
+  it("asks only about the part it is unsure of, and does the rest", async () => {
+    route.mockResolvedValue({ ...money, more: [{ ...remind, confidence: 0.5 }] });
+    const { deps, reply } = setup();
+    await handleEvent(say(MIXED), deps);
+    expect(entries).toEqual(["ค่ากาแฟ"]);
+    expect(madeReminders).toHaveLength(0);
+    expect(buttons(reply)).toContain(`a=irp&id=${PENDING}&p=yes`);
+    expect(putPending).toHaveBeenCalledWith(
+      expect.anything(),
+      "u1",
+      expect.objectContaining({ text: remind.segment }),
+      expect.anything(),
+    );
+  });
+
+  it("asks the next unsure part after the answer to the first", async () => {
+    route.mockResolvedValue({
+      ...money,
+      confidence: 0.5,
+      more: [{ ...remind, confidence: 0.5 }],
+    });
+    const { deps, reply } = setup();
+    await handleEvent(say(MIXED), deps);
+    const held = putPending.mock.calls[0]?.[2] as { decision: IntentDecision };
+    expect(held.decision.more).toHaveLength(1);
+    pending = { id: PENDING, input: money.segment, decision: held.decision };
+    reply.mockClear();
+    await handleEvent(tap(`a=irp&id=${PENDING}&p=yes`), deps);
+    expect(entries).toEqual(["ค่ากาแฟ"]);
+    expect(buttons(reply)).toContain(`a=irp&id=${PENDING}&p=yes`);
+  });
+
+  it("keeps going when one part cannot be done", async () => {
+    route.mockResolvedValue({
+      ...money,
+      more: [{ ...remind, reminderText: "กินยา วันนี้ ตี 5" }],
+    });
+    const { deps, reply } = setup();
+    await handleEvent(say(MIXED), deps);
+    expect(entries).toEqual(["ค่ากาแฟ"]);
+    expect(said(reply)).toContain(REMINDER_PAST_TEXT);
+  });
+
+  it("does only five things and says so", async () => {
+    const note = (n: number) => ({ intent: "note_add", confidence: 0.9, segment: `โน้ต ${n}` });
+    route.mockResolvedValue({ ...note(1), more: [2, 3, 4, 5, 6].map(note) });
+    const { deps, reply } = setup();
+    await handleEvent(say("ต้องซื้อ 1 และ 2 และ 3 และ 4 และ 5 และ 6 พรุ่งนี้ 9 โมง"), deps);
+    expect(notes).toHaveLength(5);
+    expect(said(reply)).toContain("สูงสุด 5 รายการ");
+  });
+});

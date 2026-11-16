@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  MAX_PARTS,
   ROUTER_ACT_CONFIDENCE,
   type IntentDecision,
   type IntentRouter,
@@ -14,7 +15,7 @@ import { buildMapCard } from "./map-flex";
 import { ASKS_RE, clockIsTheAmount, needsRouter, runRouter } from "@/lib/ai/route-text";
 import type { Command } from "@/lib/commands";
 import type { ParseResult } from "@/lib/parse/text-parser";
-import { putPendingIntent, takePendingIntent } from "@/lib/pending-intent-repo";
+import { putPendingIntent, takePendingIntent, type PendingIntent } from "@/lib/pending-intent-repo";
 import { can, effectivePlan } from "@/lib/plan";
 import { matchReminders } from "@/lib/reminder-match";
 import type { UserRow } from "@/lib/repo";
@@ -35,6 +36,8 @@ import {
   INTENT_EXPIRED_TEXT,
   INTENT_UNCLEAR_TEXT,
   MONEY_HINT_TEXT,
+  PART_FAILED_TEXT,
+  PARTS_CUT_TEXT,
   REMINDER_FULL_TEXT,
   REMINDER_GONE_TEXT,
   REMINDER_NOT_MATCHED_TEXT,
@@ -50,6 +53,7 @@ import {
 } from "./messages";
 import { buildReminderCard } from "./reminder-flex";
 import { t } from "@/lib/i18n";
+import { log, safeMessage } from "@/lib/log";
 
 const MAX_REMINDER_CHOICES = 4;
 const MAX_LABEL = 20; // LINE's limit for a quick reply
@@ -261,6 +265,86 @@ async function askAboutSecret(
   return [choices(SECRET_ASK_TEXT, id, picks)];
 }
 
+/** LINE takes five messages in one reply. */
+const MAX_REPLY = 4; // one less: a voice note's reply starts with what was heard
+/** Asking and counting come last, so what was recorded is told first. */
+const LAST: readonly RoutedIntent[] = ["ask", "query", "search", "map"];
+
+const isUnsure = (p: IntentDecision) =>
+  p.intent === "unclear" || p.confidence < ROUTER_ACT_CONFIDENCE;
+
+/**
+ * Ask about one thing of a message that asked for several. Only one question can wait at a time, so
+ * the unsure things after it ride along in `more` and are asked as each answer comes.
+ */
+async function askPart(
+  input: string,
+  part: IntentDecision,
+  rest: IntentDecision[],
+  user: UserRow,
+  deps: IntentDeps,
+): Promise<LineMessage> {
+  const words = part.segment ?? input;
+  const id = await putPendingIntent(
+    deps.db,
+    user.id,
+    { text: words, decision: { ...part, ...(rest.length ? { more: rest } : {}) } },
+    deps.now(),
+  );
+  if (part.intent === "unclear") {
+    return choices(INTENT_UNCLEAR_TEXT, id, [
+      [t("จดเป็นรายการเงิน"), "money"],
+      [t("จดเป็นโน้ต"), "note"],
+      [t("ตั้งเตือน"), "reminder"],
+      [t("ไม่ทำอะไร"), "no"],
+    ]);
+  }
+  return choices(INTENT_CONFIRM_TEXT(CONFIRM_LABEL[part.intent]), id, [
+    [t("ใช่"), "yes"],
+    [t("ไม่ใช่"), "no"],
+  ]);
+}
+
+/** A message that asked for several things: do the sure ones in turn, then ask about the rest. */
+async function runParts(
+  input: string,
+  decision: IntentDecision,
+  user: UserRow,
+  deps: IntentDeps,
+): Promise<LineMessage[]> {
+  const { more = [], cut, ...first } = decision;
+  const parts = [first, ...more].slice(0, MAX_PARTS);
+  // asking and counting come last, so what was recorded is told first
+  const sure = parts.filter((p) => !isUnsure(p));
+  const doNow = [
+    ...sure.filter((p) => !LAST.includes(p.intent)),
+    ...sure.filter((p) => LAST.includes(p.intent)),
+  ];
+  const replies: LineMessage[] = [];
+  let answered = false;
+  for (const part of doNow) {
+    const words = part.segment ?? input;
+    // one answer from the assistant per message: the AI was paid for once
+    if (part.intent === "ask" && answered) {
+      replies.push(text(PART_FAILED_TEXT(words.slice(0, 40))));
+      continue;
+    }
+    answered ||= part.intent === "ask";
+    try {
+      replies.push(...(await execute(words, part, user, deps)));
+    } catch (error) {
+      log.warn("intent_part_failed", { intent: part.intent, reason: safeMessage(error) });
+      replies.push(text(PART_FAILED_TEXT(words.slice(0, 40))));
+    }
+  }
+  const unsure = parts.filter(isUnsure);
+  const [next, ...rest] = unsure;
+  const question = next ? [await askPart(input, next, rest, user, deps)] : [];
+  // shortcut: past five messages the last are dropped, when one part answers with several cards
+  const notice = cut ? [text(PARTS_CUT_TEXT(MAX_PARTS))] : [];
+  return [...replies.slice(0, MAX_REPLY - notice.length - question.length), ...question, ...notice];
+}
+
 /**
  * Sort a message the rules cannot be trusted with, then act or ask. Null carries on down the money
  * path: it was money, or the AI could not help and the message reads as an ordinary entry.
@@ -290,6 +374,7 @@ export async function routeText(
     { db, userId: user.id, plan, text: input, history: (await deps.history?.()) ?? "" },
   );
   const reads = QUESTION_RE.test(input);
+  if (decision?.more?.length) return runParts(input, decision, user, deps);
   if (chatting && !decision) {
     // no AI to ask: what the rules read as a plain entry is one, like outside the mode
     const entry = parsed.entries.length > 0 && !reads && !clockIsTheAmount(input, parsed.entries);
@@ -361,6 +446,20 @@ export async function handleIntentPick(
 ): Promise<LineMessage[]> {
   const pending = await takePendingIntent(deps.db, user.id, id, deps.now());
   if (!pending) return [text(INTENT_EXPIRED_TEXT)];
+  const replies = await answerPick(pending, pick, user, deps, chatting);
+  // a message of several things had more to ask about: the next question follows this answer
+  const [next, ...rest] = pending.decision?.more ?? [];
+  if (!next) return replies;
+  return [...replies.slice(0, MAX_REPLY - 1), await askPart(pending.input, next, rest, user, deps)];
+}
+
+async function answerPick(
+  pending: PendingIntent,
+  pick: string,
+  user: UserRow,
+  deps: IntentDeps,
+  chatting: boolean,
+): Promise<LineMessage[]> {
   const { input, decision } = pending;
 
   if (pick === "yes" && decision) return execute(input, decision, user, deps, true, true);

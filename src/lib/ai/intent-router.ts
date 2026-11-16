@@ -10,6 +10,8 @@ export const MAX_ROUTER_INPUT = 1000;
 export const ROUTER_TIMEOUT_MS = 4_000;
 const MAX_REMINDER_TEXT = 300;
 const MAX_TERM = 100;
+/** Things one message may ask for at once; the rest are told to be sent again. */
+export const MAX_PARTS = 5;
 
 const INTENTS = [
   "money",
@@ -48,6 +50,12 @@ export interface IntentDecision {
   /** query, period custom: "2026-10-05". */
   fromDate?: string | null;
   toDate?: string | null;
+  /** Several things in one message: the words of this one, ("ค่ากาแฟ 60 บาท"). */
+  segment?: string | null;
+  /** On the first one only: the other things asked in the same message, in order. */
+  more?: IntentDecision[];
+  /** On the first one only: there were more than MAX_PARTS, and the rest were left out. */
+  cut?: boolean;
 }
 
 /** Sorts one chat message into a group. Returns the (untrusted) structured reply. */
@@ -69,8 +77,9 @@ const field = (max: number) =>
     .optional()
     .transform((v) => v?.trim().slice(0, max) || null);
 
-const rawSchema = z.object({
+const partSchema = z.object({
   intent: z.enum(INTENTS),
+  segment: field(MAX_ROUTER_INPUT),
   confidence: z.number().nullable().optional(),
   reminderText: field(MAX_REMINDER_TEXT),
   reminderQuery: field(MAX_TERM),
@@ -83,31 +92,44 @@ const rawSchema = z.object({
   fromDate: field(10),
   toDate: field(10),
 });
+const rawSchema = partSchema.extend({
+  more: z.array(z.unknown()).nullable().optional().catch(null),
+});
+
+const PART_PROPERTIES = {
+  intent: { type: "string", enum: [...INTENTS] },
+  segment: {
+    type: ["string", "null"],
+    description: "The words of this one thing, when there are several",
+  },
+  confidence: { type: "number", description: "0 to 1: how sure you are" },
+  reminderText: { type: ["string", "null"], description: "What, then when, in the same words" },
+  reminderQuery: { type: ["string", "null"], description: "Words naming the reminder to move" },
+  whenText: { type: ["string", "null"], description: "The new time, in the same words" },
+  searchTerm: { type: ["string", "null"], description: "The thing to look for" },
+  fileName: { type: ["string", "null"], description: "The name for the file, if one is said" },
+  place: { type: ["string", "null"], description: "map: the place to go" },
+  searchIn: { type: ["string", "null"], enum: [...SEARCH_IN, null] },
+  period: { type: ["string", "null"], enum: [...QUERY_PERIODS, null] },
+  fromDate: { type: ["string", "null"], description: "YYYY-MM-DD, only for period custom" },
+  toDate: { type: ["string", "null"], description: "YYYY-MM-DD, only for period custom" },
+} as const;
 
 const JSON_SCHEMA = {
   type: "object",
   properties: {
-    intent: { type: "string", enum: [...INTENTS] },
-    confidence: { type: "number", description: "0 to 1: how sure you are" },
-    reminderText: { type: ["string", "null"], description: "What, then when, in the same words" },
-    reminderQuery: { type: ["string", "null"], description: "Words naming the reminder to move" },
-    whenText: { type: ["string", "null"], description: "The new time, in the same words" },
-    searchTerm: { type: ["string", "null"], description: "The thing to look for" },
-    fileName: { type: ["string", "null"], description: "The name for the file, if one is said" },
-    place: { type: ["string", "null"], description: "map: the place to go" },
-    searchIn: { type: ["string", "null"], enum: [...SEARCH_IN, null] },
-    period: { type: ["string", "null"], enum: [...QUERY_PERIODS, null] },
-    fromDate: { type: ["string", "null"], description: "YYYY-MM-DD, only for period custom" },
-    toDate: { type: ["string", "null"], description: "YYYY-MM-DD, only for period custom" },
+    ...PART_PROPERTIES,
+    more: {
+      type: ["array", "null"],
+      description: "Every other thing the message asks for, in order; null when it asks for one",
+      items: { type: "object", properties: PART_PROPERTIES, required: ["intent", "confidence"] },
+    },
   },
   required: ["intent", "confidence"],
 } as const;
 
-/** The reply as data the bot can act on, or null when it is unusable. Never trust it unchecked. */
-export function sanitizeDecision(raw: unknown): IntentDecision | null {
-  const parsed = rawSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  const { confidence, ...rest } = parsed.data;
+function sanitizePart(parsed: z.infer<typeof partSchema>): IntentDecision {
+  const { confidence, ...rest } = parsed;
   // a question about money with no days said is about this month
   const d = {
     ...rest,
@@ -123,6 +145,27 @@ export function sanitizeDecision(raw: unknown): IntentDecision | null {
     ...d,
     intent: complete ? d.intent : "unclear",
     confidence: Math.min(1, Math.max(0, confidence ?? 0)),
+  };
+}
+
+/** The reply as data the bot can act on, or null when it is unusable. Never trust it unchecked. */
+export function sanitizeDecision(raw: unknown): IntentDecision | null {
+  const parsed = rawSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  const { more, ...first } = parsed.data;
+  const decision = sanitizePart(first);
+  // a part that cannot be read is left out; the first one speaks for the message when none is left
+  const others = (more ?? []).flatMap((m) => {
+    const p = partSchema.safeParse(m);
+    return p.success ? [sanitizePart(p.data)] : [];
+  });
+  if (others.length === 0) return decision;
+  // without each one's own words nothing can be done on its own: never fall back to the whole message
+  if ([decision, ...others].some((p) => !p.segment)) return { ...decision, intent: "unclear" };
+  return {
+    ...decision,
+    more: others.slice(0, MAX_PARTS - 1),
+    ...(others.length > MAX_PARTS - 1 ? { cut: true } : {}),
   };
 }
 
@@ -154,6 +197,10 @@ export function routerPrompt(input: {
     '- A file or picture named with no word about keeping it ("รูปสลิปโอนค่าหอ") is search, not file_save.',
     "- unclear: none of these, or you cannot tell. Asking to delete or reset anything is unclear.",
     'A question stays ask even with an amount or a time in it: "ค่าไฟ 2000 แพงไหม", "พรุ่งนี้ 9 โมงมีอะไร".',
+    'One message may ask for several things, in the order said: "ค่ากาแฟ 60 บาทและช่วยตั้งแจ้งเตือนกินยา 6 โมงเย็น".',
+    "Then give the first as the group, and each other in more. Give each its own segment: its words alone",
+    '("ค่ากาแฟ 60 บาท", "ตั้งแจ้งเตือนกินยา 6 โมงเย็น"). List every thing asked for, even past five.',
+    "A message with one thing has no more and needs no segment.",
     "Fields:",
     "- reminderText for reminder_add: what, then when, in the person's own words. Keep every word",
     '  about the day, the time and the repeat. "พรุ่งนี้ต้องไปหาหมอ 10 โมง" gives "ไปหาหมอ พรุ่งนี้ 10 โมง".',
