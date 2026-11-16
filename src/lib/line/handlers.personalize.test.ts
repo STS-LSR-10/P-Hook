@@ -116,7 +116,7 @@ describe("theme and manner in the chat", () => {
     await handleEvent(say("กาแฟ 50"), deps);
     const text = everything(reply);
     expect(text).toContain("จดแล้ว พักก่อนนะ ✅");
-    expect(text).toContain("เอาดี ๆ ตรวจเองอีกรอบ อย่าเชื่อใจพี่ฮูกร้อยเปอร์เซ็นต์");
+    expect(text).toContain("ตรวจเองอีกรอบนะคุณน้า");
     expect(text).not.toContain("อย่าลืมตรวจสอบรายการที่จดด้วยนะ");
   });
 

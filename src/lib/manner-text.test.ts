@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyManner, MANNER_LINES } from "./manner-text";
+import { applyManner, MANNER_LINES, MANNER_MORE } from "./manner-text";
 import { PERSONA_IDS } from "./personalize";
 import { setVarietyRandom } from "./line/variety";
 import {
@@ -214,6 +214,22 @@ describe("every wording of a manner keeps its meaning and its places", () => {
         expect(say(persona, "จดสำเร็จ ✅", roll)).toContain("✅");
         expect(say(persona, "จดสำเร็จ 3 รายการ ✅", roll)).toMatch(/3.*✅/);
       }
+    }
+  });
+});
+
+describe("the saved card's header stays on two lines", () => {
+  const wordings = (key: string) =>
+    Object.keys(MANNER_LINES[key] ?? {}).flatMap((p) => [
+      MANNER_LINES[key]![p as "warm"],
+      ...(MANNER_MORE[key]?.[p as "warm"] ?? []),
+    ]);
+  it.each(["จดสำเร็จ ✅", "แก้ไขรายการสำเร็จ ✅"])("title %s is short", (key) => {
+    for (const w of wordings(key)) expect(w.length, w).toBeLessThanOrEqual(26);
+  });
+  it("the reminder under it is short", () => {
+    for (const w of wordings("อย่าลืมตรวจสอบรายการที่จดด้วยนะ")) {
+      expect(w.replace("{name}", "").length, w).toBeLessThanOrEqual(30);
     }
   });
 });
