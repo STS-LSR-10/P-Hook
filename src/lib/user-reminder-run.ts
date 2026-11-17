@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { effectivePlan, GROUP_PUSH_PER_MONTH, PRIVATE_PUSH_PER_MONTH } from "@/lib/plan";
+import { can, effectivePlan, GROUP_PUSH_PER_MONTH, PRIVATE_PUSH_PER_MONTH } from "@/lib/plan";
 import { getUserPlanRow } from "@/lib/slip-repo";
 import type { Mention } from "@/lib/group-mention";
 import { addLateReminder, purgeLateReminders, reminderTargets } from "@/lib/group-reminder-repo";
@@ -82,6 +82,7 @@ export async function runUserReminders(
       if (r.lineGroupId) {
         const target = targets.get(r.id) ?? { groupId: null, mentions: [] };
         const outcome = await sendGroupReminder(db, line, r, r.lineGroupId, target, now);
+        if (outcome === "skipped") continue;
         if (outcome === "late") summary.late += 1;
         else summary.sent += 1;
         continue;
@@ -139,7 +140,7 @@ async function sendGroupReminder(
   lineGroupId: string,
   target: { groupId: string | null; mentions: Mention[] },
   now: Date,
-): Promise<"sent" | "late"> {
+): Promise<"sent" | "late" | "skipped"> {
   const repeatLabel = r.repeat ? REPEAT_LABEL[r.repeat] : null;
   const people = target.mentions.filter((m) => m.userId);
   const everyone = target.mentions.some((m) => m.all);
@@ -147,12 +148,15 @@ async function sendGroupReminder(
   const month = monthKey(now);
   // the owner's plan sets the month's allowance; a plan that cannot be read gives none, so the
   // reminder waits for the next message in the group rather than being lost
-  const allowance = await getUserPlanRow(db, r.userId)
-    .then((row) => GROUP_PUSH_PER_MONTH[effectivePlan(row.plan, row.plan_expires_at, now)])
+  const ownerPlan = await getUserPlanRow(db, r.userId)
+    .then((row) => effectivePlan(row.plan, row.plan_expires_at, now))
     .catch((e) => {
       log.error("group_push_plan_failed", e);
-      return 0;
+      return null;
     });
+  // a plan without group ledgers (Starter) sends nothing to groups
+  if (ownerPlan && !can(ownerPlan, "groupLedger") && ownerPlan !== "free") return "skipped";
+  const allowance = ownerPlan ? GROUP_PUSH_PER_MONTH[ownerPlan] : 0;
   // every message pushed counts against the owner's allowance; a counter that cannot be reached
   // counts as no room, so the reminder waits rather than being lost
   const take = (amount: number) =>

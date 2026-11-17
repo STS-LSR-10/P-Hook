@@ -2943,7 +2943,7 @@ export const EN: Record<string, string> = {
     'Recording foreign currency (like 1500 JPY), converted to your currency automatically, is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can type the amount in your own currency',
   "เดือนนี้ใช้ ถาม AI ครบ {0} ครั้งแล้ว (แผน {1}) พิมพ์จดแบบปกติได้เหมือนเดิม อัปเกรดเป็น {2} ได้ {3} ครั้ง/เดือน หรือรอต้นเดือนหน้านะ":
     "You have used all {0} Ask AI uses this month ({1} plan). You can still record as usual. Upgrade to {2} for {3} a month, or wait until next month",
-  "กระเป๋า 5 ใบ · เป้าหมายออม 2 ใบ · 1 กลุ่ม LINE": "5 wallets · 2 savings goals · 1 LINE group",
+  "กระเป๋า 5 ใบ · เป้าหมายออม 2 ใบ · เก็บไฟล์ 5 GB": "5 wallets · 2 savings goals · 5 GB of files",
   "ส่งออก CSV/Excel · หลายสกุลเงิน": "CSV/Excel export · multiple currencies",
   'การจดย้อนหลังเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์จดเป็นวันนี้ได้เลย':
     'Recording an earlier day is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can record it as today',
@@ -2952,8 +2952,8 @@ export const EN: Record<string, string> = {
     "Starter ฿{0}/month records {1} voice messages a month · Pro ฿{2}/month {3} a month{4}",
   'วงเงินและยอดตามรอบบิลของบัตรเครดิตเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
     'Credit card limits and statement balances are for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
-  'กลุ่มนี้ยังไม่ได้เปิดสมุด สมาชิกที่เป็นแผน Starter ขึ้นไปพิมพ์ "เปิดสมุดกลุ่ม" ได้เลย':
-    'This group has no ledger yet. A member on the Starter plan or above can type "open group ledger"',
+  'กลุ่มนี้ยังไม่ได้เปิดสมุด สมาชิกที่เป็นแผน Pro ขึ้นไปพิมพ์ "เปิดสมุดกลุ่ม" ได้เลย':
+    'This group has no ledger yet. A member on the Pro plan or above can type "open group ledger"',
   "จดด้วยเสียงสำหรับสมาชิก Starter ขึ้นไป": "Voice recording is for Starter members and above",
   "การแนบรูปเป็นฟีเจอร์ของแผน Starter ขึ้นไป":
     "Attaching a photo is for the Starter plan and above",
@@ -2995,8 +2995,8 @@ export const EN: Record<string, string> = {
     "10 LINE groups (20 people each) · unlimited wallets · PDF export",
   'การติดแท็ก (เช่น "หมูกระทะ 500 #ปาร์ตี้") เป็นฟีเจอร์ของแผน Starter ขึ้นไป ยังไม่ได้จดรายการนี้นะ ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" หรือพิมพ์จดโดยไม่ใส่แท็กได้เลย':
     'Tagging (like "bbq 500 #party") is for the Starter plan and above, so this was not saved. Try it free for 7 days from the "Upgrade" menu, or record it without the tag',
-  "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Starter ขึ้นไป ทดลองใช้ฟรี 7 วันได้":
-    "Friends in the group can record for free; only the person who opens the ledger must be on Starter or above. You can try it free for 7 days",
+  "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Pro ขึ้นไป ทดลองใช้ฟรี 7 วันได้":
+    "Friends in the group can record for free; only the person who opens the ledger must be on Pro or above. You can try it free for 7 days",
   เตือนในกลุ่ม: "Group reminders",
   'งบรายวัน (บอทเตือนทันทีเมื่อวันนี้ใช้เกิน) เป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ':
     'A daily budget (the bot warns you the moment today goes over) is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu',
@@ -3009,10 +3009,10 @@ export const EN: Record<string, string> = {
     "Starter ฿{0}/month gives {1} Ask AI uses a month · Pro ฿{2}/month {3} a month{4}",
   เตือนและคลังไฟล์: "Reminders and file storage",
   "(Starter 2 ใบ · Pro 10 ใบ · Elite ไม่จำกัด)": "(Starter 2 · Pro 10 · Elite unlimited)",
-  "ผู้เปิดต้องเป็น Starter ขึ้นไป (ทดลองฟรี 7 วัน)":
-    "The opener must be on Starter or above (7-day free trial)",
-  "ผู้เปิดสมุดกลุ่มต้องเป็นแผน Starter ขึ้นไป":
-    "Whoever opens the group ledger must be on the Starter plan or above",
+  "ผู้เปิดต้องเป็น Pro ขึ้นไป (ทดลองฟรี 7 วัน)":
+    "The opener must be on Pro or above (7-day free trial)",
+  "ผู้เปิดสมุดกลุ่มต้องเป็นแผน Pro ขึ้นไป":
+    "Whoever opens the group ledger must be on the Pro plan or above",
   'การสรุปรายปีเป็นฟีเจอร์ของแผน Starter ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้พิมพ์ "สรุปเดือนนี้" ได้เลย':
     'The yearly summary is for the Starter plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can type "this month"',
   "ส่งออก Excel พร้อมชีตสรุป + ZIP แนบรูป": "Export Excel with summary sheets + ZIP with pictures",
@@ -3062,12 +3062,12 @@ export const EN: Record<string, string> = {
   " หรืออัปเกรดเป็น {0} เพื่อมีได้ไม่จำกัด": " or upgrade to {0} to have unlimited",
   "อ่านสลิป {0} ใบ/เดือน + แยกรายการจากใบเสร็จ": "{0} slip reads a month + itemised receipts",
   "เตือนจ่ายบิล · 5 กลุ่ม LINE · ส่งออก ZIP": "Bill reminders · 5 LINE groups · ZIP export",
-  'สมุดกลุ่มเป็นฟีเจอร์ของแผน Starter ขึ้นไป เฉพาะคนที่เปิดสมุดต้องเป็น Starter ขึ้นไป เพื่อน ๆ ในกลุ่มใช้ได้ฟรี ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ของบอทในแชทส่วนตัวนะ':
-    'The group ledger is for the Starter plan and above. Only the person who opens it needs Starter or above; friends in the group use it free. Try it free for 7 days from the bot\'s "Upgrade" menu in a private chat',
+  'สมุดกลุ่มเป็นฟีเจอร์ของแผน Pro ขึ้นไป เฉพาะคนที่เปิดสมุดต้องเป็น Pro ขึ้นไป เพื่อน ๆ ในกลุ่มใช้ได้ฟรี ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" ของบอทในแชทส่วนตัวนะ':
+    'The group ledger is for the Pro plan and above. Only the person who opens it needs Pro or above; friends in the group use it free. Try it free for 7 days from the bot\'s "Upgrade" menu in a private chat',
   'อ่านสลิปฟรีได้อีก {0} ใบ (ลองฟรี {1} ใบแรก) อยากอ่านได้ทุกเดือน ลองทดลองใช้แผนฟรี 7 วันที่เมนู "อัปเกรด" นะ':
     '{0} free slip reads left (the first {1} are free). To read slips every month, try a plan free for 7 days from the "Upgrade" menu',
-  "สมุดกลุ่มนี้หยุดจดชั่วคราว เพราะแผนของเจ้าของสมุดหมดอายุ ดูสรุปได้ตามปกติ ต่ออายุแผนแล้วจดต่อได้เลยนะ":
-    "This group ledger is paused because its owner's plan has ended. You can still see summaries; renew the plan to carry on recording",
+  "สมุดกลุ่มนี้หยุดจดชั่วคราว เพราะแผนของเจ้าของสมุดหมดอายุหรือไม่รวมสมุดกลุ่ม ดูสรุปได้ตามปกติ ต่ออายุแผนแล้วจดต่อได้เลยนะ":
+    "This group ledger is paused because its owner's plan has ended or does not include group ledgers. You can still see summaries; renew or upgrade the plan to carry on recording",
   "สำหรับแผน Pro ขึ้นไป": "For the Pro plan and above",
   'การพยากรณ์เงินปลายเดือนเป็นฟีเจอร์ของแผน Pro ขึ้นไป ลองทดลองใช้ฟรี 7 วันได้ที่เมนู "อัปเกรด" นะ ตอนนี้ดูสรุปได้ด้วย "สรุปเดือนนี้" หรือ "เทียบเดือน"':
     'The end-of-month forecast is for the Pro plan and above. Try it free for 7 days from the "Upgrade" menu. For now you can use "this month" or "compare months"',

@@ -74,7 +74,7 @@ describe("file rules", () => {
 
   it("gives each plan its space", () => {
     expect(fileCapacity("free")).toBe(150 * 1024 * 1024);
-    expect(fileCapacity("starter")).toBe(3 * 1024 ** 3);
+    expect(fileCapacity("starter")).toBe(5 * 1024 ** 3);
     expect(fileCapacity("plus")).toBe(15 * 1024 ** 3);
     expect(fileCapacity("ultimate")).toBe(100 * 1024 ** 3);
   });

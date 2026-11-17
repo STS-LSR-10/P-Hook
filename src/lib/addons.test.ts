@@ -63,7 +63,7 @@ describe("sumBonus", () => {
 
 describe("capacities with add-ons", () => {
   it("storage grows; waiting reminders have no limit and repeating ones keep the plan's", () => {
-    expect(fileCapacity("starter", 10 * GB)).toBe(13 * GB);
+    expect(fileCapacity("starter", 10 * GB)).toBe(15 * GB);
     expect(capacityOf("starter", "once")).toBe(1000);
     expect(capacityOf("starter", "repeat")).toBe(20);
   });
@@ -110,10 +110,26 @@ describe("the quota page with add-ons", () => {
       groupPush: 100,
       ai: 0,
     });
-    expect(find(q, "storage").limit).toBe(13 * GB);
-    expect(find(q, "reminders").limit).toBe(35 + 40); // one-off reminders pushed to LINE
-    expect(findAny(q, "groupReminders").limit).toBe(30 + 100);
-    expect(find(q, "groups").limit).toBe(3);
-    expect(find(q, "storage").plans.starter.limit).toBe(3 * GB); // the plan table is unchanged
+    expect(find(q, "storage").limit).toBe(15 * GB);
+    expect(find(q, "reminders").limit).toBe(50 + 40); // one-off reminders pushed to LINE
+    expect(findAny(q, "groupReminders").limit).toBe(0 + 100);
+    expect(find(q, "groups").limit).toBe(2);
+    expect(find(q, "storage").plans.starter.limit).toBe(5 * GB); // the plan table is unchanged
+  });
+});
+
+describe("add-ons for the groups", () => {
+  it("are sold only to plans that have group ledgers", async () => {
+    const { ADDONS, addonAllowedFor } = await import("./addons");
+    const group = ADDONS.filter((a) => a.kind === "group_push" || a.kind === "group_slots");
+    expect(group.length).toBeGreaterThan(0);
+    for (const a of group) {
+      expect(addonAllowedFor("free", a)).toBe(false);
+      expect(addonAllowedFor("starter", a)).toBe(false);
+      expect(addonAllowedFor("plus", a)).toBe(true);
+    }
+    for (const a of ADDONS.filter((x) => !group.includes(x))) {
+      expect(addonAllowedFor("starter", a)).toBe(true);
+    }
   });
 });

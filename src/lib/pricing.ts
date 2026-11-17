@@ -490,7 +490,7 @@ export const PLAN_HIGHLIGHTS: Record<Plan, string[]> = {
   starter: [
     t("อ่านสลิป {0} ใบ/เดือน + จดด้วยเสียง {1} ครั้ง", SLIP_LIMIT.starter, VOICE_LIMIT.starter),
     t("งบรายวัน/สัปดาห์ + เตือนเมื่อใกล้เกินงบ"),
-    t("กระเป๋า 5 ใบ · เป้าหมายออม 2 ใบ · 1 กลุ่ม LINE"),
+    t("กระเป๋า 5 ใบ · เป้าหมายออม 2 ใบ · เก็บไฟล์ 5 GB"),
     t("ส่งออก CSV/Excel · หลายสกุลเงิน"),
   ],
   plus: [

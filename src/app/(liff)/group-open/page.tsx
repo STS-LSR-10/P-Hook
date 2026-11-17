@@ -79,10 +79,10 @@ export default function GroupOpenPage() {
         ) : !data.canOpen ? (
           <section className={cn(cardClass, "space-y-3 text-center")}>
             <BookOpen className="mx-auto h-8 w-8 text-primary" aria-hidden />
-            <h2 className="text-lg font-bold">{t("ผู้เปิดสมุดกลุ่มต้องเป็นแผน Starter ขึ้นไป")}</h2>
+            <h2 className="text-lg font-bold">{t("ผู้เปิดสมุดกลุ่มต้องเป็นแผน Pro ขึ้นไป")}</h2>
             <p className="text-sm text-muted">
               {t(
-                "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Starter ขึ้นไป ทดลองใช้ฟรี 7 วันได้",
+                "เพื่อน ๆ ในกลุ่มจดได้ฟรี มีแค่คนเปิดสมุดที่ต้องเป็น Pro ขึ้นไป ทดลองใช้ฟรี 7 วันได้",
               )}
             </p>
             <Link

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useApi, useLiff } from "@/components/liff/liff-provider";
 import { ErrorState, LoadingBlock, PageHeader } from "@/components/liff/states";
-import { type AddonKind, type AddonSku, type Bonus } from "@/lib/addons";
+import { addonBySku, type AddonKind, type AddonSku, type Bonus } from "@/lib/addons";
 import { formatBytes } from "@/lib/file";
 import { formatThaiDate } from "@/lib/thai-date";
 import { cn } from "@/lib/utils";
@@ -94,8 +94,7 @@ export default function AddonsPage() {
                 <p className="text-foreground/80">{have.join(" · ")}</p>
                 {d.active.map((a) => (
                   <p key={`${a.sku}-${a.expiresAt}`} className="text-xs text-foreground/80">
-                    {d.catalog.find((c) => c.sku === a.sku)?.label} · {t("ถึง")}{" "}
-                    {formatThaiDate(new Date(a.expiresAt))}
+                    {addonBySku(a.sku)?.label} · {t("ถึง")} {formatThaiDate(new Date(a.expiresAt))}
                   </p>
                 ))}
               </section>
@@ -139,7 +138,7 @@ export default function AddonsPage() {
               </div>
             )}
 
-            {GROUPS.map((g) => (
+            {GROUPS.filter((g) => d.catalog.some((a) => a.kind === g.kind)).map((g) => (
               <section key={g.kind} aria-label={g.title} className="space-y-2">
                 <h2 className="text-sm font-bold">{g.title}</h2>
                 <ul className="space-y-2">

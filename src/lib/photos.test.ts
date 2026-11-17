@@ -95,7 +95,7 @@ describe("handlePhotoImage", () => {
   });
 
   it("when the space is full nothing is uploaded and the person is told", async () => {
-    spaceUsed = 3 * 1024 ** 3 - 2; // Pro has 15 GB, so this is Starter's size: use Starter
+    spaceUsed = 5 * 1024 ** 3 - 2; // Pro has 15 GB, so this is Starter's size: use Starter
     plan = "starter";
     const out = await handlePhotoImage(deps, user, "m1", live);
     expect(textOf(out)).toBe(PHOTO_LIMIT_TEXT);
@@ -104,7 +104,7 @@ describe("handlePhotoImage", () => {
   });
 
   it("replacing a photo gives its space back first", async () => {
-    spaceUsed = 3 * 1024 ** 3 - 2;
+    spaceUsed = 5 * 1024 ** 3 - 2;
     plan = "starter";
     tx = { ...(tx as NonNullable<typeof tx>), photo_path: "u1/photo-t1.jpg", photo_bytes: 100 };
     const out = await handlePhotoImage(deps, user, "m1", live);

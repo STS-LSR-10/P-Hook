@@ -74,7 +74,7 @@ describe("limits", () => {
   it("group ledgers: how many groups and people each plan has", () => {
     expect(GROUP_LEDGER_LIMIT).toEqual({
       free: { groups: 0, members: 0 },
-      starter: { groups: 1, members: 5 },
+      starter: { groups: 0, members: 0 },
       plus: { groups: 5, members: 10 },
       ultimate: { groups: 10, members: 20 },
     });
@@ -112,7 +112,7 @@ describe("the four plans", () => {
     expect(at("export")).toBe("starter");
     expect(at("foreignCurrency")).toBe("starter");
     expect(at("debts")).toBe("starter");
-    expect(at("groupLedger")).toBe("starter");
+    expect(at("groupLedger")).toBe("plus");
     expect(at("savingsGoal")).toBe("starter");
     expect(at("insight")).toBe("plus");
     expect(at("forecast")).toBe("plus");

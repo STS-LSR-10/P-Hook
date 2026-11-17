@@ -196,7 +196,7 @@ describe("the group reminder row on the plan table", () => {
   it("shows the monthly push cap of each plan", async () => {
     const { FEATURE_GROUPS } = await import("./pricing");
     const row = FEATURE_GROUPS.flatMap((g) => g.rows).find((r) => r.label === "เตือนในกลุ่ม");
-    expect(row?.cells).toEqual([false, "30 ครั้ง/เดือน", "100 ครั้ง/เดือน", "250 ครั้ง/เดือน"]);
+    expect(row?.cells).toEqual([false, false, "100 ครั้ง/เดือน", "250 ครั้ง/เดือน"]);
   });
 });
 

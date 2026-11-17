@@ -1,3 +1,5 @@
+import { can, type Plan } from "@/lib/plan";
+
 /** Add-on boosters: extra quota bought on top of a plan. */
 export type AddonKind =
   "storage" | "alerts" | "slips" | "group_slots" | "private_push" | "group_push" | "ai";
@@ -176,6 +178,10 @@ export const RETIRED_ADDONS: AddonSku[] = [
     monthly: true,
   },
 ];
+
+/** Add-ons for the groups are sold only to plans that have group ledgers. */
+export const addonAllowedFor = (plan: Plan, addon: AddonSku): boolean =>
+  (addon.kind !== "group_push" && addon.kind !== "group_slots") || can(plan, "groupLedger");
 
 export const addonForSale = (sku: string): AddonSku | undefined =>
   ADDONS.find((a) => a.sku === sku);

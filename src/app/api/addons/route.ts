@@ -1,5 +1,5 @@
 import { guard, json } from "@/lib/api";
-import { ADDONS } from "@/lib/addons";
+import { ADDONS, addonAllowedFor } from "@/lib/addons";
 import { loadBonus } from "@/lib/addons-repo";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPaymentProvider } from "@/lib/payments";
@@ -33,7 +33,7 @@ export async function GET(request: Request): Promise<Response> {
       // add-ons are for people on a paid plan
       canBuy: plan !== "free",
       paymentsAvailable: getPaymentProvider().available,
-      catalog: ADDONS,
+      catalog: ADDONS.filter((a) => addonAllowedFor(plan, a)),
       bonus,
       // the monthly ones that are running, with when each runs out
       active: ((active.data ?? []) as { sku: string; expires_at: string }[]).map((r) => ({

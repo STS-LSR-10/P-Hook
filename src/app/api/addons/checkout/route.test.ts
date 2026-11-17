@@ -49,6 +49,19 @@ describe("POST /api/addons/checkout", () => {
     expect(createAddonCheckout).not.toHaveBeenCalled();
   });
 
+  it.each(["gpush_60", "groups_3"])(
+    "%s is for plans with group ledgers: Starter cannot buy it",
+    async (sku) => {
+      plan = "starter";
+      const res = await post({ sku });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ available: false, upgrade: true });
+      expect(createAddonCheckout).not.toHaveBeenCalled();
+      plan = "plus";
+      expect(await (await post({ sku })).json()).toMatchObject({ available: true });
+    },
+  );
+
   it.each(["starter", "plus", "ultimate"])(
     "%s can buy, and the price comes from the catalogue",
     async (p) => {

@@ -41,10 +41,12 @@ describe("GET /api/group-open", () => {
     expect(await (await get()).json()).toMatchObject({ friend: false, canOpen: true });
   });
 
-  it("a friend on Free cannot open it; Starter and above can", async () => {
+  it("a friend on Free cannot open it; Pro and above can", async () => {
     plan = "free";
     expect(await (await get()).json()).toMatchObject({ friend: true, canOpen: false });
-    for (const p of ["starter", "plus", "ultimate"]) {
+    plan = "starter";
+    expect(await (await get()).json()).toMatchObject({ canOpen: false });
+    for (const p of ["plus", "ultimate"]) {
       plan = p;
       expect(await (await get()).json()).toMatchObject({ canOpen: true });
     }

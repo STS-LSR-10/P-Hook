@@ -297,7 +297,7 @@ describe("group welcome card", () => {
     expect(card).toContain("เริ่มใช้ใน 3 ขั้น");
     expect(card).toContain('"label":"📒 เปิดสมุดกลุ่ม"');
     expect(card).toContain('"label":"📖 วิธีใช้งาน","text":"วิธีใช้งาน"');
-    expect(card).toContain("Starter"); // the opener must be Starter or above; the rest are free
+    expect(card).toContain("Pro"); // the opener must be Pro or above; the rest are free
     expect(card.length).toBeLessThan(50_000);
   });
 

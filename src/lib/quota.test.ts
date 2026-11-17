@@ -65,14 +65,14 @@ describe("buildQuota", () => {
     expect(q.fileSaves).toBeUndefined(); // no daily limit on saving files any more
   });
 
-  it("Starter: monthly slips and voice, one group of five, no PDF yet", () => {
+  it("Starter: monthly slips and voice, no groups, no PDF yet", () => {
     const q = byKey("starter");
     expect(q.slips).toMatchObject({ limit: 45, period: "month" });
     expect(q.voice).toMatchObject({ limit: 30, period: "month" });
     expect(q.repeatReminders?.limit).toBe(20);
-    expect(q.groups).toMatchObject({ used: 2, limit: 1, period: "total" });
-    expect(q.groupReminders).toMatchObject({ limit: 30, period: "month" });
-    expect(q.reminders).toMatchObject({ limit: 35, period: "month" });
+    expect(q.groups).toMatchObject({ used: 2, limit: 0, period: "total" });
+    expect(q.groupReminders).toMatchObject({ limit: 0, period: "month" });
+    expect(q.reminders).toMatchObject({ limit: 50, period: "month" });
     expect(q.pdf?.limit).toBe(0);
     expect(q.wallets?.limit).toBe(5);
     expect(q.goals?.limit).toBe(2);

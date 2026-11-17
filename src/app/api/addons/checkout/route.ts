@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiError, guard, json, readJson } from "@/lib/api";
-import { addonForSale } from "@/lib/addons";
+import { addonAllowedFor, addonForSale } from "@/lib/addons";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPaymentProvider } from "@/lib/payments";
 import { loadBillingState } from "@/lib/payments/billing-state";
@@ -31,11 +31,14 @@ export async function POST(request: Request): Promise<Response> {
     if (!parsed.success || !addon) return apiError("ข้อมูลไม่ถูกต้อง", 400);
 
     const { plan } = await getPlanInfo(db, auth.userId);
-    if (plan === "free") {
+    if (plan === "free" || !addonAllowedFor(plan, addon)) {
       return json(
         {
           available: false,
-          message: "แพ็กเกจเสริมสำหรับแผน Starter ขึ้นไป อัปเกรดแผนก่อนนะ",
+          message:
+            plan === "free"
+              ? "แพ็กเกจเสริมสำหรับแผน Starter ขึ้นไป อัปเกรดแผนก่อนนะ"
+              : "แพ็กเกจเสริมของกลุ่มสำหรับแผน Pro ขึ้นไป อัปเกรดแผนก่อนนะ",
           upgrade: true,
         },
         409,

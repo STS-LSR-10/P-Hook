@@ -237,7 +237,7 @@ describe("the bot joining and leaving", () => {
     // two buttons: open the ledger (a LIFF page when the LIFF id is known), and how to use it
     expect(card).toContain('"label":"📒 เปิดสมุดกลุ่ม"');
     expect(card).toContain('"label":"📖 วิธีใช้งาน","text":"วิธีใช้งาน"');
-    expect(card).toContain("Starter");
+    expect(card).toContain("Pro");
     expect(card).toContain('"type":"carousel"'); // small cards to swipe, not one tall card
 
     ({ deps, reply } = setup());
@@ -280,12 +280,12 @@ describe("เปิดสมุดกลุ่ม", () => {
     expect(said(reply)).toContain("เปิดสมุดกลุ่มแล้ว");
   });
 
-  it("a member on Free is told it needs Starter or above", async () => {
+  it("a member on Free is told it needs Pro or above", async () => {
     userPlan = "free";
     const { deps, reply } = setup();
     await handleEvent(inGroup("Ufree", "เปิดสมุดกลุ่ม"), deps);
     expect(opened).toHaveLength(0);
-    expect(said(reply)).toContain("Starter");
+    expect(said(reply)).toContain("Pro");
   });
 
   it("already open by the same person, or by someone else with a running plan", async () => {
@@ -313,7 +313,6 @@ describe("เปิดสมุดกลุ่ม", () => {
   });
 
   it.each([
-    ["starter", 1],
     ["plus", 5],
     ["ultimate", 10],
   ])("an owner on %s with %i ledgers cannot open one more", async (plan, n) => {
@@ -325,8 +324,17 @@ describe("เปิดสมุดกลุ่ม", () => {
     expect(said(reply)).toContain(`ครบ ${n} กลุ่ม`);
   });
 
-  it("a Starter owner may open the first one", async () => {
+  it("a Starter owner cannot open one: group ledgers start at Pro", async () => {
     userPlan = "starter";
+    ownedCount = 0;
+    const { deps, reply } = setup();
+    await handleEvent(inGroup("Uowner", "เปิดสมุดกลุ่ม"), deps);
+    expect(opened).toHaveLength(0);
+    expect(said(reply)).toContain("Pro");
+  });
+
+  it("a Pro owner may open the first one", async () => {
+    userPlan = "plus";
     ownedCount = 0;
     const { deps } = setup();
     await handleEvent(inGroup("Uowner", "เปิดสมุดกลุ่ม"), deps);
@@ -343,8 +351,8 @@ describe("เปิดสมุดกลุ่ม", () => {
 describe("the plan's group and member limits on a ledger already open", () => {
   it("after a downgrade, only the oldest ledgers within the limit stay writable", async () => {
     openBook();
-    ownerPlan = "starter"; // one group
-    ownedIds = ["g0", "g1"]; // this ledger (g1) is the newer one
+    ownerPlan = "plus"; // five groups
+    ownedIds = ["g0", "g2", "g3", "g4", "g5", "g1"]; // this ledger (g1) is the newest
     const { deps, reply } = setup();
     await handleEvent(inGroup("Uowner", "จดค่าน้ำ 200"), deps);
     expect(entries).toHaveLength(0);
@@ -353,8 +361,8 @@ describe("the plan's group and member limits on a ledger already open", () => {
 
   it("the oldest ledger stays writable", async () => {
     openBook();
-    ownerPlan = "starter";
-    ownedIds = ["g1", "g2"];
+    ownerPlan = "plus";
+    ownedIds = ["g1", "g2", "g3", "g4", "g5", "g6"];
     const { deps } = setup();
     await handleEvent(inGroup("Uowner", "จดค่าน้ำ 200"), deps);
     expect(entries).toHaveLength(1);
@@ -362,14 +370,28 @@ describe("the plan's group and member limits on a ledger already open", () => {
 
   it("a newcomer past the plan's people is told the ledger is full", async () => {
     openBook();
-    ownerPlan = "starter"; // 5 people, the owner counts as one
+    ownerPlan = "plus"; // 10 people, the owner counts as one
     members = new Map(
-      ["A", "B", "C", "D"].map((u) => [u, { name: u, updatedAt: NOW.toISOString() }]),
+      ["A", "B", "C", "D", "E", "F", "G", "H", "I"].map((u) => [
+        u,
+        { name: u, updatedAt: NOW.toISOString() },
+      ]),
     );
     const { deps, reply } = setup();
     await handleEvent(inGroup("Unew", "จดค่าน้ำ 200"), deps);
-    expect(said(reply)).toContain("5 คน");
+    expect(said(reply)).toContain("10 คน");
     expect(entries).toHaveLength(0);
+  });
+});
+
+describe("a ledger whose owner is on Starter", () => {
+  it("is view-only: group ledgers start at Pro", async () => {
+    openBook();
+    ownerPlan = "starter";
+    const { deps, reply } = setup();
+    await handleEvent(inGroup("Uowner", "จดค่าน้ำ 200"), deps);
+    expect(entries).toHaveLength(0);
+    expect(said(reply).length).toBeGreaterThan(0);
   });
 });
 

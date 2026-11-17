@@ -188,6 +188,20 @@ describe("runUserReminders", () => {
     expect(msgs.some((m) => "quickReply" in m)).toBe(false);
   });
 
+  it("a Starter owner's reminder in a group sends nothing: groups start at Pro", async () => {
+    ownerPlan = "starter";
+    due = [r({ lineGroupId: "Cg", groupOpen: true })];
+    const push = vi.fn(async (...args: unknown[]) => void args.length);
+    const out = await runUserReminders(
+      {} as SupabaseClient,
+      { push, groupMemberCount: async () => 4 } as never,
+      NOW,
+    );
+    expect(push).not.toHaveBeenCalled();
+    expect(out.sent).toBe(0);
+    expect(out.late).toBe(0);
+  });
+
   it("a repeating one says so, with where to cancel it", async () => {
     due = [r({ repeat: "daily" })];
     const push = vi.fn(async (...args: unknown[]) => void args.length);
@@ -272,10 +286,10 @@ describe("runUserReminders", () => {
 
     it("each plan has its own number", async () => {
       ownerPlan = "starter";
-      due = Array.from({ length: 36 }, (_, i) => r({ id: `r${i}` }));
+      due = Array.from({ length: 51 }, (_, i) => r({ id: `r${i}` }));
       const push = vi.fn(async (...args: unknown[]) => void args.length);
       const out = await runUserReminders({} as SupabaseClient, { push } as never, NOW);
-      expect(out.sent).toBe(35);
+      expect(out.sent).toBe(50);
     });
 
     it("a push that fails gives its use back", async () => {
@@ -425,10 +439,7 @@ describe("runUserReminders", () => {
       expect(late).toHaveLength(1);
     });
 
-    it.each([
-      ["starter", 20, 30],
-      ["plus", 90, 100],
-    ])(
+    it.each([["plus", 90, 100]])(
       "a %s owner's groups get a smaller monthly allowance (%i used, %i a month): the rest waits",
       async (plan, used) => {
         ownerPlan = plan;

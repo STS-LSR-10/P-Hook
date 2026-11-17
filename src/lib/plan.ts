@@ -85,7 +85,7 @@ export const FREE_VOICE_TOTAL = 10;
  */
 export const GROUP_REMINDS_PER_MONTH: Record<Plan, number> = {
   free: 0,
-  starter: 50,
+  starter: 0,
   plus: 200,
   ultimate: 500,
 };
@@ -97,7 +97,7 @@ export const GROUP_REMINDS_PER_MONTH: Record<Plan, number> = {
  */
 export const GROUP_PUSH_PER_MONTH: Record<Plan, number> = {
   free: 0,
-  starter: 30,
+  starter: 0,
   plus: 100,
   ultimate: 250,
 };
@@ -108,7 +108,7 @@ export const GROUP_PUSH_PER_MONTH: Record<Plan, number> = {
  */
 export const PRIVATE_PUSH_PER_MONTH: Record<Plan, number> = {
   free: 3,
-  starter: 35,
+  starter: 50,
   plus: 70,
   ultimate: 120,
 };
@@ -116,7 +116,7 @@ export const PRIVATE_PUSH_PER_MONTH: Record<Plan, number> = {
 /** LINE groups an owner may keep a ledger in, and how many people one ledger serves, by plan. */
 export const GROUP_LEDGER_LIMIT: Record<Plan, { groups: number; members: number }> = {
   free: { groups: 0, members: 0 },
-  starter: { groups: 1, members: 5 },
+  starter: { groups: 0, members: 0 },
   plus: { groups: 5, members: 10 },
   ultimate: { groups: 10, members: 20 },
 };
@@ -216,7 +216,7 @@ export const MIN_PLAN: Record<Feature, Plan> = {
   dailyBudget: "starter",
   savingsGoal: "starter",
   billReminder: "plus",
-  groupLedger: "starter",
+  groupLedger: "plus",
   sharedWallet: "starter",
   personalize: "starter",
 };
